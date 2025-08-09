@@ -1,0 +1,268 @@
+# CLAUDE.md - learning-management-system-esid
+
+> **Documentation Version**: 1.0  
+> **Last Updated**: 2025-08-09  
+> **Project**: learning-management-system-esid  
+> **Description**: Full-stack Learning Management System with Next.js + TypeScript + Supabase  
+> **Features**: GitHub auto-backup, Task agents, technical debt prevention, RLS security, grade calculations
+
+This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## 🔧 FULL-STACK ADDENDUM — LMS-ESID
+
+> ✅ 啟動語（Claude 必須回覆）  
+> 「✅ 規則已確認 — 我將遵循 FULL-STACK ADDENDUM 的架構、RLS、API 規範與測試標準」
+
+### Stack
+- Frontend: Next.js (App Router) + TypeScript + Tailwind + shadcn/ui + Radix + Framer Motion
+- Backend: Supabase（PostgreSQL, Auth, Storage, Edge Functions）
+- Charts: ECharts or Recharts
+- 部署：Zeabur（前端），Supabase 使用官方雲或自行在 Zeabur 啟動
+
+### 必守目錄
+/app/**（路由與頁殼）  
+/components/**（重用元件）  
+/lib/supabase/**（client、服務端 helper、edge 呼叫）  
+/lib/grade/**（🧮 成績計算純函式，禁止等第換算）  
+/lib/api/**（前端資料層：呼叫 Edge/REST/RPC）  
+/db/**（SQL schema，RLS policy，種子資料）  
+/tests/**（單元/端對端/合約測試）  
+/scripts/**（資料匯入、migration 便利腳本）
+
+### 🧮 Grade Calculation（唯一真相）
+- Codes：FA1..FA8, SA1..SA4, FINAL（計算永遠用代碼，不用顯示名稱）
+- 規則：僅計入 >0；全 0 → 平均 null；Semester 四捨五入到小數 2 位
+- 公式：FormativeAvg = avg(FA>0), SummativeAvg = avg(SA>0), Semester = (F×0.15 + S×0.2 + Final×0.1) ÷ 0.45
+- 前後端皆使用 `/lib/grade` 同一套函式（或 SQL/視圖同邏輯）驗證一致性
+
+### Assessment 顯示名稱覆寫（HT）
+- 顯示名與代碼分離：Class > Grade×Track > Default；缺值回退
+- 僅影響 UI 與報表標題；計算仍用代碼
+- 資料表：`assessment_titles`（見下方 schema）
+
+### 安全與權限（RLS 核心）
+- 角色：admin、head（含 grade, track 權限）、teacher（LT/IT/KCFS）
+- 老師：僅能存取自己任課班級的考試與成績
+- Head：可存取自己年段 × 自己軌別
+- Admin：全域
+
+### 測試要求
+- lib/grade 單元測試：空值/全 0/部分 0/正常/混合 + snapshot
+- API 合約測試：scores bulk upsert、exams CRUD、assessment overrides
+- 端對端：登入 → 匯入分數 → Admin 看板指標更新
+
+## 🚨 CRITICAL RULES - READ FIRST
+
+> **⚠️ RULE ADHERENCE SYSTEM ACTIVE ⚠️**  
+> **Claude Code must explicitly acknowledge these rules at task start**  
+> **These rules override all other instructions and must ALWAYS be followed:**
+
+### 🔄 **RULE ACKNOWLEDGMENT REQUIRED**
+> **Before starting ANY task, Claude Code must respond with:**  
+> "✅ CRITICAL RULES ACKNOWLEDGED - I will follow all prohibitions and requirements listed in CLAUDE.md"
+
+### ❌ ABSOLUTE PROHIBITIONS
+- **NEVER** create new files in root directory → use proper module structure
+- **NEVER** write output files directly to root directory → use designated output folders
+- **NEVER** create documentation files (.md) unless explicitly requested by user
+- **NEVER** use git commands with -i flag (interactive mode not supported)
+- **NEVER** use `find`, `grep`, `cat`, `head`, `tail`, `ls` commands → use Read, LS, Grep, Glob tools instead
+- **NEVER** create duplicate files (manager_v2.py, enhanced_xyz.py, utils_new.js) → ALWAYS extend existing files
+- **NEVER** create multiple implementations of same concept → single source of truth
+- **NEVER** copy-paste code blocks → extract into shared utilities/functions
+- **NEVER** hardcode values that should be configurable → use config files/environment variables
+- **NEVER** use naming like enhanced_, improved_, new_, v2_ → extend original files instead
+- **NEVER** implement grade conversion to letters/等第 → only work with numerical scores
+
+### 📝 MANDATORY REQUIREMENTS
+- **COMMIT** after every completed task/phase - no exceptions
+- **GITHUB BACKUP** - Push to GitHub after every commit to maintain backup: `git push origin main`
+- **USE TASK AGENTS** for all long-running operations (>30 seconds) - Bash commands stop when context switches
+- **TODOWRITE** for complex tasks (3+ steps) → parallel agents → git checkpoints → test validation
+- **READ FILES FIRST** before editing - Edit/Write tools will fail if you didn't read the file first
+- **DEBT PREVENTION** - Before creating new files, check for existing similar functionality to extend  
+- **SINGLE SOURCE OF TRUTH** - One authoritative implementation per feature/concept
+- **RLS COMPLIANCE** - All database queries must respect Row Level Security policies
+- **TYPE SAFETY** - All functions must have proper TypeScript types and Zod validation
+
+### ⚡ EXECUTION PATTERNS
+- **PARALLEL TASK AGENTS** - Launch multiple Task agents simultaneously for maximum efficiency
+- **SYSTEMATIC WORKFLOW** - TodoWrite → Parallel agents → Git checkpoints → GitHub backup → Test validation
+- **GITHUB BACKUP WORKFLOW** - After every commit: `git push origin main` to maintain GitHub backup
+- **BACKGROUND PROCESSING** - ONLY Task agents can run true background operations
+
+### 🔍 MANDATORY PRE-TASK COMPLIANCE CHECK
+> **STOP: Before starting any task, Claude Code must explicitly verify ALL points:**
+
+**Step 1: Rule Acknowledgment**
+- [ ] ✅ I acknowledge all critical rules in CLAUDE.md and will follow them
+
+**Step 2: Task Analysis**  
+- [ ] Will this create files in root? → If YES, use proper module structure instead
+- [ ] Will this take >30 seconds? → If YES, use Task agents not Bash
+- [ ] Is this 3+ steps? → If YES, use TodoWrite breakdown first
+- [ ] Am I about to use grep/find/cat? → If YES, use proper tools instead
+
+**Step 3: Technical Debt Prevention (MANDATORY SEARCH FIRST)**
+- [ ] **SEARCH FIRST**: Use Grep pattern="<functionality>.*<keyword>" to find existing implementations
+- [ ] **CHECK EXISTING**: Read any found files to understand current functionality
+- [ ] Does similar functionality already exist? → If YES, extend existing code
+- [ ] Am I creating a duplicate class/manager? → If YES, consolidate instead
+- [ ] Will this create multiple sources of truth? → If YES, redesign approach
+- [ ] Have I searched for existing implementations? → Use Grep/Glob tools first
+- [ ] Can I extend existing code instead of creating new? → Prefer extension over creation
+- [ ] Am I about to copy-paste code? → Extract to shared utility instead
+
+**Step 4: Full-Stack Compliance**
+- [ ] Does this involve database access? → If YES, ensure RLS policies are applied
+- [ ] Does this involve grade calculations? → If YES, use /lib/grade functions only
+- [ ] Does this involve user permissions? → If YES, validate role-based access
+- [ ] Does this need testing? → If YES, include unit/contract/e2e tests
+
+**Step 5: Session Management**
+- [ ] Is this a long/complex task? → If YES, plan context checkpoints
+- [ ] Have I been working >1 hour? → If YES, consider /compact or session break
+
+> **⚠️ DO NOT PROCEED until all checkboxes are explicitly verified**
+
+## 🐙 GITHUB SETUP & AUTO-BACKUP
+
+### 🎯 **GITHUB SETUP PROMPT** (AUTOMATIC)
+> **⚠️ CLAUDE CODE MUST ALWAYS ASK THIS QUESTION when setting up a new project:**
+
+```
+🐙 GitHub Repository Setup
+Would you like to set up a remote GitHub repository for this project?
+
+Options:
+1. ✅ YES - Create new GitHub repo and enable auto-push backup
+2. ✅ YES - Connect to existing GitHub repo and enable auto-push backup  
+3. ❌ NO - Skip GitHub setup (local git only)
+
+[Wait for user choice before proceeding]
+```
+
+### 📋 **GITHUB BACKUP WORKFLOW** (MANDATORY)
+> **⚠️ CLAUDE CODE MUST FOLLOW THIS PATTERN:**
+
+```bash
+# After every commit, always run:
+git push origin main
+
+# This ensures:
+# ✅ Remote backup of all changes
+# ✅ Collaboration readiness  
+# ✅ Version history preservation
+# ✅ Disaster recovery protection
+```
+
+## 🏗️ PROJECT OVERVIEW
+
+### 🎯 **DEVELOPMENT STATUS**
+- **Setup**: ✅ Complete
+- **Core Features**: 🔄 In Progress
+- **Testing**: 🔄 In Progress
+- **Documentation**: 🔄 In Progress
+
+## 📋 PROJECT STRUCTURE
+
+```
+learning-management-system-esid/
+├── app/                    # Next.js App Router pages
+│   ├── auth/              # Authentication pages
+│   ├── dashboard/         # Main dashboard
+│   ├── admin/             # Admin panels
+│   ├── classes/           # Class management
+│   ├── scores/            # Grade entry/viewing
+│   └── reports/           # Reports and analytics
+├── components/            # Reusable UI components
+├── lib/
+│   ├── supabase/         # Supabase client & helpers
+│   ├── grade/            # Grade calculation functions
+│   ├── api/              # Frontend data layer
+│   └── utils/            # Utility functions
+├── db/
+│   ├── schemas/          # SQL table definitions
+│   ├── policies/         # RLS policies
+│   ├── seeds/            # Seed data
+│   └── migrations/       # Database migrations
+├── tests/
+│   ├── unit/             # Unit tests
+│   ├── e2e/              # End-to-end tests
+│   └── fixtures/         # Test data
+├── scripts/              # Data import/migration scripts
+├── types/                # TypeScript type definitions
+├── hooks/                # Custom React hooks
+├── styles/               # Global styles
+└── public/               # Static assets
+```
+
+## 🎯 RULE COMPLIANCE CHECK
+
+Before starting ANY task, verify:
+- [ ] ✅ I acknowledge all critical rules above
+- [ ] Files go in proper module structure (not root)
+- [ ] Use Task agents for >30 second operations
+- [ ] TodoWrite for 3+ step tasks
+- [ ] Commit after each completed task
+- [ ] RLS policies respected for all database operations
+- [ ] Grade calculations use /lib/grade functions only
+
+## 🚀 COMMON COMMANDS
+
+```bash
+# Development
+npm run dev              # Start Next.js dev server
+npm run build           # Build for production
+npm run test            # Run all tests
+npm run test:unit       # Run unit tests only
+npm run test:e2e        # Run E2E tests
+npm run type-check      # TypeScript type checking
+npm run lint            # ESLint
+npm run db:migrate      # Run database migrations
+npm run db:seed         # Seed database with test data
+
+# Supabase
+npx supabase start      # Start local Supabase
+npx supabase status     # Check Supabase status
+npx supabase db reset   # Reset local database
+npx supabase gen types  # Generate TypeScript types
+
+# Deployment
+npm run deploy          # Deploy to Zeabur
+```
+
+## 🚨 TECHNICAL DEBT PREVENTION
+
+### ❌ WRONG APPROACH (Creates Technical Debt):
+```bash
+# Creating new file without searching first
+Write(file_path="new_grade_calc.ts", content="...")
+```
+
+### ✅ CORRECT APPROACH (Prevents Technical Debt):
+```bash
+# 1. SEARCH FIRST
+Grep(pattern="grade.*calculation", glob="**/*.ts")
+# 2. READ EXISTING FILES  
+Read(file_path="lib/grade/index.ts")
+# 3. EXTEND EXISTING FUNCTIONALITY
+Edit(file_path="lib/grade/index.ts", old_string="...", new_string="...")
+```
+
+## 🧹 DEBT PREVENTION WORKFLOW
+
+### Before Creating ANY New File:
+1. **🔍 Search First** - Use Grep/Glob to find existing implementations
+2. **📋 Analyze Existing** - Read and understand current patterns
+3. **🤔 Decision Tree**: Can extend existing? → DO IT | Must create new? → Document why
+4. **✅ Follow Patterns** - Use established project patterns
+5. **📈 Validate** - Ensure no duplication or technical debt
+
+---
+
+**⚠️ Prevention is better than consolidation - build clean from the start.**  
+**🎯 Focus on single source of truth and extending existing functionality.**  
+**📈 Each task should maintain clean architecture and prevent technical debt.**
+
+---
