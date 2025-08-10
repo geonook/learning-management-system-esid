@@ -3,6 +3,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "sonner"
 import { ThemeProvider } from "next-themes"
+import MainLayout from "@/components/layout/main-layout"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -25,9 +26,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="min-h-screen bg-background">
+          <MainLayout>
             {children}
-          </div>
+          </MainLayout>
           <Toaster />
         </ThemeProvider>
       </body>
