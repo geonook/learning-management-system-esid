@@ -1,18 +1,10 @@
 "use client"
 
 import { usePathname } from "next/navigation"
-import { Bell, Search, Sun, Moon, Laptop } from "lucide-react"
-import { useTheme } from "next-themes"
+import { Bell, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select"
 import { useAppStore } from "@/lib/store"
 
 // Page title mapping
@@ -47,7 +39,6 @@ function generateBreadcrumbs(pathname: string) {
 
 export default function Header() {
   const pathname = usePathname()
-  const { theme, setTheme } = useTheme()
   const { grade, klass, track, role } = useAppStore((s) => s.selections)
   const currentRole = useAppStore((s) => s.role)
   
@@ -108,37 +99,6 @@ export default function Header() {
           </Badge>
         </Button>
 
-        {/* Theme Toggle */}
-        <Select value={theme} onValueChange={setTheme}>
-          <SelectTrigger className="w-[110px]">
-            <SelectValue placeholder="Theme">
-              {theme === "light" && <Sun className="h-4 w-4 mr-1" />}
-              {theme === "dark" && <Moon className="h-4 w-4 mr-1" />}
-              {theme === "system" && <Laptop className="h-4 w-4 mr-1" />}
-              <span className="capitalize">{theme}</span>
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="light">
-              <div className="flex items-center gap-2">
-                <Sun className="h-4 w-4" />
-                Light
-              </div>
-            </SelectItem>
-            <SelectItem value="dark">
-              <div className="flex items-center gap-2">
-                <Moon className="h-4 w-4" />
-                Dark
-              </div>
-            </SelectItem>
-            <SelectItem value="system">
-              <div className="flex items-center gap-2">
-                <Laptop className="h-4 w-4" />
-                System
-              </div>
-            </SelectItem>
-          </SelectContent>
-        </Select>
 
         {/* User Menu */}
         <div className="flex items-center gap-2">
