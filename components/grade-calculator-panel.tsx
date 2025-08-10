@@ -42,7 +42,7 @@ export default function GradeCalculatorPanel({
   compact?: boolean
 }) {
   const [studentId, setStudentId] = useState<string>(mockStudents[0]?.id || "")
-  const selected = studentId || mockStudents[0]?.id
+  const selected = studentId || mockStudents[0]?.id || "STU-7001"
 
   const scores = mockScores[selected] || {
     FA1: null, FA2: null, FA3: null, FA4: null, FA5: null, FA6: null, FA7: null, FA8: null,

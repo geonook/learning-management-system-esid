@@ -34,8 +34,8 @@ function makeStudents(): Student[] {
     const name = STUDENT_NAMES[i % STUDENT_NAMES.length]
     const id = `STU-${(7001 + i).toString().padStart(4, '0')}`
     const grade = 7 + Math.floor(i / 8) // Grades 7-12
-    const classLetter = ["A", "B", "C", "D"][i % 4]
-    const track = i % 2 === 0 ? "local" : "international"
+    const classLetter = ["A", "B", "C", "D"][i % 4] || "A"
+    const track = i % 2 === 0 ? "local" : "international" as const
     
     students.push({
       id,

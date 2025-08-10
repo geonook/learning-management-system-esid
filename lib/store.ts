@@ -52,7 +52,7 @@ export const useAppStore = create<State>()(
           if (t === "Final") return { assessmentTitles: { ...s.assessmentTitles, final: label || "Final" } }
           const key = t as "FA" | "SA"
           const arr = [...s.assessmentTitles[key]]
-          if (index >= 0 && index < arr.length) arr[index] = label || arr[index]
+          if (index >= 0 && index < arr.length) arr[index] = label || arr[index] || ""
           return { assessmentTitles: { ...s.assessmentTitles, [key]: arr } as AssessmentTitles }
         }),
       setAssessmentTitles: (titles) => set({ assessmentTitles: titles }),
