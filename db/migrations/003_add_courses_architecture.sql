@@ -3,20 +3,51 @@
 -- Purpose: Support multiple independent English courses (LT/IT/KCFS) within each class
 
 -- Update teacher_type to include KCFS
-ALTER TYPE teacher_type DROP CONSTRAINT IF EXISTS teacher_type_check;
-DROP TYPE IF EXISTS teacher_type;
-CREATE TYPE teacher_type AS ENUM ('LT', 'IT', 'KCFS');
+-- First check if teacher_type enum exists and what values it has
+DO $$ 
+BEGIN
+    -- Check if teacher_type enum exists
+    IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'teacher_type') THEN
+        -- If it exists, check if KCFS is already added
+        IF NOT EXISTS (SELECT 1 FROM pg_enum e JOIN pg_type t ON e.enumtypid = t.oid WHERE t.typname = 'teacher_type' AND e.enumlabel = 'KCFS') THEN
+            -- Add KCFS to existing enum
+            ALTER TYPE teacher_type ADD VALUE 'KCFS';
+        END IF;
+    ELSE
+        -- Create new teacher_type enum if it doesn't exist
+        CREATE TYPE teacher_type AS ENUM ('LT', 'IT', 'KCFS');
+    END IF;
+END $$;
 
--- Update users table to use new teacher_type
-ALTER TABLE users 
-ALTER COLUMN teacher_type TYPE teacher_type 
-USING teacher_type::teacher_type;
+-- Ensure users table has teacher_type column with correct type
+DO $$
+BEGIN
+    -- Check if teacher_type column exists in users table
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'teacher_type') THEN
+        -- Add teacher_type column if it doesn't exist
+        ALTER TABLE users ADD COLUMN teacher_type teacher_type;
+    ELSE
+        -- Update existing column type if needed (safe operation)
+        BEGIN
+            ALTER TABLE users ALTER COLUMN teacher_type TYPE teacher_type USING teacher_type::text::teacher_type;
+        EXCEPTION
+            WHEN others THEN
+                -- If conversion fails, the column might already be correct type
+                RAISE NOTICE 'teacher_type column type conversion skipped - likely already correct type';
+        END;
+    END IF;
+END $$;
 
--- Create course_type enum
-CREATE TYPE course_type AS ENUM ('LT', 'IT', 'KCFS');
+-- Create course_type enum (only if it doesn't exist)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'course_type') THEN
+        CREATE TYPE course_type AS ENUM ('LT', 'IT', 'KCFS');
+    END IF;
+END $$;
 
 -- Create courses table for independent English programs within each class
-CREATE TABLE courses (
+CREATE TABLE IF NOT EXISTS courses (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     class_id UUID NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
     course_type course_type NOT NULL,
@@ -38,7 +69,7 @@ CREATE TABLE courses (
 );
 
 -- Create student_courses junction table for many-to-many relationship
-CREATE TABLE student_courses (
+CREATE TABLE IF NOT EXISTS student_courses (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     student_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
@@ -50,108 +81,153 @@ CREATE TABLE student_courses (
 );
 
 -- Add course_id to scores table (will migrate existing scores later)
-ALTER TABLE scores ADD COLUMN course_id UUID REFERENCES courses(id) ON DELETE CASCADE;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'scores' AND column_name = 'course_id') THEN
+        ALTER TABLE scores ADD COLUMN course_id UUID REFERENCES courses(id) ON DELETE CASCADE;
+    END IF;
+END $$;
 
 -- Update academic_year format in classes table
-ALTER TABLE classes ALTER COLUMN academic_year SET DEFAULT '24-25';
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'classes' AND column_name = 'academic_year') THEN
+        ALTER TABLE classes ALTER COLUMN academic_year SET DEFAULT '24-25';
+    END IF;
+END $$;
 
--- Add indexes for performance
-CREATE INDEX idx_courses_class_id ON courses(class_id);
-CREATE INDEX idx_courses_teacher_id ON courses(teacher_id);
-CREATE INDEX idx_courses_type ON courses(course_type);
-CREATE INDEX idx_student_courses_student_id ON student_courses(student_id);
-CREATE INDEX idx_student_courses_course_id ON student_courses(course_id);
-CREATE INDEX idx_scores_course_id ON scores(course_id);
+-- Add indexes for performance (only if they don't exist)
+CREATE INDEX IF NOT EXISTS idx_courses_class_id ON courses(class_id);
+CREATE INDEX IF NOT EXISTS idx_courses_teacher_id ON courses(teacher_id);
+CREATE INDEX IF NOT EXISTS idx_courses_type ON courses(course_type);
+CREATE INDEX IF NOT EXISTS idx_student_courses_student_id ON student_courses(student_id);
+CREATE INDEX IF NOT EXISTS idx_student_courses_course_id ON student_courses(course_id);
+CREATE INDEX IF NOT EXISTS idx_scores_course_id ON scores(course_id);
 
 -- Add RLS policies for courses
 ALTER TABLE courses ENABLE ROW LEVEL SECURITY;
 
 -- Admin can see all courses
-CREATE POLICY "Admin full access to courses" ON courses
-    FOR ALL USING (
-        EXISTS (
-            SELECT 1 FROM users 
-            WHERE users.id = auth.uid() 
-            AND users.role = 'admin'
-        )
-    );
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'courses' AND policyname = 'Admin full access to courses') THEN
+        CREATE POLICY "Admin full access to courses" ON courses
+            FOR ALL USING (
+                EXISTS (
+                    SELECT 1 FROM users 
+                    WHERE users.id = auth.uid() 
+                    AND users.role = 'admin'
+                )
+            );
+    END IF;
+END $$;
 
 -- Teachers can see courses they teach
-CREATE POLICY "Teachers can see their courses" ON courses
-    FOR SELECT USING (
-        teacher_id = auth.uid()
-    );
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'courses' AND policyname = 'Teachers can see their courses') THEN
+        CREATE POLICY "Teachers can see their courses" ON courses
+            FOR SELECT USING (
+                teacher_id = auth.uid()
+            );
+    END IF;
+END $$;
 
 -- Heads can see courses in their grade and track
-CREATE POLICY "Heads can see courses in their jurisdiction" ON courses
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM users u
-            JOIN classes c ON courses.class_id = c.id
-            WHERE u.id = auth.uid()
-            AND u.role = 'head' 
-            AND u.grade = c.grade
-            AND u.track = c.track
-        )
-    );
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'courses' AND policyname = 'Heads can see courses in their jurisdiction') THEN
+        CREATE POLICY "Heads can see courses in their jurisdiction" ON courses
+            FOR SELECT USING (
+                EXISTS (
+                    SELECT 1 FROM users u
+                    JOIN classes c ON courses.class_id = c.id
+                    WHERE u.id = auth.uid()
+                    AND u.role = 'head' 
+                    AND u.grade = c.grade
+                    AND u.track = c.track
+                )
+            );
+    END IF;
+END $$;
 
 -- Add RLS policies for student_courses
 ALTER TABLE student_courses ENABLE ROW LEVEL SECURITY;
 
 -- Admin can see all student-course relationships
-CREATE POLICY "Admin full access to student_courses" ON student_courses
-    FOR ALL USING (
-        EXISTS (
-            SELECT 1 FROM users 
-            WHERE users.id = auth.uid() 
-            AND users.role = 'admin'
-        )
-    );
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'student_courses' AND policyname = 'Admin full access to student_courses') THEN
+        CREATE POLICY "Admin full access to student_courses" ON student_courses
+            FOR ALL USING (
+                EXISTS (
+                    SELECT 1 FROM users 
+                    WHERE users.id = auth.uid() 
+                    AND users.role = 'admin'
+                )
+            );
+    END IF;
+END $$;
 
 -- Teachers can see student enrollments in their courses
-CREATE POLICY "Teachers can see their course enrollments" ON student_courses
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM courses
-            WHERE courses.id = student_courses.course_id
-            AND courses.teacher_id = auth.uid()
-        )
-    );
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'student_courses' AND policyname = 'Teachers can see their course enrollments') THEN
+        CREATE POLICY "Teachers can see their course enrollments" ON student_courses
+            FOR SELECT USING (
+                EXISTS (
+                    SELECT 1 FROM courses
+                    WHERE courses.id = student_courses.course_id
+                    AND courses.teacher_id = auth.uid()
+                )
+            );
+    END IF;
+END $$;
 
 -- Students can see their own course enrollments
-CREATE POLICY "Students can see their enrollments" ON student_courses
-    FOR SELECT USING (student_id = auth.uid());
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'student_courses' AND policyname = 'Students can see their enrollments') THEN
+        CREATE POLICY "Students can see their enrollments" ON student_courses
+            FOR SELECT USING (student_id = auth.uid());
+    END IF;
+END $$;
 
 -- Update scores RLS to use course_id when available
-CREATE POLICY "Scores via course access" ON scores
-    FOR SELECT USING (
-        CASE 
-            -- If course_id exists, check course permissions
-            WHEN course_id IS NOT NULL THEN
-                EXISTS (
-                    SELECT 1 FROM courses c
-                    JOIN users u ON u.id = auth.uid()
-                    WHERE c.id = scores.course_id
-                    AND (
-                        -- Admin can see all
-                        u.role = 'admin'
-                        -- Teacher can see their course scores  
-                        OR c.teacher_id = auth.uid()
-                        -- Head can see scores in their jurisdiction
-                        OR (u.role = 'head' AND EXISTS (
-                            SELECT 1 FROM classes cl
-                            WHERE cl.id = c.class_id
-                            AND cl.grade = u.grade
-                            AND cl.track = u.track
-                        ))
-                        -- Student can see their own scores
-                        OR (u.role = 'student' AND scores.student_id = auth.uid())
-                    )
-                )
-            -- Fallback to existing class-based permissions for legacy data
-            ELSE true
-        END
-    );
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'scores' AND policyname = 'Scores via course access') THEN
+        CREATE POLICY "Scores via course access" ON scores
+            FOR SELECT USING (
+                CASE 
+                    -- If course_id exists, check course permissions
+                    WHEN course_id IS NOT NULL THEN
+                        EXISTS (
+                            SELECT 1 FROM courses c
+                            JOIN users u ON u.id = auth.uid()
+                            WHERE c.id = scores.course_id
+                            AND (
+                                -- Admin can see all
+                                u.role = 'admin'
+                                -- Teacher can see their course scores  
+                                OR c.teacher_id = auth.uid()
+                                -- Head can see scores in their jurisdiction
+                                OR (u.role = 'head' AND EXISTS (
+                                    SELECT 1 FROM classes cl
+                                    WHERE cl.id = c.class_id
+                                    AND cl.grade = u.grade
+                                    AND cl.track = u.track
+                                ))
+                                -- Student can see their own scores
+                                OR (u.role = 'student' AND scores.student_id = auth.uid())
+                            )
+                        )
+                    -- Fallback to existing class-based permissions for legacy data
+                    ELSE true
+                END
+            );
+    END IF;
+END $$;
 
 -- Create function to automatically enroll students in all class courses
 CREATE OR REPLACE FUNCTION enroll_student_in_class_courses()
@@ -171,6 +247,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create trigger for automatic course enrollment
+DROP TRIGGER IF EXISTS trigger_enroll_student_in_courses ON users;
 CREATE TRIGGER trigger_enroll_student_in_courses
     AFTER INSERT OR UPDATE OF class_id ON users
     FOR EACH ROW
@@ -193,13 +270,14 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create trigger for automatic course creation
+DROP TRIGGER IF EXISTS trigger_create_default_courses ON classes;
 CREATE TRIGGER trigger_create_default_courses
     AFTER INSERT ON classes
     FOR EACH ROW
     EXECUTE FUNCTION create_default_courses_for_class();
 
 -- Add helpful views
-CREATE VIEW course_details AS
+CREATE OR REPLACE VIEW course_details AS
 SELECT 
     c.id,
     c.course_type,
@@ -219,7 +297,7 @@ LEFT JOIN users u ON c.teacher_id = u.id
 ORDER BY cl.grade, cl.name, c.course_type;
 
 -- Add view for student course enrollments
-CREATE VIEW student_course_enrollments AS
+CREATE OR REPLACE VIEW student_course_enrollments AS
 SELECT 
     sc.id as enrollment_id,
     s.id as student_id,
