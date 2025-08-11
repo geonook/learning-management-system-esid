@@ -248,8 +248,10 @@ INSERT INTO scores (
     82.0,
     '00000000-0000-0000-0000-000000000003' -- Math Teacher
   )
-ON CONFLICT (id) DO UPDATE SET
-  score = EXCLUDED.score;
+ON CONFLICT (student_id, exam_id, assessment_code) DO UPDATE SET
+  id = EXCLUDED.id,
+  score = EXCLUDED.score,
+  entered_by = EXCLUDED.entered_by;
 
 -- Display created test data
 SELECT 'Test Users Created:' as message;
