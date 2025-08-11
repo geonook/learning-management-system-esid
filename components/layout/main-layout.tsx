@@ -27,9 +27,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
   // Mock role assignment for development - only after hydration
   useEffect(() => {
     if (isHydrated && !role && !noLayoutPages.includes(pathname)) {
-      // In development, auto-assign teacher role
+      // In development, auto-assign admin role for CSV import testing
       // In production, this would redirect to login
-      useAppStore.getState().setRole("teacher")
+      useAppStore.getState().setRole("admin")
     }
   }, [isHydrated, role, pathname])
 
