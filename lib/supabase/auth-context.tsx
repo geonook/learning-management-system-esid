@@ -27,6 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [userPermissions, setUserPermissions] = useState<UserPermissions | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isHydrated, setIsHydrated] = useState(false)
 
   const fetchUserPermissions = async (userId: string): Promise<UserPermissions | null> => {
     try {
@@ -69,6 +70,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
+    // Set hydrated state
+    setIsHydrated(true)
+    
     // Get initial session
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
@@ -106,6 +110,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription.unsubscribe()
     }
   }, [])
+
+  // Prevent hydration mismatch by ensuring consistent initial render
+  if (!isHydrated) {
+    return (
+      <AuthContext.Provider value={{
+        user: null,
+        userPermissions: null,
+        loading: true,
+        signOut: async () => {},
+        refreshPermissions: async () => {}
+      }}>
+        {children}
+      </AuthContext.Provider>
+    )
+  }
 
   const value: AuthContextType = {
     user,

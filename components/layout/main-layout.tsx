@@ -3,6 +3,7 @@
 import { useEffect } from "react"
 import { usePathname } from "next/navigation"
 import { useAppStore } from "@/lib/store"
+import { useIsHydrated } from "@/lib/hooks/use-is-hydrated"
 import Sidebar from "./sidebar"
 import Header from "./header"
 
@@ -20,20 +21,33 @@ const noLayoutPages = [
 
 export default function MainLayout({ children }: MainLayoutProps) {
   const pathname = usePathname()
+  const isHydrated = useIsHydrated()
   const role = useAppStore((s) => s.role)
   
-  // Mock role assignment for development
+  // Mock role assignment for development - only after hydration
   useEffect(() => {
-    if (!role && !noLayoutPages.includes(pathname)) {
+    if (isHydrated && !role && !noLayoutPages.includes(pathname)) {
       // In development, auto-assign teacher role
       // In production, this would redirect to login
       useAppStore.getState().setRole("teacher")
     }
-  }, [role, pathname])
+  }, [isHydrated, role, pathname])
 
   // If it's an auth page or no-layout page, render without layout
   if (noLayoutPages.includes(pathname)) {
     return <>{children}</>
+  }
+
+  // Show loading state during hydration to prevent mismatch
+  if (!isHydrated) {
+    return (
+      <div className="flex h-screen bg-background items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
