@@ -27,7 +27,7 @@ export default function NotFound() {
                 Go to Home
               </Link>
             </Button>
-            <Button variant="outline" onClick={() => window.history.back()}>
+            <Button variant="outline" onClick={() => window.history.back()} suppressHydrationWarning>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Go Back
             </Button>

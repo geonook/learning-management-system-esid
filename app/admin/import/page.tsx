@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -47,6 +47,7 @@ import type {
   ImportFileInfo,
   ImportSession
 } from "@/lib/import/types"
+import { NoSSR } from "@/components/no-ssr"
 
 interface FileUploadState {
   file?: File
@@ -130,7 +131,7 @@ export default function AdminImportPage() {
   }
   
   // Handle file upload for a stage
-  const handleFileUpload = useCallback(async (stage: string, file: File) => {
+  const handleFileUpload = async (stage: string, file: File) => {
     setImportStages(prev => ({
       ...prev,
       [stage]: {
@@ -182,10 +183,10 @@ export default function AdminImportPage() {
         }
       }))
     }
-  }, [])
+  }
   
   // Remove uploaded file
-  const removeFile = useCallback((stage: string) => {
+  const removeFile = (stage: string) => {
     setImportStages(prev => ({
       ...prev,
       [stage]: {
@@ -193,10 +194,10 @@ export default function AdminImportPage() {
         upload: { status: 'idle' }
       }
     }))
-  }, [])
+  }
   
   // Download sample templates
-  const downloadTemplate = useCallback((stage: string) => {
+  const downloadTemplate = (stage: string) => {
     let content: string
     let filename: string
     
@@ -228,7 +229,7 @@ export default function AdminImportPage() {
     a.download = filename
     a.click()
     URL.revokeObjectURL(url)
-  }, [])
+  }
   
   // Get validation summary
   const getImportSummary = () => {
@@ -412,6 +413,7 @@ export default function AdminImportPage() {
                     size="sm"
                     onClick={() => downloadTemplate(stage)}
                     className="w-full"
+                    suppressHydrationWarning
                   >
                     <Download className="h-4 w-4 mr-2" />
                     Download Template
@@ -685,6 +687,7 @@ export default function AdminImportPage() {
                     onClick={() => setCurrentTab('upload')}
                     variant="outline"
                     className="flex-1"
+                    suppressHydrationWarning
                   >
                     Import More Data
                   </Button>

@@ -154,7 +154,7 @@ function NewClassDialog() {
             <Button onClick={() => setOpen(false)} className="flex-1">
               Create Class
             </Button>
-            <Button variant="outline" onClick={() => setOpen(false)}>
+            <Button variant="outline" onClick={() => setOpen(false)} suppressHydrationWarning>
               Cancel
             </Button>
           </div>
