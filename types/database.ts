@@ -334,6 +334,94 @@ export type Database = {
           }
         ]
       }
+      courses: {
+        Row: {
+          id: string
+          class_id: string
+          course_type: 'LT' | 'IT' | 'KCFS'
+          teacher_id: string | null
+          academic_year: string
+          course_name: string
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          class_id: string
+          course_type: 'LT' | 'IT' | 'KCFS'
+          teacher_id?: string | null
+          academic_year?: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          class_id?: string
+          course_type?: 'LT' | 'IT' | 'KCFS'
+          teacher_id?: string | null
+          academic_year?: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courses_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courses_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      student_courses: {
+        Row: {
+          id: string
+          student_id: string
+          course_id: string
+          enrolled_at: string
+          is_active: boolean
+        }
+        Insert: {
+          id?: string
+          student_id: string
+          course_id: string
+          enrolled_at?: string
+          is_active?: boolean
+        }
+        Update: {
+          id?: string
+          student_id?: string
+          course_id?: string
+          enrolled_at?: string
+          is_active?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_courses_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_courses_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -344,6 +432,7 @@ export type Database = {
     Enums: {
       user_role: 'admin' | 'head' | 'teacher' | 'student'
       teacher_type: 'LT' | 'IT' | 'KCFS'
+      course_type: 'LT' | 'IT' | 'KCFS'
       track_type: 'local' | 'international'
     }
     CompositeTypes: {

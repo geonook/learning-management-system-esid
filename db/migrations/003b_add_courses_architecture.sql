@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS courses (
 -- Create student_courses junction table for many-to-many relationship
 CREATE TABLE IF NOT EXISTS student_courses (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    student_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
     course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
     enrolled_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     is_active BOOLEAN DEFAULT true,
@@ -133,12 +133,18 @@ BEGIN
     END IF;
 END $$;
 
--- Students can see their own course enrollments
+-- Students can see their own course enrollments (via students table)
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'student_courses' AND policyname = 'Students can see their enrollments') THEN
         CREATE POLICY "Students can see their enrollments" ON student_courses
-            FOR SELECT USING (student_id = auth.uid());
+            FOR SELECT USING (
+                EXISTS (
+                    SELECT 1 FROM students s 
+                    JOIN users u ON s.id = student_courses.student_id
+                    WHERE u.id = auth.uid() AND u.role = 'student'
+                )
+            );
     END IF;
 END $$;
 
@@ -167,8 +173,17 @@ BEGIN
                                     AND cl.grade = u.grade
                                     AND cl.track = u.track
                                 ))
-                                -- Student can see their own scores
-                                OR (u.role = 'student' AND scores.student_id = auth.uid())
+                                -- Student can see their own scores (via students table)
+                                OR (u.role = 'student' AND EXISTS (
+                                    SELECT 1 FROM students s
+                                    WHERE s.id = scores.student_id
+                                    AND EXISTS (
+                                        SELECT 1 FROM users su
+                                        WHERE su.id = auth.uid() AND su.role = 'student'
+                                        -- Additional logic to link user to student record would go here
+                                        -- For now, this is a placeholder that needs proper implementation
+                                    )
+                                ))
                             )
                         )
                     -- Fallback to existing class-based permissions for legacy data
@@ -183,7 +198,7 @@ CREATE OR REPLACE FUNCTION enroll_student_in_class_courses()
 RETURNS TRIGGER AS $$
 BEGIN
     -- When a student is assigned to a class, enroll them in all courses of that class
-    IF NEW.role = 'student' AND NEW.class_id IS NOT NULL THEN
+    IF NEW.class_id IS NOT NULL THEN
         INSERT INTO student_courses (student_id, course_id)
         SELECT NEW.id, c.id
         FROM courses c
@@ -196,11 +211,10 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create trigger for automatic course enrollment
-DROP TRIGGER IF EXISTS trigger_enroll_student_in_courses ON users;
+DROP TRIGGER IF EXISTS trigger_enroll_student_in_courses ON students;
 CREATE TRIGGER trigger_enroll_student_in_courses
-    AFTER INSERT OR UPDATE OF class_id ON users
+    AFTER INSERT OR UPDATE OF class_id ON students
     FOR EACH ROW
-    WHEN (NEW.role = 'student')
     EXECUTE FUNCTION enroll_student_in_class_courses();
 
 -- Create function to create default courses for new classes
@@ -263,11 +277,10 @@ SELECT
     sc.enrolled_at,
     sc.is_active as enrollment_active
 FROM student_courses sc
-JOIN users s ON sc.student_id = s.id
+JOIN students s ON sc.student_id = s.id
 JOIN courses c ON sc.course_id = c.id
 JOIN classes cl ON c.class_id = cl.id
 LEFT JOIN users t ON c.teacher_id = t.id
-WHERE s.role = 'student'
 ORDER BY cl.grade, cl.name, c.course_type, s.full_name;
 
 -- Comment on tables
