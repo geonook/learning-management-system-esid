@@ -14,7 +14,7 @@ export type Database = {
           id: string
           email: string
           full_name: string
-          role: 'admin' | 'head' | 'teacher'
+          role: 'admin' | 'head' | 'teacher' | 'student'
           teacher_type: 'LT' | 'IT' | 'KCFS' | null
           grade: number | null
           track: 'local' | 'international' | null
@@ -26,7 +26,7 @@ export type Database = {
           id: string
           email: string
           full_name: string
-          role?: 'admin' | 'head' | 'teacher'
+          role?: 'admin' | 'head' | 'teacher' | 'student'
           teacher_type?: 'LT' | 'IT' | 'KCFS' | null
           grade?: number | null
           track?: 'local' | 'international' | null
@@ -38,7 +38,7 @@ export type Database = {
           id?: string
           email?: string
           full_name?: string
-          role?: 'admin' | 'head' | 'teacher'
+          role?: 'admin' | 'head' | 'teacher' | 'student'
           teacher_type?: 'LT' | 'IT' | 'KCFS' | null
           grade?: number | null
           track?: 'local' | 'international' | null
@@ -342,7 +342,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      user_role: 'admin' | 'head' | 'teacher'
+      user_role: 'admin' | 'head' | 'teacher' | 'student'
       teacher_type: 'LT' | 'IT' | 'KCFS'
       track_type: 'local' | 'international'
     }

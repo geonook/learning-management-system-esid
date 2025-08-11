@@ -9,8 +9,8 @@ import { z } from 'zod'
 export const UserImportSchema = z.object({
   email: z.string().email('Invalid email format'),
   full_name: z.string().min(1, 'Full name is required'),
-  role: z.enum(['admin', 'head', 'teacher'], {
-    errorMap: () => ({ message: 'Role must be admin, head, or teacher' })
+  role: z.enum(['admin', 'head', 'teacher', 'student'], {
+    errorMap: () => ({ message: 'Role must be admin, head, teacher, or student' })
   }),
   teacher_type: z.enum(['LT', 'IT', 'KCFS']).optional().nullable(),
   grade: z.number().int().min(1).max(6).optional().nullable(),

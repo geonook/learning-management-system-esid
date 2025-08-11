@@ -2,6 +2,22 @@
 -- Date: 2025-08-11
 -- Purpose: Support multiple independent English courses (LT/IT/KCFS) within each class
 
+-- First, ensure user_role ENUM includes 'student' value
+DO $$ 
+BEGIN
+    -- Check if user_role enum exists and add 'student' if missing
+    IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+        -- If it exists, check if 'student' is already added
+        IF NOT EXISTS (SELECT 1 FROM pg_enum e JOIN pg_type t ON e.enumtypid = t.oid WHERE t.typname = 'user_role' AND e.enumlabel = 'student') THEN
+            -- Add 'student' to existing enum
+            ALTER TYPE user_role ADD VALUE 'student';
+        END IF;
+    ELSE
+        -- Create new user_role enum if it doesn't exist (unlikely in existing system)
+        CREATE TYPE user_role AS ENUM ('admin', 'head', 'teacher', 'student');
+    END IF;
+END $$;
+
 -- Update teacher_type to include KCFS
 -- First check if teacher_type enum exists and what values it has
 DO $$ 
