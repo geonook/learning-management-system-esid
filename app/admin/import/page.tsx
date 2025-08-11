@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -103,21 +103,11 @@ export default function AdminImportPage() {
   })
   
   // Check if user has import permissions
-  // Debug: Log permission states
-  console.log('🔍 Permission Debug:', {
-    userPermissions,
-    storeRole,
-    nodeEnv: process.env.NODE_ENV,
-    isDevelopment: process.env.NODE_ENV !== 'production'
-  })
-  
   // In development: allow access regardless of permissions
   const isDevelopment = process.env.NODE_ENV !== 'production'
   const hasAdminAccess = userPermissions?.role === 'admin' || 
     (isDevelopment && storeRole === 'admin') ||
     isDevelopment // Temporary: allow all access in dev
-  
-  console.log('🔐 Access Decision:', { hasAdminAccess, isDevelopment })
   
   if (!hasAdminAccess) {
     return (
@@ -140,7 +130,7 @@ export default function AdminImportPage() {
   }
   
   // Handle file upload for a stage
-  const handleFileUpload = async (stage: string, file: File) => {
+  const handleFileUpload = useCallback(async (stage: string, file: File) => {
     setImportStages(prev => ({
       ...prev,
       [stage]: {
@@ -192,10 +182,10 @@ export default function AdminImportPage() {
         }
       }))
     }
-  }
+  }, [])
   
   // Remove uploaded file
-  const removeFile = (stage: string) => {
+  const removeFile = useCallback((stage: string) => {
     setImportStages(prev => ({
       ...prev,
       [stage]: {
@@ -203,10 +193,10 @@ export default function AdminImportPage() {
         upload: { status: 'idle' }
       }
     }))
-  }
+  }, [])
   
   // Download sample templates
-  const downloadTemplate = (stage: string) => {
+  const downloadTemplate = useCallback((stage: string) => {
     let content: string
     let filename: string
     
@@ -238,7 +228,7 @@ export default function AdminImportPage() {
     a.download = filename
     a.click()
     URL.revokeObjectURL(url)
-  }
+  }, [])
   
   // Get validation summary
   const getImportSummary = () => {
