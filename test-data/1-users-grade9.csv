@@ -1,0 +1,5 @@
+email,full_name,role,grade,track,teacher_type
+teacher.g9.local@school.edu,Grade 9 Local Teacher,teacher,null,null,LT
+teacher.g9.intl@school.edu,Grade 9 International Teacher,teacher,null,null,IT
+head.g9.local@school.edu,Grade 9 Local Head,head,9,local,LT
+admin.test@school.edu,Test Admin User,admin,null,null,null
