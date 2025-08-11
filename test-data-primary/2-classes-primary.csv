@@ -1,0 +1,20 @@
+name,grade,level,track,teacher_email,academic_year
+G1 Trailblazers,1,E1,local,teacher.lt.g1a@school.edu,2024
+G1 Discoverers,1,E1,local,teacher.lt.g1b@school.edu,2024
+G1 Adventurers,1,E2,local,head.g1.local@school.edu,2024
+G1 Innovators,1,E3,local,teacher.lt.g1a@school.edu,2024
+G2 Trailblazers,2,E1,local,teacher.lt.g2a@school.edu,2024
+G2 Discoverers,2,E2,local,teacher.lt.g2b@school.edu,2024
+G2 Adventurers,2,E3,local,head.g2.local@school.edu,2024
+G3 Trailblazers,3,E1,international,teacher.it.g3a@school.edu,2024
+G3 Discoverers,3,E2,international,teacher.it.g3b@school.edu,2024
+G3 Adventurers,3,E3,international,head.g3.intl@school.edu,2024
+G4 Trailblazers,4,E1,international,teacher.it.g4a@school.edu,2024
+G4 Discoverers,4,E2,international,teacher.it.g4b@school.edu,2024
+G4 Adventurers,4,E3,international,head.g4.intl@school.edu,2024
+G5 Trailblazers,5,E1,local,teacher.lt.g5a@school.edu,2024
+G5 Discoverers,5,E2,local,teacher.lt.g5b@school.edu,2024
+G5 Adventurers,5,E3,local,head.g5.local@school.edu,2024
+G6 Trailblazers,6,E1,local,teacher.lt.g6a@school.edu,2024
+G6 Discoverers,6,E2,local,teacher.lt.g6b@school.edu,2024
+G6 Adventurers,6,E3,local,head.g6.local@school.edu,2024

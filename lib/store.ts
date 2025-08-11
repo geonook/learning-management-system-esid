@@ -41,7 +41,7 @@ export const useAppStore = create<State>()(
   persist(
     (set, get) => ({
       role: null,
-      selections: { grade: "7", klass: "A", track: "local" },
+      selections: { grade: "1", klass: "Trailblazers", track: "local" },
       passThreshold: 60,
       assessmentTitles: defaultAssessmentTitles,
       setRole: (role) => set({ role }),

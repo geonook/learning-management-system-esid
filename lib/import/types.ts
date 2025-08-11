@@ -13,14 +13,20 @@ export const UserImportSchema = z.object({
     errorMap: () => ({ message: 'Role must be admin, head, or teacher' })
   }),
   teacher_type: z.enum(['LT', 'IT', 'KCFS']).optional().nullable(),
-  grade: z.number().int().min(7).max(12).optional().nullable(),
+  grade: z.number().int().min(1).max(6).optional().nullable(),
   track: z.enum(['local', 'international']).optional().nullable(),
   is_active: z.boolean().default(true)
 })
 
 export const ClassImportSchema = z.object({
-  name: z.string().min(1, 'Class name is required'),
-  grade: z.number().int().min(7).max(12, 'Grade must be between 7 and 12'),
+  name: z.string().min(1, 'Class name is required').regex(
+    /^G[1-6] (Trailblazers|Discoverers|Adventurers|Innovators|Explorers|Navigators|Inventors|Voyagers|Pioneers|Guardians|Pathfinders|Seekers|Visionaries|Achievers)$/,
+    'Class name must follow format: G[1-6] [StandardClassName]'
+  ),
+  grade: z.number().int().min(1).max(6, 'Grade must be between 1 and 6'),
+  level: z.enum(['E1', 'E2', 'E3'], {
+    errorMap: () => ({ message: 'Level must be E1, E2, or E3' })
+  }),
   track: z.enum(['local', 'international'], {
     errorMap: () => ({ message: 'Track must be local or international' })
   }),
@@ -32,7 +38,10 @@ export const ClassImportSchema = z.object({
 export const StudentImportSchema = z.object({
   student_id: z.string().min(1, 'Student ID is required'),
   full_name: z.string().min(1, 'Full name is required'),
-  grade: z.number().int().min(7).max(12, 'Grade must be between 7 and 12'),
+  grade: z.number().int().min(1).max(6, 'Grade must be between 1 and 6'),
+  level: z.enum(['E1', 'E2', 'E3'], {
+    errorMap: () => ({ message: 'Level must be E1, E2, or E3' })
+  }).optional().nullable(), // Inherited from class, but can be specified
   track: z.enum(['local', 'international'], {
     errorMap: () => ({ message: 'Track must be local or international' })
   }),
@@ -159,6 +168,7 @@ export const CSV_COLUMN_MAPPINGS = {
   classes: {
     name: ['name', 'Name', 'class_name', 'Class Name', 'class'],
     grade: ['grade', 'Grade', 'GRADE'],
+    level: ['level', 'Level', 'LEVEL', 'class_level', 'performance_level'],
     track: ['track', 'Track', 'TRACK', 'stream'],
     teacher_email: ['teacher_email', 'Teacher Email', 'teacher', 'Teacher'],
     academic_year: ['academic_year', 'Academic Year', 'year', 'Year']
@@ -167,6 +177,7 @@ export const CSV_COLUMN_MAPPINGS = {
     student_id: ['student_id', 'Student ID', 'id', 'ID', 'student_number'],
     full_name: ['full_name', 'Full Name', 'name', 'Name', 'student_name'],
     grade: ['grade', 'Grade', 'GRADE'],
+    level: ['level', 'Level', 'LEVEL', 'class_level', 'performance_level'],
     track: ['track', 'Track', 'TRACK', 'stream'],
     class_name: ['class_name', 'Class Name', 'class', 'Class']
   },
