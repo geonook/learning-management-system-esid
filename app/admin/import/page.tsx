@@ -23,6 +23,7 @@ import {
   BarChart
 } from "lucide-react"
 import { useAuth } from "@/lib/supabase/auth-context"
+import { useAppStore } from "@/lib/store"
 import {
   readFileAsText,
   validateUsersCSV,
@@ -63,6 +64,7 @@ interface ImportStage {
 
 export default function AdminImportPage() {
   const { user, userPermissions } = useAuth()
+  const storeRole = useAppStore(state => state.role)
   const [currentTab, setCurrentTab] = useState('upload')
   const [isImporting, setIsImporting] = useState(false)
   const [importResult, setImportResult] = useState<ImportExecutionResult | null>(null)
@@ -101,7 +103,11 @@ export default function AdminImportPage() {
   })
   
   // Check if user has import permissions
-  if (!userPermissions || userPermissions.role !== 'admin') {
+  // In development: fallback to store role if userPermissions is null
+  const hasAdminAccess = userPermissions?.role === 'admin' || 
+    (process.env.NODE_ENV === 'development' && !userPermissions && storeRole === 'admin')
+  
+  if (!hasAdminAccess) {
     return (
       <div className="container max-w-2xl mx-auto py-20 text-center">
         <Card>
