@@ -1,0 +1,4 @@
+email,full_name,role,teacher_type,grade,track
+john.doe@esid.edu,John Doe,teacher,LT,,
+mary.smith@esid.edu,Mary Smith,head,,10,local
+admin@esid.edu,System Admin,admin,,,
