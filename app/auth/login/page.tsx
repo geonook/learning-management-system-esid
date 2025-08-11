@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
+import { supabase } from "@/lib/supabase/client"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -27,23 +28,60 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
 
-    // Mock login - in real app, this would be Supabase auth
-    setTimeout(() => {
-      if (formData.email && formData.password) {
+    try {
+      // Real Supabase authentication
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      })
+
+      if (error) {
         toast({
-          title: "Login Successful",
-          description: "Welcome back to LMS ESID!"
-        })
-        router.push("/auth/role-select")
-      } else {
-        toast({
-          title: "Login Failed", 
-          description: "Please check your email and password.",
+          title: "Login Failed",
+          description: error.message,
           variant: "destructive"
         })
+        setLoading(false)
+        return
       }
+
+      if (data.user) {
+        // Check if user exists in users table
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('id, role, full_name')
+          .eq('id', data.user.id)
+          .single()
+
+        if (userError || !userData) {
+          toast({
+            title: "User Profile Not Found",
+            description: "Please contact IT support to set up your profile.",
+            variant: "destructive"
+          })
+          await supabase.auth.signOut()
+          setLoading(false)
+          return
+        }
+
+        toast({
+          title: "Login Successful",
+          description: `Welcome back, ${userData.full_name}!`
+        })
+
+        // Redirect to dashboard directly (skip role selection)
+        router.push("/dashboard")
+      }
+    } catch (error: any) {
+      console.error('Login error:', error)
+      toast({
+        title: "Login Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
       setLoading(false)
-    }, 1500)
+    }
   }
 
   return (

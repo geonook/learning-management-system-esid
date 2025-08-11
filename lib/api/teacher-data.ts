@@ -84,6 +84,7 @@ export type UserPermissions = {
   grade?: number | null
   track?: 'local' | 'international' | null
   teacher_type?: 'LT' | 'IT' | 'KCFS' | null
+  full_name?: string
 }
 
 /**
@@ -99,7 +100,7 @@ export async function getCurrentUserPermissions(): Promise<UserPermissions | nul
 
   const { data, error } = await supabase
     .from('users')
-    .select('id, role, grade, track, teacher_type')
+    .select('id, role, grade, track, teacher_type, full_name')
     .eq('id', user.id)
     .single()
 
@@ -113,7 +114,8 @@ export async function getCurrentUserPermissions(): Promise<UserPermissions | nul
     role: data.role,
     grade: data.grade,
     track: data.track,
-    teacher_type: data.teacher_type
+    teacher_type: data.teacher_type,
+    full_name: data.full_name
   }
 }
 
