@@ -28,10 +28,12 @@ import {
   readFileAsText,
   validateUsersCSV,
   validateClassesCSV,
+  validateCoursesCSV,
   validateStudentsCSV,
   validateScoresCSV,
   generateSampleUsersCSV,
   generateSampleClassesCSV,
+  generateSampleCoursesCSV,
   generateSampleStudentsCSV,
   generateSampleScoresCSV,
   getValidationSummary
@@ -42,6 +44,7 @@ import type {
   ImportExecutionResult,
   UserImport,
   ClassImport,
+  CourseImport,
   StudentImport,
   ScoreImport,
   ImportFileInfo,
@@ -83,7 +86,14 @@ export default function AdminImportPage() {
     classes: {
       name: 'Classes',
       icon: <GraduationCap className="h-4 w-4" />,
-      description: 'Class information and teacher assignments',
+      description: 'Class information (without specific teachers)',
+      upload: { status: 'idle' },
+      required: false
+    },
+    courses: {
+      name: 'Courses',
+      icon: <BookOpen className="h-4 w-4" />,
+      description: 'Independent English courses (LT/IT/KCFS) for each class',
       upload: { status: 'idle' },
       required: false
     },
@@ -97,7 +107,7 @@ export default function AdminImportPage() {
     scores: {
       name: 'Scores',
       icon: <BarChart className="h-4 w-4" />,
-      description: 'Assessment scores and grades',
+      description: 'Assessment scores for specific courses (LT/IT/KCFS)',
       upload: { status: 'idle' },
       required: false
     }
@@ -150,6 +160,9 @@ export default function AdminImportPage() {
           break
         case 'classes':
           validation = await validateClassesCSV(content)
+          break
+        case 'courses':
+          validation = await validateCoursesCSV(content)
           break
         case 'students':
           validation = await validateStudentsCSV(content)
@@ -209,6 +222,10 @@ export default function AdminImportPage() {
       case 'classes':
         content = generateSampleClassesCSV()
         filename = 'classes-template.csv'
+        break
+      case 'courses':
+        content = generateSampleCoursesCSV()
+        filename = 'courses-template.csv'
         break
       case 'students':
         content = generateSampleStudentsCSV()

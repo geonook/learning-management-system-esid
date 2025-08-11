@@ -1,0 +1,26 @@
+email,full_name,role,grade,track,teacher_type
+admin.primary@school.edu,Primary School Admin,admin,,,
+head.g1.local@school.edu,Grade 1 Local Head,head,1,local,LT
+head.g2.local@school.edu,Grade 2 Local Head,head,2,local,LT
+head.g3.intl@school.edu,Grade 3 International Head,head,3,international,IT
+head.g4.intl@school.edu,Grade 4 International Head,head,4,international,IT
+head.g5.local@school.edu,Grade 5 Local Head,head,5,local,LT
+head.g6.local@school.edu,Grade 6 Local Head,head,6,local,LT
+teacher.lt.g1@school.edu,Local Teacher G1,teacher,,,LT
+teacher.lt.g2@school.edu,Local Teacher G2,teacher,,,LT
+teacher.lt.g3@school.edu,Local Teacher G3,teacher,,,LT
+teacher.it.g1@school.edu,International Teacher G1,teacher,,,IT
+teacher.it.g2@school.edu,International Teacher G2,teacher,,,IT
+teacher.it.g3@school.edu,International Teacher G3,teacher,,,IT
+teacher.kcfs.g1@school.edu,KCFS Teacher G1,teacher,,,KCFS
+teacher.kcfs.g2@school.edu,KCFS Teacher G2,teacher,,,KCFS
+teacher.kcfs.g3@school.edu,KCFS Teacher G3,teacher,,,KCFS
+teacher.lt.g4@school.edu,Local Teacher G4,teacher,,,LT
+teacher.lt.g5@school.edu,Local Teacher G5,teacher,,,LT
+teacher.lt.g6@school.edu,Local Teacher G6,teacher,,,LT
+teacher.it.g4@school.edu,International Teacher G4,teacher,,,IT
+teacher.it.g5@school.edu,International Teacher G5,teacher,,,IT
+teacher.it.g6@school.edu,International Teacher G6,teacher,,,IT
+teacher.kcfs.g4@school.edu,KCFS Teacher G4,teacher,,,KCFS
+teacher.kcfs.g5@school.edu,KCFS Teacher G5,teacher,,,KCFS
+teacher.kcfs.g6@school.edu,KCFS Teacher G6,teacher,,,KCFS

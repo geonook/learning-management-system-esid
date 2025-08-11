@@ -30,8 +30,7 @@ export const ClassImportSchema = z.object({
   track: z.enum(['local', 'international'], {
     errorMap: () => ({ message: 'Track must be local or international' })
   }),
-  teacher_email: z.string().email('Invalid teacher email').optional().nullable(),
-  academic_year: z.string().regex(/^\d{4}$/, 'Academic year must be YYYY format').default('2024'),
+  academic_year: z.string().regex(/^\d{2}-\d{2}$/, 'Academic year must be YY-YY format (e.g., 24-25)').default('24-25'),
   is_active: z.boolean().default(true)
 })
 
@@ -49,8 +48,22 @@ export const StudentImportSchema = z.object({
   is_active: z.boolean().default(true)
 })
 
+// New Course Import Schema for independent English courses
+export const CourseImportSchema = z.object({
+  class_name: z.string().min(1, 'Class name is required'), // Will be mapped to class_id
+  course_type: z.enum(['LT', 'IT', 'KCFS'], {
+    errorMap: () => ({ message: 'Course type must be LT, IT, or KCFS' })
+  }),
+  teacher_email: z.string().email('Invalid teacher email'),
+  academic_year: z.string().regex(/^\d{2}-\d{2}$/, 'Academic year must be YY-YY format').default('24-25'),
+  is_active: z.boolean().default(true)
+})
+
 export const ScoreImportSchema = z.object({
   student_id: z.string().min(1, 'Student ID is required'), // External student ID
+  course_type: z.enum(['LT', 'IT', 'KCFS'], {
+    errorMap: () => ({ message: 'Course type must be LT, IT, or KCFS' })
+  }),
   exam_name: z.string().min(1, 'Exam name is required'),
   assessment_code: z.enum([
     'FA1', 'FA2', 'FA3', 'FA4', 'FA5', 'FA6', 'FA7', 'FA8',
@@ -65,6 +78,7 @@ export const ScoreImportSchema = z.object({
 // Inferred types
 export type UserImport = z.infer<typeof UserImportSchema>
 export type ClassImport = z.infer<typeof ClassImportSchema>
+export type CourseImport = z.infer<typeof CourseImportSchema>
 export type StudentImport = z.infer<typeof StudentImportSchema>
 export type ScoreImport = z.infer<typeof ScoreImportSchema>
 
@@ -92,6 +106,7 @@ export interface ImportExecutionResult {
   summary: {
     users: { created: number; updated: number; errors: number }
     classes: { created: number; updated: number; errors: number }
+    courses: { created: number; updated: number; errors: number }
     students: { created: number; updated: number; errors: number }
     scores: { created: number; updated: number; errors: number }
   }
@@ -100,14 +115,14 @@ export interface ImportExecutionResult {
 }
 
 export interface ImportExecutionError {
-  stage: 'users' | 'classes' | 'students' | 'scores'
+  stage: 'users' | 'classes' | 'courses' | 'students' | 'scores'
   operation: 'create' | 'update'
   data: Record<string, any>
   error: string
 }
 
 export interface ImportExecutionWarning {
-  stage: 'users' | 'classes' | 'students' | 'scores'
+  stage: 'users' | 'classes' | 'courses' | 'students' | 'scores'
   message: string
   data?: Record<string, any>
 }
@@ -123,7 +138,7 @@ export interface CSVParseOptions {
 
 // Import stage configuration
 export interface ImportStageConfig {
-  stage: 'users' | 'classes' | 'students' | 'scores'
+  stage: 'users' | 'classes' | 'courses' | 'students' | 'scores'
   schema: z.ZodSchema<any>
   requiredColumns: string[]
   optionalColumns: string[]
@@ -135,7 +150,7 @@ export interface ImportFileInfo {
   name: string
   size: number
   type: string
-  stage: 'users' | 'classes' | 'students' | 'scores'
+  stage: 'users' | 'classes' | 'courses' | 'students' | 'scores'
   content: string
 }
 
@@ -170,6 +185,11 @@ export const CSV_COLUMN_MAPPINGS = {
     grade: ['grade', 'Grade', 'GRADE'],
     level: ['level', 'Level', 'LEVEL', 'class_level', 'performance_level'],
     track: ['track', 'Track', 'TRACK', 'stream'],
+    academic_year: ['academic_year', 'Academic Year', 'year', 'Year']
+  },
+  courses: {
+    class_name: ['class_name', 'Class Name', 'class', 'Class'],
+    course_type: ['course_type', 'Course Type', 'type', 'Type', 'program', 'track_type'],
     teacher_email: ['teacher_email', 'Teacher Email', 'teacher', 'Teacher'],
     academic_year: ['academic_year', 'Academic Year', 'year', 'Year']
   },
@@ -183,6 +203,7 @@ export const CSV_COLUMN_MAPPINGS = {
   },
   scores: {
     student_id: ['student_id', 'Student ID', 'id', 'ID'],
+    course_type: ['course_type', 'Course Type', 'type', 'program', 'track_type'],
     exam_name: ['exam_name', 'Exam Name', 'exam', 'Exam'],
     assessment_code: ['assessment_code', 'Assessment Code', 'assessment', 'code'],
     score: ['score', 'Score', 'SCORE', 'marks', 'grade'],

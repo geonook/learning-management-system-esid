@@ -7,10 +7,12 @@ import { z } from 'zod'
 import {
   UserImportSchema,
   ClassImportSchema,
+  CourseImportSchema,
   StudentImportSchema,
   ScoreImportSchema,
   type UserImport,
   type ClassImport,
+  type CourseImport,
   type StudentImport,
   type ScoreImport,
   type ImportValidationResult,
@@ -224,6 +226,14 @@ export async function validateClassesCSV(
   return validateRows(headers, rows, ClassImportSchema, 'classes', options)
 }
 
+export async function validateCoursesCSV(
+  content: string,
+  options?: CSVParseOptions
+): Promise<ImportValidationResult<CourseImport>> {
+  const { headers, rows } = await parseCSVContent(content, options)
+  return validateRows(headers, rows, CourseImportSchema, 'courses', options)
+}
+
 export async function validateStudentsCSV(
   content: string,
   options?: CSVParseOptions
@@ -274,38 +284,55 @@ export function readFileAsText(file: File, encoding: 'utf8' | 'utf16le' | 'latin
 export function generateSampleUsersCSV(): string {
   const headers = 'email,full_name,role,teacher_type,grade,track'
   const samples = [
-    'john.doe@esid.edu,John Doe,teacher,LT,,',
-    'mary.smith@esid.edu,Mary Smith,head,,10,local',
+    'john.lt@esid.edu,John Doe,teacher,LT,,',
+    'mary.it@esid.edu,Mary Smith,teacher,IT,,',
+    'sarah.kcfs@esid.edu,Sarah Johnson,teacher,KCFS,,',
+    'head.g1@esid.edu,Grade 1 Head,head,LT,1,local',
     'admin@esid.edu,System Admin,admin,,,'
   ]
   return headers + '\n' + samples.join('\n')
 }
 
 export function generateSampleClassesCSV(): string {
-  const headers = 'name,grade,track,teacher_email,academic_year'
+  const headers = 'name,grade,level,track,academic_year'
   const samples = [
-    '10A Local,10,local,john.doe@esid.edu,2024',
-    '11B International,11,international,mary.smith@esid.edu,2024'
+    'G1 Trailblazers,1,E1,local,24-25',
+    'G2 Discoverers,2,E2,international,24-25',
+    'G3 Adventurers,3,E3,local,24-25'
+  ]
+  return headers + '\n' + samples.join('\n')
+}
+
+export function generateSampleCoursesCSV(): string {
+  const headers = 'class_name,course_type,teacher_email,academic_year'
+  const samples = [
+    'G1 Trailblazers,LT,john.lt@esid.edu,24-25',
+    'G1 Trailblazers,IT,mary.it@esid.edu,24-25',
+    'G1 Trailblazers,KCFS,sarah.kcfs@esid.edu,24-25',
+    'G2 Discoverers,LT,john.lt@esid.edu,24-25',
+    'G2 Discoverers,IT,mary.it@esid.edu,24-25',
+    'G2 Discoverers,KCFS,sarah.kcfs@esid.edu,24-25'
   ]
   return headers + '\n' + samples.join('\n')
 }
 
 export function generateSampleStudentsCSV(): string {
-  const headers = 'student_id,full_name,grade,track,class_name'
+  const headers = 'student_id,full_name,grade,level,track,class_name'
   const samples = [
-    'S2024001,Alice Chen,10,local,10A Local',
-    'S2024002,Bob Wang,10,local,10A Local',
-    'S2024003,Carol Liu,11,international,11B International'
+    'P001,Alice Chen,1,E1,local,G1 Trailblazers',
+    'P002,Bob Wang,1,E1,local,G1 Trailblazers',
+    'P003,Carol Liu,2,E2,international,G2 Discoverers'
   ]
   return headers + '\n' + samples.join('\n')
 }
 
 export function generateSampleScoresCSV(): string {
-  const headers = 'student_id,exam_name,assessment_code,score,entered_by_email'
+  const headers = 'student_id,course_type,exam_name,assessment_code,score,entered_by_email'
   const samples = [
-    'S2024001,Mid-term Math,FA1,85.5,john.doe@esid.edu',
-    'S2024001,Mid-term Math,SA1,88.0,john.doe@esid.edu',
-    'S2024002,Mid-term Math,FA1,78.5,john.doe@esid.edu'
+    'P001,LT,Formative Assessment 1,FA1,85,john.lt@esid.edu',
+    'P001,LT,Summative Assessment 1,SA1,88,john.lt@esid.edu',
+    'P001,IT,Formative Assessment 1,FA1,82,mary.it@esid.edu',
+    'P001,KCFS,Formative Assessment 1,FA1,90,sarah.kcfs@esid.edu'
   ]
   return headers + '\n' + samples.join('\n')
 }
