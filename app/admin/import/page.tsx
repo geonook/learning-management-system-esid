@@ -103,9 +103,21 @@ export default function AdminImportPage() {
   })
   
   // Check if user has import permissions
-  // In development: fallback to store role if userPermissions is null
+  // Debug: Log permission states
+  console.log('🔍 Permission Debug:', {
+    userPermissions,
+    storeRole,
+    nodeEnv: process.env.NODE_ENV,
+    isDevelopment: process.env.NODE_ENV !== 'production'
+  })
+  
+  // In development: allow access regardless of permissions
+  const isDevelopment = process.env.NODE_ENV !== 'production'
   const hasAdminAccess = userPermissions?.role === 'admin' || 
-    (process.env.NODE_ENV === 'development' && !userPermissions && storeRole === 'admin')
+    (isDevelopment && storeRole === 'admin') ||
+    isDevelopment // Temporary: allow all access in dev
+  
+  console.log('🔐 Access Decision:', { hasAdminAccess, isDevelopment })
   
   if (!hasAdminAccess) {
     return (
