@@ -2,45 +2,43 @@
 -- Date: 2025-08-11
 -- Purpose: Remove all test data created during verification
 
-\echo '=== Cleaning Up Test Data ==='
-\echo ''
+SELECT '=== Cleaning Up Test Data ===' as status;
 
 -- Show what will be deleted
-\echo 'Test data to be deleted:'
-\echo 'Test student enrollments:'
+SELECT 'Test data to be deleted:' as info;
+SELECT 'Test student enrollments:' as category;
 SELECT COUNT(*) as count FROM student_courses sc
 JOIN students s ON sc.student_id = s.id
 WHERE s.student_id LIKE 'TEST_%';
 
-\echo 'Test courses:'
+SELECT 'Test courses:' as category;
 SELECT COUNT(*) as count FROM courses c
 JOIN classes cl ON c.class_id = cl.id
 WHERE cl.name LIKE 'TEST_%';
 
-\echo 'Test students:'
+SELECT 'Test students:' as category;
 SELECT COUNT(*) as count FROM students WHERE student_id LIKE 'TEST_%';
 
-\echo 'Test classes:'
+SELECT 'Test classes:' as category;
 SELECT COUNT(*) as count FROM classes WHERE name LIKE 'TEST_%';
 
-\echo ''
 
 -- Delete in correct order due to foreign key constraints
-\echo 'Deleting test student enrollments...'
+SELECT 'Deleting test student enrollments...' as action;
 DELETE FROM student_courses WHERE student_id IN (
     SELECT id FROM students WHERE student_id LIKE 'TEST_%'
 );
 
-\echo 'Deleting test courses...'
+SELECT 'Deleting test courses...' as action;
 DELETE FROM courses WHERE class_id IN (
     SELECT id FROM classes WHERE name LIKE 'TEST_%'
 );
 
-\echo 'Deleting test students...'
+SELECT 'Deleting test students...' as action;
 DELETE FROM students WHERE student_id LIKE 'TEST_%';
 
-\echo 'Deleting test classes...'
+SELECT 'Deleting test classes...' as action;
 DELETE FROM classes WHERE name LIKE 'TEST_%';
 
-\echo ''
-\echo '=== Cleanup Complete ==='
+
+SELECT '=== Cleanup Complete ===' as status;
