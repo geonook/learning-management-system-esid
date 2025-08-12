@@ -1,10 +1,10 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 1.0  
-> **Last Updated**: 2025-08-09  
+> **Documentation Version**: 1.1  
+> **Last Updated**: 2025-08-12  
 > **Project**: learning-management-system-esid  
-> **Description**: Full-stack Learning Management System with Next.js + TypeScript + Supabase  
-> **Features**: GitHub auto-backup, Task agents, technical debt prevention, RLS security, grade calculations
+> **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase  
+> **Features**: ELA Course Architecture, Campus Management, CSV Import System, RLS Security, Grade Calculations
 
 This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -36,7 +36,7 @@ This file provides essential guidance to Claude Code (claude.ai/code) when worki
 - 前後端皆使用 `/lib/grade` 同一套函式（或 SQL/視圖同邏輯）驗證一致性
 
 ### Assessment 顯示名稱覆寫（HT）
-- 顯示名與代碼分離：Class > Grade×Track > Default；缺值回退
+- 顯示名與代碼分離：Class > Grade×Campus > Default；缺值回退
 - 僅影響 UI 與報表標題；計算仍用代碼
 - 資料表：`assessment_titles`（見下方 schema）
 
@@ -46,12 +46,20 @@ This file provides essential guidance to Claude Code (claude.ai/code) when worki
 - **KCFS = Kang Chiao Future Skill** - 獨立課程類型，由專門的 KCFS 教師授課
 - **HT = Head Teacher（年段主任）** - 年段與校區管理權限
 
-### 課程架構
-- **所有班級標準配置**：每個班級都包含三種課程
-  - LT English Language Arts (ELA)
-  - IT English Language Arts (ELA)
-  - KCFS
-- **Campus區分**：Local Campus / International Campus（用於管理區分，非軌別）
+### 課程架構（核心特色）
+- **統一ELA標準**：所有班級都包含三種標準課程
+  - LT English Language Arts (ELA) - 本地教師
+  - IT English Language Arts (ELA) - 國際教師
+  - KCFS - 康橋未來技能課程
+- **Campus管理概念**：Local Campus / International Campus
+  - 用於行政管理與權限控制
+  - 非課程軌別區分，所有班級均有三種ELA課程
+  - 取代過時的"Track軌別"概念
+
+### 小學年段系統（G1-G6）
+- **年級範圍**：Grade 1 至 Grade 6
+- **Level分級**：E1（頂尖）、E2（中等）、E3（基礎）
+- **班級命名**：G[1-6] [StandardName] 格式
 
 ### 安全與權限（RLS 核心）
 - 角色：admin、head（HT，含 grade, campus 權限）、teacher（LT/IT/KCFS）

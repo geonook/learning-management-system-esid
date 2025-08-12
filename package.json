@@ -1,6 +1,6 @@
 {
   "name": "learning-management-system-esid",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -13,9 +13,9 @@
     "test:e2e": "playwright test",
     "test:watch": "vitest --watch",
     "db:migrate": "supabase db push",
-    "db:seed": "node scripts/seed.js",
+    "db:seed": "npx tsx scripts/batch-import.ts --generate-samples",
     "db:reset": "supabase db reset",
-    "gen:types": "supabase gen types typescript --local > types/database.ts",
+    "gen:types": "supabase gen types typescript --project-id YOUR_PROJECT_ID > types/database.ts",
     "deploy": "npm run build && npx zeabur deploy",
     "import:cli": "npx tsx scripts/import-cli.ts",
     "import:batch": "npx tsx scripts/batch-import.ts",

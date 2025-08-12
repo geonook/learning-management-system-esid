@@ -1,6 +1,6 @@
 # Learning Management System - ESID
 
-A comprehensive English subject gradebook and academic management system for multi-role users (Admin, Head Teachers, Local Teachers, International Teachers, KCFS Teachers). Built with Next.js, TypeScript, Tailwind CSS, and Supabase.
+A comprehensive **Primary School (G1-G6)** English Language Arts (ELA) gradebook and academic management system. Features unified ELA course architecture with Campus-based management for Local Teachers, International Teachers, and KCFS Teachers. Built with Next.js, TypeScript, Tailwind CSS, and Supabase.
 
 ## Quick Start
 
@@ -16,7 +16,7 @@ A comprehensive English subject gradebook and academic management system for mul
 - **Backend**: Supabase (PostgreSQL, Auth, Storage, Edge Functions)
 - **Charts**: Recharts
 - **Testing**: Vitest (unit) + Playwright (E2E)
-- **Deployment**: Zeabur (frontend) + Supabase Cloud (backend)
+- **Deployment**: Zeabur (frontend) + Zeabur Supabase (backend)
 
 ## 🏗️ Project Structure
 
@@ -74,12 +74,25 @@ The system uses a strict numerical scoring approach with these rules:
 - ✅ **Comprehensive testing** - Unit tests for all scenarios
 - ✅ **Type safety** - Full TypeScript coverage with Zod validation
 
+## 🎓 ELA Course Architecture
+
+### Unified Course Structure
+Every class includes three standardized English Language Arts courses:
+- **LT English Language Arts (ELA)** - Local Teacher instruction
+- **IT English Language Arts (ELA)** - International Teacher instruction  
+- **KCFS** - Kang Chiao Future Skill program
+
+### Campus Management System
+- **Local Campus** - Administrative grouping for local-focused classes
+- **International Campus** - Administrative grouping for international-focused classes
+- **Note**: Campus distinction is for management only; all classes receive the same three ELA courses
+
 ## 🔐 Security & Permissions
 
 ### Role-Based Access Control (RLS)
-- **Admin**: Full system access
-- **Head Teacher**: Access to specific grade × track combinations
-- **Teacher** (LT/IT/KCFS): Access only to assigned classes
+- **Admin**: Full system access across all campuses
+- **Head Teacher (HT)**: Access to specific grade × campus combinations
+- **Teacher** (LT/IT/KCFS): Access only to assigned classes and courses
 
 ### Row Level Security
 All database operations enforce user permissions automatically through Supabase RLS policies.
@@ -87,7 +100,7 @@ All database operations enforce user permissions automatically through Supabase 
 ## 🎨 Assessment Display Names
 
 Head teachers can customize assessment display names:
-- **Priority**: Class-specific > Grade×Track > Default
+- **Priority**: Class-specific > Grade×Campus > Default
 - **Examples**: "FA1" → "Reading Assessment 1", "SA1" → "Midterm Exam"
 - **Note**: Display names only affect UI, never calculations
 
@@ -135,20 +148,20 @@ npm run deploy          # Deploy to Zeabur
 
 ## 📊 Key Features
 
-### Multi-Role Dashboard
-- **Admin**: System-wide analytics and user management
-- **Head Teachers**: Grade/track-specific insights and controls
-- **Teachers**: Class-specific grade entry and student progress
+### Primary School Dashboard
+- **Admin**: System-wide analytics and user management across all campuses
+- **Head Teachers**: Grade×campus-specific insights and ELA course controls
+- **Teachers**: Class-specific ELA course management and student progress
 
-### Grade Management
-- **Bulk CSV import** with validation and error handling
-- **Individual score entry** with real-time calculation
-- **Weighted grade calculations** following school standards
+### ELA Grade Management
+- **Unified CSV import system** with validation and error handling for all three ELA courses
+- **Individual score entry** with real-time calculation across LT/IT/KCFS
+- **Weighted grade calculations** following primary school ELA standards
 
 ### Reporting & Analytics
-- **Performance tracking** by class, grade, and track
-- **Attendance integration** with academic performance
-- **Export capabilities** for external reporting
+- **Performance tracking** by class, grade, and campus across all ELA courses
+- **ELA course comparison** between LT, IT, and KCFS performance
+- **Export capabilities** for external reporting and parent communication
 
 ## 🔄 Development Workflow
 
@@ -191,6 +204,9 @@ npm run deploy          # Deploy to Zeabur
 
 ## 🚨 Important Notes
 
+- **Primary School Focus** - System designed specifically for G1-G6 primary school structure
+- **ELA Course Architecture** - All classes must include LT, IT, and KCFS courses
+- **Campus vs Track** - Use Campus concept for management, not course tracking
 - **Follow CLAUDE.md rules** - All development must adhere to the guidelines
 - **RLS enforcement** - All database queries automatically respect user permissions  
 - **Grade calculation integrity** - Only use `/lib/grade` functions for calculations
@@ -206,5 +222,5 @@ npm run deploy          # Deploy to Zeabur
 
 ---
 
-**🎯 Template by Chang Ho Chien | HC AI 說人話channel | v1.0.0**  
-📺 Tutorial: https://youtu.be/8Q1bRZaHH24
+**🎯 Primary School ELA LMS |康橋小學英語學習管理系統 | v1.1.0**  
+🏫 Features: G1-G6 支援 | ELA三課程架構 | Campus管理系統 | CSV批量匯入

@@ -1,74 +1,132 @@
-# 🚀 Primary School LMS - 部署指南
+# 🚀 Primary School LMS - Complete Deployment Guide
 
-## 🎯 清空重建部署流程
+## 🎯 Production-Ready Deployment on Zeabur
 
-這個指南說明如何部署全新的小學 LMS 架構，解決所有先前的 migration 混亂問題。
+This guide covers complete deployment of the Primary School Learning Management System using Zeabur for both frontend and Supabase backend infrastructure.
 
-## 📋 前置準備
+## 📋 Prerequisites
 
-### 1. Supabase 配置
-確保你有以下資訊：
-- ✅ Supabase Project URL
-- ✅ Anon Key  
-- 🚨 **Service Role Key**（必須！用於資料庫寫入操作）
+### 1. Required Accounts & Services
+- ✅ **GitHub Account** - For repository hosting and CI/CD
+- ✅ **Zeabur Account** - For application and database hosting
+- ✅ **Domain (Optional)** - Custom domain for production
 
-### 2. 環境變數配置
-編輯 `.env.local` 檔案：
+### 2. Required Information
+- ✅ **Supabase Project URL** - From Zeabur Supabase service
+- ✅ **Supabase Anon Key** - From Supabase dashboard  
+- 🚨 **Supabase Service Role Key** - Critical for CSV imports and admin operations
+
+## 🔧 Environment Configuration
+
+### 1. Create Environment File
+Copy `.env.example` to `.env.local` and configure:
 
 ```env
-# Zeabur Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=https://esid-lms.zeabur.app
+# Production Supabase Configuration (Zeabur)
+NEXT_PUBLIC_SUPABASE_URL=https://your-zeabur-supabase-url.zeabur.app
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
-# 🚨 Critical: 取消註解並填入真實的 Service Role Key
+# 🚨 CRITICAL: Service Role Key for bulk operations
+# Get from: Supabase Dashboard > Settings > API > service_role
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
-# Development settings
-NODE_ENV=development
+# Application Settings
+NODE_ENV=production
+NEXT_PUBLIC_APP_URL=https://your-domain.com
+NEXT_PUBLIC_APP_VERSION=1.1.0
+
+# Security
+NEXTAUTH_SECRET=your-production-nextauth-secret
+NEXTAUTH_URL=https://your-domain.com
 ```
 
-**⚠️ 如何獲取 Service Role Key：**
-1. 登入 Supabase Dashboard
-2. 前往 Settings > API
-3. 複製 `service_role` secret (不是 anon public)
-4. 貼到 `.env.local` 的 `SUPABASE_SERVICE_ROLE_KEY`
+### 2. Obtain Supabase Service Role Key
+**⚠️ Critical Step for CSV Import Functionality:**
 
-## 🔄 部署步驟
+1. Access Zeabur Dashboard → Your Supabase Service
+2. Navigate to **Supabase Dashboard** (click the external link)
+3. Go to **Settings → API**
+4. Copy the `service_role` key (NOT the anon public key)
+5. Add to your environment variables as `SUPABASE_SERVICE_ROLE_KEY`
 
-### Phase 1: 重置資料庫
+## 🚀 Deployment Steps
+
+### Phase 1: Database Setup on Zeabur
+
+#### 1.1 Deploy Supabase Service
 ```bash
-# 1. 登入 Supabase
-npx supabase login
-
-# 2. 連接到專案
-npx supabase link --project-ref YOUR_PROJECT_ID
-
-# 3. 重置資料庫（⚠️ 會清空所有資料）
-npx supabase db reset
-
-# 4. 部署新的乾淨架構
-psql -h YOUR_DB_HOST -U postgres -d postgres -f db/schemas/primary_school_clean_schema.sql
+# Navigate to your Zeabur dashboard
+# 1. Create new project or use existing
+# 2. Add Supabase service to your project
+# 3. Note down the generated URL and access credentials
 ```
 
-### Phase 2: 驗證部署
+#### 1.2 Deploy Clean Database Schema
+Since you're using Zeabur Supabase, deploy the schema via Supabase Dashboard:
+
+```sql
+-- Connect to your Zeabur Supabase instance via Dashboard
+-- Execute the clean schema: db/schemas/primary_school_clean_schema.sql
+-- This will create all tables, RLS policies, and indexes
+```
+
+**Alternative Method - Direct SQL Execution:**
 ```bash
-# 1. 啟動開發伺服器
-npm run dev
-
-# 2. 測試基礎連線
-curl http://localhost:3000/api/test-db
-
-# 3. 執行匯入測試
-# 前往 /admin/import 頁面測試上傳功能
+# If you have psql access to your Zeabur Supabase
+psql "postgresql://postgres:[PASSWORD]@[ZEABUR-SUPABASE-HOST]:5432/postgres" \
+  -f db/schemas/primary_school_clean_schema.sql
 ```
 
-### Phase 3: 匯入測試資料
-使用新的 CSV 模板（基於乾淨架構）匯入測試資料：
+### Phase 2: Frontend Deployment on Zeabur
 
-1. **Users** (25 records)
-2. **Classes** (18 records) 
-3. **Courses** (54 records)
-4. **Students** (19 records)
+#### 2.1 GitHub Repository Setup
+```bash
+# Ensure your code is pushed to GitHub
+git add .
+git commit -m "feat: production deployment preparation"
+git push origin main
+```
+
+#### 2.2 Deploy Next.js Application
+1. **Zeabur Dashboard** → **Add Service** → **GitHub Repository**
+2. Select your LMS repository
+3. **Service Type:** Web Service (Node.js/Next.js)
+4. **Build Command:** `npm run build`
+5. **Start Command:** `npm start`
+
+#### 2.3 Configure Environment Variables in Zeabur
+Add all production environment variables in Zeabur dashboard:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-zeabur-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+NODE_ENV=production
+NEXTAUTH_SECRET=your-production-secret
+NEXTAUTH_URL=https://your-zeabur-app-url
+```
+
+### Phase 3: Verification & Testing
+
+#### 3.1 Health Check Endpoints
+```bash
+# Test database connectivity
+curl https://your-zeabur-app-url/api/test-db
+
+# Test authentication
+curl https://your-zeabur-app-url/api/test-connection
+
+# Test CSV import system
+curl https://your-zeabur-app-url/api/zeabur-diagnostic
+```
+
+#### 3.2 Import Sample Data
+Navigate to `https://your-zeabur-app-url/admin/import` and upload CSV files in order:
+
+1. **Users** (test-data-primary/1-users-primary.csv)
+2. **Classes** (test-data-primary/2-classes-primary.csv) 
+3. **Students** (test-data-primary/3-students-primary.csv)
+4. **Scores** (test-data-primary/4-scores-primary.csv)
 
 ## 📊 預期結果
 
