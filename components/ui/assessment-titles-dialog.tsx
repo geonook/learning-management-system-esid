@@ -108,10 +108,10 @@ export default function AssessmentTitlesDialog() {
         </div>
 
         <DialogFooter className="flex gap-2 pt-4">
-          <Button variant="outline" onClick={handleReset} suppressHydrationWarning>
+          <Button variant="outline" onClick={handleReset}>
             Reset to Default
           </Button>
-          <Button variant="outline" onClick={() => setOpen(false)} suppressHydrationWarning>
+          <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>
           <Button onClick={handleSave}>

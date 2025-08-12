@@ -155,7 +155,7 @@ export default function TestViewsAuthPage() {
                     )}
                   </div>
                 </div>
-                <Button variant="outline" size="sm" onClick={signOut} suppressHydrationWarning>
+                <Button variant="outline" size="sm" onClick={signOut}>
                   <LogOut className="h-4 w-4 mr-2" />
                   登出
                 </Button>

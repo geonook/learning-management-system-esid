@@ -94,7 +94,7 @@ export default function StudentsPage() {
                   <Button variant="secondary" onClick={() => location.assign("/scores")}>
                     Open in Scores
                   </Button>
-                  <Button variant="outline" onClick={() => location.assign("/attendance/today")} suppressHydrationWarning>
+                  <Button variant="outline" onClick={() => location.assign("/attendance/today")}>
                     Open in Attendance
                   </Button>
                 </div>

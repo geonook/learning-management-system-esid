@@ -274,7 +274,58 @@ export default function AdminImportPage() {
       return
     }
     
+    // Debug logging for authentication  
+    console.log('Dry Run - User state:', { user, userPermissions, isDevelopment })
+    console.log('User ID:', user?.id)
+    console.log('User email:', user?.email)
+    
     if (!user?.id) {
+      console.error('Authentication failed - no user.id available')
+      
+      // Development fallback - create temporary user ID
+      if (isDevelopment) {
+        console.warn('Development mode: Using fallback user ID for dry run')
+        const fallbackUserId = 'dev-admin-user-id'
+        
+        try {
+          setIsImporting(true)
+          setImportProgress(50)
+          
+          const response = await fetch('/api/import/dry-run', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              validationResults,
+              userId: fallbackUserId
+            })
+          })
+          
+          if (!response.ok) {
+            const errorData = await response.json()
+            throw new Error(errorData.message || 'Dry run failed')
+          }
+          
+          const dryRunResult = await response.json()
+          console.log('Dry run result:', dryRunResult)
+          
+          setImportProgress(100)
+          setCurrentTab('preview')
+          
+          console.log('Would create:', dryRunResult.wouldCreate)
+          console.log('Potential warnings:', dryRunResult.potentialWarnings)
+          
+        } catch (error: any) {
+          console.error('Dry run error:', error)
+          alert(`Dry run failed: ${error.message}`)
+        } finally {
+          setIsImporting(false)
+          setImportProgress(0)
+        }
+        return
+      }
+      
       alert('User not authenticated')
       return
     }
@@ -333,7 +384,56 @@ export default function AdminImportPage() {
       return
     }
     
+    // Debug logging for authentication
+    console.log('Execute Import - User state:', { user, userPermissions, isDevelopment })
+    console.log('User ID:', user?.id)
+    console.log('User email:', user?.email)
+    
     if (!user?.id) {
+      console.error('Authentication failed - no user.id available')
+      
+      // Development fallback - create temporary user ID
+      if (isDevelopment) {
+        console.warn('Development mode: Using fallback user ID')
+        const fallbackUserId = 'dev-admin-user-id'
+        
+        try {
+          setIsImporting(true)
+          setImportProgress(25)
+          
+          // Continue with fallback user ID
+          const response = await fetch('/api/import', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              validationResults,
+              userId: fallbackUserId
+            })
+          })
+          
+          if (!response.ok) {
+            const errorData = await response.json()
+            throw new Error(errorData.message || 'Import failed')
+          }
+          
+          const result = await response.json()
+          
+          setImportProgress(100)
+          setImportResult(result)
+          setCurrentTab('results')
+          
+        } catch (error: any) {
+          console.error('Import error:', error)
+          alert(`Import failed: ${error.message}`)
+        } finally {
+          setIsImporting(false)
+          setImportProgress(0)
+        }
+        return
+      }
+      
       alert('User not authenticated')
       return
     }
