@@ -127,11 +127,13 @@ BEGIN
     END IF;
 END $$;
 
--- 1d. Clean remaining assessment_titles table conflicts (non-class-specific ones)
+-- 1d. Clean remaining assessment_titles table conflicts (handle complex constraint)
 SELECT 'Cleaning remaining assessment_titles table conflicts...' as action;
 DO $$
 DECLARE
     conflict_count INTEGER;
+    grade_track_conflicts INTEGER;
+    other_conflicts INTEGER;
 BEGIN
     -- Count remaining conflicts (after class-specific ones were deleted in step 1b)
     SELECT COUNT(*) INTO conflict_count 
@@ -141,13 +143,32 @@ BEGIN
     RAISE NOTICE 'Found % remaining conflicting records in assessment_titles table', conflict_count;
     
     IF conflict_count > 0 THEN
-        -- These would be global assessment titles not tied to specific classes
-        -- Set conflicting grades to NULL (safe approach for global settings)
-        UPDATE assessment_titles 
-        SET grade = NULL 
-        WHERE grade IS NOT NULL AND (grade < 1 OR grade > 6);
+        -- Count grade_track context conflicts (must be deleted, can't set grade to NULL)
+        SELECT COUNT(*) INTO grade_track_conflicts
+        FROM assessment_titles 
+        WHERE grade IS NOT NULL AND (grade < 1 OR grade > 6) AND context = 'grade_track';
         
-        RAISE NOTICE 'Updated % assessment_titles records: set conflicting grades to NULL', conflict_count;
+        -- Count other context conflicts (can set grade to NULL)
+        SELECT COUNT(*) INTO other_conflicts
+        FROM assessment_titles 
+        WHERE grade IS NOT NULL AND (grade < 1 OR grade > 6) AND context != 'grade_track';
+        
+        RAISE NOTICE 'Found % grade_track conflicts (will delete) and % other conflicts (will update)', grade_track_conflicts, other_conflicts;
+        
+        -- Delete grade_track context records (constraint requires grade IS NOT NULL for grade_track)
+        IF grade_track_conflicts > 0 THEN
+            DELETE FROM assessment_titles 
+            WHERE grade IS NOT NULL AND (grade < 1 OR grade > 6) AND context = 'grade_track';
+            RAISE NOTICE 'Deleted % grade_track assessment_titles records', grade_track_conflicts;
+        END IF;
+        
+        -- Update other context records (safe to set grade to NULL for class/default contexts)
+        IF other_conflicts > 0 THEN
+            UPDATE assessment_titles 
+            SET grade = NULL 
+            WHERE grade IS NOT NULL AND (grade < 1 OR grade > 6) AND context != 'grade_track';
+            RAISE NOTICE 'Updated % non-grade_track assessment_titles records: set conflicting grades to NULL', other_conflicts;
+        END IF;
     ELSE
         RAISE NOTICE 'No remaining conflicting records found in assessment_titles table';
     END IF;
