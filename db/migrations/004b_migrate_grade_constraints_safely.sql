@@ -252,12 +252,13 @@ END $$;
 -- Step 3: Verify new constraints
 SELECT 'Step 3: Verifying new constraints...' as step;
 SELECT 
-    table_name,
-    constraint_name,
-    check_clause
-FROM information_schema.check_constraints 
-WHERE constraint_name LIKE '%grade_check'
-ORDER BY table_name;
+    tc.table_name,
+    tc.constraint_name,
+    cc.check_clause
+FROM information_schema.table_constraints tc
+JOIN information_schema.check_constraints cc ON tc.constraint_name = cc.constraint_name
+WHERE tc.constraint_name LIKE '%grade_check'
+ORDER BY tc.table_name;
 
 -- Step 4: Test constraints with sample data
 SELECT 'Step 4: Testing new constraints...' as step;
