@@ -30,6 +30,7 @@ export const ClassImportSchema = z.object({
   track: z.enum(['local', 'international'], {
     errorMap: () => ({ message: 'Track must be local or international' })
   }),
+  teacher_email: z.string().email('Invalid teacher email'),
   academic_year: z.string().regex(/^\d{2}-\d{2}$/, 'Academic year must be YY-YY format (e.g., 24-25)').default('24-25'),
   is_active: z.boolean().default(true)
 })

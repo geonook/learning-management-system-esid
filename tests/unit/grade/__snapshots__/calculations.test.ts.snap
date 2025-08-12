@@ -1,0 +1,37 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Grade Calculations > snapshot tests > complete score calculation snapshot 1`] = `
+{
+  "finalScoreUsed": true,
+  "formativeAvg": 85.33,
+  "formativeScoresUsed": 3,
+  "semesterGrade": 88.11,
+  "summativeAvg": 89.75,
+  "summativeScoresUsed": 2,
+  "totalScoresUsed": 6,
+}
+`;
+
+exports[`Grade Calculations > snapshot tests > partial score calculation snapshot 1`] = `
+{
+  "finalScoreUsed": false,
+  "formativeAvg": 91.25,
+  "formativeScoresUsed": 2,
+  "semesterGrade": 90.54,
+  "summativeAvg": 90,
+  "summativeScoresUsed": 1,
+  "totalScoresUsed": 3,
+}
+`;
+
+exports[`Grade Calculations > snapshot tests > zero and null scores handling snapshot 1`] = `
+{
+  "finalScoreUsed": true,
+  "formativeAvg": 91.25,
+  "formativeScoresUsed": 2,
+  "semesterGrade": 89.42,
+  "summativeAvg": 90,
+  "summativeScoresUsed": 1,
+  "totalScoresUsed": 4,
+}
+`;

@@ -238,6 +238,8 @@ export async function executeClassesImport(
 ): Promise<void> {
   if (validClasses.length === 0) return
   
+  const supabase = createServiceRoleClient()
+  
   const transformClass = (cls: ClassImport) => ({
     name: cls.name,
     grade: cls.grade,
@@ -254,6 +256,71 @@ export async function executeClassesImport(
     'classes',
     result
   )
+  
+  // After classes are created, assign teachers to auto-created courses
+  for (const cls of validClasses) {
+    try {
+      // Find the teacher by email
+      const { data: teacher, error: teacherError } = await supabase
+        .from('users')
+        .select('id, teacher_type')
+        .eq('email', cls.teacher_email)
+        .single()
+      
+      if (teacherError || !teacher) {
+        result.warnings.push({
+          stage: 'classes',
+          message: `Teacher not found for class assignment: ${cls.teacher_email}`,
+          data: { class_name: cls.name, teacher_email: cls.teacher_email }
+        })
+        continue
+      }
+      
+      // Find the class to get its ID
+      const { data: classRecord, error: classError } = await supabase
+        .from('classes')
+        .select('id')
+        .eq('name', cls.name)
+        .eq('academic_year', cls.academic_year)
+        .single()
+      
+      if (classError || !classRecord) {
+        result.warnings.push({
+          stage: 'classes',
+          message: `Class not found for teacher assignment: ${cls.name}`,
+          data: { class_name: cls.name, teacher_email: cls.teacher_email }
+        })
+        continue
+      }
+      
+      // Assign teacher to the corresponding course type
+      if (teacher.teacher_type) {
+        const { error: updateError } = await supabase
+          .from('courses')
+          .update({ teacher_id: teacher.id })
+          .eq('class_id', classRecord.id)
+          .eq('course_type', teacher.teacher_type)
+        
+        if (updateError) {
+          result.warnings.push({
+            stage: 'classes',
+            message: `Failed to assign teacher to course: ${updateError.message}`,
+            data: { 
+              class_name: cls.name, 
+              teacher_email: cls.teacher_email,
+              teacher_type: teacher.teacher_type 
+            }
+          })
+        }
+      }
+    } catch (error: any) {
+      result.warnings.push({
+        stage: 'classes',
+        message: `Error assigning teacher: ${error.message}`,
+        data: { class_name: cls.name, teacher_email: cls.teacher_email }
+      })
+    }
+  }
   
   result.summary.classes = stats
 }
@@ -366,16 +433,73 @@ export async function executeScoresImport(
   result: ImportExecutionResult,
   resolver: ReferenceResolver
 ): Promise<void> {
-  // TODO: Implement after basic 4 stages are stable
-  console.log(`Scores import requested but not yet implemented: ${validScores.length} records`)
+  if (validScores.length === 0) return
   
+  // Refresh references to include newly created students and courses
+  await resolver.refresh()
+  
+  const transformScore = (score: ScoreImport) => {
+    const studentId = resolver.getStudentId(score.student_id)
+    const enteredById = resolver.getUserId(score.entered_by_email)
+    
+    // Track missing references
+    if (!studentId) {
+      result.warnings.push({
+        stage: 'scores',
+        message: `Student not found: ${score.student_id}`,
+        data: { 
+          course_type: score.course_type, 
+          exam_name: score.exam_name,
+          assessment_code: score.assessment_code 
+        }
+      })
+      return null
+    }
+    
+    if (!enteredById) {
+      result.warnings.push({
+        stage: 'scores',
+        message: `Teacher not found: ${score.entered_by_email}`,
+        data: { 
+          student_id: score.student_id,
+          course_type: score.course_type,
+          exam_name: score.exam_name 
+        }
+      })
+      return null
+    }
+    
+    // Find the course_id and exam_id - for now, we'll need to create or find them
+    // This is a simplified implementation that assumes exams are auto-created
+    return {
+      student_id: studentId,
+      // course_id: will need to be resolved from student + course_type
+      // exam_id: will need to be resolved from exam_name + course
+      assessment_code: score.assessment_code,
+      score: score.score,
+      entered_by: enteredById,
+      entered_at: new Date().toISOString(),
+      updated_by: enteredById,
+      updated_at: new Date().toISOString()
+    }
+  }
+  
+  // For now, add a warning that full implementation is needed
   result.warnings.push({
     stage: 'scores',
-    message: 'Scores import not yet implemented in clean processor',
+    message: `Scores import partially implemented - need to resolve course_id and exam_id mappings`,
     data: { requested_count: validScores.length }
   })
   
-  result.summary.scores = { created: 0, updated: 0, errors: 0 }
+  const stats = await performBatchInsert(
+    'scores',
+    validScores,
+    transformScore,
+    'scores',
+    result
+  )
+  
+  result.summary.scores = stats
 }
 
 /**
@@ -424,10 +548,9 @@ export async function executeCleanImport(
       await executeClassesImport(validationResults.classes.valid, result)
     }
     
-    // Stage 3: Courses (needs classes and users)
-    if (validationResults.courses?.valid) {
-      await executeCoursesImport(validationResults.courses.valid, result, resolver)
-    }
+    // Stage 3: Courses (auto-created by database triggers, teachers assigned in Stage 2)
+    // Skip manual courses import - courses are automatically created by database triggers
+    // and teachers are assigned during classes import
     
     // Stage 4: Students (needs classes)
     if (validationResults.students?.valid) {
