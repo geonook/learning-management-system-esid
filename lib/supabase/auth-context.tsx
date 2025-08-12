@@ -81,6 +81,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session.user)
         const permissions = await fetchUserPermissions(session.user.id)
         setUserPermissions(permissions)
+      } else if (process.env.NODE_ENV === 'development') {
+        // Create mock user for development
+        const mockUser = {
+          id: 'dev-admin-user-id',
+          email: 'admin@dev.local',
+          aud: 'authenticated',
+          role: 'authenticated',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          app_metadata: {},
+          user_metadata: {},
+          identities: []
+        } as any
+        
+        setUser(mockUser)
+        setUserPermissions({
+          userId: 'dev-admin-user-id',
+          role: 'admin',
+          grade: null,
+          track: null,
+          teacher_type: null,
+          full_name: 'Development Admin'
+        })
+        console.log('Development mode: Created mock admin user')
       }
       
       setLoading(false)
@@ -97,6 +121,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(session.user)
           const permissions = await fetchUserPermissions(session.user.id)
           setUserPermissions(permissions)
+        } else if (process.env.NODE_ENV === 'development') {
+          // Keep mock user in development if no real session
+          if (!user) {
+            const mockUser = {
+              id: 'dev-admin-user-id',
+              email: 'admin@dev.local',
+              aud: 'authenticated',
+              role: 'authenticated',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              app_metadata: {},
+              user_metadata: {},
+              identities: []
+            } as any
+            
+            setUser(mockUser)
+            setUserPermissions({
+              userId: 'dev-admin-user-id',
+              role: 'admin',
+              grade: null,
+              track: null,
+              teacher_type: null,
+              full_name: 'Development Admin'
+            })
+          }
         } else {
           setUser(null)
           setUserPermissions(null)

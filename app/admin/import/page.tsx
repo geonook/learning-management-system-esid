@@ -468,7 +468,6 @@ export default function AdminImportPage() {
                     size="sm"
                     onClick={() => downloadTemplate(stage)}
                     className="w-full"
-                    suppressHydrationWarning
                   >
                     <Download className="h-4 w-4 mr-2" />
                     Download Template
@@ -742,7 +741,6 @@ export default function AdminImportPage() {
                     onClick={() => setCurrentTab('upload')}
                     variant="outline"
                     className="flex-1"
-                    suppressHydrationWarning
                   >
                     Import More Data
                   </Button>
