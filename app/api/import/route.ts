@@ -25,11 +25,13 @@ export async function POST(request: NextRequest) {
     
     // Development bypass for mock users
     if (process.env.NODE_ENV === 'development' && userId === 'dev-admin-user-id') {
-      console.log('Development mode: Bypassing authentication for mock admin user')
+      console.log('Development mode: Bypassing authentication and permissions for mock admin user')
+      // Skip all authentication and permission checks for development
     } else {
       if (authError || !user || user.id !== userId) {
+        console.error('Authentication failed:', { authError: authError?.message, hasUser: !!user, userIdMatch: user?.id === userId })
         return NextResponse.json(
-          { error: 'Unauthorized' },
+          { error: 'Unauthorized', details: 'User authentication failed' },
           { status: 401 }
         )
       }
@@ -42,8 +44,16 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (profileError || !userProfile || userProfile.role !== 'admin') {
+        console.error('Permission check failed:', { 
+          profileError: profileError?.message, 
+          hasProfile: !!userProfile, 
+          role: userProfile?.role 
+        })
         return NextResponse.json(
-          { error: 'Insufficient permissions' },
+          { 
+            error: 'Insufficient permissions', 
+            details: profileError?.message || `User role: ${userProfile?.role || 'unknown'}` 
+          },
           { status: 403 }
         )
       }

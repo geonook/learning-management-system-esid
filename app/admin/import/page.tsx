@@ -304,7 +304,10 @@ export default function AdminImportPage() {
           
           if (!response.ok) {
             const errorData = await response.json()
-            throw new Error(errorData.message || 'Dry run failed')
+            const errorMessage = errorData.details ? 
+              `${errorData.error}: ${errorData.details}` : 
+              (errorData.message || errorData.error || 'Dry run failed')
+            throw new Error(errorMessage)
           }
           
           const dryRunResult = await response.json()
@@ -347,7 +350,10 @@ export default function AdminImportPage() {
       
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.message || 'Dry run failed')
+        const errorMessage = errorData.details ? 
+          `${errorData.error}: ${errorData.details}` : 
+          (errorData.message || errorData.error || 'Dry run failed')
+        throw new Error(errorMessage)
       }
       
       const dryRunResult = await response.json()
@@ -415,7 +421,10 @@ export default function AdminImportPage() {
           
           if (!response.ok) {
             const errorData = await response.json()
-            throw new Error(errorData.message || 'Import failed')
+            const errorMessage = errorData.details ? 
+              `${errorData.error}: ${errorData.details}` : 
+              (errorData.message || errorData.error || 'Import failed')
+            throw new Error(errorMessage)
           }
           
           const result = await response.json()
@@ -455,7 +464,10 @@ export default function AdminImportPage() {
       
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.message || 'Import failed')
+        const errorMessage = errorData.details ? 
+          `${errorData.error}: ${errorData.details}` : 
+          (errorData.message || errorData.error || 'Import failed')
+        throw new Error(errorMessage)
       }
       
       const result = await response.json()
