@@ -1,6 +1,7 @@
 -- Cleanup Script for Test Data
 -- Date: 2025-08-11
 -- Purpose: Remove all test data created during verification
+-- Updated: Test data now uses grade 7 (TEST_G7_*) to match schema constraints
 
 SELECT '=== Cleaning Up Test Data ===' as status;
 
