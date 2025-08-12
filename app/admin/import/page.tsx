@@ -39,7 +39,7 @@ import {
   generateSampleScoresCSV,
   getValidationSummary
 } from "@/lib/import/csv-parser"
-import { executeImport, executeDryRun } from "@/lib/import/import-executor"
+// Import functions removed - now using API routes
 import type {
   ImportValidationResult,
   ImportExecutionResult,
@@ -274,11 +274,32 @@ export default function AdminImportPage() {
       return
     }
     
+    if (!user?.id) {
+      alert('User not authenticated')
+      return
+    }
+    
     try {
       setIsImporting(true)
       setImportProgress(50)
       
-      const dryRunResult = await executeDryRun(validationResults)
+      const response = await fetch('/api/import/dry-run', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          validationResults,
+          userId: user.id
+        })
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Dry run failed')
+      }
+      
+      const dryRunResult = await response.json()
       console.log('Dry run result:', dryRunResult)
       
       setImportProgress(100)
@@ -321,7 +342,23 @@ export default function AdminImportPage() {
       setIsImporting(true)
       setImportProgress(25)
       
-      const result = await executeImport(validationResults, user.id)
+      const response = await fetch('/api/import', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          validationResults,
+          userId: user.id
+        })
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Import failed')
+      }
+      
+      const result = await response.json()
       
       setImportProgress(100)
       setImportResult(result)
