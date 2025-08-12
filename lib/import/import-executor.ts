@@ -6,7 +6,8 @@
 import { supabase } from '@/lib/supabase/client'
 import {
   type UserImport,
-  type ClassImport, 
+  type ClassImport,
+  type CourseImport,
   type StudentImport,
   type ScoreImport,
   type ImportExecutionResult,
@@ -171,6 +172,97 @@ async function executeClassesImport(
   }
 }
 
+// Courses import executor  
+async function executeCoursesImport(
+  validCourses: CourseImport[],
+  result: ImportExecutionResult
+): Promise<void> {
+  if (validCourses.length === 0) return
+  
+  try {
+    // Get required mappings
+    const [classMap, userMap] = await Promise.all([
+      createClassNameToUUIDMap(),
+      createUserEmailToUUIDMap()
+    ])
+    
+    // Prepare course data for insertion
+    const coursesToInsert = validCourses.map(course => {
+      const classUUID = classMap.get(course.class_name)
+      const teacherUUID = userMap.get(course.teacher_email)
+      
+      // Track missing references
+      if (!classUUID) {
+        result.warnings.push({
+          stage: 'courses',
+          message: `Class not found: ${course.class_name}`,
+          data: { 
+            course_type: course.course_type, 
+            teacher_email: course.teacher_email 
+          }
+        })
+      }
+      
+      if (!teacherUUID) {
+        result.warnings.push({
+          stage: 'courses',
+          message: `Teacher not found: ${course.teacher_email}`,
+          data: { 
+            class_name: course.class_name, 
+            course_type: course.course_type 
+          }
+        })
+      }
+      
+      // Only return courses with valid references
+      if (classUUID && teacherUUID) {
+        return {
+          class_id: classUUID,
+          course_type: course.course_type,
+          teacher_id: teacherUUID,
+          academic_year: course.academic_year,
+          is_active: course.is_active
+        }
+      }
+      
+      return null
+    }).filter((course): course is NonNullable<typeof course> => course !== null)
+    
+    if (coursesToInsert.length === 0) {
+      result.warnings.push({
+        stage: 'courses',
+        message: 'No valid courses to import - all references missing'
+      })
+      return
+    }
+    
+    // Insert courses with upsert logic
+    const { data: insertedCourses, error } = await supabase
+      .from('courses')
+      .upsert(coursesToInsert, {
+        onConflict: 'class_id,course_type',
+        ignoreDuplicates: false
+      })
+      .select('id')
+    
+    if (error) {
+      throw error
+    }
+    
+    result.summary.courses.created = insertedCourses?.length || 0
+    result.summary.courses.updated = coursesToInsert.length - (insertedCourses?.length || 0)
+    
+  } catch (error: any) {
+    result.summary.courses.errors = validCourses.length
+    result.errors.push({
+      stage: 'courses',
+      operation: 'create',
+      data: { count: validCourses.length },
+      error: error.message
+    })
+  }
+}
+
 // Students import executor
 async function executeStudentsImport(
   validStudents: StudentImport[],
@@ -326,6 +418,7 @@ export async function executeImport(
   validationResults: {
     users?: ImportValidationResult<UserImport>
     classes?: ImportValidationResult<ClassImport>
+    courses?: ImportValidationResult<CourseImport>
     students?: ImportValidationResult<StudentImport>
     scores?: ImportValidationResult<ScoreImport>
   },
@@ -336,6 +429,7 @@ export async function executeImport(
     summary: {
       users: { created: 0, updated: 0, errors: 0 },
       classes: { created: 0, updated: 0, errors: 0 },
+      courses: { created: 0, updated: 0, errors: 0 },
       students: { created: 0, updated: 0, errors: 0 },
       scores: { created: 0, updated: 0, errors: 0 }
     },
@@ -356,12 +450,17 @@ export async function executeImport(
       await executeClassesImport(validationResults.classes.valid, result)
     }
     
-    // 3. Import students (need classes to exist)
+    // 3. Import courses (need classes and teachers to exist)
+    if (validationResults.courses?.valid) {
+      await executeCoursesImport(validationResults.courses.valid, result)
+    }
+    
+    // 4. Import students (need classes to exist)
     if (validationResults.students?.valid) {
       await executeStudentsImport(validationResults.students.valid, result)
     }
     
-    // 4. Import scores (need students and exams to exist)
+    // 5. Import scores (need students and exams to exist)
     if (validationResults.scores?.valid) {
       await executeScoresImport(validationResults.scores.valid, result, currentUserUUID)
     }
@@ -390,6 +489,7 @@ export async function executeBatchImport(
   batches: {
     users?: ImportValidationResult<UserImport>[]
     classes?: ImportValidationResult<ClassImport>[]
+    courses?: ImportValidationResult<CourseImport>[]
     students?: ImportValidationResult<StudentImport>[]
     scores?: ImportValidationResult<ScoreImport>[]
   },
@@ -401,6 +501,7 @@ export async function executeBatchImport(
   const maxBatches = Math.max(
     batches.users?.length || 0,
     batches.classes?.length || 0,
+    batches.courses?.length || 0,
     batches.students?.length || 0,
     batches.scores?.length || 0
   )
@@ -410,6 +511,7 @@ export async function executeBatchImport(
     const batchValidationResults = {
       users: batches.users?.[i],
       classes: batches.classes?.[i],
+      courses: batches.courses?.[i],
       students: batches.students?.[i],
       scores: batches.scores?.[i]
     }
@@ -426,12 +528,13 @@ export async function executeDryRun(
   validationResults: {
     users?: ImportValidationResult<UserImport>
     classes?: ImportValidationResult<ClassImport>
+    courses?: ImportValidationResult<CourseImport>
     students?: ImportValidationResult<StudentImport>
     scores?: ImportValidationResult<ScoreImport>
   }
 ): Promise<{
-  wouldCreate: { users: number; classes: number; students: number; scores: number }
-  wouldUpdate: { users: number; classes: number; students: number; scores: number }
+  wouldCreate: { users: number; classes: number; courses: number; students: number; scores: number }
+  wouldUpdate: { users: number; classes: number; courses: number; students: number; scores: number }
   potentialWarnings: ImportExecutionWarning[]
 }> {
   const potentialWarnings: ImportExecutionWarning[] = []
@@ -452,6 +555,27 @@ export async function executeDryRun(
           stage: 'classes',
           message: `Teacher not found: ${cls.teacher_email}`,
           data: { class_name: cls.name }
+        })
+      }
+    }
+  }
+  
+  // Check courses for missing references
+  if (validationResults.courses?.valid) {
+    for (const course of validationResults.courses.valid) {
+      if (!classMap.has(course.class_name)) {
+        potentialWarnings.push({
+          stage: 'courses',
+          message: `Class not found: ${course.class_name}`,
+          data: { course_type: course.course_type, teacher_email: course.teacher_email }
+        })
+      }
+      
+      if (!userMap.has(course.teacher_email)) {
+        potentialWarnings.push({
+          stage: 'courses',
+          message: `Teacher not found: ${course.teacher_email}`,
+          data: { class_name: course.class_name, course_type: course.course_type }
         })
       }
     }
@@ -495,12 +619,14 @@ export async function executeDryRun(
     wouldCreate: {
       users: validationResults.users?.valid.length || 0,
       classes: validationResults.classes?.valid.length || 0,
+      courses: validationResults.courses?.valid.length || 0,
       students: validationResults.students?.valid.length || 0,
       scores: validationResults.scores?.valid.length || 0
     },
     wouldUpdate: {
       users: 0, // Would need to check existing records
       classes: 0,
+      courses: 0,
       students: 0,
       scores: 0
     },
