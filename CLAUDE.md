@@ -47,13 +47,13 @@ This file provides essential guidance to Claude Code (claude.ai/code) when worki
 - **HT = Head Teacher（年段主任）** - 年段與校區管理權限
 
 ### 課程架構（核心特色）
-- **統一ELA標準**：所有班級都包含三種標準課程
+- **統一課程標準**：所有班級都包含三種標準課程
   - LT English Language Arts (ELA) - 本地教師
   - IT English Language Arts (ELA) - 國際教師
-  - KCFS - 康橋未來技能課程
+  - KCFS - 康橋未來技能課程（獨立課程）
 - **Campus管理概念**：Local Campus / International Campus
   - 用於行政管理與權限控制
-  - 非課程軌別區分，所有班級均有三種ELA課程
+  - 非課程軌別區分，所有班級均有兩種ELA課程 + 一種KCFS課程
   - 取代過時的"Track軌別"概念
 
 ### 小學年段系統（G1-G6）

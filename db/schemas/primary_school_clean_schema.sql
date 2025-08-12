@@ -362,7 +362,7 @@ CREATE TRIGGER update_assessment_titles_updated_at BEFORE UPDATE ON assessment_t
 -- Table comments
 COMMENT ON TABLE users IS 'User accounts for primary school LMS - admin, head, teacher, student roles';
 COMMENT ON TABLE classes IS 'Class definitions for grades 1-6 with standardized naming convention';
-COMMENT ON TABLE courses IS 'Independent English courses (LT/IT/KCFS) assigned to classes with specialized teachers';
+COMMENT ON TABLE courses IS 'Independent courses (LT/IT ELA + KCFS) assigned to classes with specialized teachers';
 COMMENT ON TABLE students IS 'Student records with grade, level, and class assignments';
 COMMENT ON TABLE exams IS 'Assessment occasions tied to classes';
 COMMENT ON TABLE scores IS 'Individual student scores for specific assessments';

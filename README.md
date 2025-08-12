@@ -1,6 +1,6 @@
 # Learning Management System - ESID
 
-A comprehensive **Primary School (G1-G6)** English Language Arts (ELA) gradebook and academic management system. Features unified ELA course architecture with Campus-based management for Local Teachers, International Teachers, and KCFS Teachers. Built with Next.js, TypeScript, Tailwind CSS, and Supabase.
+A comprehensive **Primary School (G1-G6)** Learning Management System featuring English Language Arts (ELA) and KCFS courses. Features unified course architecture with Campus-based management for Local Teachers, International Teachers, and KCFS Teachers. Built with Next.js, TypeScript, Tailwind CSS, and Supabase.
 
 ## Quick Start
 
@@ -77,15 +77,15 @@ The system uses a strict numerical scoring approach with these rules:
 ## 🎓 ELA Course Architecture
 
 ### Unified Course Structure
-Every class includes three standardized English Language Arts courses:
+Every class includes three standardized courses:
 - **LT English Language Arts (ELA)** - Local Teacher instruction
 - **IT English Language Arts (ELA)** - International Teacher instruction  
-- **KCFS** - Kang Chiao Future Skill program
+- **KCFS** - Kang Chiao Future Skill program (independent course)
 
 ### Campus Management System
 - **Local Campus** - Administrative grouping for local-focused classes
 - **International Campus** - Administrative grouping for international-focused classes
-- **Note**: Campus distinction is for management only; all classes receive the same three ELA courses
+- **Note**: Campus distinction is for management only; all classes receive the same two ELA courses + one KCFS course
 
 ## 🔐 Security & Permissions
 
@@ -150,17 +150,17 @@ npm run deploy          # Deploy to Zeabur
 
 ### Primary School Dashboard
 - **Admin**: System-wide analytics and user management across all campuses
-- **Head Teachers**: Grade×campus-specific insights and ELA course controls
-- **Teachers**: Class-specific ELA course management and student progress
+- **Head Teachers**: Grade×campus-specific insights and course controls (ELA + KCFS)
+- **Teachers**: Class-specific course management and student progress (ELA or KCFS)
 
-### ELA Grade Management
-- **Unified CSV import system** with validation and error handling for all three ELA courses
+### Grade Management
+- **Unified CSV import system** with validation and error handling for all three courses (LT/IT ELA + KCFS)
 - **Individual score entry** with real-time calculation across LT/IT/KCFS
-- **Weighted grade calculations** following primary school ELA standards
+- **Weighted grade calculations** following primary school standards
 
 ### Reporting & Analytics
-- **Performance tracking** by class, grade, and campus across all ELA courses
-- **ELA course comparison** between LT, IT, and KCFS performance
+- **Performance tracking** by class, grade, and campus across all courses
+- **Course comparison** between LT ELA, IT ELA, and KCFS performance
 - **Export capabilities** for external reporting and parent communication
 
 ## 🔄 Development Workflow
@@ -205,7 +205,7 @@ npm run deploy          # Deploy to Zeabur
 ## 🚨 Important Notes
 
 - **Primary School Focus** - System designed specifically for G1-G6 primary school structure
-- **ELA Course Architecture** - All classes must include LT, IT, and KCFS courses
+- **Course Architecture** - All classes must include LT ELA, IT ELA, and KCFS courses
 - **Campus vs Track** - Use Campus concept for management, not course tracking
 - **Follow CLAUDE.md rules** - All development must adhere to the guidelines
 - **RLS enforcement** - All database queries automatically respect user permissions  

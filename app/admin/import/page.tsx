@@ -94,7 +94,7 @@ export default function AdminImportPage() {
     courses: {
       name: 'Courses',
       icon: <BookOpen className="h-4 w-4" />,
-      description: 'Independent English courses (LT/IT/KCFS) for each class',
+      description: 'Independent courses (LT/IT ELA + KCFS) for each class',
       upload: { status: 'idle' },
       required: false
     },

@@ -282,6 +282,6 @@ LEFT JOIN users t ON c.teacher_id = t.id
 ORDER BY cl.grade, cl.name, c.course_type, s.full_name;
 
 -- Comment on tables
-COMMENT ON TABLE courses IS 'Independent English courses within each class (LT/IT/KCFS)';
+COMMENT ON TABLE courses IS 'Independent courses within each class (LT/IT ELA + KCFS)';
 COMMENT ON TABLE student_courses IS 'Many-to-many relationship between students and courses';
 COMMENT ON COLUMN scores.course_id IS 'Links scores to specific courses for independent grading';
