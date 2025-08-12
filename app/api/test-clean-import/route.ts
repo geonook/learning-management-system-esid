@@ -16,11 +16,11 @@ john.lt@school.edu,John Doe,teacher,LT,,,true
 mary.it@school.edu,Mary Smith,teacher,IT,,,true
 sarah.kcfs@school.edu,Sarah Johnson,teacher,KCFS,,,true`
 
-    const sampleClasses = `name,grade,level,track,academic_year,is_active
-G1 Trailblazers,1,E1,local,24-25,true
-G1 Discoverers,1,E1,international,24-25,true
-G2 Adventurers,2,E2,local,24-25,true
-G2 Innovators,2,E2,international,24-25,true`
+    const sampleClasses = `name,grade,level,track,teacher_email,academic_year,is_active
+G1 Trailblazers,1,E1,local,john.lt@school.edu,24-25,true
+G1 Discoverers,1,E1,international,mary.it@school.edu,24-25,true
+G2 Adventurers,2,E2,local,john.lt@school.edu,24-25,true
+G2 Innovators,2,E2,international,mary.it@school.edu,24-25,true`
 
     const sampleCourses = `class_name,course_type,teacher_email,academic_year,is_active
 G1 Trailblazers,LT,john.lt@school.edu,24-25,true

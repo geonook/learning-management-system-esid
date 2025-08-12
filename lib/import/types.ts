@@ -186,6 +186,7 @@ export const CSV_COLUMN_MAPPINGS = {
     grade: ['grade', 'Grade', 'GRADE'],
     level: ['level', 'Level', 'LEVEL', 'class_level', 'performance_level'],
     track: ['track', 'Track', 'TRACK', 'stream'],
+    teacher_email: ['teacher_email', 'Teacher Email', 'teacher', 'Teacher'],
     academic_year: ['academic_year', 'Academic Year', 'year', 'Year']
   },
   courses: {

@@ -234,7 +234,8 @@ export async function executeUsersImport(
  */
 export async function executeClassesImport(
   validClasses: ClassImport[],
-  result: ImportExecutionResult
+  result: ImportExecutionResult,
+  resolver?: ReferenceResolver
 ): Promise<void> {
   if (validClasses.length === 0) return
   
@@ -256,6 +257,11 @@ export async function executeClassesImport(
     'classes',
     result
   )
+  
+  // Refresh resolver to include newly created users
+  if (resolver) {
+    await resolver.refresh()
+  }
   
   // After classes are created, assign teachers to auto-created courses
   for (const cls of validClasses) {
@@ -545,7 +551,7 @@ export async function executeCleanImport(
     
     // Stage 2: Classes (needs users for head references)
     if (validationResults.classes?.valid) {
-      await executeClassesImport(validationResults.classes.valid, result)
+      await executeClassesImport(validationResults.classes.valid, result, resolver)
     }
     
     // Stage 3: Courses (auto-created by database triggers, teachers assigned in Stage 2)
