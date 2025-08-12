@@ -28,6 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userPermissions, setUserPermissions] = useState<UserPermissions | null>(null)
   const [loading, setLoading] = useState(true)
   const [isHydrated, setIsHydrated] = useState(false)
+  const [isDevelopmentMockActive, setIsDevelopmentMockActive] = useState(false)
 
   const fetchUserPermissions = async (userId: string): Promise<UserPermissions | null> => {
     try {
@@ -75,14 +76,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     // Get initial session
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (session?.user) {
-        setUser(session.user)
-        const permissions = await fetchUserPermissions(session.user.id)
-        setUserPermissions(permissions)
-      } else if (process.env.NODE_ENV === 'development') {
-        // Create mock user for development
+      // In development mode, ALWAYS use mock admin user (force override)
+      if (process.env.NODE_ENV === 'development') {
         const mockUser = {
           id: 'dev-admin-user-id',
           email: 'admin@dev.local',
@@ -104,7 +99,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           teacher_type: null,
           full_name: 'Development Admin'
         })
-        console.log('Development mode: Created mock admin user')
+        setIsDevelopmentMockActive(true) // Flag to prevent auth state override
+        console.log('Development mode: FORCED mock admin user (overriding any real session)')
+        setLoading(false)
+        return
+      }
+      
+      // Production mode: use real session
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (session?.user) {
+        setUser(session.user)
+        const permissions = await fetchUserPermissions(session.user.id)
+        setUserPermissions(permissions)
       }
       
       setLoading(false)
@@ -117,13 +124,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email)
         
+        // In development mode with mock active, ignore all auth state changes
+        if (process.env.NODE_ENV === 'development' && isDevelopmentMockActive) {
+          console.log('Development mode: Ignoring auth state change - mock admin user is active')
+          return
+        }
+        
         if (session?.user) {
-          setUser(session.user)
-          const permissions = await fetchUserPermissions(session.user.id)
-          setUserPermissions(permissions)
+          // Only process real sessions in production mode
+          if (process.env.NODE_ENV !== 'development') {
+            setUser(session.user)
+            const permissions = await fetchUserPermissions(session.user.id)
+            setUserPermissions(permissions)
+          }
         } else if (process.env.NODE_ENV === 'development') {
           // Keep mock user in development if no real session
-          if (!user) {
+          if (!user && !isDevelopmentMockActive) {
             const mockUser = {
               id: 'dev-admin-user-id',
               email: 'admin@dev.local',
@@ -145,6 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               teacher_type: null,
               full_name: 'Development Admin'
             })
+            setIsDevelopmentMockActive(true)
           }
         } else {
           setUser(null)

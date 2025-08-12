@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { executeImport } from '@/lib/import/import-executor-server'
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
+import { executeCleanImport } from '@/lib/import/clean-batch-processor'
 import type { ImportValidationResult } from '@/lib/import/types'
 
 export async function POST(request: NextRequest) {
@@ -59,9 +59,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Execute the import
-    console.log('Starting CSV import for user:', userId)
-    const result = await executeImport(validationResults, userId)
+    // Execute the clean import
+    console.log('Starting clean CSV import for user:', userId)
+    const result = await executeCleanImport(validationResults, userId)
     
     console.log('Import completed:', {
       success: result.success,

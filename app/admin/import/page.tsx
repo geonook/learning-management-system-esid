@@ -278,8 +278,13 @@ export default function AdminImportPage() {
     console.log('Dry Run - User state:', { user, userPermissions, isDevelopment })
     console.log('User ID:', user?.id)
     console.log('User email:', user?.email)
+    console.log('UserPermissions ID:', userPermissions?.userId)
     
-    if (!user?.id) {
+    // In development mode, prioritize mock user ID from userPermissions
+    const effectiveUserId = isDevelopment && userPermissions?.userId ? 
+      userPermissions.userId : user?.id
+    
+    if (!effectiveUserId) {
       console.error('Authentication failed - no user.id available')
       
       // Development fallback - create temporary user ID
@@ -344,7 +349,7 @@ export default function AdminImportPage() {
         },
         body: JSON.stringify({
           validationResults,
-          userId: user.id
+          userId: effectiveUserId
         })
       })
       
@@ -394,8 +399,13 @@ export default function AdminImportPage() {
     console.log('Execute Import - User state:', { user, userPermissions, isDevelopment })
     console.log('User ID:', user?.id)
     console.log('User email:', user?.email)
+    console.log('UserPermissions ID:', userPermissions?.userId)
     
-    if (!user?.id) {
+    // In development mode, prioritize mock user ID from userPermissions
+    const effectiveUserId = isDevelopment && userPermissions?.userId ? 
+      userPermissions.userId : user?.id
+    
+    if (!effectiveUserId) {
       console.error('Authentication failed - no user.id available')
       
       // Development fallback - create temporary user ID
@@ -458,7 +468,7 @@ export default function AdminImportPage() {
         },
         body: JSON.stringify({
           validationResults,
-          userId: user.id
+          userId: effectiveUserId
         })
       })
       
