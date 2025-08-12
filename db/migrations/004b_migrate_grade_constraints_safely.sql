@@ -42,7 +42,7 @@ SELECT 'Cleaning classes table conflicts...' as action;
 DO $$
 DECLARE
     conflict_count INTEGER;
-    classes_to_delete INTEGER[];
+    classes_to_delete UUID[];
 BEGIN
     -- Count conflicts first
     SELECT COUNT(*) INTO conflict_count 
