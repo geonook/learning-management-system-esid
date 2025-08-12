@@ -121,14 +121,14 @@ function NewClassDialog() {
           </div>
           
           <div className="space-y-2">
-            <Label>Track</Label>
+            <Label>Campus</Label>
             <Select>
               <SelectTrigger>
-                <SelectValue placeholder="Select track" />
+                <SelectValue placeholder="Select campus" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="local">Local Track</SelectItem>
-                <SelectItem value="international">International Track</SelectItem>
+                <SelectItem value="local">Local Campus</SelectItem>
+                <SelectItem value="international">International Campus</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -257,7 +257,7 @@ function ClassCard({ classData }: { classData: typeof mockClasses[0] }) {
                     <span>{classData.room}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Track:</span>
+                    <span className="text-muted-foreground">Campus:</span>
                     <Badge variant="outline" className="capitalize text-xs">
                       {classData.track}
                     </Badge>

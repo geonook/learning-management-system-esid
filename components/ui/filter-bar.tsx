@@ -32,7 +32,7 @@ export default function FilterBar({
         <div className="hidden md:flex items-center gap-1 text-xs text-muted-foreground">
           <Badge variant="secondary">Grade {grade}</Badge>
           <Badge variant="secondary">Class {klass}</Badge>
-          {showTrack && <Badge variant="secondary">Track {track}</Badge>}
+          {showTrack && <Badge variant="secondary">Campus {track}</Badge>}
         </div>
         <div className="ml-auto">{extra}</div>
       </div>
@@ -71,12 +71,12 @@ export default function FilterBar({
             {showTrack && (
               <Select value={track} onValueChange={(v) => setSelections({ track: v as any })}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Track" />
+                  <SelectValue placeholder="Campus" />
                 </SelectTrigger>
                 <SelectContent>
                   {[
-                    { value: "local", label: "Local Track" },
-                    { value: "international", label: "International Track" }
+                    { value: "local", label: "Local Campus" },
+                    { value: "international", label: "International Campus" }
                   ].map((t) => (
                     <SelectItem key={t.value} value={t.value}>
                       {t.label}

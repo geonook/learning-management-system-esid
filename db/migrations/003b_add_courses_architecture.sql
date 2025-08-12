@@ -12,9 +12,9 @@ CREATE TABLE IF NOT EXISTS courses (
     academic_year VARCHAR(5) NOT NULL DEFAULT '24-25',
     course_name VARCHAR(100) GENERATED ALWAYS AS (
         CASE course_type
-            WHEN 'LT' THEN 'Local Teacher English'
-            WHEN 'IT' THEN 'International Teacher English'  
-            WHEN 'KCFS' THEN 'KCFS English'
+            WHEN 'LT' THEN 'LT English Language Arts (ELA)'
+            WHEN 'IT' THEN 'IT English Language Arts (ELA)'  
+            WHEN 'KCFS' THEN 'KCFS'
         END
     ) STORED,
     is_active BOOLEAN DEFAULT true,
