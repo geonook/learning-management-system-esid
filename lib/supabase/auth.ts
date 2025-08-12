@@ -2,7 +2,7 @@ import { createClient } from './server'
 import { User } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 
-export type UserRole = 'admin' | 'head' | 'teacher'
+export type UserRole = 'admin' | 'head' | 'teacher' | 'student'
 export type TeacherType = 'LT' | 'IT' | 'KCFS'
 export type TrackType = 'local' | 'international'
 

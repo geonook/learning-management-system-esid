@@ -1,7 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { CleanBatchProcessor } from '@/lib/import/clean-batch-processor'
-import { CSVParser } from '@/lib/import/csv-parser'
-import { ImportExecutor } from '@/lib/import/import-executor'
+import { executeCleanImport, executeCleanDryRun } from '@/lib/import/clean-batch-processor'
 
 // Mock file system operations
 const mockFs = {
