@@ -28,7 +28,7 @@ import RoleGuard from "@/components/auth/role-guard"
 const mockClasses = [
   {
     id: "CLS-001",
-    grade: 7,
+    grade: 1,
     section: "A",
     track: "local" as const,
     subject: "English",
@@ -42,7 +42,7 @@ const mockClasses = [
   },
   {
     id: "CLS-002", 
-    grade: 7,
+    grade: 1,
     section: "B",
     track: "international",
     subject: "English",
@@ -56,7 +56,7 @@ const mockClasses = [
   },
   {
     id: "CLS-003",
-    grade: 8,
+    grade: 2,
     section: "A", 
     track: "local",
     subject: "English",
@@ -94,7 +94,7 @@ function NewClassDialog() {
                   <SelectValue placeholder="Select grade" />
                 </SelectTrigger>
                 <SelectContent>
-                  {[7, 8, 9, 10, 11, 12].map((grade) => (
+                  {[1, 2, 3, 4, 5, 6].map((grade) => (
                     <SelectItem key={grade} value={grade.toString()}>
                       Grade {grade}
                     </SelectItem>

@@ -49,7 +49,7 @@ export default function FilterBar({
                 <SelectValue placeholder="Grade" />
               </SelectTrigger>
               <SelectContent>
-                {["7", "8", "9", "10", "11", "12"].map((g) => (
+                {["1", "2", "3", "4", "5", "6"].map((g) => (
                   <SelectItem key={g} value={g}>
                     Grade {g}
                   </SelectItem>

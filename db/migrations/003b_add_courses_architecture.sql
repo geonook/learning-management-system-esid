@@ -12,8 +12,8 @@ CREATE TABLE IF NOT EXISTS courses (
     academic_year VARCHAR(5) NOT NULL DEFAULT '24-25',
     course_name VARCHAR(100) GENERATED ALWAYS AS (
         CASE course_type
-            WHEN 'LT' THEN 'Local Track English'
-            WHEN 'IT' THEN 'International Track English'  
+            WHEN 'LT' THEN 'Local Teacher English'
+            WHEN 'IT' THEN 'International Teacher English'  
             WHEN 'KCFS' THEN 'KCFS English'
         END
     ) STORED,

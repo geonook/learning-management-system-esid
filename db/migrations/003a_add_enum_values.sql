@@ -73,5 +73,5 @@ END $$;
 
 -- Add comment explaining the two-part migration
 COMMENT ON TYPE user_role IS 'User roles: admin, head, teacher, student. Extended in migration 003a.';
-COMMENT ON TYPE teacher_type IS 'Teacher specializations: LT (Local Track), IT (International Track), KCFS. Extended in migration 003a.';
+COMMENT ON TYPE teacher_type IS 'Teacher specializations: LT (Local Teacher), IT (International Teacher), KCFS (Kang Chiao Future Skill). Extended in migration 003a.';
 COMMENT ON TYPE course_type IS 'Course types matching teacher specializations: LT, IT, KCFS. Created in migration 003a.';

@@ -40,10 +40,16 @@ This file provides essential guidance to Claude Code (claude.ai/code) when worki
 - 僅影響 UI 與報表標題；計算仍用代碼
 - 資料表：`assessment_titles`（見下方 schema）
 
+### 教師類型與課程定義
+- **LT = Local Teacher（本地教師）** - 教授 English learning
+- **IT = International Teacher（國際教師）** - 教授 English learning  
+- **KCFS = Kang Chiao Future Skill** - 獨立課程類型，由專門的 KCFS 教師授課
+- **HT = Head Teacher（年段主任）** - 年段與軌別管理權限
+
 ### 安全與權限（RLS 核心）
-- 角色：admin、head（含 grade, track 權限）、teacher（LT/IT/KCFS）
+- 角色：admin、head（HT，含 grade, track 權限）、teacher（LT/IT/KCFS）
 - 老師：僅能存取自己任課班級的考試與成績
-- Head：可存取自己年段 × 自己軌別
+- Head Teacher（HT）：可存取自己年段 × 自己軌別
 - Admin：全域
 
 ### 測試要求

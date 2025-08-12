@@ -28,7 +28,7 @@ INSERT INTO users (
   full_name = EXCLUDED.full_name,
   role = EXCLUDED.role;
 
--- Test User 2: Head Teacher (Grade 10 Local Track)  
+-- Test User 2: Head Teacher (Grade 1 Local Track)  
 INSERT INTO users (
   id,
   email,
@@ -41,10 +41,10 @@ INSERT INTO users (
 ) VALUES (
   '00000000-0000-0000-0000-000000000002',
   'head@esid.edu',
-  'Head Teacher Grade 10',
+  'Head Teacher Grade 1',
   'head', 
   NULL,
-  10,
+  1,
   'local',
   TRUE
 ) ON CONFLICT (id) DO UPDATE SET
@@ -67,7 +67,7 @@ INSERT INTO users (
 ) VALUES (
   '00000000-0000-0000-0000-000000000003',
   'teacher@esid.edu',
-  'Math Teacher',
+  'English Teacher (LT)',
   'teacher',
   'LT',
   NULL,
@@ -91,20 +91,20 @@ INSERT INTO classes (
 ) VALUES 
   (
     '10000000-0000-0000-0000-000000000001',
-    '10A Local',
-    10,
+    'G1 Trailblazers',
+    1,
     'local', 
-    '00000000-0000-0000-0000-000000000003', -- Math Teacher
-    '2024',
+    '00000000-0000-0000-0000-000000000003', -- English Teacher (LT)
+    '24-25',
     TRUE
   ),
   (
     '10000000-0000-0000-0000-000000000002', 
-    '10B Local',
-    10,
-    'local',
-    '00000000-0000-0000-0000-000000000003', -- Math Teacher
-    '2024',
+    'G1 Discoverers',
+    1,
+    'international',
+    '00000000-0000-0000-0000-000000000003', -- English Teacher (LT)
+    '24-25',
     TRUE
   )
 ON CONFLICT (id) DO UPDATE SET
@@ -121,50 +121,50 @@ INSERT INTO students (
   class_id,
   is_active
 ) VALUES
-  -- Students in Class 10A Local
+  -- Students in G1 Trailblazers (Local)
   (
     '20000000-0000-0000-0000-000000000001',
-    'S2024001',
+    'P001',
     'Alice Chen',
-    10,
+    1,
     'local',
     '10000000-0000-0000-0000-000000000001',
     TRUE
   ),
   (
     '20000000-0000-0000-0000-000000000002',
-    'S2024002', 
+    'P002', 
     'Bob Wang',
-    10,
+    1,
     'local',
     '10000000-0000-0000-0000-000000000001',
     TRUE
   ),
   (
     '20000000-0000-0000-0000-000000000003',
-    'S2024003',
+    'P003',
     'Carol Liu',
-    10,
-    'local',
-    '10000000-0000-0000-0000-000000000001', 
+    1,
+    'international',
+    '10000000-0000-0000-0000-000000000002', 
     TRUE
   ),
-  -- Students in Class 10B Local
+  -- Students in G1 Discoverers (International)
   (
     '20000000-0000-0000-0000-000000000004',
-    'S2024004',
+    'P004',
     'David Lin',
-    10,
-    'local',
+    1,
+    'international',
     '10000000-0000-0000-0000-000000000002',
     TRUE
   ),
   (
     '20000000-0000-0000-0000-000000000005',
-    'S2024005',
+    'P005',
     'Emily Zhang',
-    10,
-    'local',
+    1,
+    'international',
     '10000000-0000-0000-0000-000000000002',
     TRUE
   )
@@ -185,21 +185,21 @@ INSERT INTO exams (
 ) VALUES
   (
     '30000000-0000-0000-0000-000000000001',
-    'Mid-term Math Exam',
-    'First semester mathematics examination',
-    '10000000-0000-0000-0000-000000000001', -- 10A Local
-    '2024-03-15',
+    'Mid-term English Exam',
+    'First semester English examination',
+    '10000000-0000-0000-0000-000000000001', -- G1 Trailblazers
+    '2025-03-15',
     TRUE,
-    '00000000-0000-0000-0000-000000000003' -- Math Teacher
+    '00000000-0000-0000-0000-000000000003' -- English Teacher (LT)
   ),
   (
     '30000000-0000-0000-0000-000000000002',
-    'Mid-term Math Exam',
-    'First semester mathematics examination', 
-    '10000000-0000-0000-0000-000000000002', -- 10B Local
-    '2024-03-15',
+    'Mid-term English Exam',
+    'First semester English examination', 
+    '10000000-0000-0000-0000-000000000002', -- G1 Discoverers
+    '2025-03-15',
     TRUE,
-    '00000000-0000-0000-0000-000000000003' -- Math Teacher
+    '00000000-0000-0000-0000-000000000003' -- English Teacher (LT)
   )
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
@@ -221,7 +221,7 @@ INSERT INTO scores (
     '30000000-0000-0000-0000-000000000001', -- Mid-term 10A
     'FA1',
     85.5,
-    '00000000-0000-0000-0000-000000000003' -- Math Teacher
+    '00000000-0000-0000-0000-000000000003' -- English Teacher (LT)
   ),
   (
     '40000000-0000-0000-0000-000000000002', 
@@ -229,7 +229,7 @@ INSERT INTO scores (
     '30000000-0000-0000-0000-000000000001', -- Mid-term 10A
     'SA1',
     88.0,
-    '00000000-0000-0000-0000-000000000003' -- Math Teacher
+    '00000000-0000-0000-0000-000000000003' -- English Teacher (LT)
   ),
   -- Bob Wang scores
   (
@@ -238,7 +238,7 @@ INSERT INTO scores (
     '30000000-0000-0000-0000-000000000001', -- Mid-term 10A
     'FA1',
     78.5,
-    '00000000-0000-0000-0000-000000000003' -- Math Teacher
+    '00000000-0000-0000-0000-000000000003' -- English Teacher (LT)
   ),
   (
     '40000000-0000-0000-0000-000000000004',
@@ -246,7 +246,7 @@ INSERT INTO scores (
     '30000000-0000-0000-0000-000000000001', -- Mid-term 10A
     'SA1', 
     82.0,
-    '00000000-0000-0000-0000-000000000003' -- Math Teacher
+    '00000000-0000-0000-0000-000000000003' -- English Teacher (LT)
   )
 ON CONFLICT (student_id, exam_id, assessment_code) DO UPDATE SET
   id = EXCLUDED.id,
