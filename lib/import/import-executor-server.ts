@@ -69,31 +69,46 @@ async function createExamNameToUUIDMap(): Promise<Map<string, string>> {
   return new Map(exams?.map(exam => [exam.name, exam.id]) || [])
 }
 
-// Helper to create student+course to course_id mapping
+// Helper to create student+course to course_id mapping (simplified to avoid stack depth issues)
 async function createStudentCourseMap(): Promise<Map<string, string>> {
   const supabase = createClient()
-  const { data: studentCourses, error } = await supabase
-    .from('student_courses')
-    .select(`
-      student_id,
-      course_id,
-      courses!inner(course_type, class_id, classes!inner(name))
-    `)
   
-  if (error) {
-    throw new Error(`Failed to fetch student-course mappings: ${error.message}`)
+  // Simplified query: get student_courses and courses separately, then join in JavaScript
+  const [studentCoursesResult, coursesResult] = await Promise.all([
+    supabase
+      .from('student_courses')
+      .select('student_id, course_id'),
+    supabase
+      .from('courses')
+      .select('id, course_type')
+  ])
+  
+  if (studentCoursesResult.error) {
+    throw new Error(`Failed to fetch student-course mappings: ${studentCoursesResult.error.message}`)
   }
   
+  if (coursesResult.error) {
+    throw new Error(`Failed to fetch courses data: ${coursesResult.error.message}`)
+  }
+  
+  // Create course_id to course_type mapping
+  const courseTypeMap = new Map<string, string>()
+  coursesResult.data?.forEach(course => {
+    courseTypeMap.set(course.id, course.course_type)
+  })
+  
+  // Create final mapping: student_id:course_type -> course_id
   const map = new Map<string, string>()
   
-  studentCourses?.forEach(sc => {
+  studentCoursesResult.data?.forEach(sc => {
     const student_id = sc.student_id
-    const course_type = sc.courses.course_type
     const course_id = sc.course_id
+    const course_type = courseTypeMap.get(course_id)
     
-    // Create mapping key: student_id:course_type
-    const key = `${student_id}:${course_type}`
-    map.set(key, course_id)
+    if (course_type) {
+      const key = `${student_id}:${course_type}`
+      map.set(key, course_id)
+    }
   })
   
   return map
@@ -425,15 +440,36 @@ async function executeScoresImport(
     }
     
     // Create exams for unique exam names if they don't exist
+    // Note: exams table still uses class_id, so we need to get class_id from courses
+    const courseToClassMap = new Map<string, string>()
+    
+    // Get course to class mapping for exam creation
+    const { data: coursesData, error: coursesError } = await supabase
+      .from('courses')
+      .select('id, class_id')
+    
+    if (coursesError) {
+      console.warn('Failed to fetch courses for exam creation:', coursesError.message)
+    } else {
+      coursesData?.forEach(course => {
+        courseToClassMap.set(course.id, course.class_id)
+      })
+    }
+    
     const uniqueExamsByName = new Map<string, any>()
     scoresToInsert.forEach(score => {
-      if (!score.exam_id && score.exam_name) {
-        const key = `${score.course_id}:${score.exam_name}`
-        if (!uniqueExamsByName.has(key)) {
-          uniqueExamsByName.set(key, {
-            course_id: score.course_id,
-            name: score.exam_name
-          })
+      if (!score.exam_id && score.exam_name && score.course_id) {
+        const class_id = courseToClassMap.get(score.course_id)
+        if (class_id) {
+          const key = `${class_id}:${score.exam_name}`
+          if (!uniqueExamsByName.has(key)) {
+            uniqueExamsByName.set(key, {
+              class_id: class_id,
+              name: score.exam_name,
+              description: `Auto-created exam for ${score.exam_name}`,
+              created_by: currentUserUUID
+            })
+          }
         }
       }
     })
@@ -444,10 +480,10 @@ async function executeScoresImport(
       const { data: newExams, error: examError } = await supabase
         .from('exams')
         .upsert(examInserts, {
-          onConflict: 'course_id,name',
+          onConflict: 'class_id,name',
           ignoreDuplicates: false
         })
-        .select('id, name, course_id')
+        .select('id, name, class_id')
       
       if (examError) {
         console.warn('Failed to create exams:', examError.message)
@@ -459,16 +495,18 @@ async function executeScoresImport(
       }
     }
     
-    // Update scores with exam_id
+    // Update scores with exam_id and prepare for insertion
     const finalScoresToInsert = scoresToInsert.map(score => {
       if (!score.exam_id && score.exam_name) {
         score.exam_id = examMap.get(score.exam_name)
       }
       
-      // Remove exam_name from final insert data
-      const { exam_name, ...scoreData } = score
+      // Remove exam_name and course_id from final insert data (course_id not needed for scores table)
+      const { exam_name, course_id, ...scoreData } = score
       return scoreData
-    }).filter(score => score.exam_id) // Only include scores with valid exam_id
+    }).filter((score): score is typeof score & { exam_id: string } => 
+      score.exam_id !== undefined
+    ) // Only include scores with valid exam_id
     
     if (finalScoresToInsert.length === 0) {
       result.warnings.push({
