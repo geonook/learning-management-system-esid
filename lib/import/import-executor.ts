@@ -65,6 +65,35 @@ async function createExamNameToUUIDMap(): Promise<Map<string, string>> {
   return new Map(exams?.map(exam => [exam.name, exam.id]) || [])
 }
 
+// Helper to create student+course to course_id mapping
+async function createStudentCourseMap(): Promise<Map<string, string>> {
+  const { data: studentCourses, error } = await supabase
+    .from('student_courses')
+    .select(`
+      student_id,
+      course_id,
+      courses!inner(course_type, class_id, classes!inner(name))
+    `)
+  
+  if (error) {
+    throw new Error(`Failed to fetch student-course mappings: ${error.message}`)
+  }
+  
+  const map = new Map<string, string>()
+  
+  studentCourses?.forEach(sc => {
+    const student_id = sc.student_id
+    const course_type = sc.courses.course_type
+    const course_id = sc.course_id
+    
+    // Create mapping key: student_id:course_type
+    const key = `${student_id}:${course_type}`
+    map.set(key, course_id)
+  })
+  
+  return map
+}
+
 // Users import executor
 async function executeUsersImport(
   validUsers: UserImport[],
@@ -323,7 +352,7 @@ async function executeStudentsImport(
   }
 }
 
-// Scores import executor
+// Scores import executor  
 async function executeScoresImport(
   validScores: ScoreImport[],
   result: ImportExecutionResult,
@@ -333,44 +362,53 @@ async function executeScoresImport(
   
   try {
     // Get all required mappings
-    const [studentMap, examMap, userMap] = await Promise.all([
+    const [studentMap, examMap, userMap, studentCourseMap] = await Promise.all([
       createStudentIdToUUIDMap(),
-      createExamNameToUUIDMap(),
-      createUserEmailToUUIDMap()
+      createExamNameToUUIDMap(), 
+      createUserEmailToUUIDMap(),
+      createStudentCourseMap()
     ])
     
     // Prepare score data for insertion
     const scoresToInsert = validScores
       .map(score => {
         const studentUUID = studentMap.get(score.student_id)
-        const examUUID = examMap.get(score.exam_name)
         const enteredByUUID = userMap.get(score.entered_by_email) || currentUserUUID
+        
+        // Get course_id from student_id + course_type
+        const studentCourseKey = `${studentUUID}:${score.course_type}`
+        const courseUUID = studentCourseMap.get(studentCourseKey)
         
         // Track missing references
         if (!studentUUID) {
           result.warnings.push({
             stage: 'scores',
             message: `Student not found: ${score.student_id}`,
-            data: { exam_name: score.exam_name, assessment_code: score.assessment_code }
+            data: { course_type: score.course_type, assessment_code: score.assessment_code }
           })
         }
         
-        if (!examUUID) {
+        if (!courseUUID) {
           result.warnings.push({
             stage: 'scores',
-            message: `Exam not found: ${score.exam_name}`,
-            data: { student_id: score.student_id, assessment_code: score.assessment_code }
+            message: `Student not enrolled in course: ${score.student_id} (${score.course_type})`,
+            data: { student_id: score.student_id, course_type: score.course_type, assessment_code: score.assessment_code }
           })
         }
         
+        // Try to find or create exam for this course and exam_name
+        let examUUID = examMap.get(score.exam_name)
+        
         // Only return scores with valid references
-        if (studentUUID && examUUID) {
+        if (studentUUID && courseUUID) {
           return {
             student_id: studentUUID,
-            exam_id: examUUID,
+            course_id: courseUUID,
+            exam_id: examUUID, // May be null, will be handled in insertion
             assessment_code: score.assessment_code,
             score: score.score,
-            entered_by: enteredByUUID
+            entered_by: enteredByUUID,
+            exam_name: score.exam_name // Keep for exam creation if needed
           }
         }
         
@@ -386,10 +424,64 @@ async function executeScoresImport(
       return
     }
     
+    // Create exams for unique exam names if they don't exist
+    const uniqueExamsByName = new Map<string, any>()
+    scoresToInsert.forEach(score => {
+      if (!score.exam_id && score.exam_name) {
+        const key = `${score.course_id}:${score.exam_name}`
+        if (!uniqueExamsByName.has(key)) {
+          uniqueExamsByName.set(key, {
+            course_id: score.course_id,
+            name: score.exam_name
+          })
+        }
+      }
+    })
+    
+    // Insert missing exams
+    const examInserts = Array.from(uniqueExamsByName.values())
+    if (examInserts.length > 0) {
+      const { data: newExams, error: examError } = await supabase
+        .from('exams')
+        .upsert(examInserts, {
+          onConflict: 'course_id,name',
+          ignoreDuplicates: false
+        })
+        .select('id, name, course_id')
+      
+      if (examError) {
+        console.warn('Failed to create exams:', examError.message)
+      } else {
+        // Update examMap with new exams
+        newExams?.forEach(exam => {
+          examMap.set(exam.name, exam.id)
+        })
+      }
+    }
+    
+    // Update scores with exam_id
+    const finalScoresToInsert = scoresToInsert.map(score => {
+      if (!score.exam_id && score.exam_name) {
+        score.exam_id = examMap.get(score.exam_name)
+      }
+      
+      // Remove exam_name from final insert data
+      const { exam_name, ...scoreData } = score
+      return scoreData
+    }).filter(score => score.exam_id) // Only include scores with valid exam_id
+    
+    if (finalScoresToInsert.length === 0) {
+      result.warnings.push({
+        stage: 'scores',
+        message: 'No valid scores to import - could not create or find exams'
+      })
+      return
+    }
+    
     // Insert scores with upsert logic
     const { data: insertedScores, error } = await supabase
       .from('scores')
-      .upsert(scoresToInsert, {
+      .upsert(finalScoresToInsert, {
         onConflict: 'student_id,exam_id,assessment_code',
         ignoreDuplicates: false
       })
@@ -400,7 +492,7 @@ async function executeScoresImport(
     }
     
     result.summary.scores.created = insertedScores?.length || 0
-    result.summary.scores.updated = scoresToInsert.length - (insertedScores?.length || 0)
+    result.summary.scores.updated = finalScoresToInsert.length - (insertedScores?.length || 0)
     
   } catch (error: any) {
     result.summary.scores.errors = validScores.length
@@ -540,11 +632,12 @@ export async function executeDryRun(
   const potentialWarnings: ImportExecutionWarning[] = []
   
   // Get mappings to check for missing references
-  const [userMap, classMap, studentMap, examMap] = await Promise.all([
+  const [userMap, classMap, studentMap, examMap, studentCourseMap] = await Promise.all([
     createUserEmailToUUIDMap(),
     createClassNameToUUIDMap(),
     createStudentIdToUUIDMap(),
-    createExamNameToUUIDMap()
+    createExamNameToUUIDMap(),
+    createStudentCourseMap()
   ])
   
   // Check classes for missing teachers
@@ -594,24 +687,30 @@ export async function executeDryRun(
     }
   }
   
-  // Check scores for missing references
+  // Check scores for missing references  
   if (validationResults.scores?.valid) {
     for (const score of validationResults.scores.valid) {
-      if (!studentMap.has(score.student_id)) {
+      const studentUUID = studentMap.get(score.student_id)
+      
+      if (!studentUUID) {
         potentialWarnings.push({
           stage: 'scores',
           message: `Student not found: ${score.student_id}`,
-          data: { exam_name: score.exam_name }
+          data: { course_type: score.course_type, exam_name: score.exam_name }
         })
+      } else {
+        // Check if student is enrolled in the specified course
+        const studentCourseKey = `${studentUUID}:${score.course_type}`
+        if (!studentCourseMap.has(studentCourseKey)) {
+          potentialWarnings.push({
+            stage: 'scores',
+            message: `Student not enrolled in course: ${score.student_id} (${score.course_type})`,
+            data: { student_id: score.student_id, course_type: score.course_type }
+          })
+        }
       }
       
-      if (!examMap.has(score.exam_name)) {
-        potentialWarnings.push({
-          stage: 'scores',
-          message: `Exam not found: ${score.exam_name}`,
-          data: { student_id: score.student_id }
-        })
-      }
+      // Note: Exams will be auto-created if missing, so no warning needed for missing exams
     }
   }
   
