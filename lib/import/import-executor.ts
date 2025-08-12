@@ -149,36 +149,21 @@ async function executeClassesImport(
   if (validClasses.length === 0) return
   
   try {
-    // Get user email to UUID mapping
-    const userMap = await createUserEmailToUUIDMap()
-    
-    // Prepare class data for insertion
-    const classesToInsert = validClasses.map(cls => {
-      const teacherUUID = cls.teacher_email ? userMap.get(cls.teacher_email) : null
-      
-      if (cls.teacher_email && !teacherUUID) {
-        result.warnings.push({
-          stage: 'classes',
-          message: `Teacher not found for email: ${cls.teacher_email}`,
-          data: { class_name: cls.name }
-        })
-      }
-      
-      return {
-        name: cls.name,
-        grade: cls.grade,
-        track: cls.track,
-        teacher_id: teacherUUID,
-        academic_year: cls.academic_year,
-        is_active: cls.is_active
-      }
-    })
+    // Prepare class data for insertion (no teacher assignment at class level)
+    const classesToInsert = validClasses.map(cls => ({
+      name: cls.name,
+      grade: cls.grade,
+      level: cls.level,
+      track: cls.track,
+      academic_year: cls.academic_year,
+      is_active: cls.is_active
+    }))
     
     // Insert classes with upsert logic
     const { data: insertedClasses, error } = await supabase
       .from('classes')
       .upsert(classesToInsert, {
-        onConflict: 'name,grade,track,academic_year',
+        onConflict: 'name,grade,level,track,academic_year',
         ignoreDuplicates: false
       })
       .select('id, name')
@@ -640,18 +625,8 @@ export async function executeDryRun(
     createStudentCourseMap()
   ])
   
-  // Check classes for missing teachers
-  if (validationResults.classes?.valid) {
-    for (const cls of validationResults.classes.valid) {
-      if (cls.teacher_email && !userMap.has(cls.teacher_email)) {
-        potentialWarnings.push({
-          stage: 'classes',
-          message: `Teacher not found: ${cls.teacher_email}`,
-          data: { class_name: cls.name }
-        })
-      }
-    }
-  }
+  // Classes don't need teacher validation in new architecture
+  // Teachers are assigned at the course level
   
   // Check courses for missing references
   if (validationResults.courses?.valid) {
