@@ -36,9 +36,17 @@ ERROR: 23514: check constraint "users_grade_check" of relation "users" is violat
 
 **資料處理策略**：
 - **users 表**：將違反約束的 grade 設為 NULL
-- **classes 表**：刪除中學制班級及相關資料
+- **classes 表**：刪除中學制班級及相關資料（按外鍵依賴順序）
 - **students 表**：刪除中學制學生及相關資料  
 - **assessment_titles 表**：將違反約束的 grade 設為 NULL
+
+**⚠️ 外鍵依賴處理順序**：
+1. assessment_titles (引用 classes.id)
+2. scores (引用 students.id)
+3. student_courses (引用 students.id 和 courses.id)
+4. courses (引用 classes.id)
+5. students (引用 classes.id)
+6. classes (主表)
 
 ## 📋 執行步驟
 

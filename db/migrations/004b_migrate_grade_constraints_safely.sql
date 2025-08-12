@@ -37,11 +37,12 @@ BEGIN
     END IF;
 END $$;
 
--- 1b. Clean classes table conflicts  
+-- 1b. Clean classes table conflicts (with proper foreign key handling)
 SELECT 'Cleaning classes table conflicts...' as action;
 DO $$
 DECLARE
     conflict_count INTEGER;
+    classes_to_delete INTEGER[];
 BEGIN
     -- Count conflicts first
     SELECT COUNT(*) INTO conflict_count 
@@ -51,75 +52,104 @@ BEGIN
     RAISE NOTICE 'Found % conflicting records in classes table', conflict_count;
     
     IF conflict_count > 0 THEN
-        -- For classes, we need to decide: delete or transform
-        -- Option 1: Delete conflicting classes (and related data)
+        -- Get list of class IDs to delete
+        SELECT ARRAY(SELECT id FROM classes WHERE grade < 1 OR grade > 6) INTO classes_to_delete;
+        
+        -- Delete in proper order to respect foreign key constraints
+        
+        -- 1. Delete from assessment_titles (references classes.id)
+        DELETE FROM assessment_titles WHERE class_id = ANY(classes_to_delete);
+        RAISE NOTICE 'Deleted assessment_titles records for conflicting classes';
+        
+        -- 2. Delete from scores (references students.id, indirectly linked to classes)
+        DELETE FROM scores WHERE student_id IN (
+            SELECT id FROM students WHERE class_id = ANY(classes_to_delete)
+        );
+        RAISE NOTICE 'Deleted scores records for conflicting classes';
+        
+        -- 3. Delete from student_courses (references students.id and courses.id)
         DELETE FROM student_courses WHERE course_id IN (
-            SELECT c.id FROM courses c 
-            JOIN classes cl ON c.class_id = cl.id 
-            WHERE cl.grade < 1 OR cl.grade > 6
+            SELECT c.id FROM courses c WHERE c.class_id = ANY(classes_to_delete)
         );
-        DELETE FROM courses WHERE class_id IN (
-            SELECT id FROM classes WHERE grade < 1 OR grade > 6
+        DELETE FROM student_courses WHERE student_id IN (
+            SELECT id FROM students WHERE class_id = ANY(classes_to_delete)
         );
-        DELETE FROM students WHERE class_id IN (
-            SELECT id FROM classes WHERE grade < 1 OR grade > 6
-        );
+        RAISE NOTICE 'Deleted student_courses records for conflicting classes';
+        
+        -- 4. Delete from courses (references classes.id)
+        DELETE FROM courses WHERE class_id = ANY(classes_to_delete);
+        RAISE NOTICE 'Deleted courses records for conflicting classes';
+        
+        -- 5. Delete from students (references classes.id)
+        DELETE FROM students WHERE class_id = ANY(classes_to_delete);
+        RAISE NOTICE 'Deleted students records for conflicting classes';
+        
+        -- 6. Finally delete from classes (parent table)
         DELETE FROM classes WHERE grade < 1 OR grade > 6;
         
-        RAISE NOTICE 'Deleted % conflicting classes and related data', conflict_count;
+        RAISE NOTICE 'Deleted % conflicting classes and all related data', conflict_count;
     ELSE
         RAISE NOTICE 'No conflicting records found in classes table';
     END IF;
 END $$;
 
--- 1c. Clean students table conflicts
-SELECT 'Cleaning students table conflicts...' as action;
+-- 1c. Clean remaining students table conflicts (should be minimal after classes cleanup)
+SELECT 'Cleaning remaining students table conflicts...' as action;
 DO $$
 DECLARE
     conflict_count INTEGER;
 BEGIN
-    -- Count conflicts first
+    -- Count conflicts first (should be 0 or very few after classes cleanup)
     SELECT COUNT(*) INTO conflict_count 
     FROM students 
     WHERE grade < 1 OR grade > 6;
     
-    RAISE NOTICE 'Found % conflicting records in students table', conflict_count;
+    RAISE NOTICE 'Found % remaining conflicting records in students table', conflict_count;
     
     IF conflict_count > 0 THEN
-        -- Delete conflicting student records
+        -- Clean up any remaining orphaned student records
+        -- (These would be students not linked to classes, or missed in previous cleanup)
+        
+        -- Delete from dependent tables first
+        DELETE FROM scores WHERE student_id IN (
+            SELECT id FROM students WHERE grade < 1 OR grade > 6
+        );
         DELETE FROM student_courses WHERE student_id IN (
             SELECT id FROM students WHERE grade < 1 OR grade > 6
         );
+        
+        -- Finally delete the students
         DELETE FROM students WHERE grade < 1 OR grade > 6;
         
-        RAISE NOTICE 'Deleted % conflicting students and related data', conflict_count;
+        RAISE NOTICE 'Deleted % remaining conflicting students and related data', conflict_count;
     ELSE
-        RAISE NOTICE 'No conflicting records found in students table';
+        RAISE NOTICE 'No remaining conflicting records found in students table';
     END IF;
 END $$;
 
--- 1d. Clean assessment_titles table conflicts
-SELECT 'Cleaning assessment_titles table conflicts...' as action;
+-- 1d. Clean remaining assessment_titles table conflicts (non-class-specific ones)
+SELECT 'Cleaning remaining assessment_titles table conflicts...' as action;
 DO $$
 DECLARE
     conflict_count INTEGER;
 BEGIN
-    -- Count conflicts first
+    -- Count remaining conflicts (after class-specific ones were deleted in step 1b)
     SELECT COUNT(*) INTO conflict_count 
     FROM assessment_titles 
     WHERE grade IS NOT NULL AND (grade < 1 OR grade > 6);
     
-    RAISE NOTICE 'Found % conflicting records in assessment_titles table', conflict_count;
+    RAISE NOTICE 'Found % remaining conflicting records in assessment_titles table', conflict_count;
     
     IF conflict_count > 0 THEN
-        -- Set conflicting grades to NULL (safe approach)
+        -- These would be global assessment titles not tied to specific classes
+        -- Set conflicting grades to NULL (safe approach for global settings)
         UPDATE assessment_titles 
         SET grade = NULL 
         WHERE grade IS NOT NULL AND (grade < 1 OR grade > 6);
         
         RAISE NOTICE 'Updated % assessment_titles records: set conflicting grades to NULL', conflict_count;
     ELSE
-        RAISE NOTICE 'No conflicting records found in assessment_titles table';
+        RAISE NOTICE 'No remaining conflicting records found in assessment_titles table';
     END IF;
 END $$;
 
