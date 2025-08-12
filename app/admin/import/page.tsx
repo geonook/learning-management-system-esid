@@ -20,7 +20,8 @@ import {
   Users,
   GraduationCap,
   UserCheck,
-  BarChart
+  BarChart,
+  BookOpen
 } from "lucide-react"
 import { useAuth } from "@/lib/supabase/auth-context"
 import { useAppStore } from "@/lib/store"
