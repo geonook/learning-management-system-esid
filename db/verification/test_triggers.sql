@@ -20,10 +20,10 @@ DELETE FROM classes WHERE name LIKE 'TEST_%';
 
 -- 1. Test automatic course creation when creating a class
 SELECT '1. Testing automatic course creation trigger...' as step;
-SELECT 'Creating test class: TEST_G7_Explorers' as action;
+SELECT 'Creating test class: TEST_G3_Explorers (Primary School)' as action;
 
 INSERT INTO classes (name, grade, track, academic_year, is_active)
-VALUES ('TEST_G7_Explorers', 7, 'local', '24-25', true);
+VALUES ('TEST_G3_Explorers', 3, 'local', '24-25', true);
 
 SELECT 'Checking courses were automatically created:' as action;
 SELECT 
@@ -34,7 +34,7 @@ SELECT
     c.is_active
 FROM courses c
 JOIN classes cl ON c.class_id = cl.id
-WHERE cl.name = 'TEST_G7_Explorers'
+WHERE cl.name = 'TEST_G3_Explorers'
 ORDER BY c.course_type;
 
 
@@ -47,13 +47,13 @@ DO $$
 DECLARE
     test_class_id UUID;
 BEGIN
-    SELECT id INTO test_class_id FROM classes WHERE name = 'TEST_G7_Explorers';
+    SELECT id INTO test_class_id FROM classes WHERE name = 'TEST_G3_Explorers';
     
     -- Insert test students
     INSERT INTO students (student_id, full_name, grade, track, class_id, is_active)
     VALUES 
-        ('TEST_001', 'Test Student One', 7, 'local', test_class_id, true),
-        ('TEST_002', 'Test Student Two', 7, 'local', test_class_id, true);
+        ('TEST_001', 'Test Student One', 3, 'local', test_class_id, true),
+        ('TEST_002', 'Test Student Two', 3, 'local', test_class_id, true);
 END $$;
 
 SELECT 'Checking students were automatically enrolled in all courses:' as action;
@@ -76,7 +76,7 @@ ORDER BY s.student_id, c.course_type;
 -- 3. Test course_details view
 SELECT '3. Testing course_details view with test data...' as step;
 SELECT * FROM course_details 
-WHERE class_name = 'TEST_G7_Explorers'
+WHERE class_name = 'TEST_G3_Explorers'
 ORDER BY course_type;
 
 
@@ -95,10 +95,10 @@ DO $$
 DECLARE
     test_class_id UUID;
 BEGIN
-    SELECT id INTO test_class_id FROM classes WHERE name = 'TEST_G7_Explorers';
+    SELECT id INTO test_class_id FROM classes WHERE name = 'TEST_G3_Explorers';
     
     INSERT INTO students (student_id, full_name, grade, track, class_id, is_active)
-    VALUES ('TEST_003', 'Test Student Three', 7, 'local', test_class_id, true);
+    VALUES ('TEST_003', 'Test Student Three', 3, 'local', test_class_id, true);
 END $$;
 
 SELECT 'Checking late student was enrolled in all existing courses:' as action;
