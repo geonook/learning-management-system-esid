@@ -82,7 +82,7 @@ async function performBatchInsert<T>(
                 console.warn(`Individual ${stageName} insert failed after ${MAX_RETRIES} attempts:`, individualError.message)
                 totalErrors++
                 result.errors.push({
-                  stage: stageName,
+                  stage: stageName as any,
                   operation: 'create',
                   data: record,
                   error: individualError.message
@@ -107,7 +107,7 @@ async function performBatchInsert<T>(
       console.error(`Fatal error in batch ${batchNumber}:`, batchError.message)
       totalErrors += batch.length
       result.errors.push({
-        stage: stageName,
+        stage: stageName as any,
         operation: 'create',
         data: { batchNumber, batchSize: batch.length },
         error: batchError.message
@@ -128,6 +128,7 @@ class ReferenceResolver {
   private classNameToId = new Map<string, string>()
   private studentIdToId = new Map<string, string>()
   private examNameToId = new Map<string, string>()
+  private courseKeyToId = new Map<string, string>() // "student_id|course_type" -> course_id
   
   async initialize(): Promise<void> {
     const supabase = createServiceRoleClient()
@@ -169,7 +170,43 @@ class ReferenceResolver {
         }
       })
       
-      console.log(`Reference resolver initialized: ${this.userEmailToId.size} users, ${this.classNameToId.size} classes, ${this.studentIdToId.size} students`)
+      // Load course mappings (student_id + course_type -> course_id)
+      const { data: courses } = await supabase
+        .from('course_details')
+        .select('id, class_id, course_type')
+        .limit(1000)
+      
+      // Need to also get students for each course
+      if (courses) {
+        for (const course of courses) {
+          const { data: courseStudents } = await supabase
+            .from('students')
+            .select('student_id')
+            .eq('class_id', course.class_id)
+          
+          courseStudents?.forEach(student => {
+            if (student.student_id) {
+              const courseKey = `${student.student_id}|${course.course_type}`
+              this.courseKeyToId.set(courseKey, course.id)
+            }
+          })
+        }
+      }
+      
+      // Load exam mappings
+      const { data: exams } = await supabase
+        .from('exams')
+        .select('id, name, course_id')
+        .limit(1000)
+      
+      exams?.forEach(exam => {
+        if (exam.name && exam.id) {
+          // Use exam name as key
+          this.examNameToId.set(exam.name, exam.id)
+        }
+      })
+      
+      console.log(`Reference resolver initialized: ${this.userEmailToId.size} users, ${this.classNameToId.size} classes, ${this.studentIdToId.size} students, ${this.courseKeyToId.size} courses, ${this.examNameToId.size} exams`)
       
     } catch (error: any) {
       console.warn('Reference resolver initialization failed:', error.message)
@@ -191,6 +228,15 @@ class ReferenceResolver {
   
   getExamId(name: string): string | null {
     return this.examNameToId.get(name) || null
+  }
+  
+  getCourseId(studentId: string, courseType: string): string | null {
+    const courseKey = `${studentId}|${courseType}`
+    return this.courseKeyToId.get(courseKey) || null
+  }
+  
+  addExamMapping(examName: string, examId: string): void {
+    this.examNameToId.set(examName, examId)
   }
   
   // Refresh mappings after each stage (for subsequent stages)
@@ -432,7 +478,7 @@ export async function executeStudentsImport(
 }
 
 /**
- * Stage 5: Scores Import (More Complex - Future Implementation)
+ * Stage 5: Scores Import (Complete Implementation)
  */
 export async function executeScoresImport(
   validScores: ScoreImport[],
@@ -441,15 +487,17 @@ export async function executeScoresImport(
 ): Promise<void> {
   if (validScores.length === 0) return
   
+  const supabase = createServiceRoleClient()
+  
   // Refresh references to include newly created students and courses
   await resolver.refresh()
   
-  const transformScore = (score: ScoreImport) => {
-    const studentId = resolver.getStudentId(score.student_id)
+  const transformScore = async (score: ScoreImport) => {
+    const studentUUID = resolver.getStudentId(score.student_id)
     const enteredById = resolver.getUserId(score.entered_by_email)
     
     // Track missing references
-    if (!studentId) {
+    if (!studentUUID) {
       result.warnings.push({
         stage: 'scores',
         message: `Student not found: ${score.student_id}`,
@@ -475,12 +523,59 @@ export async function executeScoresImport(
       return null
     }
     
-    // Find the course_id and exam_id - for now, we'll need to create or find them
-    // This is a simplified implementation that assumes exams are auto-created
+    // Find course_id from student enrollment
+    const courseId = resolver.getCourseId(score.student_id, score.course_type)
+    
+    if (!courseId) {
+      result.warnings.push({
+        stage: 'scores',
+        message: `Course not found for student: ${score.student_id} in ${score.course_type}`,
+        data: { 
+          exam_name: score.exam_name,
+          assessment_code: score.assessment_code 
+        }
+      })
+      return null
+    }
+    
+    // Find or create exam
+    let examId = resolver.getExamId(score.exam_name)
+    
+    if (!examId) {
+      // Create exam if it doesn't exist
+      const { data: newExam, error: examError } = await supabase
+        .from('exams')
+        .insert({
+          name: score.exam_name,
+          course_id: courseId,
+          exam_date: new Date().toISOString().split('T')[0], // Default to today
+          is_active: true
+        })
+        .select('id')
+        .single()
+      
+      if (examError || !newExam) {
+        result.warnings.push({
+          stage: 'scores',
+          message: `Failed to create exam: ${score.exam_name}`,
+          data: { 
+            student_id: score.student_id,
+            course_type: score.course_type,
+            error: examError?.message 
+          }
+        })
+        return null
+      }
+      
+      examId = newExam.id
+      // Update resolver cache
+      resolver.addExamMapping(score.exam_name, examId)
+    }
+    
     return {
-      student_id: studentId,
-      // course_id: will need to be resolved from student + course_type
-      // exam_id: will need to be resolved from exam_name + course
+      student_id: studentUUID,
+      course_id: courseId,
+      exam_id: examId,
       assessment_code: score.assessment_code,
       score: score.score,
       entered_by: enteredById,
@@ -490,22 +585,74 @@ export async function executeScoresImport(
     }
   }
   
-  // For now, add a warning that full implementation is needed
-  result.warnings.push({
-    stage: 'scores',
-    message: `Scores import partially implemented - need to resolve course_id and exam_id mappings`,
-    data: { requested_count: validScores.length }
-  })
+  // Process scores with async transformation
+  let totalCreated = 0
+  let totalErrors = 0
   
-  const stats = await performBatchInsert(
-    'scores',
-    validScores,
-    transformScore,
-    'scores',
-    result
-  )
+  console.log(`Starting scores import: ${validScores.length} records`)
   
-  result.summary.scores = stats
+  for (let i = 0; i < validScores.length; i += BATCH_SIZE) {
+    const batch = validScores.slice(i, i + BATCH_SIZE)
+    const batchNumber = Math.floor(i / BATCH_SIZE) + 1
+    const totalBatches = Math.ceil(validScores.length / BATCH_SIZE)
+    
+    console.log(`Processing scores batch ${batchNumber}/${totalBatches}: ${batch.length} records`)
+    
+    try {
+      // Transform records with async operations
+      const transformedBatch = []
+      for (const score of batch) {
+        const transformed = await transformScore(score)
+        if (transformed) {
+          transformedBatch.push(transformed)
+        }
+      }
+      
+      if (transformedBatch.length === 0) {
+        console.log(`Batch ${batchNumber} skipped: no valid records after transformation`)
+        continue
+      }
+      
+      // Use upsert to handle duplicate scores
+      const { data, error } = await supabase
+        .from('scores')
+        .upsert(transformedBatch, {
+          onConflict: 'student_id,course_id,exam_id,assessment_code'
+        })
+        .select('id')
+      
+      if (error) {
+        console.warn(`Batch ${batchNumber} failed:`, error.message)
+        totalErrors += transformedBatch.length
+        result.errors.push({
+          stage: 'scores',
+          operation: 'create',
+          data: { batchNumber, batchSize: transformedBatch.length },
+          error: error.message
+        })
+      } else {
+        const insertedCount = data?.length || 0
+        totalCreated += insertedCount
+        console.log(`Batch ${batchNumber} succeeded: ${insertedCount} records`)
+      }
+      
+      // Small delay between batches
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+    } catch (batchError: any) {
+      console.error(`Fatal error in scores batch ${batchNumber}:`, batchError.message)
+      totalErrors += batch.length
+      result.errors.push({
+        stage: 'scores',
+        operation: 'create',
+        data: { batchNumber, batchSize: batch.length },
+        error: batchError.message
+      })
+    }
+  }
+  
+  console.log(`Scores import completed: ${totalCreated} created, ${totalErrors} errors`)
+  result.summary.scores = { created: totalCreated, updated: 0, errors: totalErrors }
 }
 
 /**

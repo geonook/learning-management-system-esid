@@ -116,14 +116,14 @@ export interface ImportExecutionResult {
 }
 
 export interface ImportExecutionError {
-  stage: 'users' | 'classes' | 'courses' | 'students' | 'scores'
-  operation: 'create' | 'update'
+  stage: 'users' | 'classes' | 'courses' | 'students' | 'scores' | 'system'
+  operation: 'create' | 'update' | 'import'
   data: Record<string, any>
   error: string
 }
 
 export interface ImportExecutionWarning {
-  stage: 'users' | 'classes' | 'courses' | 'students' | 'scores'
+  stage: 'users' | 'classes' | 'courses' | 'students' | 'scores' | 'system'
   message: string
   data?: Record<string, any>
 }
