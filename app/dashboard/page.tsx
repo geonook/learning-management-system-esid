@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
+import AuthGuard from "@/components/auth/auth-guard"
 import FilterBar from "@/components/ui/filter-bar"
 import StatCard from "@/components/ui/stat-card"
 import ChartCard from "@/components/ui/chart-card"
@@ -34,6 +35,7 @@ export default function TeacherDashboard() {
   const alerts = useMemo(() => getRecentAlerts(), [])
 
   return (
+    <AuthGuard requiredRoles={['admin', 'head', 'teacher']}>
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Teacher Dashboard</h1>
@@ -130,5 +132,6 @@ export default function TeacherDashboard() {
         </Card>
       </div>
     </div>
+    </AuthGuard>
   )
 }

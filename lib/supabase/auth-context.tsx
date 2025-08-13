@@ -76,8 +76,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     // Get initial session
     const getSession = async () => {
-      // In development mode, ALWAYS use mock admin user (force override)
-      if (process.env.NODE_ENV === 'development') {
+      // Check for environment variable to enable mock auth
+      const useMockAuth = process.env.NEXT_PUBLIC_USE_MOCK_AUTH === 'true'
+      
+      if (useMockAuth && process.env.NODE_ENV === 'development') {
         const mockUser = {
           id: 'dev-admin-user-id',
           email: 'admin@dev.local',
@@ -99,13 +101,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           teacher_type: null,
           full_name: 'Development Admin'
         })
-        setIsDevelopmentMockActive(true) // Flag to prevent auth state override
-        console.log('Development mode: FORCED mock admin user (overriding any real session)')
+        setIsDevelopmentMockActive(true)
+        console.log('Development mode: Using mock admin user')
         setLoading(false)
         return
       }
       
-      // Production mode: use real session
+      // Real authentication: use actual Supabase session
       const { data: { session } } = await supabase.auth.getSession()
       
       if (session?.user) {
@@ -124,45 +126,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email)
         
-        // In development mode with mock active, ignore all auth state changes
-        if (process.env.NODE_ENV === 'development' && isDevelopmentMockActive) {
+        const useMockAuth = process.env.NEXT_PUBLIC_USE_MOCK_AUTH === 'true'
+        
+        // If mock auth is active, ignore real auth state changes
+        if (useMockAuth && process.env.NODE_ENV === 'development' && isDevelopmentMockActive) {
           console.log('Development mode: Ignoring auth state change - mock admin user is active')
           return
         }
         
         if (session?.user) {
-          // Only process real sessions in production mode
-          if (process.env.NODE_ENV !== 'development') {
-            setUser(session.user)
-            const permissions = await fetchUserPermissions(session.user.id)
-            setUserPermissions(permissions)
-          }
-        } else if (process.env.NODE_ENV === 'development') {
-          // Keep mock user in development if no real session
-          if (!user && !isDevelopmentMockActive) {
-            const mockUser = {
-              id: 'dev-admin-user-id',
-              email: 'admin@dev.local',
-              aud: 'authenticated',
-              role: 'authenticated',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-              app_metadata: {},
-              user_metadata: {},
-              identities: []
-            } as any
-            
-            setUser(mockUser)
-            setUserPermissions({
-              userId: 'dev-admin-user-id',
-              role: 'admin',
-              grade: null,
-              track: null,
-              teacher_type: null,
-              full_name: 'Development Admin'
-            })
-            setIsDevelopmentMockActive(true)
-          }
+          setUser(session.user)
+          const permissions = await fetchUserPermissions(session.user.id)
+          setUserPermissions(permissions)
         } else {
           setUser(null)
           setUserPermissions(null)

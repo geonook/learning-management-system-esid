@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { useAppStore } from "@/lib/store"
+import { useAuth } from "@/lib/supabase/auth-context"
 import { 
   Home, 
   Users, 
@@ -77,6 +78,7 @@ export default function Sidebar({ className }: SidebarProps) {
   const [expandedItem, setExpandedItem] = useState<string | null>(null)
   const pathname = usePathname()
   const role = useAppStore((s) => s.role)
+  const { signOut } = useAuth()
 
   const filteredItems = sidebarItems.filter(item => 
     !role || item.roles.includes(role)
@@ -187,9 +189,13 @@ export default function Sidebar({ className }: SidebarProps) {
             "w-full gap-3",
             collapsed ? "h-8 w-8 p-0" : "justify-start"
           )}
-          onClick={() => {
-            // Handle logout
-            console.log("Logout clicked")
+          onClick={async () => {
+            try {
+              await signOut()
+              window.location.href = '/auth/login'
+            } catch (error) {
+              console.error('Logout error:', error)
+            }
           }}
         >
           <LogOut className="h-4 w-4" />
