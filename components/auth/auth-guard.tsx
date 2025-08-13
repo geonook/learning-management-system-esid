@@ -44,14 +44,23 @@ export function AuthGuard({
     )
   }
 
-  // Show nothing while redirecting
+  // Critical: If no user or permissions after loading is done, don't render anything
+  // The useEffect above will handle the redirect
   if (!user || !userPermissions) {
-    return null
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    )
   }
 
-  // Check role permissions
+  // Check role permissions - if user doesn't have required role, don't render
   if (requiredRoles.length > 0 && !requiredRoles.includes(userPermissions.role)) {
-    return null
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    )
   }
 
   // User is authenticated and authorized

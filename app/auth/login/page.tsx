@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/lib/supabase/client"
+import { LoadingSpinner } from "@/components/ui/loading-spinner"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -29,16 +30,27 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      // Real Supabase authentication
-      const { data, error } = await supabase.auth.signInWithPassword({
+      console.log('嘗試登入:', formData.email)
+      
+      // Add timeout to catch slow connections
+      const loginPromise = supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       })
+      
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('登入請求超時（超過 10 秒）')), 10000)
+      )
+      
+      const { data, error } = await Promise.race([loginPromise, timeoutPromise]) as any
 
       if (error) {
+        console.error('登入錯誤:', error)
         toast({
-          title: "Login Failed",
-          description: error.message,
+          title: "登入失敗",
+          description: error.message === 'Invalid login credentials' 
+            ? '電子郵件或密碼錯誤，請檢查後重試'
+            : error.message,
           variant: "destructive"
         })
         setLoading(false)
@@ -64,19 +76,20 @@ export default function LoginPage() {
           return
         }
 
+        console.log('登入成功:', userData)
         toast({
-          title: "Login Successful",
-          description: `Welcome back, ${userData.full_name}!`
+          title: "登入成功",
+          description: `歡迎回來，${userData.full_name}！`
         })
 
         // Redirect to dashboard directly (skip role selection)
         router.push("/dashboard")
       }
     } catch (error: any) {
-      console.error('Login error:', error)
+      console.error('登入例外錯誤:', error)
       toast({
-        title: "Login Error",
-        description: "An unexpected error occurred. Please try again.",
+        title: "登入錯誤",
+        description: error.message || "發生未預期的錯誤，請重試。",
         variant: "destructive"
       })
     } finally {
@@ -178,7 +191,14 @@ export default function LoginPage() {
                 className="w-full"
                 disabled={loading}
               >
-                {loading ? "Signing in..." : "Sign In"}
+                {loading ? (
+                  <>
+                    <LoadingSpinner size="sm" className="mr-2" />
+                    登入中...
+                  </>
+                ) : (
+                  "登入"
+                )}
               </Button>
             </form>
 
