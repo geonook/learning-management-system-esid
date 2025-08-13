@@ -181,18 +181,64 @@ export async function getCourseStudentsWithScores(courseId: string) {
   }))
 }
 
-// Update score with course_id
-export async function upsertScoreWithCourse(scoreData: ScoreInsert & { course_id: string }) {
+// Update score with course_id (simplified for direct course access)
+export async function upsertScoreWithCourse(scoreData: { 
+  student_id: string
+  course_id: string 
+  assessment_code: string
+  score: number
+  entered_by: string
+  entered_at: string
+}) {
+  // First, find or create a default exam for this course
+  let examId = null
+  const defaultExamName = `${scoreData.assessment_code} Assessment`
+  
+  const { data: existingExam } = await supabase
+    .from('exams')
+    .select('id')
+    .eq('course_id', scoreData.course_id)
+    .eq('name', defaultExamName)
+    .single()
+  
+  if (existingExam) {
+    examId = existingExam.id
+  } else {
+    // Create a default exam
+    const { data: newExam, error: examError } = await supabase
+      .from('exams')
+      .insert({
+        name: defaultExamName,
+        course_id: scoreData.course_id,
+        exam_date: new Date().toISOString().split('T')[0],
+        is_active: true
+      })
+      .select('id')
+      .single()
+    
+    if (examError) {
+      console.error('Error creating default exam:', examError)
+      throw new Error(`Failed to create exam: ${examError.message}`)
+    }
+    
+    examId = newExam.id
+  }
+
   const { data, error } = await supabase
     .from('scores')
     .upsert(
       {
-        ...scoreData,
+        student_id: scoreData.student_id,
+        exam_id: examId,
+        assessment_code: scoreData.assessment_code,
+        score: scoreData.score,
+        entered_by: scoreData.entered_by,
+        entered_at: scoreData.entered_at,
         updated_at: new Date().toISOString(),
         updated_by: scoreData.entered_by
       },
       {
-        onConflict: 'student_id,course_id,assessment_code'
+        onConflict: 'student_id,exam_id,assessment_code'
       }
     )
     .select('*')

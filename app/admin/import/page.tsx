@@ -147,8 +147,8 @@ export default function AdminImportPage() {
       ...prev,
       [stage]: {
         ...prev[stage],
-        upload: { file, status: 'validating' }
-      }
+        upload: { file, status: 'validating' as const }
+      } as ImportStage
     }))
     
     try {
@@ -182,9 +182,9 @@ export default function AdminImportPage() {
           upload: {
             file,
             validation,
-            status: validation.summary.invalid > 0 ? 'invalid' : 'valid'
+            status: validation.summary.invalid > 0 ? 'invalid' as const : 'valid' as const
           }
-        }
+        } as ImportStage
       }))
       
     } catch (error: any) {
@@ -193,8 +193,8 @@ export default function AdminImportPage() {
         ...prev,
         [stage]: {
           ...prev[stage],
-          upload: { file, status: 'invalid' }
-        }
+          upload: { file, status: 'invalid' as const }
+        } as ImportStage
       }))
     }
   }
@@ -205,8 +205,8 @@ export default function AdminImportPage() {
       ...prev,
       [stage]: {
         ...prev[stage],
-        upload: { status: 'idle' }
-      }
+        upload: { status: 'idle' as const }
+      } as ImportStage
     }))
   }
   
@@ -253,7 +253,7 @@ export default function AdminImportPage() {
   const getImportSummary = () => {
     const validations = Object.values(importStages)
       .map(stage => stage.upload.validation)
-      .filter(Boolean)
+      .filter((v): v is ImportValidationResult<any> => Boolean(v))
     
     if (validations.length === 0) return null
     return getValidationSummary(validations)

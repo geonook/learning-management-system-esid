@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { getTeacherCourses, getCourseStudentsWithScores, upsertScoreWithCourse, type TeacherCourse } from "./api/scores"
 import { useAuth } from "./supabase/auth-context"
 
@@ -21,31 +21,31 @@ export function useTeacherCourses() {
   const [error, setError] = useState<string | null>(null)
   const { user } = useAuth()
 
-  useEffect(() => {
-    async function fetchCourses() {
-      if (!user) {
-        setLoading(false)
-        return
-      }
-
-      try {
-        setLoading(true)
-        const teacherCourses = await getTeacherCourses()
-        setCourses(teacherCourses)
-        setError(null)
-      } catch (err: any) {
-        console.error('Error fetching teacher courses:', err)
-        setError(err.message)
-        setCourses([])
-      } finally {
-        setLoading(false)
-      }
+  const fetchCourses = useCallback(async () => {
+    if (!user) {
+      setLoading(false)
+      return
     }
 
-    fetchCourses()
+    try {
+      setLoading(true)
+      const teacherCourses = await getTeacherCourses()
+      setCourses(teacherCourses)
+      setError(null)
+    } catch (err: any) {
+      console.error('Error fetching teacher courses:', err)
+      setError(err.message)
+      setCourses([])
+    } finally {
+      setLoading(false)
+    }
   }, [user])
 
-  return { courses, loading, error, refetch: () => fetchCourses() }
+  useEffect(() => {
+    fetchCourses()
+  }, [fetchCourses])
+
+  return { courses, loading, error, refetch: fetchCourses }
 }
 
 // Course-based scores hook (replaces useScoresTable)
