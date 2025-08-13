@@ -1,6 +1,10 @@
 /**
  * Teacher-focused API functions using safe database views
  * Implements application-level permission filtering to avoid RLS recursion
+ * 
+ * ⚠️ LEGACY WARNING: This file uses track-based filtering
+ * For NEW GRADE ENTRY functionality, use course-based API from /lib/api/scores.ts
+ * This API is maintained for dashboard/analytics features only
  */
 
 import { supabase } from '@/lib/supabase/client'

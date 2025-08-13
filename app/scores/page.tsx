@@ -30,13 +30,13 @@ function NewAssessmentDrawer() {
         </DrawerHeader>
         <div className="grid gap-2 p-4">
           <div className="text-sm text-muted-foreground">
-            Fields: Exam Type (F.A./S.A./Final), Index, Weight, Grade/Class, Track, Due date
+            Fields: Exam Type (F.A./S.A./Final), Index, Weight, Grade/Class/Course, Due date
           </div>
           <div className="grid gap-2 md:grid-cols-2">
             <input className="border rounded-md p-2 bg-background" placeholder="Exam Type (F.A./S.A./Final)" />
             <input className="border rounded-md p-2 bg-background" placeholder="Index (1-8 / 1-4)" />
             <input className="border rounded-md p-2 bg-background" placeholder="Weight (auto)" />
-            <input className="border rounded-md p-2 bg-background" placeholder="Grade/Class/Track" />
+            <input className="border rounded-md p-2 bg-background" placeholder="Grade/Class/Course" />
             <input className="border rounded-md p-2 bg-background" placeholder="Due date" />
           </div>
           <div className="flex justify-end">

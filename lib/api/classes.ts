@@ -1,3 +1,9 @@
+/**
+ * ⚠️ LEGACY WARNING: This file uses track-based filtering
+ * For course-based class queries in grade entry, use course APIs from /lib/api/scores.ts
+ * This API is maintained for general class management features only
+ */
+
 import { supabase } from '@/lib/supabase/client'
 import { Database } from '@/types/database'
 
