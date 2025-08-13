@@ -10,13 +10,7 @@ type Student = {
   track: "local" | "international" 
 }
 
-type ScoreRow = { 
-  id: string
-  name: string
-  FA: number[]
-  SA: number[]
-  Final: number 
-}
+// ScoreRow type moved to lib/table-hooks.ts as CourseScoreRow
 
 const STUDENT_NAMES = [
   "Alice Chen", "Bob Li", "Carol Wang", "David Zhang", "Emma Johnson",
@@ -54,32 +48,8 @@ export function getStudentsFor(): Student[] {
   return studentsCache
 }
 
-let scoresCache: ScoreRow[] | null = null
-
-function makeScores(): ScoreRow[] {
-  const students = getStudentsFor()
-  return students.map((s) => {
-    const FA = Array.from({ length: 8 }).map(() => pickScore(0.15))
-    const SA = Array.from({ length: 4 }).map(() => pickScore(0.1))
-    const Final = Math.round(60 + Math.random() * 40)
-    return { id: s.id, name: s.name, FA, SA, Final }
-  })
-}
-
-function pickScore(zeroChance = 0.1): number {
-  if (Math.random() < zeroChance) return 0
-  return Math.round(55 + Math.random() * 45)
-}
-
-export function getScores(): ScoreRow[] {
-  if (!scoresCache) scoresCache = makeScores()
-  return scoresCache
-}
-
-export function getScoresForStudent(id: string): ScoreRow {
-  const row = getScores().find((r) => r.id === id)
-  return row ?? { id, name: "Unknown", FA: Array(8).fill(0), SA: Array(4).fill(0), Final: 0 }
-}
+// Legacy score functions removed - now using course-based API from lib/api/scores.ts
+// These functions are deprecated and should not be used for new features
 
 // Teacher Dashboard KPIs
 export function getKpisTeacher() {
