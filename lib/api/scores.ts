@@ -22,6 +22,12 @@ export type ScoreWithDetails = Score & {
     name: string
     class_id: string
   }
+  course?: {
+    id: string
+    course_type: 'LT' | 'IT' | 'KCFS'
+    course_name: string
+    class_id: string
+  }
   assessment_code_info: {
     code: string
     category: 'formative' | 'summative' | 'final'
@@ -38,7 +44,195 @@ export type ExamWithClass = Exam & {
   }
 }
 
-// Score-related functions
+// Course-related types
+export type Course = Database['public']['Tables']['courses']['Row']
+export type CourseWithClass = Course & {
+  class: {
+    id: string
+    name: string
+    grade: number
+    track: 'local' | 'international'
+  }
+}
+
+// Teacher course enrollment with student count
+export type TeacherCourse = {
+  id: string
+  course_type: 'LT' | 'IT' | 'KCFS'
+  course_name: string
+  class_id: string
+  class_name: string
+  grade: number
+  student_count: number
+  is_active: boolean
+}
+
+// Course-based functions
+
+// Get courses for the current teacher
+export async function getTeacherCourses() {
+  const { data, error } = await supabase
+    .from('course_details')
+    .select('*')
+    .eq('is_active', true)
+    .order('grade')
+    .order('class_name')
+    .order('course_type')
+
+  if (error) {
+    console.error('Error fetching teacher courses:', error)
+    throw new Error(`Failed to fetch teacher courses: ${error.message}`)
+  }
+
+  return data.map(course => ({
+    id: course.id,
+    course_type: course.course_type as 'LT' | 'IT' | 'KCFS',
+    course_name: course.course_name,
+    class_id: course.class_id,
+    class_name: course.class_name,
+    grade: course.grade,
+    student_count: course.student_count,
+    is_active: course.is_active
+  } as TeacherCourse))
+}
+
+// Get scores for a specific course
+export async function getScoresByCourse(courseId: string) {
+  const { data, error } = await supabase
+    .from('scores')
+    .select(`
+      *,
+      student:students(
+        id,
+        student_id,
+        full_name
+      ),
+      exam:exams(
+        id,
+        name,
+        class_id
+      )
+    `)
+    .eq('course_id', courseId)
+    .order('student.full_name')
+    .order('assessment_code')
+
+  if (error) {
+    console.error('Error fetching scores by course:', error)
+    throw new Error(`Failed to fetch scores: ${error.message}`)
+  }
+
+  return data as ScoreWithDetails[]
+}
+
+// Get all students enrolled in a course with their scores
+export async function getCourseStudentsWithScores(courseId: string) {
+  const { data, error } = await supabase
+    .from('student_course_enrollments')
+    .select(`
+      student_id,
+      student_name,
+      external_student_id,
+      course_id,
+      course_type,
+      class_name,
+      grade,
+      enrollment_active
+    `)
+    .eq('course_id', courseId)
+    .eq('enrollment_active', true)
+    .order('student_name')
+
+  if (error) {
+    console.error('Error fetching course students:', error)
+    throw new Error(`Failed to fetch course students: ${error.message}`)
+  }
+
+  // Get scores for all students in this course
+  const studentIds = data.map(s => s.student_id)
+  if (studentIds.length === 0) {
+    return data.map(student => ({ ...student, scores: [] }))
+  }
+
+  const { data: scoresData, error: scoresError } = await supabase
+    .from('scores')
+    .select('*')
+    .eq('course_id', courseId)
+    .in('student_id', studentIds)
+    .order('assessment_code')
+
+  if (scoresError) {
+    console.error('Error fetching scores for course students:', scoresError)
+    throw new Error(`Failed to fetch scores: ${scoresError.message}`)
+  }
+
+  // Group scores by student
+  const scoresByStudent = scoresData.reduce((acc, score) => {
+    if (!acc[score.student_id]) {
+      acc[score.student_id] = []
+    }
+    acc[score.student_id].push(score)
+    return acc
+  }, {} as Record<string, Score[]>)
+
+  return data.map(student => ({
+    ...student,
+    scores: scoresByStudent[student.student_id] || []
+  }))
+}
+
+// Update score with course_id
+export async function upsertScoreWithCourse(scoreData: ScoreInsert & { course_id: string }) {
+  const { data, error } = await supabase
+    .from('scores')
+    .upsert(
+      {
+        ...scoreData,
+        updated_at: new Date().toISOString(),
+        updated_by: scoreData.entered_by
+      },
+      {
+        onConflict: 'student_id,course_id,assessment_code'
+      }
+    )
+    .select('*')
+    .single()
+
+  if (error) {
+    console.error('Error upserting score with course:', error)
+    throw new Error(`Failed to save score: ${error.message}`)
+  }
+
+  return data as Score
+}
+
+// Bulk upsert scores with course_id
+export async function upsertScoresBulkWithCourse(scoresData: (ScoreInsert & { course_id: string })[]) {
+  const scoresWithTimestamp = scoresData.map(score => ({
+    ...score,
+    updated_at: new Date().toISOString(),
+    updated_by: score.entered_by
+  }))
+
+  const { data, error } = await supabase
+    .from('scores')
+    .upsert(
+      scoresWithTimestamp,
+      {
+        onConflict: 'student_id,course_id,assessment_code'
+      }
+    )
+    .select('*')
+
+  if (error) {
+    console.error('Error bulk upserting scores with course:', error)
+    throw new Error(`Failed to save scores: ${error.message}`)
+  }
+
+  return data as Score[]
+}
+
+// Legacy Score-related functions (maintained for compatibility)
 
 // Get scores for a specific exam (simplified)
 export async function getScoresByExam(examId: string) {
