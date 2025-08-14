@@ -173,7 +173,7 @@ export async function getCourseStudentsWithScores(courseId: string) {
     if (!acc[score.student_id]) {
       acc[score.student_id] = []
     }
-    acc[score.student_id].push(score)
+    acc[score.student_id]!.push(score)
     return acc
   }, {} as Record<string, Score[]>)
 
@@ -428,14 +428,14 @@ export async function getStudentGrades(studentId: string, examId?: string) {
     throw new Error(`Failed to fetch student grades: ${error.message}`)
   }
 
-  // Convert to grade calculation format
+  // Convert to grade calculation format  
   const scoresMap: Record<string, number | null> = {}
   data.forEach(score => {
     scoresMap[score.assessment_code] = score.score
   })
 
   const gradeCalculationInput = {
-    scores: scoresMap,
+    scores: scoresMap as any, // Type assertion for grade calculation
     studentId,
     classId: '', // We don't have classId in this context
     examId

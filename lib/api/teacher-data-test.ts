@@ -103,7 +103,7 @@ export async function getAccessibleClassesTest(userType: 'admin' | 'teacher' | '
     }
 
     console.log(`✅ Successfully fetched ${data?.length || 0} classes`)
-    return data as TeacherClassView[]
+    return data as unknown as TeacherClassView[]
   } catch (error: any) {
     console.error('❌ Exception in getAccessibleClassesTest:', error)
     throw error
@@ -154,7 +154,7 @@ export async function getAccessibleStudentsTest(userType: 'admin' | 'teacher' | 
     }
 
     console.log(`✅ Successfully fetched ${data?.length || 0} students`)
-    return data as TeacherStudentView[]
+    return data as unknown as TeacherStudentView[]
   } catch (error: any) {
     console.error('❌ Exception in getAccessibleStudentsTest:', error)
     throw error
@@ -206,7 +206,7 @@ export async function getAccessibleStudentPerformanceTest(userType: 'admin' | 't
     }
 
     console.log(`✅ Successfully fetched ${data?.length || 0} performance records`)
-    return data as StudentPerformanceView[]
+    return data as unknown as StudentPerformanceView[]
   } catch (error: any) {
     console.error('❌ Exception in getAccessibleStudentPerformanceTest:', error)
     throw error
@@ -261,7 +261,7 @@ export async function getAccessibleClassScoresTest(userType: 'admin' | 'teacher'
     }
 
     console.log(`✅ Successfully fetched ${data?.length || 0} score records`)
-    return data as ClassScoreView[]
+    return data as unknown as ClassScoreView[]
   } catch (error: any) {
     console.error('❌ Exception in getAccessibleClassScoresTest:', error)
     throw error

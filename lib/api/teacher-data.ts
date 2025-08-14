@@ -166,7 +166,7 @@ export async function getAccessibleClasses(): Promise<TeacherClassView[]> {
     throw new Error(`Failed to fetch classes: ${error.message}`)
   }
 
-  return data as TeacherClassView[]
+  return data as unknown as TeacherClassView[]
 }
 
 /**
@@ -214,7 +214,7 @@ export async function getAccessibleStudents(): Promise<TeacherStudentView[]> {
     throw new Error(`Failed to fetch students: ${error.message}`)
   }
 
-  return data as TeacherStudentView[]
+  return data as unknown as TeacherStudentView[]
 }
 
 /**
@@ -261,7 +261,7 @@ export async function getStudentsByClass(classId: string): Promise<TeacherStuden
     throw new Error(`Failed to fetch students: ${error.message}`)
   }
 
-  return data as TeacherStudentView[]
+  return data as unknown as TeacherStudentView[]
 }
 
 /**
@@ -308,7 +308,7 @@ export async function getAccessibleStudentPerformance(): Promise<StudentPerforma
     throw new Error(`Failed to fetch student performance: ${error.message}`)
   }
 
-  return data as StudentPerformanceView[]
+  return data as unknown as StudentPerformanceView[]
 }
 
 /**
@@ -358,7 +358,7 @@ export async function getAccessibleClassScores(classId?: string): Promise<ClassS
     throw new Error(`Failed to fetch class scores: ${error.message}`)
   }
 
-  return data as ClassScoreView[]
+  return data as unknown as ClassScoreView[]
 }
 
 /**

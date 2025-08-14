@@ -198,7 +198,8 @@ export async function getUserStatistics() {
     byRole: {
       admin: 0,
       head: 0,
-      teacher: 0
+      teacher: 0,
+      student: 0
     },
     byTeacherType: {
       LT: 0,
