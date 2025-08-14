@@ -12,6 +12,15 @@ import {
   UserPermissions 
 } from '@/lib/api/teacher-data'
 
+// Re-export types for use in test pages
+export type { 
+  TeacherClassView, 
+  TeacherStudentView, 
+  StudentPerformanceView,
+  ClassScoreView,
+  UserPermissions 
+}
+
 // 測試模式的模擬用戶權限
 const TEST_USER_PERMISSIONS: Record<string, UserPermissions> = {
   admin: {

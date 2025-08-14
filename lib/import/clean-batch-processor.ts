@@ -172,7 +172,7 @@ class ReferenceResolver {
       
       // Load course mappings (student_id + course_type -> course_id)
       const { data: courses } = await supabase
-        .from('course_details')
+        .from('courses')
         .select('id, class_id, course_type')
         .limit(1000)
       

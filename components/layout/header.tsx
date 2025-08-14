@@ -39,7 +39,7 @@ function generateBreadcrumbs(pathname: string) {
 
 export default function Header() {
   const pathname = usePathname()
-  const { grade, klass, track, role } = useAppStore((s) => s.selections)
+  const { grade, klass, track } = useAppStore((s) => s.selections)
   const currentRole = useAppStore((s) => s.role)
   
   const pageTitle = pageTitles[pathname] || "Learning Management System"

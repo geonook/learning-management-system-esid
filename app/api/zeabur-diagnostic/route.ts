@@ -70,11 +70,11 @@ export async function GET(request: NextRequest) {
         const keyParts = anonKey.split('.')
         if (keyParts.length !== 3) throw new Error('Invalid JWT format')
         
+        const base64Payload = keyParts[1]
+        if (!base64Payload) throw new Error('Missing JWT payload')
+        
         const anonPayload = JSON.parse(
-          Buffer.from(
-            keyParts[1], 
-            'base64'
-          ).toString()
+          Buffer.from(base64Payload, 'base64').toString()
         )
         diagnostics.connection_attempts.anon_jwt_decode = {
           success: true,
@@ -97,11 +97,11 @@ export async function GET(request: NextRequest) {
         const keyParts = serviceKey.split('.')
         if (keyParts.length !== 3) throw new Error('Invalid JWT format')
         
+        const base64Payload = keyParts[1]
+        if (!base64Payload) throw new Error('Missing JWT payload')
+        
         const servicePayload = JSON.parse(
-          Buffer.from(
-            keyParts[1], 
-            'base64'
-          ).toString()
+          Buffer.from(base64Payload, 'base64').toString()
         )
         diagnostics.connection_attempts.service_jwt_decode = {
           success: true,

@@ -139,7 +139,7 @@ export default function TestSupabasePage() {
     try {
       const start = Date.now()
       // Check if we can query system tables to see RLS status
-      const { data: rlsData, error: rlsError } = await supabase
+      const { data: rlsData, error: rlsError } = await (supabase as any)
         .from('pg_class')
         .select('relname, relrowsecurity')
         .in('relname', ['users', 'classes', 'courses', 'students', 'exams', 'scores'])
@@ -148,9 +148,9 @@ export default function TestSupabasePage() {
       if (rlsError) {
         addResult('🔐 RLS 狀態檢查', 'error', `無法檢查 RLS 狀態: ${rlsError.message}`, duration)
       } else {
-        const enabledTables = rlsData?.filter(table => table.relrowsecurity) || []
+        const enabledTables = rlsData?.filter((table: any) => table.relrowsecurity) || []
         if (enabledTables.length > 0) {
-          addResult('🔐 RLS 狀態檢查', 'error', `仍有 ${enabledTables.length} 個表格啟用 RLS: ${enabledTables.map(t => t.relname).join(', ')}`, duration)
+          addResult('🔐 RLS 狀態檢查', 'error', `仍有 ${enabledTables.length} 個表格啟用 RLS: ${enabledTables.map((t: any) => t.relname).join(', ')}`, duration)
         } else {
           addResult('🔐 RLS 狀態檢查', 'success', `RLS 已在所有表格停用`, duration)
         }
