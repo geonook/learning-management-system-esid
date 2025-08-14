@@ -161,7 +161,7 @@ describe('Grade Calculations', () => {
       expect(result).toEqual({
         formativeAvg: 95.0, // Only FA3 counts
         summativeAvg: null, // No valid SA scores
-        semesterGrade: 87.6, // (95*0.15 + 85*0.1) / 0.25
+        semesterGrade: 91.0, // (95*0.15 + 85*0.1) / 0.25 = 22.75 / 0.25 = 91
         totalScoresUsed: 2, // FA3, FINAL
         formativeScoresUsed: 1,
         summativeScoresUsed: 0,

@@ -72,3 +72,12 @@ global.matchMedia = vi.fn().mockImplementation((query) => ({
   removeEventListener: vi.fn(),
   dispatchEvent: vi.fn()
 }))
+
+// Mock Recharts to avoid chart rendering issues in tests
+vi.mock('recharts', () => ({
+  ResponsiveContainer: vi.fn(({ children }) => children),
+  PieChart: vi.fn(() => null),
+  Pie: vi.fn(() => null),
+  Cell: vi.fn(() => null),
+  Tooltip: vi.fn(() => null)
+}))
