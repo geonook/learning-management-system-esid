@@ -227,7 +227,7 @@ export async function getStudentsByClass(classId: string): Promise<TeacherStuden
   }
 
   let query = supabase
-    .from('teacher_students_view')
+    .from('students')
     .select('*')
     .eq('class_id', classId)
 
@@ -273,7 +273,7 @@ export async function getAccessibleStudentPerformance(): Promise<StudentPerforma
     throw new Error('User not authenticated')
   }
 
-  let query = supabase.from('student_performance_view').select('*')
+  let query = supabase.from('scores').select('*')
 
   // Apply permission-based filtering
   switch (permissions.role) {
@@ -320,10 +320,10 @@ export async function getAccessibleClassScores(classId?: string): Promise<ClassS
     throw new Error('User not authenticated')
   }
 
-  let query = supabase.from('class_scores_view').select('*')
+  let query = supabase.from('scores').select('*')
 
   if (classId) {
-    query = query.eq('class_id', classId)
+    query = query.eq('exam_id', classId) // Scores are linked via exam_id
   }
 
   // Apply permission-based filtering
