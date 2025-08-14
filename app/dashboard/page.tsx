@@ -11,11 +11,13 @@ import { AlertCircle, BarChart2, CheckCircle2, CheckSquare } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { 
   getTeacherKpis,
+  getAdminKpis,
   getClassDistribution, 
   getScatterData, 
   getUpcomingDeadlines, 
   getRecentAlerts,
   type TeacherKpis,
+  type AdminKpis,
   type ClassDistribution,
   type ScatterPoint,
   type UpcomingDeadline,
@@ -34,15 +36,22 @@ import {
   ZAxis,
 } from "recharts"
 
-export default function TeacherDashboard() {
+export default function Dashboard() {
   const { user, userPermissions } = useAuth()
   const userRole = userPermissions?.role
   const [loading, setLoading] = useState(true)
-  const [kpis, setKpis] = useState<TeacherKpis>({ 
+  const [teacherKpis, setTeacherKpis] = useState<TeacherKpis>({ 
     attendanceRate: 0, 
     averageScore: 0, 
     passRate: 0, 
     activeAlerts: 0 
+  })
+  const [adminKpis, setAdminKpis] = useState<AdminKpis>({
+    totalExams: 0,
+    notDue: 0,
+    overdue: 0,
+    coverage: 0,
+    onTime: 0
   })
   const [distribution, setDistribution] = useState<ClassDistribution[]>([])
   const [scatterData, setScatterData] = useState<ScatterPoint[]>([])
@@ -57,16 +66,21 @@ export default function TeacherDashboard() {
         setLoading(true)
 
         // Load data based on user role
-        const [kpiData, distData, scatterPoints, upcomingDeadlines, recentAlerts] = await Promise.all([
-          userRole === 'teacher' ? getTeacherKpis(user.id) : 
-            Promise.resolve({ attendanceRate: 0, averageScore: 0, passRate: 0, activeAlerts: 0 }),
-          getClassDistribution(userRole, user.id),
+        const [distData, scatterPoints, upcomingDeadlines, recentAlerts] = await Promise.all([
+          getClassDistribution(userRole, user.id, userPermissions?.grade || undefined, userPermissions?.track || undefined),
           getScatterData(userRole, user.id),
-          getUpcomingDeadlines(userRole, user.id),
+          getUpcomingDeadlines(userRole, user.id, userPermissions?.grade || undefined, userPermissions?.track || undefined),
           getRecentAlerts(userRole, user.id)
         ])
 
-        setKpis(kpiData)
+        // Load role-specific KPIs
+        if (userRole === 'teacher') {
+          const teacherKpiData = await getTeacherKpis(user.id)
+          setTeacherKpis(teacherKpiData)
+        } else if (userRole === 'admin') {
+          const adminKpiData = await getAdminKpis()
+          setAdminKpis(adminKpiData)
+        }
         setDistribution(distData)
         setScatterData(scatterPoints)
         setDeadlines(upcomingDeadlines)
@@ -80,7 +94,7 @@ export default function TeacherDashboard() {
     }
 
     loadDashboardData()
-  }, [user?.id, userRole])
+  }, [user?.id, userRole, userPermissions?.grade, userPermissions?.track])
 
   if (loading) {
     return (
@@ -96,39 +110,119 @@ export default function TeacherDashboard() {
     <AuthGuard requiredRoles={['admin', 'head', 'teacher']}>
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Teacher Dashboard</h1>
+        <h1 className="text-xl font-semibold">
+          {userRole === 'admin' ? 'Admin Dashboard' : 
+           userRole === 'head' ? 'Head Teacher Dashboard' : 
+           'Teacher Dashboard'}
+        </h1>
       </div>
       <FilterBar />
 
-      <div className="grid gap-3 md:grid-cols-4">
-        <StatCard
-          label="Attendance Rate"
-          value={`${kpis.attendanceRate}%`}
-          delta="+2.1%"
-          icon={<CheckSquare className="w-4 h-4" />}
-          tone="success"
-        />
-        <StatCard
-          label="Average Score"
-          value={kpis.averageScore.toString()}
-          delta="+1.4%"
-          icon={<BarChart2 className="w-4 h-4" />}
-        />
-        <StatCard
-          label="Pass Rate"
-          value={`${kpis.passRate}%`}
-          delta="+0.9%"
-          icon={<CheckCircle2 className="w-4 h-4" />}
-          tone="success"
-        />
-        <StatCard
-          label="Active Alerts (7d)"
-          value={kpis.activeAlerts.toString()}
-          delta="-3"
-          icon={<AlertCircle className="w-4 h-4" />}
-          tone="warning"
-        />
-      </div>
+      {/* Teacher KPIs */}
+      {userRole === 'teacher' && (
+        <div className="grid gap-3 md:grid-cols-4">
+          <StatCard
+            label="Attendance Rate"
+            value={`${teacherKpis.attendanceRate}%`}
+            delta="+2.1%"
+            icon={<CheckSquare className="w-4 h-4" />}
+            tone="success"
+          />
+          <StatCard
+            label="Average Score"
+            value={teacherKpis.averageScore.toString()}
+            delta="+1.4%"
+            icon={<BarChart2 className="w-4 h-4" />}
+          />
+          <StatCard
+            label="Pass Rate"
+            value={`${teacherKpis.passRate}%`}
+            delta="+0.9%"
+            icon={<CheckCircle2 className="w-4 h-4" />}
+            tone="success"
+          />
+          <StatCard
+            label="Active Alerts (7d)"
+            value={teacherKpis.activeAlerts.toString()}
+            delta="-3"
+            icon={<AlertCircle className="w-4 h-4" />}
+            tone="warning"
+          />
+        </div>
+      )}
+
+      {/* Admin KPIs */}
+      {userRole === 'admin' && (
+        <div className="grid gap-3 md:grid-cols-5">
+          <StatCard
+            label="Total Exams"
+            value={adminKpis.totalExams.toString()}
+            delta="+12"
+            icon={<BarChart2 className="w-4 h-4" />}
+          />
+          <StatCard
+            label="Due Soon"
+            value={adminKpis.notDue.toString()}
+            delta="+3"
+            icon={<AlertCircle className="w-4 h-4" />}
+            tone="warning"
+          />
+          <StatCard
+            label="Overdue"
+            value={adminKpis.overdue.toString()}
+            delta="-2"
+            icon={<AlertCircle className="w-4 h-4" />}
+            tone={adminKpis.overdue > 0 ? "danger" : "success"}
+          />
+          <StatCard
+            label="Coverage"
+            value={`${adminKpis.coverage}%`}
+            delta="+5.2%"
+            icon={<CheckCircle2 className="w-4 h-4" />}
+            tone="success"
+          />
+          <StatCard
+            label="On Time"
+            value={`${adminKpis.onTime}%`}
+            delta="+1.8%"
+            icon={<CheckSquare className="w-4 h-4" />}
+            tone="success"
+          />
+        </div>
+      )}
+
+      {/* Head Teacher KPIs - similar to teacher but for their grade/track */}
+      {userRole === 'head' && (
+        <div className="grid gap-3 md:grid-cols-4">
+          <StatCard
+            label={`Grade ${userPermissions?.grade} Classes`}
+            value="8"
+            delta="+1"
+            icon={<BarChart2 className="w-4 h-4" />}
+          />
+          <StatCard
+            label="Average Score"
+            value="78.5"
+            delta="+2.1%"
+            icon={<CheckCircle2 className="w-4 h-4" />}
+            tone="success"
+          />
+          <StatCard
+            label="Coverage Rate"
+            value="92%"
+            delta="+3.2%"
+            icon={<CheckSquare className="w-4 h-4" />}
+            tone="success"
+          />
+          <StatCard
+            label="Active Issues"
+            value="3"
+            delta="-1"
+            icon={<AlertCircle className="w-4 h-4" />}
+            tone="warning"
+          />
+        </div>
+      )}
 
       <div className="grid gap-3 lg:grid-cols-2">
         <ChartCard title="Class Score Distribution" subtitle="English - Current Term">
