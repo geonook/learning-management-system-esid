@@ -586,3 +586,249 @@ export async function getScatterData(
     z: Math.round(15 + Math.random() * 20), // Class size
   }))
 }
+
+// ======================================
+// ADMIN-SPECIFIC FUNCTIONS
+// ======================================
+
+export interface OverdueTableRow {
+  examId: string
+  examName: string
+  grade: number
+  className: string
+  track: 'local' | 'international'
+  coverage: number
+  missing: number
+  dueIn: string
+  examDate: string
+}
+
+export interface ClassPerformanceRow {
+  grade: number
+  className: string
+  track: 'local' | 'international'
+  avg: number
+  max: number
+  min: number
+  passRate: number
+  studentCount: number
+}
+
+export interface ActivityTrendPoint {
+  day: string
+  scores: number
+  attendance: number
+}
+
+/**
+ * Get overdue and incomplete exams for Admin dashboard table
+ */
+export async function getOverdueTable(): Promise<OverdueTableRow[]> {
+  const supabase = createClient()
+
+  try {
+    const today = new Date().toISOString().split('T')[0]
+    
+    // Get overdue exams with their coverage stats
+    const { data: exams, error } = await supabase
+      .from('exams')
+      .select(`
+        id,
+        name,
+        exam_date,
+        classes!inner(
+          id,
+          name,
+          grade,
+          track
+        )
+      `)
+      .eq('is_active', true)
+      .eq('classes.is_active', true)
+      .lt('exam_date', today)
+      .order('exam_date', { ascending: true })
+      .limit(20)
+
+    if (error) {
+      console.error('Error fetching overdue exams:', error)
+      return []
+    }
+
+    const overdueData: OverdueTableRow[] = []
+
+    for (const exam of exams || []) {
+      // Get total students in class
+      const { count: totalStudents } = await supabase
+        .from('students')
+        .select('*', { count: 'exact' })
+        .eq('class_id', exam.classes.id)
+        .eq('is_active', true)
+
+      // Get students with scores for this exam
+      const { count: studentsWithScores } = await supabase
+        .from('scores')
+        .select('*', { count: 'exact' })
+        .eq('exam_id', exam.id)
+
+      const coverage = totalStudents && totalStudents > 0
+        ? Math.round((studentsWithScores || 0) / totalStudents * 100)
+        : 0
+      
+      const missing = (totalStudents || 0) - (studentsWithScores || 0)
+
+      // Calculate days overdue
+      const examDate = new Date(exam.exam_date)
+      const diffTime = Date.now() - examDate.getTime()
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+      
+      overdueData.push({
+        examId: exam.id,
+        examName: exam.name,
+        grade: exam.classes.grade,
+        className: exam.classes.name,
+        track: exam.classes.track,
+        coverage,
+        missing,
+        dueIn: `${diffDays} days ago`,
+        examDate: exam.exam_date
+      })
+    }
+
+    return overdueData
+
+  } catch (error) {
+    console.error('Exception in getOverdueTable:', error)
+    return []
+  }
+}
+
+/**
+ * Get class performance overview for Admin dashboard
+ */
+export async function getClassPerformance(): Promise<ClassPerformanceRow[]> {
+  const supabase = createClient()
+
+  try {
+    // Get all active classes
+    const { data: classes, error: classesError } = await supabase
+      .from('classes')
+      .select('id, name, grade, track')
+      .eq('is_active', true)
+      .order('grade', { ascending: true })
+      .order('name', { ascending: true })
+
+    if (classesError) {
+      console.error('Error fetching classes:', classesError)
+      return []
+    }
+
+    const performanceData: ClassPerformanceRow[] = []
+
+    for (const cls of classes || []) {
+      // Get students count
+      const { count: studentCount } = await supabase
+        .from('students')
+        .select('*', { count: 'exact' })
+        .eq('class_id', cls.id)
+        .eq('is_active', true)
+
+      // Get recent scores for this class
+      const { data: scores, error: scoresError } = await supabase
+        .from('scores')
+        .select(`
+          score,
+          exams!inner(
+            class_id
+          )
+        `)
+        .eq('exams.class_id', cls.id)
+        .gte('entered_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()) // Last 30 days
+        .not('score', 'is', null)
+
+      if (scoresError) {
+        console.error('Error fetching scores for class:', cls.id, scoresError)
+        continue
+      }
+
+      const validScores = (scores || [])
+        .map(s => s.score || 0)
+        .filter(score => score > 0)
+
+      if (validScores.length > 0) {
+        const avg = Math.round(validScores.reduce((sum, score) => sum + score, 0) / validScores.length * 10) / 10
+        const max = Math.max(...validScores)
+        const min = Math.min(...validScores)
+        const passRate = Math.round((validScores.filter(score => score >= 60).length / validScores.length) * 100)
+
+        performanceData.push({
+          grade: cls.grade,
+          className: cls.name,
+          track: cls.track,
+          avg,
+          max,
+          min,
+          passRate,
+          studentCount: studentCount || 0
+        })
+      }
+    }
+
+    return performanceData
+
+  } catch (error) {
+    console.error('Exception in getClassPerformance:', error)
+    return []
+  }
+}
+
+/**
+ * Get activity trend for Admin dashboard chart
+ */
+export async function getActivityTrend(): Promise<ActivityTrendPoint[]> {
+  const supabase = createClient()
+
+  try {
+    const trend: ActivityTrendPoint[] = []
+    
+    // Get last 14 days of data
+    for (let i = 13; i >= 0; i--) {
+      const date = new Date()
+      date.setDate(date.getDate() - i)
+      const dateStr = date.toISOString().split('T')[0]
+      const dayLabel = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+
+      // Count scores entered on this day
+      const { count: scoresCount } = await supabase
+        .from('scores')
+        .select('*', { count: 'exact' })
+        .gte('entered_at', `${dateStr}T00:00:00Z`)
+        .lt('entered_at', `${dateStr}T23:59:59Z`)
+
+      // Mock attendance data for now (could be implemented later)
+      const attendanceCount = Math.round(80 + Math.random() * 40)
+
+      trend.push({
+        day: dayLabel,
+        scores: scoresCount || 0,
+        attendance: attendanceCount
+      })
+    }
+
+    return trend
+
+  } catch (error) {
+    console.error('Exception in getActivityTrend:', error)
+    return []
+  }
+}
+
+/**
+ * Get teacher progress heatmap data
+ */
+export async function getTeacherHeatmap(): Promise<number[][]> {
+  // This is a complex visualization that would require significant computation
+  // For now, return mock data, but this could be implemented with real teacher/exam coverage stats
+  return Array.from({ length: 8 }).map(() =>
+    Array.from({ length: 12 }).map(() => Math.round(Math.random() * 100))
+  )
+}
