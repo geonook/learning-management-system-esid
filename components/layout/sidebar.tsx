@@ -38,6 +38,12 @@ const sidebarItems = [
     roles: ["admin"]
   },
   {
+    label: "Assessment Titles",
+    href: "/admin/assessment-titles",
+    icon: FileBarChart,
+    roles: ["admin", "head"]
+  },
+  {
     label: "Scores",
     href: "/scores",
     icon: FileBarChart,
