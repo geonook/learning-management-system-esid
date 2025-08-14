@@ -125,13 +125,13 @@ export async function parseCSVContent(
     throw new Error('CSV file is empty')
   }
   
-  const headers = parseCSVLine(lines[0], delimiter)
+  const headers = parseCSVLine(lines[0] || '', delimiter)
   const rows: string[][] = []
   
   const maxRowsToProcess = maxRows ? Math.min(lines.length - 1, maxRows) : lines.length - 1
   
   for (let i = 1; i <= maxRowsToProcess; i++) {
-    const row = parseCSVLine(lines[i], delimiter)
+    const row = parseCSVLine(lines[i] || '', delimiter)
     rows.push(row)
   }
   

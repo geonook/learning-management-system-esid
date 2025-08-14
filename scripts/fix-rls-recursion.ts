@@ -56,7 +56,7 @@ async function applyFixedRLSPolicies() {
       
       for (let i = 0; i < statements.length; i++) {
         const statement = statements[i]
-        if (statement.trim()) {
+        if (statement && statement.trim()) {
           console.log(`  ${i + 1}/${statements.length}: ${statement.substring(0, 50)}...`)
           
           const { error: stmtError } = await supabase
@@ -71,7 +71,7 @@ async function applyFixedRLSPolicies() {
               headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${supabaseServiceKey}`,
-                'apikey': supabaseServiceKey
+                'apikey': supabaseServiceKey || ''
               },
               body: JSON.stringify({ query: statement + ';' })
             })

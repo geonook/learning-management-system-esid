@@ -67,9 +67,11 @@ Generated: ${formatTimestamp(timestamp)}
   // Calculate totals
   stages.forEach(stage => {
     const result = validationResults[stage]
-    totalValid += result.summary.valid
-    totalInvalid += result.summary.invalid
-    totalRecords += result.summary.total
+    if (result) {
+      totalValid += result.summary.valid
+      totalInvalid += result.summary.invalid
+      totalRecords += result.summary.total
+    }
   })
 
   const overallValidPercent = totalRecords > 0 ? Math.round((totalValid / totalRecords) * 100) : 0
@@ -88,6 +90,8 @@ Generated: ${formatTimestamp(timestamp)}
   
   stages.forEach(stage => {
     const result = validationResults[stage]
+    if (!result) return
+    
     const stagePercent = result.summary.validPercent
     
     report += `
@@ -126,7 +130,7 @@ Generated: ${formatTimestamp(timestamp)}
     
     stages.forEach(stage => {
       const result = validationResults[stage]
-      if (result.summary.invalid > 0) {
+      if (result && result.summary.invalid > 0) {
         const commonErrors = getCommonErrors(result.invalid)
         report += `\n**${stage}:**\n`
         commonErrors.forEach(({ error, count }) => {

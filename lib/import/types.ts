@@ -76,12 +76,15 @@ export const ScoreImportSchema = z.object({
   entered_by_email: z.string().email('Invalid teacher email') // Will be mapped to entered_by UUID
 })
 
-// Inferred types
+// Inferred types from Zod schemas
 export type UserImport = z.infer<typeof UserImportSchema>
-export type ClassImport = z.infer<typeof ClassImportSchema>
+export type ClassImport = z.infer<typeof ClassImportSchema>  
 export type CourseImport = z.infer<typeof CourseImportSchema>
 export type StudentImport = z.infer<typeof StudentImportSchema>
 export type ScoreImport = z.infer<typeof ScoreImportSchema>
+
+// Export the schemas for type consistency
+export { UserImportSchema, ClassImportSchema, CourseImportSchema, StudentImportSchema, ScoreImportSchema }
 
 // Import validation result types
 export interface ImportValidationResult<T> {

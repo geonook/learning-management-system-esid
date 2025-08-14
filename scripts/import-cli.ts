@@ -94,7 +94,7 @@ function parseArgs(): CLIArgs {
         i++
         break
       case '--max-rows':
-        args.maxRows = parseInt(nextArg)
+        args.maxRows = parseInt(nextArg || '0')
         i++
         break
       case '--skip-errors':

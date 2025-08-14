@@ -416,8 +416,9 @@ async function executeScoresImport(
         const key = `${score.course_id}:${score.exam_name}`
         if (!uniqueExamsByName.has(key)) {
           uniqueExamsByName.set(key, {
-            course_id: score.course_id,
-            name: score.exam_name
+            class_id: score.course_id, // Fixed: exam belongs to class, not course
+            name: score.exam_name,
+            created_by: currentUserUUID
           })
         }
       }
@@ -429,10 +430,10 @@ async function executeScoresImport(
       const { data: newExams, error: examError } = await supabase
         .from('exams')
         .upsert(examInserts, {
-          onConflict: 'course_id,name',
+          onConflict: 'class_id,name',
           ignoreDuplicates: false
         })
-        .select('id, name, course_id')
+        .select('id, name, class_id')
       
       if (examError) {
         console.warn('Failed to create exams:', examError.message)
@@ -450,8 +451,8 @@ async function executeScoresImport(
         score.exam_id = examMap.get(score.exam_name)
       }
       
-      // Remove exam_name from final insert data
-      const { exam_name, ...scoreData } = score
+      // Remove exam_name and course_id from final insert data
+      const { exam_name, course_id, ...scoreData } = score
       return scoreData
     }).filter(score => score.exam_id) // Only include scores with valid exam_id
     

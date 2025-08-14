@@ -107,7 +107,7 @@ function parseArgs(): BatchImportArgs {
         i++
         break
       case '--max-errors':
-        args.maxErrors = parseInt(nextArg)
+        args.maxErrors = parseInt(nextArg || '0')
         i++
         break
       case '--skip-stages-on-error':

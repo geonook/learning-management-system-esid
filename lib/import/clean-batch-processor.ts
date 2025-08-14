@@ -28,8 +28,10 @@ const RETRY_DELAY_MS = 200
  * Standard Batch Insert Template
  * All import stages use this same pattern for consistency
  */
+type ValidTableName = 'users' | 'classes' | 'students' | 'exams' | 'assessment_codes' | 'scores' | 'assessment_titles' | 'courses' | 'student_courses'
+
 async function performBatchInsert<T>(
-  tableName: string,
+  tableName: ValidTableName,
   records: T[],
   transformFn: (record: any) => any,
   stageName: string,
@@ -196,7 +198,7 @@ class ReferenceResolver {
       // Load exam mappings
       const { data: exams } = await supabase
         .from('exams')
-        .select('id, name, course_id')
+        .select('id, name, class_id')
         .limit(1000)
       
       exams?.forEach(exam => {
@@ -542,14 +544,35 @@ export async function executeScoresImport(
     let examId = resolver.getExamId(score.exam_name)
     
     if (!examId) {
+      // Find class_id from course
+      const { data: courseData } = await supabase
+        .from('courses')
+        .select('class_id')
+        .eq('id', courseId)
+        .single()
+      
+      if (!courseData) {
+        result.warnings.push({
+          stage: 'scores',
+          message: `Course not found: ${courseId}`,
+          data: { 
+            student_id: score.student_id,
+            course_type: score.course_type,
+            exam_name: score.exam_name 
+          }
+        })
+        return null
+      }
+      
       // Create exam if it doesn't exist
       const { data: newExam, error: examError } = await supabase
         .from('exams')
         .insert({
           name: score.exam_name,
-          course_id: courseId,
+          class_id: courseData.class_id, // Correct: exam belongs to class
           exam_date: new Date().toISOString().split('T')[0], // Default to today
-          is_active: true
+          is_active: true,
+          created_by: enteredById
         })
         .select('id')
         .single()
@@ -574,7 +597,6 @@ export async function executeScoresImport(
     
     return {
       student_id: studentUUID,
-      course_id: courseId,
       exam_id: examId,
       assessment_code: score.assessment_code,
       score: score.score,
@@ -617,7 +639,7 @@ export async function executeScoresImport(
       const { data, error } = await supabase
         .from('scores')
         .upsert(transformedBatch, {
-          onConflict: 'student_id,course_id,exam_id,assessment_code'
+          onConflict: 'student_id,exam_id,assessment_code'
         })
         .select('id')
       
