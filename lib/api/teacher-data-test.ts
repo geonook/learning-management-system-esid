@@ -28,21 +28,24 @@ const TEST_USER_PERMISSIONS: Record<string, UserPermissions> = {
     role: 'admin',
     grade: null,
     track: null,
-    teacher_type: null
+    teacher_type: null,
+    full_name: 'Test Admin User'
   },
   teacher: {
     userId: '550e8400-e29b-41d4-a716-446655440011', 
     role: 'teacher',
     grade: null,
     track: null,
-    teacher_type: 'LT'
+    teacher_type: 'LT',
+    full_name: 'Test Teacher User'
   },
   head: {
     userId: '550e8400-e29b-41d4-a716-446655440012',
     role: 'head',
     grade: 10,
     track: 'local',
-    teacher_type: null
+    teacher_type: null,
+    full_name: 'Test Head Teacher'
   }
 }
 
@@ -50,7 +53,11 @@ const TEST_USER_PERMISSIONS: Record<string, UserPermissions> = {
  * 取得測試用戶權限
  */
 export function getTestUserPermissions(userType: 'admin' | 'teacher' | 'head' = 'admin'): UserPermissions {
-  return TEST_USER_PERMISSIONS[userType]
+  const permissions = TEST_USER_PERMISSIONS[userType]
+  if (!permissions) {
+    throw new Error(`Invalid user type: ${userType}`)
+  }
+  return permissions
 }
 
 /**
@@ -61,7 +68,7 @@ export async function getAccessibleClassesTest(userType: 'admin' | 'teacher' | '
   
   console.log(`🧪 Testing with ${userType} permissions:`, permissions)
 
-  let query = supabase.from('teacher_classes_view').select('*')
+  let query = supabase.from('classes').select('*')
 
   // 應用權限過濾
   switch (permissions.role) {
@@ -88,7 +95,7 @@ export async function getAccessibleClassesTest(userType: 'admin' | 'teacher' | '
   }
 
   try {
-    const { data, error } = await query.order('grade').order('class_name')
+    const { data, error } = await query.order('grade').order('name')
 
     if (error) {
       console.error('❌ Error fetching accessible classes:', error)
@@ -111,7 +118,7 @@ export async function getAccessibleStudentsTest(userType: 'admin' | 'teacher' | 
   
   console.log(`🧪 Testing students with ${userType} permissions:`, permissions)
 
-  let query = supabase.from('teacher_students_view').select('*')
+  let query = supabase.from('students').select('*')
 
   // 應用權限過濾
   switch (permissions.role) {
@@ -123,8 +130,8 @@ export async function getAccessibleStudentsTest(userType: 'admin' | 'teacher' | 
       if (permissions.grade && permissions.track) {
         console.log(`🔧 Head: Filtering by student_grade=${permissions.grade}, track=${permissions.track}`)
         query = query
-          .eq('student_grade', permissions.grade)
-          .eq('student_track', permissions.track)
+          .eq('grade', permissions.grade)
+          .eq('track', permissions.track)
       } else {
         return []
       }
@@ -138,9 +145,8 @@ export async function getAccessibleStudentsTest(userType: 'admin' | 'teacher' | 
 
   try {
     const { data, error } = await query
-      .order('student_grade')
-      .order('class_name')
-      .order('student_name')
+      .order('grade')
+      .order('full_name')
 
     if (error) {
       console.error('❌ Error fetching accessible students:', error)
@@ -163,7 +169,7 @@ export async function getAccessibleStudentPerformanceTest(userType: 'admin' | 't
   
   console.log(`🧪 Testing performance with ${userType} permissions:`, permissions)
 
-  let query = supabase.from('student_performance_view').select('*')
+  let query = supabase.from('scores').select('*')
 
   // 應用權限過濾
   switch (permissions.role) {
@@ -215,10 +221,10 @@ export async function getAccessibleClassScoresTest(userType: 'admin' | 'teacher'
   
   console.log(`🧪 Testing class scores with ${userType} permissions:`, permissions)
 
-  let query = supabase.from('class_scores_view').select('*')
+  let query = supabase.from('scores').select('*')
 
   if (classId) {
-    query = query.eq('class_id', classId)
+    query = query.eq('exam_id', classId) // Scores are linked via exam_id
   }
 
   // 應用權限過濾
@@ -316,8 +322,8 @@ export async function testAllViews(): Promise<{
   try {
     console.log('🧪 Testing class_scores_view...')
     const { data, error } = await supabase
-      .from('class_scores_view')
-      .select('student_name, assessment_code, score')
+      .from('scores')
+      .select('student_id, assessment_code, score')
       .limit(3)
     
     if (error) throw error
@@ -332,8 +338,8 @@ export async function testAllViews(): Promise<{
   try {
     console.log('🧪 Testing student_performance_view...')
     const { data, error } = await supabase
-      .from('student_performance_view')
-      .select('student_name, formative_avg, semester_grade')
+      .from('scores')
+      .select('student_id, assessment_code, score')
       .limit(3)
     
     if (error) throw error

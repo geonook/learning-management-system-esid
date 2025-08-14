@@ -126,20 +126,16 @@ export async function getScoresByCourse(courseId: string) {
 // Get all students enrolled in a course with their scores
 export async function getCourseStudentsWithScores(courseId: string) {
   const { data, error } = await supabase
-    .from('student_course_enrollments')
+    .from('student_courses')
     .select(`
       student_id,
-      student_name,
-      external_student_id,
       course_id,
-      course_type,
-      class_name,
-      grade,
-      enrollment_active
+      enrolled_at,
+      is_active
     `)
     .eq('course_id', courseId)
-    .eq('enrollment_active', true)
-    .order('student_name')
+    .eq('is_active', true)
+    .order('enrolled_at')
 
   if (error) {
     console.error('Error fetching course students:', error)
@@ -152,10 +148,18 @@ export async function getCourseStudentsWithScores(courseId: string) {
     return data.map(student => ({ ...student, scores: [] }))
   }
 
+  // Get exams for this course to then get scores
+  const { data: examsData } = await supabase
+    .from('exams')
+    .select('id')
+    .eq('class_id', courseId) // Assuming courseId maps to a class
+  
+  const examIds = examsData?.map(e => e.id) || []
+  
   const { data: scoresData, error: scoresError } = await supabase
     .from('scores')
     .select('*')
-    .eq('course_id', courseId)
+    .in('exam_id', examIds)
     .in('student_id', studentIds)
     .order('assessment_code')
 
@@ -424,12 +428,19 @@ export async function getStudentGrades(studentId: string, examId?: string) {
   }
 
   // Convert to grade calculation format
-  const gradeData: Record<string, number> = {}
+  const scoresMap: Record<string, number | null> = {}
   data.forEach(score => {
-    gradeData[score.assessment_code] = score.score!
+    scoresMap[score.assessment_code] = score.score
   })
 
-  return calculateGrades(gradeData)
+  const gradeCalculationInput = {
+    scores: scoresMap,
+    studentId,
+    classId: '', // We don't have classId in this context
+    examId
+  }
+
+  return calculateGrades(gradeCalculationInput)
 }
 
 // Exam-related functions
