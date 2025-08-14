@@ -84,11 +84,11 @@ export type StudentPerformanceView = {
 // User role and permissions type
 export type UserPermissions = {
   userId: string
-  role: 'admin' | 'head' | 'teacher'
-  grade?: number | null
-  track?: 'local' | 'international' | null
-  teacher_type?: 'LT' | 'IT' | 'KCFS' | null
-  full_name?: string
+  role: 'admin' | 'head' | 'teacher' | 'student'
+  grade: number | null
+  track: 'local' | 'international' | null
+  teacher_type: 'LT' | 'IT' | 'KCFS' | null
+  full_name: string
 }
 
 /**

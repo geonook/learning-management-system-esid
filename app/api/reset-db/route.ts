@@ -44,14 +44,14 @@ export async function POST(request: NextRequest) {
     for (const table of tablesToDrop) {
       try {
         // Use raw SQL to ensure clean drop
-        const { error } = await supabase.rpc('exec_sql', {
-          sql: `DROP TABLE IF EXISTS ${table} CASCADE;`
+        const { error } = await (supabase as any).rpc('exec_sql', {
+          sql_query: `DROP TABLE IF EXISTS ${table} CASCADE;`
         })
 
         if (error) {
           // Fallback: try without CASCADE
-          const { error: fallbackError } = await supabase.rpc('exec_sql', {
-            sql: `DROP TABLE IF EXISTS ${table};`
+          const { error: fallbackError } = await (supabase as any).rpc('exec_sql', {
+            sql_query: `DROP TABLE IF EXISTS ${table};`
           })
           
           addStep(`Drop table ${table}`, !fallbackError, { 
@@ -82,8 +82,8 @@ export async function POST(request: NextRequest) {
 
     for (const type of typesToDrop) {
       try {
-        const { error } = await supabase.rpc('exec_sql', {
-          sql: `DROP TYPE IF EXISTS ${type} CASCADE;`
+        const { error } = await (supabase as any).rpc('exec_sql', {
+          sql_query: `DROP TYPE IF EXISTS ${type} CASCADE;`
         })
         
         addStep(`Drop type ${type}`, !error, { error: error?.message || null })
@@ -98,9 +98,9 @@ export async function POST(request: NextRequest) {
     // Step 3: Verify clean state
     try {
       // Try to count remaining tables
-      const { data: remainingTables, error: tablesError } = await supabase
+      const { data: remainingTables, error: tablesError } = await (supabase as any)
         .rpc('exec_sql', {
-          sql: `
+          sql_query: `
             SELECT count(*) as table_count 
             FROM information_schema.tables 
             WHERE table_schema = 'public' 

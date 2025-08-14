@@ -11,9 +11,9 @@ export type UserProfile = {
   email: string
   full_name: string
   role: UserRole
-  teacher_type?: TeacherType
-  grade?: number
-  track?: TrackType
+  teacher_type: TeacherType | null
+  grade: number | null
+  track: TrackType | null
   is_active: boolean
   created_at: string
   updated_at: string

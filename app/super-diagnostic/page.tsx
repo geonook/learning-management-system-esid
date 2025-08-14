@@ -51,70 +51,70 @@ export default function SuperDiagnosticPage() {
     // 測試 1: 最基本的系統查詢（不涉及業務表）
     await testWithTimeout(
       '🔧 系統狀態查詢',
-      () => supabase.from('users').select('*', { count: 'exact', head: true }),
+      async () => await supabase.from('users').select('*', { count: 'exact', head: true }),
       5000
     )
 
     // 測試 2: 檢查表格存在性（業務表測試）
     await testWithTimeout(
       '📋 檢查表格存在性',
-      () => supabase.from('classes').select('*', { count: 'exact', head: true }),
+      async () => await supabase.from('classes').select('*', { count: 'exact', head: true }),
       5000
     )
 
     // 測試 3: 檢查課程表狀態
     await testWithTimeout(
       '🔒 檢查課程表狀態',
-      () => supabase.from('courses').select('*', { count: 'exact', head: true }),
+      async () => await supabase.from('courses').select('*', { count: 'exact', head: true }),
       5000
     )
 
     // 測試 4: 檢查學生表狀態
     await testWithTimeout(
       '📜 檢查學生表狀態',
-      () => supabase.from('students').select('*', { count: 'exact', head: true }),
+      async () => await supabase.from('students').select('*', { count: 'exact', head: true }),
       5000
     )
 
     // 測試 5: 用戶表基本查詢
     await testWithTimeout(
       '👤 用戶表 count 查詢',
-      () => supabase.from('users').select('*', { count: 'exact', head: true }),
+      async () => await supabase.from('users').select('*', { count: 'exact', head: true }),
       8000
     )
 
     // 測試 6: 班級表基本查詢
     await testWithTimeout(
       '🏫 班級表 count 查詢',
-      () => supabase.from('classes').select('*', { count: 'exact', head: true }),
+      async () => await supabase.from('classes').select('*', { count: 'exact', head: true }),
       8000
     )
 
     // 測試 7: 課程表基本查詢
     await testWithTimeout(
       '📚 課程表 count 查詢',
-      () => supabase.from('courses').select('*', { count: 'exact', head: true }),
+      async () => await supabase.from('courses').select('*', { count: 'exact', head: true }),
       8000
     )
 
     // 測試 8: 學生表基本查詢
     await testWithTimeout(
       '🎓 學生表 count 查詢',
-      () => supabase.from('students').select('*', { count: 'exact', head: true }),
+      async () => await supabase.from('students').select('*', { count: 'exact', head: true }),
       8000
     )
 
     // 測試 9: 考試表基本查詢
     await testWithTimeout(
       '📝 考試表 count 查詢',
-      () => supabase.from('exams').select('*', { count: 'exact', head: true }),
+      async () => await supabase.from('exams').select('*', { count: 'exact', head: true }),
       8000
     )
 
     // 測試 10: 分數表基本查詢
     await testWithTimeout(
       '📊 分數表 count 查詢',
-      () => supabase.from('scores').select('*', { count: 'exact', head: true }),
+      async () => await supabase.from('scores').select('*', { count: 'exact', head: true }),
       8000
     )
 

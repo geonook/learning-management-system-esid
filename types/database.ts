@@ -427,7 +427,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_table_names: {
+        Args: {}
+        Returns: string[]
+      }
+      get_constraints_info: {
+        Args: {}
+        Returns: Record<string, any>[]
+      }
+      exec_sql: {
+        Args: {
+          sql_query: string
+        }
+        Returns: Record<string, any>[]
+      }
     }
     Enums: {
       user_role: 'admin' | 'head' | 'teacher' | 'student'

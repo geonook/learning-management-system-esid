@@ -52,8 +52,8 @@ const mockExecuteCleanImport = vi.mocked(executeCleanImport)
 describe('Scores API - Contract Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    // Set NODE_ENV to development for bypass
-    process.env.NODE_ENV = 'development'
+    // Mock NODE_ENV for development bypass
+    vi.stubEnv('NODE_ENV', 'development')
   })
 
   describe('POST /api/import', () => {
@@ -82,10 +82,11 @@ describe('Scores API - Contract Tests', () => {
       mockExecuteCleanImport.mockResolvedValue({
         success: true,
         summary: {
-          processed: 1,
-          created: 1,
-          updated: 0,
-          errors: 0
+          users: { created: 0, updated: 0, errors: 0 },
+          classes: { created: 0, updated: 0, errors: 0 },
+          courses: { created: 0, updated: 0, errors: 0 },
+          students: { created: 0, updated: 0, errors: 0 },
+          scores: { created: 1, updated: 0, errors: 0 }
         },
         errors: [],
         warnings: []
@@ -135,12 +136,18 @@ describe('Scores API - Contract Tests', () => {
       mockExecuteCleanImport.mockResolvedValue({
         success: false,
         summary: {
-          processed: 1,
-          created: 0,
-          updated: 0,
-          errors: 1
+          users: { created: 0, updated: 0, errors: 0 },
+          classes: { created: 0, updated: 0, errors: 0 },
+          courses: { created: 0, updated: 0, errors: 0 },
+          students: { created: 0, updated: 0, errors: 0 },
+          scores: { created: 0, updated: 0, errors: 1 }
         },
-        errors: ['Database connection failed'],
+        errors: [{ 
+          stage: 'scores', 
+          operation: 'create', 
+          data: {}, 
+          error: 'Database connection failed' 
+        }],
         warnings: []
       })
 
@@ -165,7 +172,8 @@ describe('Scores API - Contract Tests', () => {
 
       expect(response.status).toBe(200)
       expect(result.success).toBe(false)
-      expect(result.errors).toContain('Database connection failed')
+      expect(result.errors).toHaveLength(1)
+      expect(result.errors[0].error).toBe('Database connection failed')
     })
 
     it('should handle malformed JSON', async () => {

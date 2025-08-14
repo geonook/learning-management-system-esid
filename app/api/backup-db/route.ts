@@ -22,26 +22,21 @@ export async function GET(request: NextRequest) {
       .single()
     
     if (tablesError) {
-      // Fallback: try to get table info from information_schema
-      const { data: tableInfo, error: tableInfoError } = await supabase
-        .from('information_schema.tables')
-        .select('table_name')
-        .eq('table_schema', 'public')
-        .eq('table_type', 'BASE TABLE')
+      // Fallback: use known table list instead of information_schema
+      console.warn('RPC function get_table_names not available, using fallback')
       
-      if (tableInfoError) {
-        // Manual table list based on known schema
-        const knownTables = ['users', 'classes', 'courses', 'students', 'exams', 'scores', 'assessment_titles']
+      // Manual table list based on known schema
+      const knownTables = ['users', 'classes', 'courses', 'students', 'exams', 'scores', 'assessment_titles']
         
         for (const tableName of knownTables) {
           try {
             const { data, error, count } = await supabase
-              .from(tableName)
+              .from(tableName as any)
               .select('*', { count: 'exact', head: true })
             
             backup.tables[tableName] = {
               exists: !error,
-              count: error ? 0 : count,
+              count: error ? 0 : (count || 0),
               error: error?.message || null
             }
           } catch (e: any) {
@@ -52,20 +47,6 @@ export async function GET(request: NextRequest) {
             }
           }
         }
-      } else {
-        // Process found tables
-        for (const table of tableInfo || []) {
-          const { data, error, count } = await supabase
-            .from(table.table_name)
-            .select('*', { count: 'exact', head: true })
-          
-          backup.tables[table.table_name] = {
-            exists: !error,
-            count: error ? 0 : count,
-            error: error?.message || null
-          }
-        }
-      }
     }
 
     // Try to get constraint information via direct SQL

@@ -7,13 +7,23 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function GET(request: NextRequest) {
   const diagnostics = {
     timestamp: new Date().toISOString(),
-    zeabur_detection: {},
-    environment_analysis: {},
-    connection_attempts: {},
+    zeabur_detection: {} as any,
+    environment_analysis: {} as any,
+    connection_attempts: {} as any,
     recommendations: [] as string[]
   }
 
   // Analyze current environment variables
+  const urlAnalysis = {
+    is_zeabur_domain: process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('zeabur.app') || false,
+    is_localhost: process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('localhost') || false,
+    is_supabase_cloud: process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('supabase.co') || false,
+    detected_pattern: process.env.NEXT_PUBLIC_SUPABASE_URL ? 
+      (process.env.NEXT_PUBLIC_SUPABASE_URL.includes('zeabur.app') ? 'ZEABUR_SELF_HOSTED' :
+       process.env.NEXT_PUBLIC_SUPABASE_URL.includes('supabase.co') ? 'SUPABASE_CLOUD' :
+       process.env.NEXT_PUBLIC_SUPABASE_URL.includes('localhost') ? 'LOCAL_DEVELOPMENT' : 'UNKNOWN') : 'NO_URL'
+  }
+
   diagnostics.environment_analysis = {
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || 'NOT_SET',
@@ -27,21 +37,13 @@ export async function GET(request: NextRequest) {
     DATABASE_URL: process.env.DATABASE_URL ? 'PRESENT' : 'NOT_SET',
     
     // Analyze URL pattern
-    url_analysis: {
-      is_zeabur_domain: process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('zeabur.app') || false,
-      is_localhost: process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('localhost') || false,
-      is_supabase_cloud: process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('supabase.co') || false,
-      detected_pattern: process.env.NEXT_PUBLIC_SUPABASE_URL ? 
-        (process.env.NEXT_PUBLIC_SUPABASE_URL.includes('zeabur.app') ? 'ZEABUR_SELF_HOSTED' :
-         process.env.NEXT_PUBLIC_SUPABASE_URL.includes('supabase.co') ? 'SUPABASE_CLOUD' :
-         process.env.NEXT_PUBLIC_SUPABASE_URL.includes('localhost') ? 'LOCAL_DEVELOPMENT' : 'UNKNOWN') : 'NO_URL'
-    }
+    url_analysis: urlAnalysis
   }
 
   // Zeabur specific detection
   diagnostics.zeabur_detection = {
-    deployment_type: diagnostics.environment_analysis.url_analysis.detected_pattern,
-    expected_config_location: diagnostics.environment_analysis.url_analysis.detected_pattern === 'ZEABUR_SELF_HOSTED' ? 
+    deployment_type: urlAnalysis.detected_pattern,
+    expected_config_location: urlAnalysis.detected_pattern === 'ZEABUR_SELF_HOSTED' ? 
       'Zeabur Console > Kong Service > Environment Variables' : 'Unknown',
     
     // Check JWT token patterns
@@ -62,9 +64,15 @@ export async function GET(request: NextRequest) {
     // Try to decode JWT tokens to validate format
     if (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
       try {
+        const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        if (!anonKey) throw new Error('No anon key')
+        
+        const keyParts = anonKey.split('.')
+        if (keyParts.length !== 3) throw new Error('Invalid JWT format')
+        
         const anonPayload = JSON.parse(
           Buffer.from(
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.split('.')[1], 
+            keyParts[1], 
             'base64'
           ).toString()
         )
@@ -83,9 +91,15 @@ export async function GET(request: NextRequest) {
 
     if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
       try {
+        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+        if (!serviceKey) throw new Error('No service key')
+        
+        const keyParts = serviceKey.split('.')
+        if (keyParts.length !== 3) throw new Error('Invalid JWT format')
+        
         const servicePayload = JSON.parse(
           Buffer.from(
-            process.env.SUPABASE_SERVICE_ROLE_KEY.split('.')[1], 
+            keyParts[1], 
             'base64'
           ).toString()
         )
@@ -106,7 +120,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Generate recommendations
-  if (diagnostics.environment_analysis.url_analysis.detected_pattern === 'ZEABUR_SELF_HOSTED') {
+  if (urlAnalysis.detected_pattern === 'ZEABUR_SELF_HOSTED') {
     diagnostics.recommendations.push('✅ Zeabur self-hosted Supabase detected')
     
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -121,11 +135,11 @@ export async function GET(request: NextRequest) {
       diagnostics.recommendations.push('⚠️ Anon Key format invalid - should start with "eyJ"')
     }
     
-    if (diagnostics.connection_attempts.service_jwt_decode?.success && 
-        diagnostics.connection_attempts.service_jwt_decode?.role !== 'service_role') {
+    const serviceJwtDecode = (diagnostics.connection_attempts as any).service_jwt_decode
+    if (serviceJwtDecode?.success && serviceJwtDecode?.role !== 'service_role') {
       diagnostics.recommendations.push('⚠️ Service Role Key may not have correct role permissions')
     }
-  } else if (diagnostics.environment_analysis.url_analysis.detected_pattern === 'SUPABASE_CLOUD') {
+  } else if (urlAnalysis.detected_pattern === 'SUPABASE_CLOUD') {
     diagnostics.recommendations.push('❓ Supabase Cloud detected, but you mentioned Zeabur deployment')
     diagnostics.recommendations.push('Check if URL should point to your Zeabur instance instead')
   } else {
