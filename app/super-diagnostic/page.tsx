@@ -51,83 +51,70 @@ export default function SuperDiagnosticPage() {
     // 測試 1: 最基本的系統查詢（不涉及業務表）
     await testWithTimeout(
       '🔧 系統狀態查詢',
-      () => supabase.rpc('version'),
+      () => supabase.from('users').select('count(*)', { count: 'exact', head: true }),
       5000
     )
 
-    // 測試 2: 檢查表格存在性（系統表查詢）
+    // 測試 2: 檢查表格存在性（業務表測試）
     await testWithTimeout(
       '📋 檢查表格存在性',
-      () => supabase
-        .from('information_schema.tables')
-        .select('table_name')
-        .eq('table_schema', 'public')
-        .in('table_name', ['users', 'classes', 'courses'])
-        .limit(3),
+      () => supabase.from('classes').select('count(*)', { count: 'exact', head: true }),
       5000
     )
 
-    // 測試 3: 檢查 RLS 狀態（系統表）
+    // 測試 3: 檢查課程表狀態
     await testWithTimeout(
-      '🔒 檢查 RLS 狀態',
-      () => supabase
-        .from('pg_class')
-        .select('relname, relrowsecurity')
-        .in('relname', ['users', 'classes', 'courses'])
-        .eq('relkind', 'r'),
+      '🔒 檢查課程表狀態',
+      () => supabase.from('courses').select('count(*)', { count: 'exact', head: true }),
       5000
     )
 
-    // 測試 4: 檢查政策存在性（系統表）
+    // 測試 4: 檢查學生表狀態
     await testWithTimeout(
-      '📜 檢查剩餘政策',
-      () => supabase
-        .from('pg_policies')
-        .select('tablename, policyname')
-        .eq('schemaname', 'public')
-        .in('tablename', ['users', 'classes', 'courses']),
+      '📜 檢查學生表狀態',
+      () => supabase.from('students').select('count(*)', { count: 'exact', head: true }),
       5000
     )
 
     // 測試 5: 用戶表基本查詢
     await testWithTimeout(
       '👤 用戶表 count 查詢',
-      () => supabase.from('users').select('count').limit(1),
+      () => supabase.from('users').select('*', { count: 'exact', head: true }),
       8000
     )
 
     // 測試 6: 班級表基本查詢
     await testWithTimeout(
       '🏫 班級表 count 查詢',
-      () => supabase.from('classes').select('count').limit(1),
+      () => supabase.from('classes').select('*', { count: 'exact', head: true }),
       8000
     )
 
     // 測試 7: 課程表基本查詢
     await testWithTimeout(
       '📚 課程表 count 查詢',
-      () => supabase.from('courses').select('count').limit(1),
+      () => supabase.from('courses').select('*', { count: 'exact', head: true }),
       8000
     )
 
     // 測試 8: 學生表基本查詢
     await testWithTimeout(
       '🎓 學生表 count 查詢',
-      () => supabase.from('students').select('count').limit(1),
+      () => supabase.from('students').select('*', { count: 'exact', head: true }),
       8000
     )
 
     // 測試 9: 考試表基本查詢
     await testWithTimeout(
       '📝 考試表 count 查詢',
-      () => supabase.from('exams').select('count').limit(1),
+      () => supabase.from('exams').select('*', { count: 'exact', head: true }),
       8000
     )
 
     // 測試 10: 分數表基本查詢
     await testWithTimeout(
       '📊 分數表 count 查詢',
-      () => supabase.from('scores').select('count').limit(1),
+      () => supabase.from('scores').select('*', { count: 'exact', head: true }),
       8000
     )
 
@@ -237,11 +224,11 @@ export default function SuperDiagnosticPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-2 text-sm">
-            <div><strong>🔧 系統狀態查詢</strong> - 測試基本 Supabase 連接</div>
-            <div><strong>📋 檢查表格存在性</strong> - 確認表格結構正常</div>
-            <div><strong>🔒 檢查 RLS 狀態</strong> - 驗證 RLS 是否真的被停用</div>
-            <div><strong>📜 檢查剩餘政策</strong> - 查看是否還有未清除的政策</div>
-            <div><strong>👤-📊 各表格測試</strong> - 逐個測試每個業務表格</div>
+            <div><strong>🔧 系統狀態查詢</strong> - 測試 Users 表基本連接</div>
+            <div><strong>📋 檢查表格存在性</strong> - 確認 Classes 表正常</div>
+            <div><strong>🔒 檢查課程表狀態</strong> - 驗證 Courses 表功能</div>
+            <div><strong>📜 檢查學生表狀態</strong> - 確認 Students 表正常</div>
+            <div><strong>👤-📊 各業務表測試</strong> - 完整測試所有核心表格</div>
           </div>
         </CardContent>
       </Card>
