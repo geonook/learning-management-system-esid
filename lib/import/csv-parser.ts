@@ -176,8 +176,8 @@ function validateRows<T>(
       }
       
       // Validate against schema
-      const result = schema.parse(rowData)
-      valid.push(result)
+      const parsedData = schema.parse(rowData)
+      valid.push(parsedData)
     } catch (error) {
       const zodError = error as z.ZodError
       const errorMessages = zodError.errors.map(err => 
@@ -215,7 +215,17 @@ export async function validateUsersCSV(
   options?: CSVParseOptions
 ): Promise<ImportValidationResult<UserImport>> {
   const { headers, rows } = await parseCSVContent(content, options)
-  return validateRows(headers, rows, UserImportSchema, 'users', options)
+  const result = validateRows(headers, rows, UserImportSchema, 'users', options)
+  
+  // Transform to match our explicit UserImport type
+  return {
+    valid: result.valid.map(item => ({
+      ...item,
+      is_active: item.is_active ?? true
+    } as UserImport)),
+    invalid: result.invalid,
+    summary: result.summary
+  }
 }
 
 export async function validateClassesCSV(
@@ -223,7 +233,17 @@ export async function validateClassesCSV(
   options?: CSVParseOptions
 ): Promise<ImportValidationResult<ClassImport>> {
   const { headers, rows } = await parseCSVContent(content, options)
-  return validateRows(headers, rows, ClassImportSchema, 'classes', options)
+  const result = validateRows(headers, rows, ClassImportSchema, 'classes', options)
+  
+  return {
+    valid: result.valid.map(item => ({
+      ...item,
+      is_active: item.is_active ?? true,
+      academic_year: item.academic_year || '24-25'
+    } as ClassImport)),
+    invalid: result.invalid,
+    summary: result.summary
+  }
 }
 
 export async function validateCoursesCSV(
@@ -231,7 +251,17 @@ export async function validateCoursesCSV(
   options?: CSVParseOptions
 ): Promise<ImportValidationResult<CourseImport>> {
   const { headers, rows } = await parseCSVContent(content, options)
-  return validateRows(headers, rows, CourseImportSchema, 'courses', options)
+  const result = validateRows(headers, rows, CourseImportSchema, 'courses', options)
+  
+  return {
+    valid: result.valid.map(item => ({
+      ...item,
+      is_active: item.is_active ?? true,
+      academic_year: item.academic_year || '24-25'
+    } as CourseImport)),
+    invalid: result.invalid,
+    summary: result.summary
+  }
 }
 
 export async function validateStudentsCSV(
@@ -239,7 +269,16 @@ export async function validateStudentsCSV(
   options?: CSVParseOptions
 ): Promise<ImportValidationResult<StudentImport>> {
   const { headers, rows } = await parseCSVContent(content, options)
-  return validateRows(headers, rows, StudentImportSchema, 'students', options)
+  const result = validateRows(headers, rows, StudentImportSchema, 'students', options)
+  
+  return {
+    valid: result.valid.map(item => ({
+      ...item,
+      is_active: item.is_active ?? true
+    } as StudentImport)),
+    invalid: result.invalid,
+    summary: result.summary
+  }
 }
 
 export async function validateScoresCSV(

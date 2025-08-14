@@ -113,13 +113,10 @@ async function executeUsersImport(
       is_active: user.is_active
     }))
     
-    // Insert users with upsert logic
+    // Use insert for new users - cast to satisfy TypeScript but let database generate UUIDs
     const { data: insertedUsers, error } = await supabase
       .from('users')
-      .upsert(usersToInsert, {
-        onConflict: 'email',
-        ignoreDuplicates: false
-      })
+      .insert(usersToInsert as any)
       .select('id, email')
     
     if (error) {
@@ -454,7 +451,9 @@ async function executeScoresImport(
       // Remove exam_name and course_id from final insert data
       const { exam_name, course_id, ...scoreData } = score
       return scoreData
-    }).filter(score => score.exam_id) // Only include scores with valid exam_id
+    }).filter((score): score is NonNullable<typeof score> & { exam_id: string } => 
+      score !== null && score.exam_id !== null && score.exam_id !== undefined
+    )
     
     if (finalScoresToInsert.length === 0) {
       result.warnings.push({

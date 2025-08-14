@@ -15,7 +15,7 @@ export const UserImportSchema = z.object({
   teacher_type: z.enum(['LT', 'IT', 'KCFS']).optional().nullable(),
   grade: z.number().int().min(1).max(6).optional().nullable(),
   track: z.enum(['local', 'international']).optional().nullable(),
-  is_active: z.boolean().default(true)
+  is_active: z.boolean().default(true).transform(val => val ?? true)
 })
 
 export const ClassImportSchema = z.object({
@@ -31,8 +31,8 @@ export const ClassImportSchema = z.object({
     errorMap: () => ({ message: 'Track must be local or international' })
   }),
   teacher_email: z.string().email('Invalid teacher email'),
-  academic_year: z.string().regex(/^\d{2}-\d{2}$/, 'Academic year must be YY-YY format (e.g., 24-25)').default('24-25'),
-  is_active: z.boolean().default(true)
+  academic_year: z.string().regex(/^\d{2}-\d{2}$/, 'Academic year must be YY-YY format (e.g., 24-25)').default('24-25').transform(val => val || '24-25'),
+  is_active: z.boolean().default(true).transform(val => val ?? true)
 })
 
 export const StudentImportSchema = z.object({
@@ -46,7 +46,7 @@ export const StudentImportSchema = z.object({
     errorMap: () => ({ message: 'Track must be local or international' })
   }),
   class_name: z.string().optional().nullable(), // Will be mapped to class_id
-  is_active: z.boolean().default(true)
+  is_active: z.boolean().default(true).transform(val => val ?? true)
 })
 
 // New Course Import Schema for independent English courses
@@ -56,8 +56,8 @@ export const CourseImportSchema = z.object({
     errorMap: () => ({ message: 'Course type must be LT, IT, or KCFS' })
   }),
   teacher_email: z.string().email('Invalid teacher email'),
-  academic_year: z.string().regex(/^\d{2}-\d{2}$/, 'Academic year must be YY-YY format').default('24-25'),
-  is_active: z.boolean().default(true)
+  academic_year: z.string().regex(/^\d{2}-\d{2}$/, 'Academic year must be YY-YY format').default('24-25').transform(val => val || '24-25'),
+  is_active: z.boolean().default(true).transform(val => val ?? true)
 })
 
 export const ScoreImportSchema = z.object({
@@ -76,15 +76,53 @@ export const ScoreImportSchema = z.object({
   entered_by_email: z.string().email('Invalid teacher email') // Will be mapped to entered_by UUID
 })
 
-// Inferred types from Zod schemas
-export type UserImport = z.infer<typeof UserImportSchema>
-export type ClassImport = z.infer<typeof ClassImportSchema>  
-export type CourseImport = z.infer<typeof CourseImportSchema>
-export type StudentImport = z.infer<typeof StudentImportSchema>
-export type ScoreImport = z.infer<typeof ScoreImportSchema>
+// Explicit types for import data (with required fields properly typed)
+export type UserImport = {
+  email: string
+  full_name: string
+  role: 'admin' | 'head' | 'teacher' | 'student'
+  teacher_type?: 'LT' | 'IT' | 'KCFS' | null
+  grade?: number | null
+  track?: 'local' | 'international' | null
+  is_active: boolean
+}
 
-// Export the schemas for type consistency
-export { UserImportSchema, ClassImportSchema, CourseImportSchema, StudentImportSchema, ScoreImportSchema }
+export type ClassImport = {
+  name: string
+  grade: number
+  level: 'E1' | 'E2' | 'E3'
+  track: 'local' | 'international'
+  teacher_email: string
+  academic_year: string
+  is_active: boolean
+}
+
+export type CourseImport = {
+  class_name: string
+  course_type: 'LT' | 'IT' | 'KCFS'
+  teacher_email: string
+  academic_year: string
+  is_active: boolean
+}
+
+export type StudentImport = {
+  student_id: string
+  full_name: string
+  grade: number
+  level?: 'E1' | 'E2' | 'E3' | null
+  track: 'local' | 'international'
+  class_name?: string | null
+  is_active: boolean
+}
+
+export type ScoreImport = {
+  student_id: string
+  course_type: 'LT' | 'IT' | 'KCFS'
+  exam_name: string
+  assessment_code: 'FA1' | 'FA2' | 'FA3' | 'FA4' | 'FA5' | 'FA6' | 'FA7' | 'FA8' | 'SA1' | 'SA2' | 'SA3' | 'SA4' | 'FINAL'
+  score: number
+  entered_by_email: string
+}
 
 // Import validation result types
 export interface ImportValidationResult<T> {
