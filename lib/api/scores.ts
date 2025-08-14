@@ -169,7 +169,7 @@ export async function getCourseStudentsWithScores(courseId: string) {
   }
 
   // Group scores by student
-  const scoresByStudent = scoresData.reduce((acc, score) => {
+  const scoresByStudent = (scoresData || []).reduce((acc, score) => {
     if (!acc[score.student_id]) {
       acc[score.student_id] = []
     }
@@ -211,9 +211,10 @@ export async function upsertScoreWithCourse(scoreData: {
       .from('exams')
       .insert({
         name: defaultExamName,
-        course_id: scoreData.course_id,
+        class_id: scoreData.course_id, // Using course_id as class_id for now
         exam_date: new Date().toISOString().split('T')[0],
-        is_active: true
+        is_published: true,
+        created_by: scoreData.entered_by
       })
       .select('id')
       .single()

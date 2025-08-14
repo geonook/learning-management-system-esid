@@ -87,8 +87,8 @@ function mapColumns(headers: string[], stage: keyof typeof CSV_COLUMN_MAPPINGS):
   
   for (const [standardField, variants] of Object.entries(stageMapping)) {
     for (let i = 0; i < headers.length; i++) {
-      const header = headers[i].trim()
-      if (variants.includes(header)) {
+      const header = headers[i]?.trim()
+      if (header && variants.includes(header)) {
         mapping[standardField] = i
         break
       }

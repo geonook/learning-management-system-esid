@@ -133,7 +133,7 @@ export async function getAccessibleClasses(): Promise<TeacherClassView[]> {
     throw new Error('User not authenticated')
   }
 
-  let query = supabase.from('teacher_classes_view').select('*')
+  let query = supabase.from('classes').select('*')
 
   // Apply permission-based filtering
   switch (permissions.role) {
@@ -179,7 +179,7 @@ export async function getAccessibleStudents(): Promise<TeacherStudentView[]> {
     throw new Error('User not authenticated')
   }
 
-  let query = supabase.from('teacher_students_view').select('*')
+  let query = supabase.from('students').select('*')
 
   // Apply permission-based filtering
   switch (permissions.role) {

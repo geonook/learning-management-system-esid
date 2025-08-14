@@ -362,7 +362,7 @@ function getCommonErrors(errors: ImportValidationError[]): Array<{ error: string
   errors.forEach(error => {
     error.errors.forEach(errorMsg => {
       // Extract the base error message (before the colon if present)
-      const baseError = errorMsg.split(':')[0].trim()
+      const baseError = errorMsg.split(':')[0]?.trim() || errorMsg
       errorCounts.set(baseError, (errorCounts.get(baseError) || 0) + 1)
     })
   })
@@ -479,7 +479,7 @@ export function generateImportAnalytics(
   
   results.forEach(result => {
     result.errors.forEach(error => {
-      const issue = error.error.split(':')[0].trim() // Extract base error message
+      const issue = error.error.split(':')[0]?.trim() || error.error // Extract base error message
       const current = issueMap.get(issue) || { frequency: 0, stages: new Set() }
       current.frequency++
       current.stages.add(error.stage)

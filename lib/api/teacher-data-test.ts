@@ -290,8 +290,8 @@ export async function testAllViews(): Promise<{
   try {
     console.log('🧪 Testing teacher_classes_view...')
     const { data, error } = await supabase
-      .from('teacher_classes_view')
-      .select('class_id, class_name, teacher_id')
+      .from('classes')
+      .select('id, name, teacher_id')
       .limit(3)
     
     if (error) throw error
@@ -306,8 +306,8 @@ export async function testAllViews(): Promise<{
   try {
     console.log('🧪 Testing teacher_students_view...')
     const { data, error } = await supabase
-      .from('teacher_students_view')
-      .select('student_id, student_name, class_name')
+      .from('students')
+      .select('id, full_name, class_id')
       .limit(3)
     
     if (error) throw error
