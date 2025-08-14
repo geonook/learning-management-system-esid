@@ -832,3 +832,251 @@ export async function getTeacherHeatmap(): Promise<number[][]> {
     Array.from({ length: 12 }).map(() => Math.round(Math.random() * 100))
   )
 }
+
+// ======================================
+// HEAD TEACHER-SPECIFIC FUNCTIONS
+// ======================================
+
+export interface HeadTeacherKpis {
+  totalClasses: number
+  averageScore: number
+  coverageRate: number
+  activeIssues: number
+  studentsCount: number
+  teachersCount: number
+}
+
+export interface GradeClassSummary {
+  className: string
+  track: 'local' | 'international'
+  studentCount: number
+  ltTeacher: string | null
+  itTeacher: string | null
+  kcfsTeacher: string | null
+  avgScore: number
+  coverageRate: number
+  lastActivity: string
+}
+
+/**
+ * Get Head Teacher KPIs for their specific grade and track
+ */
+export async function getHeadTeacherKpis(
+  grade: number,
+  track: 'local' | 'international'
+): Promise<HeadTeacherKpis> {
+  const supabase = createClient()
+
+  try {
+    // Get classes in this grade and track
+    const { data: classes, error: classesError } = await supabase
+      .from('classes')
+      .select('id, name')
+      .eq('grade', grade)
+      .eq('track', track)
+      .eq('is_active', true)
+
+    if (classesError) {
+      console.error('Error fetching head teacher classes:', classesError)
+      return { totalClasses: 0, averageScore: 0, coverageRate: 0, activeIssues: 0, studentsCount: 0, teachersCount: 0 }
+    }
+
+    const classIds = (classes || []).map(c => c.id)
+    const totalClasses = classes?.length || 0
+
+    if (classIds.length === 0) {
+      return { totalClasses: 0, averageScore: 0, coverageRate: 0, activeIssues: 0, studentsCount: 0, teachersCount: 0 }
+    }
+
+    // Get students count
+    const { count: studentsCount } = await supabase
+      .from('students')
+      .select('*', { count: 'exact' })
+      .in('class_id', classIds)
+      .eq('is_active', true)
+
+    // Get teachers count (unique teachers teaching in these classes)
+    const { data: courses } = await supabase
+      .from('courses')
+      .select('teacher_id')
+      .in('class_id', classIds)
+      .eq('is_active', true)
+
+    const uniqueTeachers = new Set((courses || []).map(c => c.teacher_id))
+    const teachersCount = uniqueTeachers.size
+
+    // Get recent scores for average calculation
+    const { data: scores } = await supabase
+      .from('scores')
+      .select(`
+        score,
+        student_id,
+        exams!inner(
+          class_id
+        )
+      `)
+      .in('exams.class_id', classIds)
+      .gte('entered_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()) // Last 30 days
+      .not('score', 'is', null)
+
+    const validScores = (scores || [])
+      .map(s => s.score || 0)
+      .filter(score => score > 0)
+
+    const averageScore = validScores.length > 0
+      ? Math.round(validScores.reduce((sum, score) => sum + score, 0) / validScores.length * 10) / 10
+      : 0
+
+    // Calculate coverage rate (students with recent scores)
+    const studentsWithScores = new Set(
+      (scores || []).map(s => s.student_id).filter(Boolean)
+    ).size
+
+    const coverageRate = studentsCount && studentsCount > 0
+      ? Math.round((studentsWithScores / studentsCount) * 100)
+      : 0
+
+    // Mock active issues (could be implemented with real issue tracking)
+    const activeIssues = Math.floor(Math.random() * 5)
+
+    return {
+      totalClasses,
+      averageScore,
+      coverageRate,
+      activeIssues,
+      studentsCount: studentsCount || 0,
+      teachersCount
+    }
+
+  } catch (error) {
+    console.error('Exception in getHeadTeacherKpis:', error)
+    return { totalClasses: 0, averageScore: 0, coverageRate: 0, activeIssues: 0, studentsCount: 0, teachersCount: 0 }
+  }
+}
+
+/**
+ * Get grade class summary for Head Teacher overview
+ */
+export async function getGradeClassSummary(
+  grade: number,
+  track: 'local' | 'international'
+): Promise<GradeClassSummary[]> {
+  const supabase = createClient()
+
+  try {
+    // Get classes in this grade and track
+    const { data: classes, error: classesError } = await supabase
+      .from('classes')
+      .select('id, name, track')
+      .eq('grade', grade)
+      .eq('track', track)
+      .eq('is_active', true)
+      .order('name', { ascending: true })
+
+    if (classesError) {
+      console.error('Error fetching classes:', classesError)
+      return []
+    }
+
+    const classSummary: GradeClassSummary[] = []
+
+    for (const cls of classes || []) {
+      // Get student count
+      const { count: studentCount } = await supabase
+        .from('students')
+        .select('*', { count: 'exact' })
+        .eq('class_id', cls.id)
+        .eq('is_active', true)
+
+      // Get teachers for each course type
+      const { data: courses } = await supabase
+        .from('courses')
+        .select(`
+          course_type,
+          users!courses_teacher_id_fkey(
+            full_name
+          )
+        `)
+        .eq('class_id', cls.id)
+        .eq('is_active', true)
+
+      let ltTeacher = null
+      let itTeacher = null
+      let kcfsTeacher = null
+
+      for (const course of courses || []) {
+        const teacherName = course.users?.full_name || 'Unassigned'
+        switch (course.course_type) {
+          case 'LT':
+            ltTeacher = teacherName
+            break
+          case 'IT':
+            itTeacher = teacherName
+            break
+          case 'KCFS':
+            kcfsTeacher = teacherName
+            break
+        }
+      }
+
+      // Get recent scores for this class
+      const { data: scores } = await supabase
+        .from('scores')
+        .select(`
+          score,
+          student_id,
+          entered_at,
+          exams!inner(
+            class_id
+          )
+        `)
+        .eq('exams.class_id', cls.id)
+        .gte('entered_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()) // Last 30 days
+        .not('score', 'is', null)
+
+      const validScores = (scores || [])
+        .map(s => s.score || 0)
+        .filter(score => score > 0)
+
+      const avgScore = validScores.length > 0
+        ? Math.round(validScores.reduce((sum, score) => sum + score, 0) / validScores.length * 10) / 10
+        : 0
+
+      // Calculate coverage rate
+      const studentsWithScores = new Set(
+        (scores || []).map(s => s.student_id).filter(Boolean)
+      ).size
+
+      const coverageRate = studentCount && studentCount > 0
+        ? Math.round((studentsWithScores / studentCount) * 100)
+        : 0
+
+      // Get last activity date
+      const lastActivityDate = scores && scores.length > 0
+        ? Math.max(...scores.map(s => new Date(s.entered_at).getTime()))
+        : 0
+
+      const lastActivity = lastActivityDate > 0
+        ? new Date(lastActivityDate).toLocaleDateString()
+        : 'No activity'
+
+      classSummary.push({
+        className: cls.name,
+        track: cls.track,
+        studentCount: studentCount || 0,
+        ltTeacher,
+        itTeacher,
+        kcfsTeacher,
+        avgScore,
+        coverageRate,
+        lastActivity
+      })
+    }
+
+    return classSummary
+
+  } catch (error) {
+    console.error('Exception in getGradeClassSummary:', error)
+    return []
+  }
+}

@@ -9,15 +9,20 @@ import ChartCard from "@/components/ui/chart-card"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { AlertCircle, BarChart2, CheckCircle2, CheckSquare } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { 
   getTeacherKpis,
   getAdminKpis,
+  getHeadTeacherKpis,
+  getGradeClassSummary,
   getClassDistribution, 
   getScatterData, 
   getUpcomingDeadlines, 
   getRecentAlerts,
   type TeacherKpis,
   type AdminKpis,
+  type HeadTeacherKpis,
+  type GradeClassSummary,
   type ClassDistribution,
   type ScatterPoint,
   type UpcomingDeadline,
@@ -53,6 +58,15 @@ export default function Dashboard() {
     coverage: 0,
     onTime: 0
   })
+  const [headKpis, setHeadKpis] = useState<HeadTeacherKpis>({
+    totalClasses: 0,
+    averageScore: 0,
+    coverageRate: 0,
+    activeIssues: 0,
+    studentsCount: 0,
+    teachersCount: 0
+  })
+  const [gradeClassSummary, setGradeClassSummary] = useState<GradeClassSummary[]>([])
   const [distribution, setDistribution] = useState<ClassDistribution[]>([])
   const [scatterData, setScatterData] = useState<ScatterPoint[]>([])
   const [deadlines, setDeadlines] = useState<UpcomingDeadline[]>([])
@@ -80,6 +94,13 @@ export default function Dashboard() {
         } else if (userRole === 'admin') {
           const adminKpiData = await getAdminKpis()
           setAdminKpis(adminKpiData)
+        } else if (userRole === 'head' && userPermissions?.grade && userPermissions?.track) {
+          const [headKpiData, classSummaryData] = await Promise.all([
+            getHeadTeacherKpis(userPermissions.grade, userPermissions.track),
+            getGradeClassSummary(userPermissions.grade, userPermissions.track)
+          ])
+          setHeadKpis(headKpiData)
+          setGradeClassSummary(classSummaryData)
         }
         setDistribution(distData)
         setScatterData(scatterPoints)
@@ -191,37 +212,123 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Head Teacher KPIs - similar to teacher but for their grade/track */}
+      {/* Head Teacher KPIs - for specific grade and track management */}
       {userRole === 'head' && (
-        <div className="grid gap-3 md:grid-cols-4">
-          <StatCard
-            label={`Grade ${userPermissions?.grade} Classes`}
-            value="8"
-            delta="+1"
-            icon={<BarChart2 className="w-4 h-4" />}
-          />
-          <StatCard
-            label="Average Score"
-            value="78.5"
-            delta="+2.1%"
-            icon={<CheckCircle2 className="w-4 h-4" />}
-            tone="success"
-          />
-          <StatCard
-            label="Coverage Rate"
-            value="92%"
-            delta="+3.2%"
-            icon={<CheckSquare className="w-4 h-4" />}
-            tone="success"
-          />
-          <StatCard
-            label="Active Issues"
-            value="3"
-            delta="-1"
-            icon={<AlertCircle className="w-4 h-4" />}
-            tone="warning"
-          />
-        </div>
+        <>
+          <div className="grid gap-3 md:grid-cols-6">
+            <StatCard
+              label={`Grade ${userPermissions?.grade} Classes`}
+              value={headKpis.totalClasses.toString()}
+              delta="+1"
+              icon={<BarChart2 className="w-4 h-4" />}
+            />
+            <StatCard
+              label="Total Students"
+              value={headKpis.studentsCount.toString()}
+              delta="+12"
+              icon={<CheckSquare className="w-4 h-4" />}
+            />
+            <StatCard
+              label="Teachers"
+              value={headKpis.teachersCount.toString()}
+              delta="0"
+              icon={<CheckCircle2 className="w-4 h-4" />}
+            />
+            <StatCard
+              label="Average Score"
+              value={headKpis.averageScore.toString()}
+              delta="+2.1%"
+              icon={<BarChart2 className="w-4 h-4" />}
+              tone={headKpis.averageScore >= 75 ? "success" : headKpis.averageScore >= 60 ? "warning" : "danger"}
+            />
+            <StatCard
+              label="Coverage Rate"
+              value={`${headKpis.coverageRate}%`}
+              delta="+3.2%"
+              icon={<CheckSquare className="w-4 h-4" />}
+              tone={headKpis.coverageRate >= 80 ? "success" : "warning"}
+            />
+            <StatCard
+              label="Active Issues"
+              value={headKpis.activeIssues.toString()}
+              delta="-1"
+              icon={<AlertCircle className="w-4 h-4" />}
+              tone={headKpis.activeIssues === 0 ? "success" : "warning"}
+            />
+          </div>
+
+          {/* Grade Class Summary Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                Grade {userPermissions?.grade} {userPermissions?.track && userPermissions.track.charAt(0).toUpperCase() + userPermissions.track.slice(1)} Classes Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Class</TableHead>
+                    <TableHead>Students</TableHead>
+                    <TableHead>LT Teacher</TableHead>
+                    <TableHead>IT Teacher</TableHead>
+                    <TableHead>KCFS Teacher</TableHead>
+                    <TableHead>Avg Score</TableHead>
+                    <TableHead>Coverage</TableHead>
+                    <TableHead>Last Activity</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {gradeClassSummary.map((classData) => (
+                    <TableRow key={classData.className}>
+                      <TableCell className="font-medium">{classData.className}</TableCell>
+                      <TableCell>{classData.studentCount}</TableCell>
+                      <TableCell>
+                        <span className={classData.ltTeacher === 'Unassigned' ? 'text-red-600' : 'text-foreground'}>
+                          {classData.ltTeacher || 'Unassigned'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className={classData.itTeacher === 'Unassigned' ? 'text-red-600' : 'text-foreground'}>
+                          {classData.itTeacher || 'Unassigned'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className={classData.kcfsTeacher === 'Unassigned' ? 'text-red-600' : 'text-foreground'}>
+                          {classData.kcfsTeacher || 'Unassigned'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className={`font-medium ${
+                          classData.avgScore >= 80 ? 'text-green-600' : 
+                          classData.avgScore >= 60 ? 'text-yellow-600' : 
+                          classData.avgScore > 0 ? 'text-red-600' : 'text-muted-foreground'
+                        }`}>
+                          {classData.avgScore > 0 ? classData.avgScore : 'No data'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className={`font-medium ${
+                          classData.coverageRate >= 80 ? 'text-green-600' : 
+                          classData.coverageRate >= 50 ? 'text-yellow-600' : 
+                          'text-red-600'
+                        }`}>
+                          {classData.coverageRate}%
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{classData.lastActivity}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {gradeClassSummary.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  No classes found for Grade {userPermissions?.grade} {userPermissions?.track}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </>
       )}
 
       <div className="grid gap-3 lg:grid-cols-2">
