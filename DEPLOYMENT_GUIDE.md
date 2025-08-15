@@ -2,7 +2,9 @@
 
 ## 🎯 Production-Ready Deployment on Zeabur
 
-This guide covers complete deployment of the Primary School Learning Management System using Zeabur for both frontend and Supabase backend infrastructure.
+This guide covers complete deployment of the Primary School Learning Management System with **Advanced Analytics** capabilities using Zeabur for both frontend and Supabase backend infrastructure.
+
+> **Version**: 1.2.0 | **Analytics**: Phase 3A-1 ✅ | **Last Updated**: 2025-08-15
 
 ## 📋 Prerequisites
 
@@ -33,7 +35,12 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 # Application Settings
 NODE_ENV=production
 NEXT_PUBLIC_APP_URL=https://your-domain.com
-NEXT_PUBLIC_APP_VERSION=1.1.0
+NEXT_PUBLIC_APP_VERSION=1.2.0
+
+# Analytics Configuration (Phase 3A-1)
+NEXT_PUBLIC_ANALYTICS_ENABLED=true
+ANALYTICS_CACHE_TTL=300000
+ANALYTICS_BATCH_SIZE=100
 
 # Security
 NEXTAUTH_SECRET=your-production-nextauth-secret
@@ -152,6 +159,12 @@ Navigate to `https://your-zeabur-app-url/admin/import` and upload CSV files in o
 
 ## 🏗️ 架構說明
 
+### Phase 3A-1 Analytics 架構 ✅
+- ✅ **Analytics 引擎**: 40+ TypeScript 介面，完整統計計算功能
+- ✅ **快取系統**: TTL-based 快取機制，最佳化查詢效能
+- ✅ **RLS 整合**: Analytics 查詢完全遵循權限控制
+- ✅ **即時更新**: 與通知系統整合，自動資料刷新
+
 ### 清理的問題
 - ❌ 移除了 6+ 個混亂的 migration 檔案
 - ❌ 移除了重複的 enum 定義
@@ -163,6 +176,7 @@ Navigate to `https://your-zeabur-app-url/admin/import` and upload CSV files in o
 - ✅ 完整的 RLS 安全政策
 - ✅ 最佳化的索引策略
 - ✅ 標準化的 CSV 匯入流程
+- ✅ **智能分析引擎**: 學習軌跡追蹤、風險評估、預測分析
 
 ## 📝 後續維護
 

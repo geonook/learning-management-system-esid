@@ -1,6 +1,6 @@
 # Learning Management System - ESID
 
-A comprehensive **Primary School (G1-G6)** Learning Management System featuring English Language Arts (ELA) and KCFS courses. Features unified course architecture with Campus-based management for Local Teachers, International Teachers, and KCFS Teachers. Built with Next.js, TypeScript, Tailwind CSS, and Supabase.
+A comprehensive **Primary School (G1-G6)** Learning Management System featuring English Language Arts (ELA) and KCFS courses with advanced **Analytics** capabilities. Features unified course architecture with Campus-based management for Local Teachers, International Teachers, and KCFS Teachers, plus real-time performance analytics and intelligent insights. Built with Next.js, TypeScript, Tailwind CSS, and Supabase.
 
 ## Quick Start
 
@@ -132,35 +132,73 @@ npm run deploy          # Deploy to Zeabur
 ## 🧪 Testing Strategy
 
 ### Unit Tests (Vitest)
-- **Grade calculations** - All scenarios including edge cases
+- **Grade calculations** - All scenarios including edge cases with snapshots
+- **Analytics functions** - Statistical calculations, risk assessment algorithms
 - **Utility functions** - Helper functions and validation
 - **Components** - UI component behavior
 
 ### E2E Tests (Playwright)
 - **Authentication flow** - Login/logout/role-based access
 - **Grade entry workflow** - Complete score import to dashboard update
+- **Analytics workflow** - Data visualization and real-time updates
 - **Multi-role scenarios** - Admin, head teacher, teacher workflows
 
 ### Contract Tests
-- **API endpoints** - Scores bulk upsert, exams CRUD
+- **API endpoints** - Scores bulk upsert, exams CRUD, analytics queries
 - **Database operations** - RLS policy enforcement
 - **Assessment overrides** - Display name resolution
 
+## 🧪 Test Environment
+
+### Available Test Accounts
+> **Password**: Use username without `@esid.edu` (e.g., `admin` for `admin@esid.edu`)
+
+#### System Administrator
+- `admin@esid.edu` - Full system access
+
+#### Head Teachers (Grade × Campus)
+- `head.g1.local@esid.edu` - Grade 1 Local Campus Head
+- `head.g1.intl@esid.edu` - Grade 1 International Campus Head
+- `head.g2.local@esid.edu` - Grade 2 Local Campus Head
+- ... (G1-G6 × Local/International = 12 positions)
+
+#### Subject Teachers
+- `lt.g1@esid.edu` - Grade 1 LT Teacher (Local English)
+- `it.g1@esid.edu` - Grade 1 IT Teacher (International English)
+- `kcfs.g1@esid.edu` - Grade 1 KCFS Teacher (Future Skills)
+- ... (G1-G6 × 3 subjects = 18 teachers)
+
+### Test Data Overview
+- **Classes**: 24 classes (G1-G6 × 4 classes each)
+- **Students**: ~480 students (20 per class)
+- **Courses**: 72 courses (3 per class: LT + IT + KCFS)
+- **Sample Scores**: Available for analytics testing
+
 ## 📊 Key Features
 
-### Primary School Dashboard
-- **Admin**: System-wide analytics and user management across all campuses
-- **Head Teachers**: Grade×campus-specific insights and course controls (ELA + KCFS)
-- **Teachers**: Class-specific course management and student progress (ELA or KCFS)
+### Primary School Dashboard with Analytics
+- **Admin**: System-wide analytics and user management across all campuses with advanced statistical insights
+- **Head Teachers**: Grade×campus-specific insights and course controls (ELA + KCFS) with performance tracking
+- **Teachers**: Class-specific course management and student progress (ELA or KCFS) with learning analytics
+
+### 🧠 Analytics System (Phase 3A-1 ✅)
+- **40+ TypeScript Interfaces** - Comprehensive type system for all analytics data structures
+- **Statistical Calculations** - Mean, median, standard deviation, trend analysis, risk assessment
+- **Performance Metrics** - Student learning trajectories, improvement rates, engagement tracking
+- **Real-time Caching** - TTL-based cache system for optimal performance
+- **Role-based Filtering** - Analytics queries respect RLS policies automatically
+- **Grade Integration** - Seamless integration with existing grade calculation system
 
 ### Grade Management
 - **Unified CSV import system** with validation and error handling for all three courses (LT/IT ELA + KCFS)
 - **Individual score entry** with real-time calculation across LT/IT/KCFS
 - **Weighted grade calculations** following primary school standards
 
-### Reporting & Analytics
-- **Performance tracking** by class, grade, and campus across all courses
-- **Course comparison** between LT ELA, IT ELA, and KCFS performance
+### Reporting & Advanced Analytics
+- **Performance tracking** by class, grade, and campus across all courses with statistical analysis
+- **Course comparison** between LT ELA, IT ELA, and KCFS performance with trend visualization
+- **Learning Analytics** - Student risk identification, improvement tracking, consistency analysis
+- **Predictive Insights** - Early warning systems and intervention recommendations
 - **Export capabilities** for external reporting and parent communication
 
 ## 🔄 Development Workflow
@@ -222,5 +260,5 @@ npm run deploy          # Deploy to Zeabur
 
 ---
 
-**🎯 Primary School ELA LMS |康橋小學英語學習管理系統 | v1.1.0**  
-🏫 Features: G1-G6 支援 | ELA三課程架構 | Campus管理系統 | CSV批量匯入
+**🎯 Primary School ELA LMS |康橋小學英語學習管理系統 | v1.2.0**  
+🏫 Features: G1-G6 支援 | ELA三課程架構 | Campus管理系統 | CSV批量匯入 | 📊 Analytics引擎 | 🧠 智能分析
