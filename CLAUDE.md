@@ -1,10 +1,10 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 1.1  
-> **Last Updated**: 2025-08-12  
+> **Documentation Version**: 1.2  
+> **Last Updated**: 2025-08-14  
 > **Project**: learning-management-system-esid  
 > **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase  
-> **Features**: ELA Course Architecture, Campus Management, CSV Import System, RLS Security, Grade Calculations
+> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, CSV Import System, RLS Security, Grade Calculations
 
 This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -71,6 +71,43 @@ This file provides essential guidance to Claude Code (claude.ai/code) when worki
 - lib/grade 單元測試：空值/全 0/部分 0/正常/混合 + snapshot
 - API 合約測試：scores bulk upsert、exams CRUD、assessment overrides
 - 端對端：登入 → 匯入分數 → Admin 看板指標更新
+
+## 🆕 Phase 2C 新增功能 (2025-08-14)
+
+### Assessment Title 管理系統
+- **目的**：允許 Head Teacher 自定義評量顯示名稱
+- **層級優先序**：Class > Grade×Track > Default
+- **API 端點**：`/lib/api/assessment-titles.ts`
+- **UI 介面**：`/app/admin/assessment-titles/page.tsx`
+- **權限控制**：僅 admin 和 head 角色可存取
+- **資料表**：`assessment_titles` (context, assessment_code, display_name)
+
+### Student Course 管理功能
+- **增強功能**：`getStudentsWithCourses` - 學生課程關聯查詢
+- **批量操作**：`bulkAssignStudentsToClass`, `bulkRemoveStudentsFromClass`
+- **統計數據**：`getStudentStatistics` - 各年段課程分佈統計
+- **未分配查詢**：`getUnassignedStudents` - 支持年段和校區篩選
+- **學生升級**：`promoteStudents` - 批量年段升級功能
+
+### Real-time 通知系統
+- **智能監控**：自動分析系統狀態生成通知
+- **分類系統**：8種通知類型 (exam_overdue, low_completion, attendance_low 等)
+- **優先級管理**：urgent > high > medium > low
+- **角色篩選**：依使用者角色和權限自動過濾
+- **UI 元件**：`NotificationCenter` 彈出式通知中心
+- **API 服務**：`/lib/api/notifications.ts` 完整通知管理
+
+### 通知觸發邏輯
+- **逾期考試**：考試日期過後且完成率 < 80% → admin 通知
+- **低完成率**：近期考試完成率 < 70% → head teacher 通知
+- **即將到期**：3天內到期考試 → 相關教師通知
+- **系統更新**：維護、權限變更等 → 目標角色通知
+
+### 技術規格
+- **測試覆蓋**：16個單元測試，涵蓋核心功能和錯誤處理
+- **TypeScript 合規**：0 編譯錯誤，完整型別定義
+- **RLS 安全**：所有查詢遵循 Row Level Security 政策
+- **效能最佳化**：通知每2分鐘自動更新，避免過度請求
 
 ## 🚨 CRITICAL RULES - READ FIRST
 
