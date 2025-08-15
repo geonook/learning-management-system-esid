@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { useAppStore } from "@/lib/store"
 import NotificationCenter from "@/components/ui/notification-center"
+import { useCurrentUser } from "@/hooks/use-current-user"
 
 // Page title mapping
 const pageTitles: Record<string, string> = {
@@ -42,9 +43,20 @@ export default function Header() {
   const pathname = usePathname()
   const { grade, klass, track } = useAppStore((s) => s.selections)
   const currentRole = useAppStore((s) => s.role)
+  const { user, loading: userLoading } = useCurrentUser()
   
   const pageTitle = pageTitles[pathname] || "Learning Management System"
   const breadcrumbs = generateBreadcrumbs(pathname)
+  
+  // Get user display info
+  const userName = user?.full_name || 'Loading...'
+  const userEmail = user?.email || ''
+  const userInitials = userName
+    .split(' ')
+    .map(name => name.charAt(0))
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
 
   return (
     <header className="flex h-16 items-center justify-between border-b bg-background px-6">
@@ -96,11 +108,11 @@ export default function Header() {
         {/* User Menu */}
         <div className="flex items-center gap-2">
           <div className="hidden sm:flex flex-col text-right">
-            <span className="text-sm font-medium">John Teacher</span>
-            <span className="text-xs text-muted-foreground">john.teacher@esid.edu</span>
+            <span className="text-sm font-medium">{userName}</span>
+            <span className="text-xs text-muted-foreground">{userEmail}</span>
           </div>
           <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-            JT
+            {userLoading ? '...' : userInitials}
           </div>
         </div>
       </div>

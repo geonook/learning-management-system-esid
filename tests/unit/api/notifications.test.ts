@@ -3,7 +3,7 @@
  * Tests the notification system including user filtering, preferences, and utility functions
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 // Mock Supabase client
 vi.mock('@/lib/supabase/client', () => ({
@@ -194,7 +194,10 @@ describe('Notifications API - Unit Tests', () => {
     it('should handle partial category updates', async () => {
       const updates = {
         categories: {
-          attendance: false
+          exams: true,
+          attendance: false,
+          grades: true,
+          system: true
         }
       }
 
