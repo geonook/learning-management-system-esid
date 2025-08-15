@@ -63,35 +63,97 @@ export type TeacherCourse = {
   class_id: string
   class_name: string
   grade: number
+  track: 'local' | 'international'
+  level?: 'E1' | 'E2' | 'E3' | null
   student_count: number
   is_active: boolean
+  academic_year: string
 }
 
 // Course-based functions
 
 // Get courses for the current teacher
 export async function getTeacherCourses() {
-  const { data, error } = await supabase
+  // Get current user to check teacher permissions
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  if (userError || !user) {
+    throw new Error('Authentication required')
+  }
+
+  // Get user profile to determine role and permissions
+  const { data: profile, error: profileError } = await supabase
+    .from('users')
+    .select('id, role, teacher_type')
+    .eq('id', user.id)
+    .single()
+
+  if (profileError || !profile) {
+    throw new Error('User profile not found')
+  }
+
+  let coursesQuery = supabase
     .from('courses')
-    .select('*')
+    .select(`
+      id,
+      course_type,
+      course_name,
+      class_id,
+      teacher_id,
+      academic_year,
+      is_active,
+      classes!inner(
+        id,
+        name,
+        grade,
+        track,
+        level
+      )
+    `)
     .eq('is_active', true)
-    .order('created_at')
+
+  // Apply role-based filtering
+  if (profile.role === 'teacher') {
+    // Teachers can only see their own courses
+    coursesQuery = coursesQuery.eq('teacher_id', profile.id)
+  } else if (profile.role === 'head') {
+    // Head teachers can see courses for their grade and track (this would need additional logic)
+    // For now, show all courses
+  }
+  // Admin can see all courses
+
+  const { data: coursesData, error } = await coursesQuery.order('course_type', { ascending: true })
 
   if (error) {
     console.error('Error fetching teacher courses:', error)
     throw new Error(`Failed to fetch teacher courses: ${error.message}`)
   }
 
-  return data.map(course => ({
-    id: course.id,
-    course_type: course.course_type,
-    course_name: course.course_name,
-    class_id: course.class_id,
-    class_name: `Class ${course.class_id}`, // Placeholder - should join with classes
-    grade: 1, // Placeholder - should join with classes  
-    student_count: 0, // Placeholder - should calculate
-    is_active: course.is_active
-  } as TeacherCourse))
+  // Get student counts for each course
+  const coursesWithCounts = await Promise.all(
+    (coursesData || []).map(async (course) => {
+      const { count: studentCount } = await supabase
+        .from('students')
+        .select('id', { count: 'exact', head: true })
+        .eq('class_id', course.class_id)
+        .eq('is_active', true)
+
+      return {
+        id: course.id,
+        course_type: course.course_type,
+        course_name: course.course_name,
+        class_id: course.class_id,
+        class_name: (course.classes as any)?.name || 'Unknown Class',
+        grade: (course.classes as any)?.grade || 1,
+        track: (course.classes as any)?.track || 'local',
+        level: (course.classes as any)?.level,
+        student_count: studentCount || 0,
+        is_active: course.is_active,
+        academic_year: course.academic_year
+      } as TeacherCourse
+    })
+  )
+
+  return coursesWithCounts
 }
 
 // Get scores for a specific course

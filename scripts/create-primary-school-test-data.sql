@@ -151,7 +151,7 @@ ON CONFLICT (id) DO UPDATE SET
 -- ========================================
 
 INSERT INTO courses (
-  id, name, course_type, class_id, teacher_id, academic_year, is_active
+  id, course_name, course_type, class_id, teacher_id, academic_year, is_active
 ) VALUES
   -- Grade 1 Courses (LT + IT + KCFS for each class)
   -- G1 Explorers (Local)
@@ -175,7 +175,7 @@ INSERT INTO courses (
   ('40000000-0000-0000-0000-000000000112', 'KCFS Future Skills', 'KCFS', '30000000-0000-0000-0000-000000000104', '20000000-0000-0000-0000-000000000103', '24-25', TRUE)
 
 ON CONFLICT (id) DO UPDATE SET
-  name = EXCLUDED.name,
+  course_name = EXCLUDED.course_name,
   course_type = EXCLUDED.course_type,
   class_id = EXCLUDED.class_id,
   teacher_id = EXCLUDED.teacher_id;
