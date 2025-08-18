@@ -35,7 +35,7 @@ vi.mock('next/navigation', () => ({
 
 // Mock Supabase client
 vi.mock('@/lib/supabase/client', () => ({
-  supabase: {
+  createClient: vi.fn(() => ({
     auth: {
       getUser: vi.fn(),
       signInWithPassword: vi.fn(),
@@ -46,13 +46,26 @@ vi.mock('@/lib/supabase/client', () => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
           single: vi.fn()
-        }))
+        })),
+        limit: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            single: vi.fn()
+          }))
+        })),
+        gt: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            single: vi.fn()
+          }))
+        })),
+        gte: vi.fn(),
+        lte: vi.fn(),
+        not: vi.fn()
       })),
       insert: vi.fn(),
       update: vi.fn(),
       delete: vi.fn()
     }))
-  }
+  }))
 }))
 
 // Global test environment setup
