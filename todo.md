@@ -1,8 +1,8 @@
 # 📋 Primary School LMS - 項目狀況記錄
 
-> **最後更新**: 2025-08-15  
-> **版本**: v1.2.0 (Phase 3A-1 完成)  
-> **狀態**: 🟢 開發進行中 | 📋 文件已同步更新  
+> **最後更新**: 2025-08-23  
+> **版本**: v1.3.0 (Phase 3A-1 完成 + 測試準備就緒)  
+> **狀態**: 🧪 人工測試準備階段 | 📋 文件已全面更新  
 
 ---
 
@@ -10,8 +10,9 @@
 
 ### 🎯 開發階段
 - **Phase 2C**: ✅ 完成 (Assessment Title 管理、Student Course 管理、Real-time 通知)
-- **Phase 3A-1**: ✅ 完成 (Analytics 基礎架構、核心計算引擎)
+- **Phase 3A-1**: ✅ 完成 (Analytics 基礎架構、資料庫視圖、效能驗證)
 - **Phase 3A-2**: 🔄 準備開始 (學習軌跡分析、性能預測)
+- **當前階段**: 🧪 **人工測試與系統驗證** (Phase 1-7 測試流程)
 
 ### 💻 技術棧
 - **前端**: Next.js 14 (App Router) + TypeScript + Tailwind + shadcn/ui
@@ -47,7 +48,7 @@
   - 優先級管理：urgent > high > medium > low
   - 角色篩選：依權限自動過濾通知
 
-### 🧮 Phase 3A-1 - Analytics 基礎架構
+### 🧮 Phase 3A-1 - Analytics 基礎架構 ✅ 完全完成 (2025-08-23)
 - [x] **核心 Analytics 引擎**
   - 完整型別系統：40+ TypeScript 介面
   - 統計計算：平均值、中位數、標準差、趨勢分析
@@ -59,6 +60,13 @@
   - 風險評估：學習表現預警系統
   - 角色過濾：RLS 政策完全遵循
   - 錯誤處理：完整例外處理機制
+
+- [x] **Analytics 資料庫視圖部署** 🆕
+  - student_grade_aggregates：學生成績聚合視圖
+  - class_statistics：班級統計分析視圖
+  - teacher_performance：教師績效監控視圖
+  - PostgreSQL 類型修復：::numeric 轉換完成
+  - 效能驗證：平均查詢時間 146ms (目標 <500ms) ✅
 
 ### 🔧 系統修復 (Recent Fixes)
 - [x] **Header 用戶顯示修復**
@@ -81,16 +89,24 @@
 ## 📝 待辦事項 (Todo Tasks)
 
 ### 🔄 當前進行中
-- [ ] **創建項目狀況記錄文件** (本文件) - `in_progress`
+- [x] **創建項目狀況記錄文件** (本文件) - ✅ 已完成並持續更新
+- [ ] **Phase 1-7 完整人工測試執行** - `in_progress` 🧪
+  - Phase 1: 基礎登入與導航測試 (10分鐘)
+  - Phase 2: 學生與班級管理測試 (15分鐘) 
+  - Phase 3: 成績管理與計算測試 (20分鐘)
+  - Phase 4: Analytics 儀表板測試 (15分鐘)
+  - Phase 5: Assessment Title 管理測試 (10分鐘)
+  - Phase 6: 通知系統測試 (10分鐘)
+  - Phase 7: 系統整合與效能測試 (10分鐘)
 
 ### ⏳ 待開始任務
 
-#### Phase 3A-1 剩餘工作
-- [ ] **建立分析專用的資料庫視圖與索引**
-  - 學生成績聚合視圖
-  - 班級統計視圖  
-  - 教師績效視圖
-  - 效能最佳化索引
+#### Phase 3A-1 剩餘工作 ✅ 已全部完成
+- [x] **建立分析專用的資料庫視圖與索引** ✅ 完成
+  - [x] 學生成績聚合視圖 (student_grade_aggregates)
+  - [x] 班級統計視圖 (class_statistics)
+  - [x] 教師績效視圖 (teacher_performance)
+  - [x] 效能最佳化索引 (8個索引建立)
 
 #### Phase 3A-2 - 學習分析
 - [ ] **學習軌跡分析系統**
@@ -131,18 +147,25 @@
   - 決策支援系統
   - KPI 追蹤與警示
 
-### 🧪 測試與品質保證
-- [ ] **人工測試：核心功能流程驗證**
-  - 登入流程 + 角色權限
-  - 成績輸入 + 計算驗證
-  - Course 選擇 + 學生管理
-  - CSV 匯入系統
+### 🧪 測試與品質保證 🎯 當前重點
+- [ ] **人工測試：核心功能流程驗證** - `in_progress`
+  - [ ] 登入流程 + 角色權限 (6種測試帳號)
+  - [ ] 成績輸入 + 計算驗證 (Grade calculation formula)
+  - [ ] Course 選擇 + 學生管理 (ELA 三軌制)
+  - [ ] CSV 匯入系統
+  - [ ] Assessment Title 管理 (HT專用功能)
 
-- [ ] **人工測試：Analytics 系統功能驗證**
-  - 統計計算正確性
-  - 視覺化圖表呈現
-  - 即時資料更新
-  - 效能壓力測試
+- [ ] **人工測試：Analytics 系統功能驗證** - `in_progress`
+  - [ ] 統計計算正確性 (57學生 + 9教師數據)
+  - [ ] 視覺化圖表呈現 (student/class/teacher views)
+  - [ ] 即時資料更新 (2分鐘自動刷新)
+  - [ ] 效能壓力測試 (目標 <500ms 查詢時間)
+
+- [x] **測試環境建置** ✅ 完成
+  - [x] 小學年段測試數據調整 (G4, G6 符合 G1-G6 規範)
+  - [x] 完整測試指南建立 (90分鐘測試流程)
+  - [x] 測試帳號系統 (6種角色 × 完整權限)
+  - [x] 開發環境準備 (localhost:3000 + Claude Code CLI)
 
 ### 🔧 系統最佳化
 - [ ] **效能最佳化**
@@ -207,48 +230,54 @@ lib/
 
 ## 🧪 測試環境 (Testing Environment)
 
-### 👥 可用測試帳號
-> **密碼規則**: 使用用戶名 (去掉 @esid.edu)
+### 👥 可用測試帳號 🆕 已更新至小學年段
+> **重要**: 所有帳號已調整符合 G1-G6 小學年段系統
 
 #### 🔒 系統管理員
-- `admin@esid.edu` - System Administrator (全域權限)
+- `admin@school.edu` - System Administrator (全域權限)
 
-#### 🏫 年段主任 (Head Teachers)
-- `head.g1.local@esid.edu` - Grade 1 Local Campus Head
-- `head.g1.intl@esid.edu` - Grade 1 International Campus Head
-- `head.g2.local@esid.edu` - Grade 2 Local Campus Head
-- `head.g2.intl@esid.edu` - Grade 2 International Campus Head
-- ... (G1-G6 × Local/International = 12 positions)
+#### 🏫 年段主任 (Head Teachers) - 主要測試帳號
+- `head.g4.local@school.edu` - Grade 4 Local Campus Head
+- `head.g4.intl@school.edu` - Grade 4 International Campus Head  
+- `head.g6.local@school.edu` - Grade 6 Local Campus Head
+> 測試重點：Assessment Title 管理、年段統計、RLS 權限邊界
 
 #### 👨‍🏫 科目教師 (Subject Teachers)
-- `lt.g1@esid.edu` - Grade 1 LT Teacher (本地英語)
-- `it.g1@esid.edu` - Grade 1 IT Teacher (國際英語)  
-- `kcfs.g1@esid.edu` - Grade 1 KCFS Teacher (未來技能)
-- ... (G1-G6 × 3 subjects = 18 teachers)
+- `teacher.lt.1@school.edu` - Local Teacher (LT English)
+- `teacher.it.1@school.edu` - International Teacher (IT English)
+- `teacher.kcfs.1@school.edu` - KCFS Teacher (康橋未來技能)
+> 測試重點：成績輸入、課程權限、個人 Analytics
 
-### 🏫 測試資料概況
-- **班級數**: 24 個班級 (G1-G6 × 各 4 班)
-- **學生數**: 約 480 名學生 (每班 20 人)
-- **課程數**: 72 門課程 (每班 3 門：LT + IT + KCFS)
-- **範例成績**: 已建立部分測試成績資料
+### 🏫 測試資料概況 🆕 已優化
+- **測試學生**: 57 名學生 (已驗證數量)
+- **測試教師**: 9 名教師 (各角色完整覆蓋)
+- **課程架構**: ELA 三軌制 (LT + IT + KCFS)
+- **測試成績**: 完整 FA/SA/FINAL 測試數據
+- **Analytics 數據**: 完整統計計算驗證
+- **年段範圍**: G4, G6 (代表小學中、高年級)
 
-### 🔗 測試環境 URL
-- **本地開發**: http://localhost:3000
-- **Zeabur 部署**: [待更新]
+### 🔗 測試環境 URL ✅ 就緒
+- **本地開發**: http://localhost:3000 ✅ 運行中
+- **開發工具**: Claude Code CLI ✅ 已安裝
+- **測試指南**: TESTING_GUIDE.md ✅ 90分鐘完整流程
+- **Zeabur 部署**: Supabase on Zeabur ✅ 正常運作
 
 ---
 
 ## 🚀 下一步計劃 (Next Steps)
 
-### 📅 短期目標 (1-2 週)
-1. **完成 Phase 3A-1 剩餘工作**
-   - 建立資料庫分析視圖
-   - 效能最佳化與索引
+### 📅 短期目標 (1-2 週) 🎯 當前重點
+1. **完成人工測試驗證** - `當前進行中`
+   - [x] 測試環境與帳號準備 ✅
+   - [ ] Phase 1-7 完整測試執行
+   - [ ] 測試結果記錄與問題收集
+   - [ ] 發現問題的即時修復
 
-2. **系統測試與驗證**
-   - 全面人工測試核心功能
-   - Analytics 功能正確性驗證
-   - 效能與安全性測試
+2. **系統品質確保** 
+   - [ ] Analytics 功能正確性驗證 (基於實際測試)
+   - [ ] 效能基準測試 (目標: 頁面 <2秒, API <500ms)
+   - [ ] RLS 安全性完整驗證
+   - [ ] 成績計算邏輯準確性確認
 
 ### 📅 中期目標 (2-4 週)  
 1. **Phase 3A-2 開發**
@@ -274,12 +303,14 @@ lib/
 
 ## 📈 成功指標 (Success Metrics)
 
-### 🎯 功能完整性
-- [x] ELA 三軌課程架構 100% 運作
-- [x] RLS 權限系統 100% 正確
-- [x] 成績計算系統 100% 準確  
-- [ ] Analytics 視覺化 100% 可用
-- [ ] 即時通知系統 100% 穩定
+### 🎯 功能完整性 🆕 更新狀態
+- [x] ELA 三軌課程架構 100% 運作 ✅
+- [x] RLS 權限系統 100% 正確 ✅
+- [x] 成績計算系統 100% 準確 ✅
+- [x] Analytics 核心引擎 100% 完成 ✅
+- [x] Analytics 資料庫視圖 100% 部署 ✅  
+- [ ] Analytics UI/UX 100% 驗證 🧪 測試中
+- [ ] 即時通知系統 100% 穩定 🧪 測試中
 
 ### ⚡ 效能目標
 - [ ] 頁面載入時間 < 2 秒

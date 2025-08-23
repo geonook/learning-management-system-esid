@@ -4,7 +4,7 @@
 
 This guide covers complete deployment of the Primary School Learning Management System with **Advanced Analytics** capabilities using Zeabur for both frontend and Supabase backend infrastructure.
 
-> **Version**: 1.2.0 | **Analytics**: Phase 3A-1 ✅ | **Last Updated**: 2025-08-15
+> **Version**: 1.3.0 | **Analytics**: Phase 3A-1 ✅ Complete + Database Views | **Last Updated**: 2025-08-23
 
 ## 📋 Prerequisites
 
@@ -35,7 +35,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 # Application Settings
 NODE_ENV=production
 NEXT_PUBLIC_APP_URL=https://your-domain.com
-NEXT_PUBLIC_APP_VERSION=1.2.0
+NEXT_PUBLIC_APP_VERSION=1.3.0
 
 # Analytics Configuration (Phase 3A-1)
 NEXT_PUBLIC_ANALYTICS_ENABLED=true
