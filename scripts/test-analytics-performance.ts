@@ -112,25 +112,27 @@ async function testAnalyticsPerformance() {
 
   for (let i = 0; i < tests.length; i++) {
     const test = tests[i]
+    if (!test) continue
+
     console.log(`\n📊 Test ${i + 1}/${tests.length}: ${test.description}`)
-    
+
     try {
       const startTime = performance.now()
-      
+
       let data, error
-      
+
       // For simple SELECT queries, use direct table access
       if (test.query.includes('SELECT COUNT(*)') && test.query.includes('FROM ') && !test.query.includes('GROUP BY')) {
         // Extract table name for COUNT queries
         const tableMatch = test.query.match(/FROM\s+(\w+)/)
-        if (tableMatch) {
+        if (tableMatch && tableMatch[1]) {
           const tableName = tableMatch[1]
-          const result = await supabase.from(tableName).select('*', { count: 'exact', head: true })
+          const result = await supabase.from(tableName as any).select('*', { count: 'exact', head: true })
           data = [{ count: result.count }]
           error = result.error
         } else {
           // Fallback to RPC
-          const result = await supabase.rpc('exec', { sql: test.query })
+          const result = await supabase.rpc('exec_sql', { sql_query: test.query })
           data = result.data
           error = result.error
         }
@@ -138,21 +140,21 @@ async function testAnalyticsPerformance() {
         // For LIMIT queries, use direct table access
         const tableMatch = test.query.match(/FROM\s+(\w+)/)
         const limitMatch = test.query.match(/LIMIT\s+(\d+)/)
-        if (tableMatch && limitMatch) {
+        if (tableMatch && tableMatch[1] && limitMatch && limitMatch[1]) {
           const tableName = tableMatch[1]
           const limit = parseInt(limitMatch[1])
-          const result = await supabase.from(tableName).select('*').limit(limit)
+          const result = await supabase.from(tableName as any).select('*').limit(limit)
           data = result.data
           error = result.error
         } else {
           // Fallback to RPC
-          const result = await supabase.rpc('exec', { sql: test.query })
+          const result = await supabase.rpc('exec_sql', { sql_query: test.query })
           data = result.data
           error = result.error
         }
       } else {
         // For complex queries, try RPC
-        const result = await supabase.rpc('exec', { sql: test.query })
+        const result = await supabase.rpc('exec_sql', { sql_query: test.query })
         data = result.data
         error = result.error
       }

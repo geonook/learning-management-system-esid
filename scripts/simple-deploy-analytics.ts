@@ -36,18 +36,19 @@ async function deployViews() {
     
     // Execute each view creation
     for (let i = 0; i < createViewStatements.length; i++) {
-      const viewSql = createViewStatements[i].trim()
+      const viewSql = createViewStatements[i]?.trim()
+      if (!viewSql) continue
       
       // Extract view name
       const viewNameMatch = viewSql.match(/CREATE OR REPLACE VIEW\s+(\w+)/i)
-      const viewName = viewNameMatch ? viewNameMatch[1] : `View ${i + 1}`
-      
+      const viewName = viewNameMatch && viewNameMatch[1] ? viewNameMatch[1] : `View ${i + 1}`
+
       console.log(`\n🔧 Creating ${viewName}...`)
-      
+
       try {
         // Use raw SQL query
-        const { data, error } = await supabase.rpc('exec', { 
-          sql: viewSql 
+        const { data, error } = await supabase.rpc('exec_sql', {
+          sql_query: viewSql 
         })
         
         if (error) {

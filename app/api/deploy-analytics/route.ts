@@ -37,8 +37,8 @@ export async function POST(request: NextRequest) {
         console.log(`Executing statement ${i + 1}/${statements.length}`)
         
         // Execute raw SQL
-        const { data, error } = await supabase.rpc('exec', { 
-          sql: statement 
+        const { data, error } = await supabase.rpc('exec_sql', {
+          sql_query: statement
         })
         
         if (error) {
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       try {
         const startTime = Date.now()
         const { data, error } = await supabase
-          .from(viewName)
+          .from(viewName as any)
           .select('*')
           .limit(1)
         

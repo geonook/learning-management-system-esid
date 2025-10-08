@@ -243,7 +243,7 @@ export async function POST(request: NextRequest) {
         console.log(`Creating view: ${view.name}`)
         
         // Use raw SQL through rpc if available, or use a workaround
-        const { data, error } = await supabase.rpc('exec_sql', { sql: view.sql })
+        const { data, error } = await supabase.rpc('exec_sql', { sql_query: view.sql })
         
         if (error) {
           console.error(`Error creating ${view.name}:`, error)
@@ -278,7 +278,7 @@ export async function POST(request: NextRequest) {
       try {
         const startTime = Date.now()
         const { data, error } = await supabase
-          .from(view.name)
+          .from(view.name as any)
           .select('*')
           .limit(1)
         

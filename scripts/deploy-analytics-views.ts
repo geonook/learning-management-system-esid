@@ -96,7 +96,7 @@ async function executeRawSql(sql: string, description: string): Promise<boolean>
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${serviceKey}`,
-          'apikey': serviceKey
+          'apikey': serviceKey!
         },
         body: JSON.stringify({ query: sql })
       })
@@ -153,11 +153,11 @@ async function deployAnalytics() {
     
     for (let i = 0; i < statements.length; i++) {
       const statement = statements[i]
-      if (statement.length > 10) { // Skip empty statements
+      if (statement && statement.length > 10) { // Skip empty statements
         console.log(`   Executing statement ${i + 1}/${statements.length}`)
-        
-        const { error } = await supabase.rpc('exec_sql', { 
-          sql: statement + ';' 
+
+        const { error } = await supabase.rpc('exec_sql', {
+          sql_query: statement + ';'
         })
         
         if (error && !error.message.includes('already exists')) {
@@ -191,11 +191,11 @@ async function deployAnalytics() {
     
     for (let i = 0; i < statements.length; i++) {
       const statement = statements[i]
-      if (statement.length > 10 && statement.toUpperCase().includes('CREATE')) {
+      if (statement && statement.length > 10 && statement.toUpperCase().includes('CREATE')) {
         console.log(`   Executing index ${i + 1}/${statements.length}`)
-        
-        const { error } = await supabase.rpc('exec_sql', { 
-          sql: statement + ';' 
+
+        const { error } = await supabase.rpc('exec_sql', {
+          sql_query: statement + ';'
         })
         
         if (error && !error.message.includes('already exists')) {

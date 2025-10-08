@@ -96,31 +96,31 @@ export function useTeacherScores(courseId?: string) {
   }
 
   // Fetch scores for the selected course
-  useEffect(() => {
-    async function fetchScores() {
-      if (!user || !courseId) {
-        setRows([])
-        setLoading(false)
-        return
-      }
-
-      try {
-        setLoading(true)
-        const studentsData = await getCourseStudentsWithScores(courseId)
-        const scoreRows = convertToScoreRows(studentsData)
-        setRows(scoreRows)
-        setError(null)
-      } catch (err: any) {
-        console.error('Error fetching course scores:', err)
-        setError(err.message)
-        setRows([])
-      } finally {
-        setLoading(false)
-      }
+  const fetchScores = useCallback(async () => {
+    if (!user || !courseId) {
+      setRows([])
+      setLoading(false)
+      return
     }
 
-    fetchScores()
+    try {
+      setLoading(true)
+      const studentsData = await getCourseStudentsWithScores(courseId)
+      const scoreRows = convertToScoreRows(studentsData)
+      setRows(scoreRows)
+      setError(null)
+    } catch (err: any) {
+      console.error('Error fetching course scores:', err)
+      setError(err.message)
+      setRows([])
+    } finally {
+      setLoading(false)
+    }
   }, [user, courseId])
+
+  useEffect(() => {
+    fetchScores()
+  }, [fetchScores])
 
   // Update score function
   async function onEdit(id: string, type: "FA" | "SA" | "Final", idx: number, value: number) {
@@ -170,7 +170,8 @@ export function useTeacherScores(courseId?: string) {
     } catch (err: any) {
       console.error('Error saving score:', err)
       setError(`Failed to save score: ${err.message}`)
-      // TODO: Revert optimistic update on error
+      // Revert optimistic update on error by refetching data
+      fetchScores()
     } finally {
       setSaving(false)
     }
