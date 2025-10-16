@@ -61,6 +61,23 @@
   - 技術選型理由
   - 架構演進歷史
 
+#### 🗂️ 資料庫 Migration 文檔
+
+- **[Migration 003: Courses Architecture](reference/migrations/README_MIGRATION_003.md)**
+  - 課程架構兩階段遷移說明
+  - ENUM 值新增步驟
+  - 課程與學生註冊表建立
+
+- **[Migration 004: Primary School Constraints](reference/migrations/README_MIGRATION_004.md)**
+  - 從中學制 (G7-G12) 改為小學制 (G1-G6)
+  - Grade 約束條件更新
+  - 驗證測試步驟
+
+- **[Migration 004 Fix: 現存資料處理](reference/migrations/README_MIGRATION_004_FIX.md)**
+  - 處理現存中學制資料的約束衝突
+  - 兩階段修復流程
+  - 安全遷移策略
+
 ---
 
 ### 🗄️ 歷史歸檔 (Archived)
