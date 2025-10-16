@@ -109,3 +109,7 @@ tmp/
 temp/
 *.tmp
 *.bak
+*.backup
+
+# Import reports
+import-reports/
