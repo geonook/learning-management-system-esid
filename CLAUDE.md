@@ -1,10 +1,10 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 1.4  
-> **Last Updated**: 2025-08-23  
-> **Project**: learning-management-system-esid  
-> **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase + Advanced Analytics  
-> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, CSV Import System, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**
+> **Documentation Version**: 1.5
+> **Last Updated**: 2025-10-16
+> **Project**: learning-management-system-esid
+> **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics
+> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, CSV Import System, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**
 
 This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -15,9 +15,9 @@ This file provides essential guidance to Claude Code (claude.ai/code) when worki
 
 ### Stack
 - Frontend: Next.js (App Router) + TypeScript + Tailwind + shadcn/ui + Radix + Framer Motion
-- Backend: Supabase（PostgreSQL, Auth, Storage, Edge Functions）
+- Backend: **Supabase Cloud 官方雲端**（PostgreSQL, Auth, Storage, Edge Functions）
 - Charts: ECharts or Recharts
-- 部署：Zeabur（前端），Supabase 使用官方雲或自行在 Zeabur 啟動
+- 部署：Zeabur（前端）+ Supabase Cloud（後端資料庫）
 
 ### 必守目錄
 /app/**（路由與頁殼）  
@@ -195,6 +195,97 @@ UI Component → API Layer → Analytics Engine → Supabase (with RLS)
 - **測試框架**: 90分鐘完整測試流程 (Phase 1-7)
 - **測試帳號**: 6種角色完整覆蓋 (admin/head/teacher)
 - **開發環境**: localhost:3000 + Claude Code CLI 就緒
+
+## ⚠️ 已知問題與解決方案 (2025-10-16)
+
+### 🔥 Claude Code 環境變數快取問題
+
+**問題描述**：
+- Claude Code 會將 `.env.local` 內容儲存在會話歷史檔案中 (`~/.claude/projects/.../*.jsonl`)
+- 每個 Bash 工具執行時會從快取注入環境變數
+- 即使更新 `.env.local`，Next.js webpack 編譯時仍使用舊值
+- 導致客戶端 JavaScript bundle 硬編碼錯誤的 Supabase URL
+
+**症狀識別**：
+```
+✅ .env.local 檔案內容正確
+❌ 瀏覽器請求發送到舊 URL (https://esid-lms.zeabur.app)
+❌ CORS 錯誤：No 'Access-Control-Allow-Origin' header
+❌ .next/static/chunks/ 包含硬編碼的舊 URL
+```
+
+**快速驗證**：
+```bash
+# 檢查 Shell 環境變數
+env | grep SUPABASE
+# 如果顯示舊 URL，表示遇到快取問題
+
+# 檢查編譯產物
+grep -r "esid-lms.zeabur.app" .next/static/chunks/
+# 如果找到舊 URL，表示 webpack 使用了錯誤的環境變數
+```
+
+**解決方案**：
+詳見 [`TROUBLESHOOTING_CLAUDE_CODE.md`](./TROUBLESHOOTING_CLAUDE_CODE.md) 完整文件
+
+**快速修復**：
+1. **方案 A**：清除 Claude Code 會話快取（推薦）
+   ```bash
+   rm -f ~/.claude/projects/-Users-chenzehong-Desktop-LMS/*.jsonl
+   # 重啟 Cursor/VSCode
+   ```
+
+2. **方案 B**：使用外部終端機（繞過 Claude Code）
+   ```bash
+   # 在系統終端機（非 Claude Code）中執行
+   cd /Users/chenzehong/Desktop/LMS
+   npm run dev
+   ```
+
+3. **方案 C**：臨時硬編碼（緊急使用）
+   ```typescript
+   // lib/supabase/client.ts - 僅供緊急測試
+   return createBrowserClient<Database>(
+     'https://piwbooidofbaqklhijup.supabase.co',
+     'eyJhbGci...' // 完整 anon key
+   )
+   ```
+
+### 📋 環境變數配置 (Supabase Cloud)
+
+**正確配置**：
+```env
+# Supabase Official Cloud Configuration
+NEXT_PUBLIC_SUPABASE_URL=https://piwbooidofbaqklhijup.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# Service Role Key (for server-side operations) - KEEP SECRET!
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# Development settings
+NODE_ENV=development
+NEXT_PUBLIC_USE_MOCK_AUTH=false
+```
+
+**驗證步驟**：
+```bash
+# 1. 驗證環境變數檔案
+cat .env.local | grep NEXT_PUBLIC_SUPABASE_URL
+
+# 2. 清除快取並重新編譯
+rm -rf .next node_modules/.cache .swc
+npm run dev
+
+# 3. 檢查編譯產物
+grep -A 2 "createBrowserClient" .next/static/chunks/app/layout.js | grep "https://"
+# 預期：piwbooidofbaqklhijup.supabase.co
+```
+
+**重要提醒**：
+1. ✅ 使用外部終端機可避免 Claude Code 快取問題
+2. ✅ 更新環境變數後需清除 Claude 會話快取
+3. ✅ 參考 [`SUPABASE_CLOUD_SETUP.md`](./SUPABASE_CLOUD_SETUP.md) 完整設定指南
+4. ⚠️ 切勿將 Service Role Key 提交到 Git
 
 ## 🚨 CRITICAL RULES - READ FIRST
 

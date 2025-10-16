@@ -1,7 +1,18 @@
-# 🔧 Zeabur Supabase 配置指南
+# 🗄️ [ARCHIVED] Zeabur Supabase 配置指南
+
+> **⚠️ ARCHIVED DOCUMENTATION**
+> **Archived Date**: 2025-10-16
+> **Reason**: Project migrated to Supabase Official Cloud
+> **Current Setup**: See [SUPABASE_CLOUD_SETUP.md](SUPABASE_CLOUD_SETUP.md)
+>
+> This document is preserved for historical reference only.
+
+---
 
 ## 🎯 問題確認
 你的 Supabase 是部署在 Zeabur 上的**自託管實例**，不是 Supabase Cloud。配置方式完全不同！
+
+**注意**: 本專案已於 2025-10-16 遷移至 Supabase Official Cloud，此配置方式已不再使用。
 
 ## 📋 獲取正確的 API Keys
 
@@ -89,4 +100,6 @@ A: 正確的格式應該是 `eyJ...` 開頭的長字串（通常 200+ 字符）
 
 ---
 
-**🎯 一旦獲取到正確的 Service Role Key，我們立即繼續資料庫重置和乾淨部署！**
+**🗄️ ARCHIVED DOCUMENT | Zeabur Self-Hosted Supabase Configuration**
+📅 Archived: 2025-10-16 | ☁️ Migrated to Supabase Official Cloud
+🔗 Current Setup Guide: [SUPABASE_CLOUD_SETUP.md](SUPABASE_CLOUD_SETUP.md)

@@ -3,11 +3,13 @@
 A comprehensive **Primary School (G1-G6)** Learning Management System featuring English Language Arts (ELA) and KCFS courses with advanced **Analytics Engine** and **Database Analytics Views**. Features unified course architecture with Campus-based management for Local Teachers, International Teachers, and KCFS Teachers, plus real-time performance analytics, intelligent insights, and comprehensive testing framework. Built with Next.js, TypeScript, Tailwind CSS, and Supabase.
 
 ## 🎯 Current Status (Phase 3A-1 Complete ✅)
+- **Supabase Migration**: ✅ Migrated to Supabase Cloud (2025-10-16)
 - **Analytics Engine**: ✅ Complete with 40+ TypeScript interfaces
-- **Database Views**: ✅ 3 professional analytics views deployed  
+- **Database Views**: ✅ 3 professional analytics views deployed
 - **Performance**: ✅ Average query time 146ms (target <500ms)
 - **Testing Framework**: ✅ 90-minute comprehensive testing workflow
 - **Primary School Data**: ✅ G4, G6 test data (57 students, 9 teachers)
+- **Known Issues**: ⚠️ Claude Code env cache (See [TROUBLESHOOTING](CLAUDE.md#⚠️-已知問題與解決方案-2025-10-16))
 - **Ready for**: 🧪 Phase 1-7 Manual Testing
 
 ## Quick Start
@@ -21,10 +23,10 @@ A comprehensive **Primary School (G1-G6)** Learning Management System featuring 
 
 - **Frontend**: Next.js 14 (App Router) + TypeScript + Tailwind CSS
 - **UI Components**: shadcn/ui + Radix UI + Framer Motion
-- **Backend**: Supabase (PostgreSQL, Auth, Storage, Edge Functions)
+- **Backend**: Supabase Cloud (Official) - PostgreSQL, Auth, Storage, Edge Functions
 - **Charts**: Recharts
 - **Testing**: Vitest (unit) + Playwright (E2E)
-- **Deployment**: Zeabur (frontend) + Zeabur Supabase (backend)
+- **Deployment**: Zeabur (frontend) + Supabase Cloud (backend)
 
 ## 🏗️ Project Structure
 

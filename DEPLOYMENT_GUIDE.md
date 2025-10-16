@@ -1,22 +1,25 @@
 # 🚀 Primary School LMS - Complete Deployment Guide
 
-## 🎯 Production-Ready Deployment on Zeabur
+## 🎯 Production-Ready Deployment
 
-This guide covers complete deployment of the Primary School Learning Management System with **Advanced Analytics** capabilities using Zeabur for both frontend and Supabase backend infrastructure.
+This guide covers complete deployment of the Primary School Learning Management System with **Advanced Analytics** capabilities using **Zeabur (frontend)** and **Supabase Cloud (backend database)**.
 
-> **Version**: 1.3.0 | **Analytics**: Phase 3A-1 ✅ Complete + Database Views | **Last Updated**: 2025-08-23
+> **Version**: 1.4.0 | **Analytics**: Phase 3A-1 ✅ Complete + Database Views | **Migration**: Supabase Cloud ✅ | **Last Updated**: 2025-10-16
 
 ## 📋 Prerequisites
 
 ### 1. Required Accounts & Services
 - ✅ **GitHub Account** - For repository hosting and CI/CD
-- ✅ **Zeabur Account** - For application and database hosting
+- ✅ **Zeabur Account** - For frontend application hosting
+- ✅ **Supabase Cloud Account** - For managed database hosting (Official Cloud)
 - ✅ **Domain (Optional)** - Custom domain for production
 
 ### 2. Required Information
-- ✅ **Supabase Project URL** - From Zeabur Supabase service
-- ✅ **Supabase Anon Key** - From Supabase dashboard  
-- 🚨 **Supabase Service Role Key** - Critical for CSV imports and admin operations
+- ✅ **Supabase Project URL** - From Supabase Cloud dashboard (`https://[ref].supabase.co`)
+- ✅ **Supabase Anon Key** - From Supabase Cloud Project Settings → API
+- 🚨 **Supabase Service Role Key** - Critical for CSV imports and admin operations (from same API page)
+
+> **📚 Detailed Setup Guide**: See [SUPABASE_CLOUD_SETUP.md](SUPABASE_CLOUD_SETUP.md) for complete Supabase Cloud configuration instructions.
 
 ## 🔧 Environment Configuration
 
@@ -24,18 +27,18 @@ This guide covers complete deployment of the Primary School Learning Management 
 Copy `.env.example` to `.env.local` and configure:
 
 ```env
-# Production Supabase Configuration (Zeabur)
-NEXT_PUBLIC_SUPABASE_URL=https://your-zeabur-supabase-url.zeabur.app
+# Production Supabase Configuration (Supabase Cloud)
+NEXT_PUBLIC_SUPABASE_URL=https://[your-project-ref].supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 # 🚨 CRITICAL: Service Role Key for bulk operations
-# Get from: Supabase Dashboard > Settings > API > service_role
+# Get from: Supabase Cloud Dashboard > Project Settings > API > service_role
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 # Application Settings
 NODE_ENV=production
 NEXT_PUBLIC_APP_URL=https://your-domain.com
-NEXT_PUBLIC_APP_VERSION=1.3.0
+NEXT_PUBLIC_APP_VERSION=1.4.0
 
 # Analytics Configuration (Phase 3A-1)
 NEXT_PUBLIC_ANALYTICS_ENABLED=true
@@ -47,41 +50,77 @@ NEXTAUTH_SECRET=your-production-nextauth-secret
 NEXTAUTH_URL=https://your-domain.com
 ```
 
-### 2. Obtain Supabase Service Role Key
+### 2. Obtain Supabase API Keys from Cloud
 **⚠️ Critical Step for CSV Import Functionality:**
 
-1. Access Zeabur Dashboard → Your Supabase Service
-2. Navigate to **Supabase Dashboard** (click the external link)
-3. Go to **Settings → API**
-4. Copy the `service_role` key (NOT the anon public key)
-5. Add to your environment variables as `SUPABASE_SERVICE_ROLE_KEY`
+1. Login to [Supabase Cloud Dashboard](https://app.supabase.com)
+2. Select your LMS project
+3. Navigate to **Project Settings → API**
+4. Copy the following keys:
+   - **Project URL**: `https://[project-ref].supabase.co`
+   - **anon public**: For client-side operations (respects RLS)
+   - **service_role**: For server-side bulk operations (bypasses RLS)
+5. Add these to your production environment variables
+
+> **⚠️ Security Note**: Never expose `service_role` key to client-side code!
 
 ## 🚀 Deployment Steps
 
-### Phase 1: Database Setup on Zeabur
+### Phase 1: Database Setup on Supabase Cloud
 
-#### 1.1 Deploy Supabase Service
-```bash
-# Navigate to your Zeabur dashboard
-# 1. Create new project or use existing
-# 2. Add Supabase service to your project
-# 3. Note down the generated URL and access credentials
+#### 1.1 Create Supabase Cloud Project
 ```
+1. Visit https://app.supabase.com
+2. Click "New Project"
+3. Fill in project details:
+   - Name: lms-esid
+   - Database Password: (generate strong password - save it!)
+   - Region: Select closest to users (Asia: Singapore or Tokyo)
+4. Wait 2-3 minutes for project initialization
+5. Note your Project URL and API keys from Settings → API
+```
+
+> **📚 Complete Setup Instructions**: Follow [SUPABASE_CLOUD_SETUP.md](SUPABASE_CLOUD_SETUP.md) for detailed cloud setup.
 
 #### 1.2 Deploy Clean Database Schema
-Since you're using Zeabur Supabase, deploy the schema via Supabase Dashboard:
+Use Supabase Cloud SQL Editor to deploy schema:
 
-```sql
--- Connect to your Zeabur Supabase instance via Dashboard
--- Execute the clean schema: db/schemas/primary_school_clean_schema.sql
--- This will create all tables, RLS policies, and indexes
-```
+**Steps**:
+1. Navigate to **SQL Editor** in Supabase Cloud dashboard
+2. Click **+ New query**
+3. Execute schema files in order:
+   ```sql
+   -- From /db/schemas/ directory:
+   -- 1. users.sql
+   -- 2. classes.sql
+   -- 3. courses.sql
+   -- 4. exams.sql
+   -- 5. scores.sql
+   -- 6. assessment_titles.sql
+   -- 7. notifications.sql
 
-**Alternative Method - Direct SQL Execution:**
+   -- From /db/views/ directory:
+   -- 1. student_grade_aggregates.sql
+   -- 2. class_statistics.sql
+   -- 3. teacher_performance.sql
+
+   -- From /db/policies/ directory:
+   -- Execute all RLS policy files
+   ```
+
+**Alternative Method - Using Supabase CLI:**
 ```bash
-# If you have psql access to your Zeabur Supabase
-psql "postgresql://postgres:[PASSWORD]@[ZEABUR-SUPABASE-HOST]:5432/postgres" \
-  -f db/schemas/primary_school_clean_schema.sql
+# Install Supabase CLI
+npm install -g supabase
+
+# Login
+supabase login
+
+# Link to cloud project
+supabase link --project-ref [YOUR_PROJECT_REF]
+
+# Push local schema to cloud
+supabase db push
 ```
 
 ### Phase 2: Frontend Deployment on Zeabur
@@ -105,13 +144,24 @@ git push origin main
 Add all production environment variables in Zeabur dashboard:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-zeabur-supabase-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+# Supabase Cloud Configuration
+NEXT_PUBLIC_SUPABASE_URL=https://[project-ref].supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-from-cloud
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-from-cloud
+
+# Application
 NODE_ENV=production
+NEXT_PUBLIC_APP_VERSION=1.4.0
+
+# Security
 NEXTAUTH_SECRET=your-production-secret
 NEXTAUTH_URL=https://your-zeabur-app-url
+
+# Analytics
+NEXT_PUBLIC_ANALYTICS_ENABLED=true
 ```
+
+> **⚠️ Important**: Use API keys from **Supabase Cloud** (Project Settings → API), not from old Zeabur Supabase instance.
 
 ### Phase 3: Verification & Testing
 
@@ -189,6 +239,32 @@ Navigate to `https://your-zeabur-app-url/admin/import` and upload CSV files in o
 - 所有匯入都透過 Service Role 執行
 - 完整的錯誤處理和回復機制
 
+## 🔄 Migration from Zeabur Supabase
+
+If you're migrating from a previous Zeabur self-hosted Supabase instance:
+
+### Data Migration Steps
+1. **Export data from old Zeabur Supabase**:
+   ```bash
+   pg_dump -h [OLD_HOST] -U postgres -d postgres \
+     --data-only --inserts -f backup_data.sql
+   ```
+
+2. **Import to Supabase Cloud**:
+   - Use SQL Editor in Supabase Cloud dashboard
+   - Copy and execute `backup_data.sql`
+   - Verify data integrity with record counts
+
+3. **Update environment variables** in all deployments (local, Zeabur, CI/CD)
+
+4. **Test thoroughly** before decommissioning old instance
+
+> **⚠️ Known Issue**: Claude Code environment cache may require session reset. See [TROUBLESHOOTING_CLAUDE_CODE.md](TROUBLESHOOTING_CLAUDE_CODE.md)
+
+### Archived Documentation
+- [ARCHIVED_ZEABUR_CONFIG.md](ARCHIVED_ZEABUR_CONFIG.md) - Previous Zeabur self-hosted setup (for reference)
+
 ---
 
-**🎯 記住：這是一次性的大清理。完成後，系統將更穩定、可維護，不會再有「越改越多洞」的問題。**
+**🎯 Production Deployment | LMS-ESID | v1.4.0**
+📅 Updated: 2025-10-16 | ☁️ Supabase Cloud | 🚀 Zeabur Frontend | 📊 Phase 3A-1 Analytics
