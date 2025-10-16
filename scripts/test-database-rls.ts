@@ -52,7 +52,7 @@ const adminClient = createClient(supabaseUrl, serviceKey, {
 async function testDatabaseConnection() {
   console.log('🔌 Testing Database Connection & RLS Policies')
   console.log('📍 Target:', supabaseUrl)
-  console.log('=' * 60)
+  console.log('='.repeat(60))
 
   const testResults: any[] = []
 
