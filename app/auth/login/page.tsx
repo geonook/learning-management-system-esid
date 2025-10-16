@@ -12,18 +12,56 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/lib/supabase/client"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { GoogleIcon } from "@/components/icons/google-icon"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     rememberMe: false
   })
-  
+
   const router = useRouter()
   const { toast } = useToast()
+
+  // Google OAuth login handler
+  const handleGoogleLogin = async () => {
+    setGoogleLoading(true)
+
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
+        }
+      })
+
+      if (error) {
+        toast({
+          title: "Google 登入失敗",
+          description: error.message,
+          variant: "destructive"
+        })
+        setGoogleLoading(false)
+      }
+      // Note: If successful, browser will redirect to Google
+      // No need to setGoogleLoading(false) as page will redirect
+    } catch (error: any) {
+      toast({
+        title: "登入錯誤",
+        description: error.message || "發生未預期的錯誤",
+        variant: "destructive"
+      })
+      setGoogleLoading(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -123,6 +161,39 @@ export default function LoginPage() {
           </CardHeader>
 
           <CardContent>
+            {/* Google Login Button */}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={handleGoogleLogin}
+              disabled={googleLoading || loading}
+            >
+              {googleLoading ? (
+                <>
+                  <LoadingSpinner size="sm" className="mr-2" />
+                  連接 Google...
+                </>
+              ) : (
+                <>
+                  <GoogleIcon className="mr-2 h-5 w-5" />
+                  使用 Google 帳號登入
+                </>
+              )}
+            </Button>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  或使用電子郵件
+                </span>
+              </div>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Email Field */}
               <div className="space-y-2">
