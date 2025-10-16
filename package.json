@@ -15,7 +15,7 @@
     "db:migrate": "supabase db push",
     "db:seed": "npx tsx scripts/batch-import.ts --generate-samples",
     "db:reset": "supabase db reset",
-    "gen:types": "supabase gen types typescript --project-id YOUR_PROJECT_ID > types/database.ts",
+    "gen:types": "supabase gen types typescript --project-id piwbooidofbaqklhijup > types/database.ts",
     "deploy": "npm run build && npx zeabur deploy",
     "import:cli": "npx tsx scripts/import-cli.ts",
     "import:batch": "npx tsx scripts/batch-import.ts",
