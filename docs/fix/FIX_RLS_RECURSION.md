@@ -121,20 +121,20 @@ CREATE POLICY "teachers_manage_own_courses" ON courses FOR ALL USING (
     teacher_id = auth.uid() AND auth.role() = 'authenticated'
 );
 
--- Teachers can manage exams for their classes
-CREATE POLICY "teachers_manage_class_exams" ON exams FOR ALL USING (
+-- Teachers can manage exams for their courses (CORRECTED: use course_id)
+CREATE POLICY "teachers_manage_own_exams" ON exams FOR ALL USING (
     auth.role() = 'authenticated' AND EXISTS (
         SELECT 1 FROM courses c
         WHERE c.teacher_id = auth.uid()
-        AND c.class_id = exams.class_id
+        AND c.id = exams.course_id  -- ✅ 正確：使用 course_id
     )
 );
 
--- Teachers can manage scores for their students
+-- Teachers can manage scores for their students (CORRECTED: join through exams.course_id)
 CREATE POLICY "teachers_manage_student_scores" ON scores FOR ALL USING (
     auth.role() = 'authenticated' AND EXISTS (
         SELECT 1 FROM exams e
-        JOIN courses c ON c.class_id = e.class_id
+        JOIN courses c ON c.id = e.course_id  -- ✅ 正確：exams.course_id
         WHERE e.id = scores.exam_id
         AND c.teacher_id = auth.uid()
     )
@@ -199,6 +199,32 @@ USING (auth.role() = 'service_role');
 -- 2. 一般使用者只能讀取（無遞迴查詢）
 CREATE POLICY users_authenticated_read ON users FOR SELECT
 USING (auth.role() = 'authenticated');
+```
+
+### ⚠️ 重要欄位修正
+
+**注意**：實際 Supabase 資料庫中 `exams` 表使用 **`course_id`** 欄位，而非 `class_id`。
+
+修復 SQL 中所有涉及 `exams` 的策略都必須使用正確欄位：
+
+```sql
+-- ✅ 正確
+CREATE POLICY "teachers_manage_own_exams" ON exams FOR ALL USING (
+    auth.role() = 'authenticated' AND EXISTS (
+        SELECT 1 FROM courses c
+        WHERE c.teacher_id = auth.uid()
+        AND c.id = exams.course_id  -- ✅ 使用 course_id
+    )
+);
+
+-- ❌ 錯誤
+CREATE POLICY "teachers_manage_class_exams" ON exams FOR ALL USING (
+    auth.role() = 'authenticated' AND EXISTS (
+        SELECT 1 FROM courses c
+        WHERE c.teacher_id = auth.uid()
+        AND c.class_id = exams.class_id  -- ❌ exams 表沒有 class_id 欄位！
+    )
+);
 ```
 
 ### 權限控制架構
