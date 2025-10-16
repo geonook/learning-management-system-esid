@@ -19,7 +19,7 @@ This guide covers complete deployment of the Primary School Learning Management 
 - ✅ **Supabase Anon Key** - From Supabase Cloud Project Settings → API
 - 🚨 **Supabase Service Role Key** - Critical for CSV imports and admin operations (from same API page)
 
-> **📚 Detailed Setup Guide**: See [SUPABASE_CLOUD_SETUP.md](SUPABASE_CLOUD_SETUP.md) for complete Supabase Cloud configuration instructions.
+> **📚 Detailed Setup Guide**: See [SUPABASE_CLOUD_SETUP.md](../setup/SUPABASE_CLOUD_SETUP.md) for complete Supabase Cloud configuration instructions.
 
 ## 🔧 Environment Configuration
 
@@ -80,7 +80,7 @@ NEXTAUTH_URL=https://your-domain.com
 5. Note your Project URL and API keys from Settings → API
 ```
 
-> **📚 Complete Setup Instructions**: Follow [SUPABASE_CLOUD_SETUP.md](SUPABASE_CLOUD_SETUP.md) for detailed cloud setup.
+> **📚 Complete Setup Instructions**: Follow [SUPABASE_CLOUD_SETUP.md](../setup/SUPABASE_CLOUD_SETUP.md) for detailed cloud setup.
 
 #### 1.2 Deploy Clean Database Schema
 Use Supabase Cloud SQL Editor to deploy schema:
@@ -259,10 +259,10 @@ If you're migrating from a previous Zeabur self-hosted Supabase instance:
 
 4. **Test thoroughly** before decommissioning old instance
 
-> **⚠️ Known Issue**: Claude Code environment cache may require session reset. See [TROUBLESHOOTING_CLAUDE_CODE.md](TROUBLESHOOTING_CLAUDE_CODE.md)
+> **⚠️ Known Issue**: Claude Code environment cache may require session reset. See [TROUBLESHOOTING_CLAUDE_CODE.md](../troubleshooting/TROUBLESHOOTING_CLAUDE_CODE.md)
 
 ### Archived Documentation
-- [ARCHIVED_ZEABUR_CONFIG.md](ARCHIVED_ZEABUR_CONFIG.md) - Previous Zeabur self-hosted setup (for reference)
+- [ARCHIVED_ZEABUR_CONFIG.md](../archived/ARCHIVED_ZEABUR_CONFIG.md) - Previous Zeabur self-hosted setup (for reference)
 
 ---
 

@@ -226,7 +226,7 @@ grep -r "esid-lms.zeabur.app" .next/static/chunks/
 ```
 
 **解決方案**：
-詳見 [`TROUBLESHOOTING_CLAUDE_CODE.md`](./TROUBLESHOOTING_CLAUDE_CODE.md) 完整文件
+詳見 [`TROUBLESHOOTING_CLAUDE_CODE.md`](./docs/troubleshooting/TROUBLESHOOTING_CLAUDE_CODE.md) 完整文件
 
 **快速修復**：
 1. **方案 A**：清除 Claude Code 會話快取（推薦）
@@ -284,7 +284,7 @@ grep -A 2 "createBrowserClient" .next/static/chunks/app/layout.js | grep "https:
 **重要提醒**：
 1. ✅ 使用外部終端機可避免 Claude Code 快取問題
 2. ✅ 更新環境變數後需清除 Claude 會話快取
-3. ✅ 參考 [`SUPABASE_CLOUD_SETUP.md`](./SUPABASE_CLOUD_SETUP.md) 完整設定指南
+3. ✅ 參考 [`SUPABASE_CLOUD_SETUP.md`](./docs/setup/SUPABASE_CLOUD_SETUP.md) 完整設定指南
 4. ⚠️ 切勿將 Service Role Key 提交到 Git
 
 ## 🚨 CRITICAL RULES - READ FIRST

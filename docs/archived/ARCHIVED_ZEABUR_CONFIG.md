@@ -3,7 +3,7 @@
 > **⚠️ ARCHIVED DOCUMENTATION**
 > **Archived Date**: 2025-10-16
 > **Reason**: Project migrated to Supabase Official Cloud
-> **Current Setup**: See [SUPABASE_CLOUD_SETUP.md](SUPABASE_CLOUD_SETUP.md)
+> **Current Setup**: See [SUPABASE_CLOUD_SETUP.md](../setup/SUPABASE_CLOUD_SETUP.md)
 >
 > This document is preserved for historical reference only.
 
@@ -102,4 +102,4 @@ A: 正確的格式應該是 `eyJ...` 開頭的長字串（通常 200+ 字符）
 
 **🗄️ ARCHIVED DOCUMENT | Zeabur Self-Hosted Supabase Configuration**
 📅 Archived: 2025-10-16 | ☁️ Migrated to Supabase Official Cloud
-🔗 Current Setup Guide: [SUPABASE_CLOUD_SETUP.md](SUPABASE_CLOUD_SETUP.md)
+🔗 Current Setup Guide: [SUPABASE_CLOUD_SETUP.md](../setup/SUPABASE_CLOUD_SETUP.md)
