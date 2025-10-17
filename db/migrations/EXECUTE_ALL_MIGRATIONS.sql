@@ -68,7 +68,7 @@ END $$;
 CREATE TABLE IF NOT EXISTS courses (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   class_id UUID NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
-  course_type teacher_type NOT NULL,  -- LT, IT, or KCFS
+  course_type course_type NOT NULL,  -- LT, IT, or KCFS
   teacher_id UUID REFERENCES users(id) ON DELETE SET NULL,
   academic_year TEXT NOT NULL,
   is_active BOOLEAN DEFAULT TRUE,
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS courses (
       EXISTS (
         SELECT 1 FROM users
         WHERE users.id = teacher_id
-        AND users.teacher_type = course_type
+        AND users.teacher_type::text = course_type::text
       )
     )
 );
@@ -120,7 +120,7 @@ SELECT
   c.academic_year
 FROM classes c
 CROSS JOIN (
-  VALUES ('LT'::teacher_type), ('IT'::teacher_type), ('KCFS'::teacher_type)
+  VALUES ('LT'::course_type), ('IT'::course_type), ('KCFS'::course_type)
 ) AS ct(course_type)
 WHERE c.is_active = TRUE
 ON CONFLICT (class_id, course_type, academic_year) DO NOTHING;
