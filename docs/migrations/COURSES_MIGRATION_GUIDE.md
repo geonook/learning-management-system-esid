@@ -1,5 +1,9 @@
 # Courses Table Migration Guide
 
+> **部署狀態**: ✅ **已成功部署** (2025-10-17)
+> **驗證狀態**: ⏳ 待執行驗證腳本
+> **執行記錄**: [MIGRATION_EXECUTION_LOG.md](../../db/migrations/MIGRATION_EXECUTION_LOG.md)
+
 ## Overview
 This migration implements the **Course Assignment Architecture** (方案 A) which enables:
 - One class to have three different course types: LT, IT, and KCFS
@@ -244,5 +248,26 @@ If you encounter any issues:
 
 **Migration Version**: 008
 **Created**: 2025-10-17
+**Deployed**: 2025-10-17 ✅
 **Architecture**: Course Assignment (方案 A)
-**Status**: Ready for deployment ✅
+**Status**: ✅ **Successfully Deployed to Supabase Cloud**
+
+## Post-Deployment Verification
+
+### Next Step: Run Verification Script
+
+Execute in Supabase Dashboard SQL Editor:
+```
+/db/migrations/VERIFY_MIGRATIONS.sql
+```
+
+This will check:
+- ✅ Courses table structure (8 columns)
+- ✅ Indexes (5 indexes)
+- ✅ RLS policies (4 policies)
+- ✅ Course records (3 per active class)
+- ✅ Trigger function and trigger
+- ✅ ENUM types
+
+### Deployment Log
+See complete deployment record: [MIGRATION_EXECUTION_LOG.md](../../db/migrations/MIGRATION_EXECUTION_LOG.md)
