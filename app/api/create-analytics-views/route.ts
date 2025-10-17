@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
         name: 'student_grade_aggregates',
         sql: `
           CREATE OR REPLACE VIEW student_grade_aggregates AS
-          SELECT 
+          SELECT
             s.id as student_id,
             s.student_id as student_number,
             s.full_name as student_name,
@@ -29,7 +29,12 @@ export async function POST(request: NextRequest) {
             c.name as class_name,
             co.id as course_id,
             co.course_type,
-            co.course_name,
+            CASE co.course_type
+              WHEN 'LT' THEN 'LT English Language Arts (ELA)'
+              WHEN 'IT' THEN 'IT English Language Arts (ELA)'
+              WHEN 'KCFS' THEN 'KCFS'
+              ELSE co.course_type
+            END as course_name,
             u.id as teacher_id,
             u.full_name as teacher_name,
             c.academic_year,
@@ -95,11 +100,11 @@ export async function POST(request: NextRequest) {
           LEFT JOIN users u ON co.teacher_id = u.id
           LEFT JOIN student_courses sc_rel ON s.id = sc_rel.student_id AND co.id = sc_rel.course_id
           LEFT JOIN scores sc ON s.id = sc.student_id AND sc.course_id = co.id
-          WHERE s.is_active = true 
+          WHERE s.is_active = true
               AND (c.is_active = true OR c.id IS NULL)
               AND (co.is_active = true OR co.id IS NULL)
           GROUP BY s.id, s.student_id, s.full_name, s.grade, s.track, s.level,
-                   c.id, c.name, co.id, co.course_type, co.course_name,
+                   c.id, c.name, co.id, co.course_type,
                    u.id, u.full_name, c.academic_year
         `
       },
@@ -107,7 +112,7 @@ export async function POST(request: NextRequest) {
         name: 'class_statistics',
         sql: `
           CREATE OR REPLACE VIEW class_statistics AS
-          SELECT 
+          SELECT
             c.id as class_id,
             c.name as class_name,
             c.grade,
@@ -116,7 +121,12 @@ export async function POST(request: NextRequest) {
             c.academic_year,
             co.id as course_id,
             co.course_type,
-            co.course_name,
+            CASE co.course_type
+              WHEN 'LT' THEN 'LT English Language Arts (ELA)'
+              WHEN 'IT' THEN 'IT English Language Arts (ELA)'
+              WHEN 'KCFS' THEN 'KCFS'
+              ELSE co.course_type
+            END as course_name,
             u.id as teacher_id,
             u.full_name as teacher_name,
             u.teacher_type,
@@ -167,7 +177,7 @@ export async function POST(request: NextRequest) {
           WHERE c.is_active = true
               AND (co.is_active = true OR co.id IS NULL)
           GROUP BY c.id, c.name, c.grade, c.track, c.level, c.academic_year,
-                   co.id, co.course_type, co.course_name,
+                   co.id, co.course_type,
                    u.id, u.full_name, u.teacher_type
         `
       },

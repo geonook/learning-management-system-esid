@@ -96,7 +96,6 @@ export async function getTeacherCourses() {
     .select(`
       id,
       course_type,
-      course_name,
       class_id,
       teacher_id,
       academic_year,
@@ -137,10 +136,17 @@ export async function getTeacherCourses() {
         .eq('class_id', course.class_id)
         .eq('is_active', true)
 
+      // Generate course name from course_type
+      const courseNameMap: Record<string, string> = {
+        'LT': 'LT English Language Arts (ELA)',
+        'IT': 'IT English Language Arts (ELA)',
+        'KCFS': 'KCFS'
+      }
+
       return {
         id: course.id,
         course_type: course.course_type,
-        course_name: course.course_name,
+        course_name: courseNameMap[course.course_type] || course.course_type,
         class_id: course.class_id,
         class_name: (course.classes as any)?.name || 'Unknown Class',
         grade: (course.classes as any)?.grade || 1,
