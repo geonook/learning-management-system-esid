@@ -1,7 +1,8 @@
 # Courses Table Migration Guide
 
-> **部署狀態**: ✅ **已成功部署** (2025-10-17)
-> **驗證狀態**: ⏳ 待執行驗證腳本
+> **部署狀態**: ✅ **完全部署** (2025-10-17)
+> **驗證狀態**: ✅ **全部通過** (ALL CHECKS PASSED)
+> **真實資料**: ✅ 84 classes + 252 courses
 > **執行記錄**: [MIGRATION_EXECUTION_LOG.md](../../db/migrations/MIGRATION_EXECUTION_LOG.md)
 
 ## Overview
@@ -252,22 +253,50 @@ If you encounter any issues:
 **Architecture**: Course Assignment (方案 A)
 **Status**: ✅ **Successfully Deployed to Supabase Cloud**
 
-## Post-Deployment Verification
+## Post-Deployment Verification ✅ **COMPLETED**
 
-### Next Step: Run Verification Script
+### Verification Results (2025-10-17)
 
-Execute in Supabase Dashboard SQL Editor:
+Executed: `VERIFY_MIGRATIONS_SIMPLE.sql`
+**Result**: 🎉 **ALL CHECKS PASSED** ✅
+
 ```
-/db/migrations/VERIFY_MIGRATIONS.sql
+Total Courses: 252
+Active Classes: 84
+Courses Per Class: 3.00 ✅
+RLS Policies: 7+ ✅
+Indexes: 8+ ✅
+Overall Status: 🎉 ALL CHECKS PASSED ✅
 ```
 
-This will check:
+**Verified Components**:
 - ✅ Courses table structure (8 columns)
-- ✅ Indexes (5 indexes)
-- ✅ RLS policies (4 policies)
-- ✅ Course records (3 per active class)
+- ✅ Indexes (8 indexes including UNIQUE constraints)
+- ✅ RLS policies (7 policies including extras from previous migrations)
+- ✅ Course records (3 per active class = 252 total)
 - ✅ Trigger function and trigger
-- ✅ ENUM types
+- ✅ ENUM types (LT, IT, KCFS)
+- ✅ Level format (G[1-6]E[1-3])
+- ✅ Track fields (classes.track = NULL)
+- ✅ Teacher assignment support (teacher_id allows NULL)
+
+### Additional Migrations Completed
+
+**Migration 009**: Level format upgrade to TEXT
+- Support for G[1-6]E[1-3] format
+- 84 classes using new format
+
+**Migration 010**: Remove track NOT NULL constraint
+- All classes.track = NULL
+- Supports "One Class, Three Teachers" architecture
+
+**Migration 011**: Remove teacher_id NOT NULL constraint
+- 252 courses with teacher_id = NULL (ready for assignment)
+- Supports two-phase workflow
+
+**RLS 003 Fix**: Head Teacher permissions corrected
+- Matching on course_type instead of classes.track
+- Grade + Course Type permission model
 
 ### Deployment Log
 See complete deployment record: [MIGRATION_EXECUTION_LOG.md](../../db/migrations/MIGRATION_EXECUTION_LOG.md)

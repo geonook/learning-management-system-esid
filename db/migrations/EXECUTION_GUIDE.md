@@ -4,9 +4,11 @@
 
 This guide provides step-by-step instructions for deploying the complete LMS database with real class data for the 2025-2026 academic year.
 
-**Current Status**: Migration 007 + 008 deployed. Ready to add real data and fix RLS policies.
+**Current Status**: ✅ **ALL MIGRATIONS DEPLOYED** (2025-10-17)
 
-**Target**: Deploy 84 real classes (G1-G6) with 252 course records and corrected Head Teacher permissions.
+**Completed**: 84 real classes (G1-G6) with 252 course records and corrected Head Teacher permissions.
+
+**Verification**: 🎉 ALL CHECKS PASSED ✅
 
 ---
 
@@ -315,24 +317,41 @@ All courses initially have `teacher_id = NULL` (to be assigned by admin)
 
 ## ✅ Success Criteria
 
-- [x] Migration 007: User self-registration policy active
-- [x] Migration 008: Courses table created
-- [ ] **Migration 010**: Track NOT NULL constraint removed → **Execute Step 0** ⚠️ **FIRST**
-- [ ] **Migration 009**: Level field changed to TEXT → **Execute Step 1**
-- [ ] **RLS 003 Fix**: Head Teacher permissions corrected → **Execute Step 2**
-- [ ] **Real Data**: 84 classes created → **Execute Step 3**
-- [ ] **Migration 011**: Teacher_id NOT NULL constraint removed → **Execute Step 3.5** ⚠️ **BEFORE STEP 4**
-- [ ] **Real Data**: 252 courses created → **Execute Step 4**
-- [ ] **Verification**: All checks pass → **Execute Step 5**
+- [x] Migration 007: User self-registration policy active ✅
+- [x] Migration 008: Courses table created ✅
+- [x] **Migration 010**: Track NOT NULL constraint removed ✅
+- [x] **Migration 009**: Level field changed to TEXT ✅
+- [x] **RLS 003 Fix**: Head Teacher permissions corrected ✅
+- [x] **Real Data**: 84 classes created ✅
+- [x] **Migration 011**: Teacher_id NOT NULL constraint removed ✅
+- [x] **Real Data**: 252 courses created ✅
+- [x] **Verification**: All checks pass ✅
 
 ---
 
-## 📝 Next Steps After Verification
+## 📝 Next Steps (Post-Migration)
 
-1. **Teacher Assignment**: Admin assigns teachers to 252 courses
-2. **Student Data Import**: Import student records and assign to classes
-3. **Head Teacher Setup**: Create Head Teacher accounts with grade + course_type
-4. **Testing**: Verify permissions work correctly for each role
+### 🎯 現在可以進行的工作
+
+1. **教師指派 (Teacher Assignment)**:
+   - Admin assigns teachers to 252 courses
+   - Update `courses.teacher_id` from NULL to actual teacher UUID
+   - Ensure teacher type matches course type (LT → LT course, etc.)
+
+2. **學生資料匯入 (Student Data Import)**:
+   - Import student records via CSV or manual entry
+   - Assign students to classes
+   - Set student level (G[1-6]E[1-3] format)
+
+3. **年段主任設定 (Head Teacher Setup)**:
+   - Create Head Teacher accounts
+   - Set grade + track (course_type) for permission scope
+   - Example: G4 LT Head Teacher (grade=4, track='LT')
+
+4. **系統測試 (System Testing)**:
+   - Verify RLS permissions for each role
+   - Test teacher assignment workflow
+   - Validate grade calculations
 
 ---
 
@@ -379,9 +398,15 @@ Class: G4 Seekers
 ---
 
 **Last Updated**: 2025-10-17
+**Migration Status**: ✅ **ALL COMPLETED**
 **Migration Version**: 007 + 008 + 009 + 010 + 011 + RLS 003 (Fixed)
 **Academic Year**: 2025-2026
 **Real Data**: 84 classes + 252 courses (Linkou Campus)
-**Critical Fixes**:
-- Migration 010: Removes track NOT NULL constraint (required for Step 3)
-- Migration 011: Removes teacher_id NOT NULL constraint (required for Step 4)
+**Deployment Date**: 2025-10-17
+**Verification Status**: 🎉 ALL CHECKS PASSED ✅
+
+**Key Architectural Changes**:
+- Migration 009: Level format changed to G[1-6]E[1-3] (TEXT with validation)
+- Migration 010: classes.track and students.track now allow NULL
+- Migration 011: courses.teacher_id now allows NULL (supports two-phase workflow)
+- RLS 003: Head Teacher permissions fixed to use course_type matching

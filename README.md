@@ -1,16 +1,17 @@
 # Learning Management System - ESID
 
-A comprehensive **Primary School (G1-G6)** Learning Management System featuring English Language Arts (ELA) and KCFS courses with advanced **Analytics Engine** and **Database Analytics Views**. Features unified course architecture with Campus-based management for Local Teachers, International Teachers, and KCFS Teachers, plus real-time performance analytics, intelligent insights, and comprehensive testing framework. Built with Next.js, TypeScript, Tailwind CSS, and Supabase.
+A comprehensive **Primary School (G1-G6)** Learning Management System featuring English Language Arts (ELA) and KCFS courses with advanced **Analytics Engine** and **Database Analytics Views**. Features **One Class, Three Teachers (一班三師)** architecture where each class has dedicated LT, IT, and KCFS instructors, plus real-time performance analytics, intelligent insights, and comprehensive testing framework. Built with Next.js, TypeScript, Tailwind CSS, and Supabase Cloud.
 
-## 🎯 Current Status (Phase 3A-1 Complete ✅)
-- **Supabase Migration**: ✅ Migrated to Supabase Cloud (2025-10-16)
+## 🎯 Current Status (Updated 2025-10-17)
+- **Database Migrations**: ✅ Migrations 007-011 完全部署
+- **Real Data Deployment**: ✅ 84 classes + 252 courses (2025-2026 學年度)
+- **Supabase Cloud**: ✅ Official cloud migration complete
 - **Analytics Engine**: ✅ Complete with 40+ TypeScript interfaces
 - **Database Views**: ✅ 3 professional analytics views deployed
 - **Performance**: ✅ Average query time 146ms (target <500ms)
 - **Testing Framework**: ✅ 90-minute comprehensive testing workflow
-- **Primary School Data**: ✅ G4, G6 test data (57 students, 9 teachers)
 - **Known Issues**: ⚠️ Claude Code env cache (See [TROUBLESHOOTING](CLAUDE.md#⚠️-已知問題與解決方案-2025-10-16))
-- **Ready for**: 🧪 Phase 1-7 Manual Testing
+- **Ready for**: 👥 Teacher Assignment + Student Import
 
 ## Quick Start
 
@@ -92,16 +93,24 @@ Every class includes three standardized courses:
 - **IT English Language Arts (ELA)** - International Teacher instruction  
 - **KCFS** - Kang Chiao Future Skill program (independent course)
 
-### Campus Management System
-- **Local Campus** - Administrative grouping for local-focused classes
-- **International Campus** - Administrative grouping for international-focused classes
-- **Note**: Campus distinction is for management only; all classes receive the same two ELA courses + one KCFS course
+### Course-Teacher Assignment System
+- **One Class, Three Teachers (一班三師)**: Each class has three dedicated course instructors
+  - **LT Course**: Local Teacher for ELA
+  - **IT Course**: International Teacher for ELA
+  - **KCFS Course**: KCFS specialist teacher
+- **Database Architecture**: Implemented through `courses` table (class_id + course_type + teacher_id)
+- **Track Field Semantics**:
+  - `classes.track`: Always NULL (classes don't belong to single track)
+  - `users.track`: Stores Head Teacher's course_type responsibility (LT/IT/KCFS)
+  - `courses.course_type`: Stores actual course type
 
 ## 🔐 Security & Permissions
 
 ### Role-Based Access Control (RLS)
-- **Admin**: Full system access across all campuses
-- **Head Teacher (HT)**: Access to specific grade × campus combinations
+- **Admin**: Full system access across all grades and course types
+- **Head Teacher (HT)**: Access to specific Grade + Course Type combinations
+  - Example: G4 LT Head Teacher manages all G4 LT courses (14 courses)
+  - Can view all classes in their grade, but only manage their course_type
 - **Teacher** (LT/IT/KCFS): Access only to assigned classes and courses
 
 ### Row Level Security
@@ -110,9 +119,10 @@ All database operations enforce user permissions automatically through Supabase 
 ## 🎨 Assessment Display Names
 
 Head teachers can customize assessment display names:
-- **Priority**: Class-specific > Grade×Campus > Default
+- **Priority**: Class-specific > Grade×Track > Default
 - **Examples**: "FA1" → "Reading Assessment 1", "SA1" → "Midterm Exam"
 - **Note**: Display names only affect UI, never calculations
+- **Implementation**: `assessment_titles` table
 
 ## 🚀 Development Commands
 
@@ -269,10 +279,11 @@ npm run deploy          # Deploy to Zeabur
 ## 🚨 Important Notes
 
 - **Primary School Focus** - System designed specifically for G1-G6 primary school structure
-- **Course Architecture** - All classes must include LT ELA, IT ELA, and KCFS courses
-- **Campus vs Track** - Use Campus concept for management, not course tracking
+- **One Class, Three Teachers** - All classes must have LT, IT, and KCFS courses (252 courses for 84 classes)
+- **Track Field Semantics** - `classes.track` = NULL, `users.track` = HT responsibility, `courses.course_type` = actual type
+- **Level Format** - Use G[1-6]E[1-3] format (e.g., G4E2), not just E1-E3
 - **Follow CLAUDE.md rules** - All development must adhere to the guidelines
-- **RLS enforcement** - All database queries automatically respect user permissions  
+- **RLS enforcement** - All database queries automatically respect user permissions
 - **Grade calculation integrity** - Only use `/lib/grade` functions for calculations
 - **Type safety** - Maintain strict TypeScript compliance
 - **Testing requirements** - All new features require corresponding tests

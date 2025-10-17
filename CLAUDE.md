@@ -1,7 +1,7 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 1.5
-> **Last Updated**: 2025-10-16
+> **Documentation Version**: 1.6
+> **Last Updated**: 2025-10-17
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics
 > **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, CSV Import System, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**
@@ -46,26 +46,34 @@ This file provides essential guidance to Claude Code (claude.ai/code) when worki
 - **KCFS = Kang Chiao Future Skill** - 獨立課程類型，由專門的 KCFS 教師授課
 - **HT = Head Teacher（年段主任）** - 年段與校區管理權限
 
-### 課程架構（核心特色）
+### 課程架構（核心特色 - 一班三師）
 - **統一課程標準**：所有班級都包含三種標準課程
   - LT English Language Arts (ELA) - 本地教師
   - IT English Language Arts (ELA) - 國際教師
   - KCFS - 康橋未來技能課程（獨立課程）
-- **Campus管理概念**：Local Campus / International Campus
-  - 用於行政管理與權限控制
-  - 非課程軌別區分，所有班級均有兩種ELA課程 + 一種KCFS課程
-  - 取代過時的"Track軌別"概念
+- **Track 欄位語意**：
+  - `classes.track`: **永遠為 NULL**（班級不屬於任何單一 track）
+  - `users.track`: 儲存 Head Teacher 的課程類型職責（LT/IT/KCFS）
+  - `courses.course_type`: 儲存實際課程類型（LT/IT/KCFS）
+- **課程-教師關聯**：透過 `courses` 表實現，支援一個班級有三位不同類型的教師
 
 ### 小學年段系統（G1-G6）
 - **年級範圍**：Grade 1 至 Grade 6
-- **Level分級**：E1（頂尖）、E2（中等）、E3（基礎）
-- **班級命名**：G[1-6] [StandardName] 格式
+- **Level分級格式**：G[1-6]E[1-3]（例如：G1E1, G4E2, G6E3）
+  - 包含年級資訊，因為不同年級的 E1 能力標準不同
+  - G1E1（一年級頂尖）≠ G4E1（四年級頂尖）
+  - 資料庫欄位類型：TEXT（非 ENUM），帶格式驗證
+- **班級命名**：G[1-6] [StandardName] 格式（例如：G4 Seekers, G6 Navigators）
 
 ### 安全與權限（RLS 核心）
-- 角色：admin、head（HT，含 grade, campus 權限）、teacher（LT/IT/KCFS）
-- 老師：僅能存取自己任課班級的考試與成績
-- Head Teacher（HT）：可存取自己年段 × 自己校區
-- Admin：全域
+- **角色定義**：admin、head（HT）、teacher（LT/IT/KCFS）
+- **Teacher（教師）**：僅能存取自己任課班級的考試與成績
+- **Head Teacher（年段主任）**：
+  - 權限範圍：Grade（年級）+ Course Type（課程類型）
+  - 範例：G4 LT Head Teacher 可管理所有 G4 年級的 LT 課程（14 個班級的 LT 課程）
+  - 檢視權限：可查看該年級所有班級
+  - 管理權限：僅能管理自己 course_type 的課程
+- **Admin（系統管理員）**：全域存取權限
 
 ### 測試要求
 - lib/grade 單元測試：空值/全 0/部分 0/正常/混合 + snapshot
@@ -76,9 +84,65 @@ This file provides essential guidance to Claude Code (claude.ai/code) when worki
 
 ### ✅ 完成狀態
 - **Assessment Title 管理系統**: 100% 完成
-- **Student Course 管理功能**: 100% 完成  
+- **Student Course 管理功能**: 100% 完成
 - **Real-time 通知系統**: 100% 完成
 - **系統整合測試**: 100% 完成
+
+## 🗄️ Database Migrations 完成記錄 (2025-10-17) ✅ **完全部署**
+
+### ✅ 已完成的 Migrations
+
+#### Migration 007-008 + RLS 003: 課程關聯表架構 (2025-10-17)
+- **Migration 007**: 用戶自主註冊 RLS 政策
+- **Migration 008**: `courses` 表建立（實現「一班三師」系統）
+- **RLS 003**: Courses 表權限政策（4 個 policies）
+
+#### Migration 009: Level 欄位格式升級 (2025-10-17) ✅
+- **變更內容**: 將 `level` 欄位從 ENUM 改為 TEXT
+- **新格式**: 支援 G1E1 ~ G6E3（包含年級資訊）
+- **驗證機制**: CHECK 約束確保格式正確（`G[1-6]E[1-3]`）
+- **影響範圍**: `classes` 和 `students` 表
+
+#### Migration 010: 移除 Track NOT NULL 約束 (2025-10-17) ✅
+- **變更內容**: `classes.track` 和 `students.track` 允許 NULL 值
+- **設計理由**: 在「一班三師」架構中，班級不屬於任何單一 track
+- **實際狀態**: 所有班級的 track = NULL
+- **影響範圍**: 84 個真實班級資料
+
+#### Migration 011: 移除 Teacher_id NOT NULL 約束 (2025-10-17) ✅
+- **變更內容**: `courses.teacher_id` 允許 NULL 值
+- **工作流程支援**: 課程建立（teacher_id = NULL）→ 教師指派（更新 teacher_id）
+- **影響範圍**: 252 筆課程記錄（84 × 3）
+
+### 📊 真實資料部署狀態
+
+#### 2025-2026 學年班級資料 ✅
+- **班級數量**: 84 個班級（林口校區）
+- **年級分佈**: G1-G6，每個年級 14 個班級
+- **Level 分佈**:
+  - G1: 5×E1, 5×E2, 4×E3
+  - G2: 5×E1, 5×E2, 4×E3
+  - G3: 4×E1, 7×E2, 3×E3
+  - G4: 4×E1, 7×E2, 3×E3
+  - G5: 3×E1, 7×E2, 4×E3
+  - G6: 4×E1, 7×E2, 3×E3
+
+#### 課程資料建立 ✅
+- **課程總數**: 252 筆（84 classes × 3 course types）
+- **課程類型**: LT（84）+ IT（84）+ KCFS（84）
+- **教師指派狀態**: 全部 teacher_id = NULL（待指派）
+
+### 🎯 驗證結果
+
+**執行驗證**: `VERIFY_MIGRATIONS_SIMPLE.sql` ✅ 全部通過
+```
+總課程數: 252
+活躍班級: 84
+每班課程數: 3.00 ✅
+RLS Policies: 7+ ✅
+Indexes: 8+ ✅
+Overall Status: 🎉 ALL CHECKS PASSED
+```
 
 ## 🧠 Phase 3A-1 Analytics 基礎架構 (2025-08-23) ✅ **完全完成**
 
