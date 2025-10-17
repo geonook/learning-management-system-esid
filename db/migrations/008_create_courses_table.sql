@@ -3,6 +3,16 @@
 -- Architecture: Preserves existing track (local/international) for administrative classification
 --               Uses teacher_type for course specialization (LT/IT/KCFS)
 
+-- Ensure update_updated_at_column() function exists
+-- This function is used by triggers to automatically update the updated_at timestamp
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ language 'plpgsql';
+
 -- Create courses table
 CREATE TABLE IF NOT EXISTS courses (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

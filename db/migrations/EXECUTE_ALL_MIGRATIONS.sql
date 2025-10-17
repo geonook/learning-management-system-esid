@@ -49,6 +49,21 @@ BEGIN
   RAISE NOTICE '=== Executing Migration 008: Create Courses Table ===';
 END $$;
 
+-- Ensure update_updated_at_column() function exists
+-- This function is used by triggers to automatically update the updated_at timestamp
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+DO $$
+BEGIN
+  RAISE NOTICE 'Helper function update_updated_at_column() created/verified';
+END $$;
+
 -- Create courses table (Idempotent - IF NOT EXISTS)
 CREATE TABLE IF NOT EXISTS courses (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
