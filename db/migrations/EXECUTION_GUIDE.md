@@ -153,6 +153,43 @@ track_status: ✅ PASS - All tracks are NULL
 
 ---
 
+### Step 3.5: Remove Teacher_id NOT NULL Constraint ⚠️ **REQUIRED BEFORE STEP 4**
+
+**File**: `011_remove_teacher_id_not_null.sql`
+
+**Purpose**: Allow NULL values in `courses.teacher_id` column
+
+**Why**: Courses are created without teacher assignment initially. Teachers are assigned later by admin/head teacher.
+
+**Instructions**:
+1. Open Supabase Dashboard → SQL Editor
+2. Copy and paste the entire contents of `011_remove_teacher_id_not_null.sql`
+3. Click "Run" button
+4. Verify results in the output tables
+
+**Expected Output**:
+```
+=== TEACHER_ID COLUMN NULLABLE STATUS ===
+column_name | data_type | is_nullable | status
+------------|-----------|-------------|---------------
+teacher_id  | uuid      | YES         | ✅ NULLABLE
+
+✅ Teacher_id NULL constraint test PASSED - NULL values accepted
+
+=== MIGRATION 011 COMPLETED ===
+status: Teacher_id column now allows NULL values
+```
+
+**What This Does**:
+- Removes NOT NULL constraint from `courses.teacher_id`
+- Allows courses to be created without teacher assignment
+- Teachers can be assigned later by admin/head teacher
+- Supports workflow: Create Course Structure → Assign Teachers
+
+**Critical**: This migration MUST be executed before INSERT_COURSES_FOR_EXISTING_CLASSES.sql
+
+---
+
 ### Step 4: Create Course Records (252 courses) ✅ Ready
 
 **File**: `INSERT_COURSES_FOR_EXISTING_CLASSES.sql`
@@ -225,6 +262,11 @@ overall_status: 🎉 ALL CHECKS PASSED ✅
 **Solution**: Execute Step 0 (Migration 010) FIRST to remove NOT NULL constraint
 **Why**: Classes don't belong to a single track in the "one class, three teachers" architecture
 
+### Issue: "null value in column teacher_id violates not-null constraint" ⚠️ **COMMON**
+**Error**: `ERROR: 23502: null value in column "teacher_id" of relation "courses" violates not-null constraint`
+**Solution**: Execute Step 3.5 (Migration 011) BEFORE Step 4 to remove NOT NULL constraint
+**Why**: Courses are created without teacher assignment initially. Teachers are assigned later.
+
 ### Issue: "column level cannot be cast to type text"
 **Solution**: Make sure to execute Step 1 (Migration 009) first
 
@@ -279,6 +321,7 @@ All courses initially have `teacher_id = NULL` (to be assigned by admin)
 - [ ] **Migration 009**: Level field changed to TEXT → **Execute Step 1**
 - [ ] **RLS 003 Fix**: Head Teacher permissions corrected → **Execute Step 2**
 - [ ] **Real Data**: 84 classes created → **Execute Step 3**
+- [ ] **Migration 011**: Teacher_id NOT NULL constraint removed → **Execute Step 3.5** ⚠️ **BEFORE STEP 4**
 - [ ] **Real Data**: 252 courses created → **Execute Step 4**
 - [ ] **Verification**: All checks pass → **Execute Step 5**
 
@@ -336,7 +379,9 @@ Class: G4 Seekers
 ---
 
 **Last Updated**: 2025-10-17
-**Migration Version**: 007 + 008 + 009 + 010 + RLS 003 (Fixed)
+**Migration Version**: 007 + 008 + 009 + 010 + 011 + RLS 003 (Fixed)
 **Academic Year**: 2025-2026
 **Real Data**: 84 classes + 252 courses (Linkou Campus)
-**Critical Fix**: Migration 010 removes track NOT NULL constraint (required for Step 3)
+**Critical Fixes**:
+- Migration 010: Removes track NOT NULL constraint (required for Step 3)
+- Migration 011: Removes teacher_id NOT NULL constraint (required for Step 4)
