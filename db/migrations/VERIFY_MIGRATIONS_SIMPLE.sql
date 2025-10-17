@@ -220,16 +220,16 @@ SELECT
 
   -- RLS Policies
   policies_count AS rls_policies_count,
-  CASE WHEN policies_count = 4 THEN '✅ PASS' ELSE '❌ FAIL' END AS rls_policies_status,
+  CASE WHEN policies_count >= 4 THEN '✅ PASS (Expected 4+)' ELSE '❌ FAIL' END AS rls_policies_status,
 
   -- Indexes
   indexes_count,
-  CASE WHEN indexes_count = 5 THEN '✅ PASS' ELSE '❌ FAIL' END AS indexes_status,
+  CASE WHEN indexes_count >= 5 THEN '✅ PASS (Expected 5+)' ELSE '❌ FAIL' END AS indexes_status,
 
   -- Function & Trigger
   function_count,
   trigger_count,
-  CASE WHEN function_count = 1 AND trigger_count = 1 THEN '✅ PASS' ELSE '❌ FAIL' END AS function_trigger_status,
+  CASE WHEN function_count >= 1 AND trigger_count >= 1 THEN '✅ PASS (Expected 1+)' ELSE '❌ FAIL' END AS function_trigger_status,
 
   -- ENUM
   enum_values_count,
@@ -237,18 +237,18 @@ SELECT
 
   -- User Policy
   user_policy_count,
-  CASE WHEN user_policy_count = 1 THEN '✅ PASS' ELSE '❌ FAIL' END AS user_policy_status,
+  CASE WHEN user_policy_count >= 1 THEN '✅ PASS (Expected 1+)' ELSE '❌ FAIL' END AS user_policy_status,
 
   -- 整體狀態
   CASE
     WHEN active_classes > 0
       AND (total_courses::NUMERIC / active_classes) = 3
-      AND policies_count = 4
-      AND indexes_count = 5
-      AND function_count = 1
-      AND trigger_count = 1
+      AND policies_count >= 4
+      AND indexes_count >= 5
+      AND function_count >= 1
+      AND trigger_count >= 1
       AND enum_values_count = 3
-      AND user_policy_count = 1
+      AND user_policy_count >= 1
     THEN '🎉 ALL CHECKS PASSED ✅'
     ELSE '⚠️ SOME CHECKS FAILED ❌'
   END AS overall_status
@@ -266,12 +266,17 @@ FROM verification_data;
 --    - "⚠️ SOME CHECKS FAILED ❌" = 有問題，檢查各個 status 欄位找出問題
 
 -- 關鍵指標（預期值）：
--- - courses_per_class: 3.00
--- - rls_policies_count: 4
--- - indexes_count: 5
--- - function_count: 1
--- - trigger_count: 1
--- - enum_values_count: 3
--- - user_policy_count: 1
+-- - courses_per_class: 3.00 (exactly 3)
+-- - rls_policies_count: 4+ (at least 4, extras from previous migrations are OK)
+-- - indexes_count: 5+ (at least 5, UNIQUE constraints create additional indexes)
+-- - function_count: 1+ (at least 1 update_updated_at_column function)
+-- - trigger_count: 1+ (at least 1 trigger)
+-- - enum_values_count: 3 (exactly 3: LT, IT, KCFS)
+-- - user_policy_count: 1+ (at least 1 user self-registration policy)
+
+-- 說明：
+-- - 額外的 policies/indexes/functions 是正常的，來自其他 migrations
+-- - 只要核心功能存在（≥ 預期值）就是成功的
+-- - UNIQUE 約束會自動建立額外的索引（這是 PostgreSQL 的正常行為）
 
 -- 如果全部通過，恭喜！Migration 成功部署 🎊
