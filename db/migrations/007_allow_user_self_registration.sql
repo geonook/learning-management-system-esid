@@ -14,9 +14,13 @@
 -- 新增 RLS 政策，允許已驗證的用戶為自己插入記錄
 
 -- =====================================================
--- 建立政策
+-- 建立政策（Idempotent - 可安全重複執行）
 -- =====================================================
 
+-- 先刪除舊政策（如果存在）
+DROP POLICY IF EXISTS "allow_authenticated_user_self_insert" ON public.users;
+
+-- 建立新政策
 CREATE POLICY "allow_authenticated_user_self_insert"
 ON public.users
 FOR INSERT

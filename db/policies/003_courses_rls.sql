@@ -1,8 +1,14 @@
--- RLS Policies for courses table
+-- RLS Policies for courses table (Idempotent - 可安全重複執行)
 -- Purpose: Control access to course assignments based on user roles
 
 -- Enable RLS
 ALTER TABLE courses ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "admin_full_access_courses" ON courses;
+DROP POLICY IF EXISTS "head_teacher_access_courses" ON courses;
+DROP POLICY IF EXISTS "teacher_view_own_courses" ON courses;
+DROP POLICY IF EXISTS "teacher_view_class_courses" ON courses;
 
 -- Policy 1: Admin can do everything
 CREATE POLICY "admin_full_access_courses"
