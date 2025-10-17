@@ -1,89 +1,162 @@
-# Migration Execution Guide
+# Migration Execution Guide - 2025-2026 Real Data
 
 ## 📋 Overview
 
-This guide provides step-by-step instructions for executing all pending migrations and test data setup.
+This guide provides step-by-step instructions for deploying the complete LMS database with real class data for the 2025-2026 academic year.
 
-**Current Status**: Migration 007 + 008 + RLS 003 successfully deployed, but no test data exists.
+**Current Status**: Migration 007 + 008 deployed. Ready to add real data and fix RLS policies.
 
-**Target**: Create test classes and courses to verify the complete migration.
+**Target**: Deploy 84 real classes (G1-G6) with 252 course records and corrected Head Teacher permissions.
 
 ---
 
 ## 🎯 Execution Steps
 
-### Step 1: Create Test Classes ✅ Ready
+### Step 1: Modify Level Field Type ✅ Ready
 
-**File**: `CREATE_TEST_CLASSES.sql`
+**File**: `009_change_level_to_text.sql`
 
-**Purpose**: Create 5 test classes to enable course record creation
+**Purpose**: Change `level` column from ENUM to TEXT to support G1E1~G6E3 format
+
+**Why**: Different grades have different E1 ability standards (G1E1 ≠ G4E1)
 
 **Instructions**:
 1. Open Supabase Dashboard → SQL Editor
-2. Copy and paste the entire contents of `CREATE_TEST_CLASSES.sql`
+2. Copy and paste the entire contents of `009_change_level_to_text.sql`
 3. Click "Run" button
-4. Verify results in the output tables:
-   - `total_test_classes` should be **5**
-   - `active_test_classes` should be **5**
-   - `local_track_count` should be **3**
-   - `international_track_count` should be **2**
+4. Verify results in the output tables
 
 **Expected Output**:
 ```
-=== TEST CLASSES CREATED ===
-total_test_classes: 5
-active_test_classes: 5
-local_track_count: 3
-international_track_count: 2
+=== CLASSES.LEVEL COLUMN INFO ===
+data_type: text
 
-=== TEST CLASSES LIST ===
-5 rows showing Test_G1_Luna, Test_G4_Mars, Test_G4_Venus, Test_G6_Jupiter, Test_G6_Saturn
+=== STUDENTS.LEVEL COLUMN INFO ===
+data_type: text
+
+=== MIGRATION 009 COMPLETED ===
+status: Level columns changed to TEXT with format validation
+valid_formats: G1E1 ~ G6E3
 ```
+
+**What This Does**:
+- Changes `classes.level` and `students.level` from ENUM to TEXT
+- Adds format validation: only accepts `G[1-6]E[1-3]` or NULL
+- Examples: G1E1, G2E2, G3E3, G4E1, G5E2, G6E3
 
 ---
 
-### Step 2: Insert Courses for Test Classes ✅ Ready
+### Step 2: Fix RLS Policies for Head Teachers ✅ Ready
+
+**File**: `003_courses_rls.sql` (Updated)
+
+**Purpose**: Correct Head Teacher permission logic
+
+**Key Changes**:
+- **OLD (Wrong)**: `WHERE u.track = c.track` (classes.track is NULL, so this fails)
+- **NEW (Correct)**: `WHERE u.track::text = courses.course_type::text` (match course type)
+
+**Instructions**:
+1. Open Supabase Dashboard → SQL Editor
+2. Copy and paste the entire contents of `db/policies/003_courses_rls.sql`
+3. Click "Run" button
+
+**What This Does**:
+- **Head Teacher** can manage courses in their grade + course_type
+  - Example: G4 LT Head Teacher manages all G4 LT courses
+- **Head Teacher** can VIEW all classes in their grade (but only MANAGE specific course_type)
+- **Teachers** can view courses they teach and courses in same class
+
+---
+
+### Step 3: Create Real Classes (84 classes) ✅ Ready
+
+**File**: `CREATE_REAL_CLASSES_2025.sql`
+
+**Purpose**: Create all 84 Linkou campus classes for 2025-2026
+
+**Instructions**:
+1. Open Supabase Dashboard → SQL Editor
+2. Copy and paste the entire contents of `CREATE_REAL_CLASSES_2025.sql`
+3. Click "Run" button
+4. Verify results in the output tables
+
+**Expected Output**:
+```
+=== CLASSES BY GRADE AND LEVEL ===
+grade | e1_count | e2_count | e3_count | total
+------|----------|----------|----------|------
+1     | 5        | 5        | 4        | 14
+2     | 5        | 5        | 4        | 14
+3     | 4        | 7        | 3        | 14
+4     | 4        | 7        | 3        | 14
+5     | 3        | 7        | 4        | 14
+6     | 4        | 7        | 3        | 14
+
+=== TOTAL SUMMARY ===
+total_classes: 84
+active_classes: 84
+total_classes_status: ✅ PASS
+
+=== TRACK FIELD CHECK ===
+null_track_count: 84
+track_status: ✅ PASS - All tracks are NULL
+```
+
+**Class Distribution**:
+- G1: 14 classes (5×E1, 5×E2, 4×E3)
+- G2: 14 classes (5×E1, 5×E2, 4×E3)
+- G3: 14 classes (4×E1, 7×E2, 3×E3)
+- G4: 14 classes (4×E1, 7×E2, 3×E3)
+- G5: 14 classes (3×E1, 7×E2, 4×E3)
+- G6: 14 classes (4×E1, 7×E2, 3×E3)
+
+**Total**: 84 classes
+
+---
+
+### Step 4: Create Course Records (252 courses) ✅ Ready
 
 **File**: `INSERT_COURSES_FOR_EXISTING_CLASSES.sql`
 
-**Purpose**: Create 3 course records (LT/IT/KCFS) for each test class
+**Purpose**: Create 3 course records (LT/IT/KCFS) for each class
 
 **Instructions**:
 1. Open Supabase Dashboard → SQL Editor
 2. Copy and paste the entire contents of `INSERT_COURSES_FOR_EXISTING_CLASSES.sql`
 3. Click "Run" button
-4. Verify results in the output tables:
-   - `total_courses_created` should be **15** (5 classes × 3 types)
-   - `lt_courses` should be **5**
-   - `it_courses` should be **5**
-   - `kcfs_courses` should be **5**
-   - Each class should show `status: ✅ Complete`
+4. Verify results in the output tables
 
 **Expected Output**:
 ```
 === COURSES CREATION SUMMARY ===
-total_courses_created: 15
-lt_courses: 5
-it_courses: 5
-kcfs_courses: 5
-classes_with_courses: 5
+total_courses_created: 252
+lt_courses: 84
+it_courses: 84
+kcfs_courses: 84
+classes_with_courses: 84
 
 === COURSES BY CLASS ===
-5 rows, each showing course_count = 3, status = ✅ Complete
+84 rows, each showing course_count = 3, status = ✅ Complete
 
 === COURSES BY TYPE ===
-LT: 5 total, 0 assigned, 5 unassigned
-IT: 5 total, 0 assigned, 5 unassigned
-KCFS: 5 total, 0 assigned, 5 unassigned
+LT: 84 total, 0 assigned, 84 unassigned
+IT: 84 total, 0 assigned, 84 unassigned
+KCFS: 84 total, 0 assigned, 84 unassigned
 ```
+
+**What This Creates**:
+- 252 course records (84 classes × 3 course types)
+- Each class has: LT course, IT course, KCFS course
+- All `teacher_id` initially NULL (to be assigned by admin)
 
 ---
 
-### Step 3: Verify Complete Migration ✅ Ready
+### Step 5: Verify Complete Deployment ✅ Ready
 
 **File**: `VERIFY_MIGRATIONS_SIMPLE.sql`
 
-**Purpose**: Final verification that all migrations are successful
+**Purpose**: Final verification that all migrations and data are correct
 
 **Instructions**:
 1. Open Supabase Dashboard → SQL Editor
@@ -94,14 +167,14 @@ KCFS: 5 total, 0 assigned, 5 unassigned
 **Expected Output**:
 ```
 === FINAL VERIFICATION SUMMARY ===
-total_courses: 15
-active_classes: 5
+total_courses: 252
+active_classes: 84
 courses_per_class: 3.00
 courses_per_class_status: ✅ PASS
-rls_policies_count: 7
-rls_policies_status: ✅ PASS (4+ expected)
-indexes_count: 8
-indexes_status: ✅ PASS (5+ expected)
+rls_policies_count: 7+
+rls_policies_status: ✅ PASS
+indexes_count: 8+
+indexes_status: ✅ PASS
 overall_status: 🎉 ALL CHECKS PASSED ✅
 ```
 
@@ -109,30 +182,33 @@ overall_status: 🎉 ALL CHECKS PASSED ✅
 
 ## 🔍 Troubleshooting
 
-### Issue: "classes table is empty"
-**Solution**: Execute Step 1 (CREATE_TEST_CLASSES.sql) first
+### Issue: "column level cannot be cast to type text"
+**Solution**: Make sure to execute Step 1 (Migration 009) first
 
-### Issue: "courses table is empty"
-**Solution**: Execute Step 2 (INSERT_COURSES_FOR_EXISTING_CLASSES.sql) after Step 1
+### Issue: "new row violates check constraint level_format_check"
+**Solution**: Level format must be G[1-6]E[1-3], e.g., G1E1, G4E2, G6E3
 
 ### Issue: "policy already exists" error
-**Solution**: All scripts are idempotent - this is safe to ignore, or the policy already exists from previous execution
+**Solution**: All scripts are idempotent - safe to re-run
 
-### Issue: "function does not exist" error
-**Solution**: Re-run `EXECUTE_ALL_MIGRATIONS.sql` which includes the function definition
+### Issue: Head Teacher cannot see courses
+**Solution**: Execute Step 2 (RLS policy fix) to correct permission logic
 
 ---
 
 ## 📊 Database Structure After Completion
 
-### Classes Table (5 records)
-- Test_G1_Luna (Grade 1, Local)
-- Test_G4_Mars (Grade 4, Local)
-- Test_G4_Venus (Grade 4, International)
-- Test_G6_Jupiter (Grade 6, Local)
-- Test_G6_Saturn (Grade 6, International)
+### Classes Table (84 records)
+**Academic Year**: 2025-2026
+**Campus**: Linkou (林口)
+**Track**: All NULL (班級不屬於任何單一 track)
 
-### Courses Table (15 records)
+**Examples**:
+- G1 Achievers (Grade 1, Level G1E1)
+- G4 Seekers (Grade 4, Level G4E1)
+- G6 Navigators (Grade 6, Level G6E3)
+
+### Courses Table (252 records)
 Each class has 3 courses:
 - **LT** (Local Teacher) - English Language Arts
 - **IT** (International Teacher) - English Language Arts
@@ -140,42 +216,82 @@ Each class has 3 courses:
 
 All courses initially have `teacher_id = NULL` (to be assigned by admin)
 
+### Level Format
+- **G1E1 ~ G1E3**: Grade 1 ability levels
+- **G2E1 ~ G2E3**: Grade 2 ability levels
+- **G3E1 ~ G3E3**: Grade 3 ability levels
+- **G4E1 ~ G4E3**: Grade 4 ability levels
+- **G5E1 ~ G5E3**: Grade 5 ability levels
+- **G6E1 ~ G6E3**: Grade 6 ability levels
+
+**Note**: G1E1 ≠ G4E1 (different grade ability standards)
+
 ---
 
 ## ✅ Success Criteria
 
 - [x] Migration 007: User self-registration policy active
-- [x] Migration 008: Courses table created with all constraints and indexes
-- [x] RLS 003: 4 courses policies active
-- [x] Helper function: `update_updated_at_column()` exists
-- [ ] Test data: 5 classes created → **Execute Step 1**
-- [ ] Test data: 15 courses created → **Execute Step 2**
-- [ ] Verification: All checks pass → **Execute Step 3**
+- [x] Migration 008: Courses table created
+- [ ] **Migration 009**: Level field changed to TEXT → **Execute Step 1**
+- [ ] **RLS 003 Fix**: Head Teacher permissions corrected → **Execute Step 2**
+- [ ] **Real Data**: 84 classes created → **Execute Step 3**
+- [ ] **Real Data**: 252 courses created → **Execute Step 4**
+- [ ] **Verification**: All checks pass → **Execute Step 5**
 
 ---
 
 ## 📝 Next Steps After Verification
 
-1. **Teacher Assignment**: Use admin interface to assign teachers to courses
-2. **Phase 3-4 of Registration**: User management and approval workflow (deferred)
-3. **Real Data Migration**: Import actual classes and student data
+1. **Teacher Assignment**: Admin assigns teachers to 252 courses
+2. **Student Data Import**: Import student records and assign to classes
+3. **Head Teacher Setup**: Create Head Teacher accounts with grade + course_type
+4. **Testing**: Verify permissions work correctly for each role
 
 ---
 
-## 🐛 Known Issues
+## 🏗️ Architecture Summary
 
-### Schema Differences (Non-blocking)
-- `classes` table does not have `teacher_id` field
-- This is **not a problem** - the new course architecture doesn't need it
-- The `courses` table handles teacher assignments instead
+### Head Teacher Permission Model
+- **G1 LT Head Teacher**: Manages all G1 LT courses (14 courses)
+- **G1 IT Head Teacher**: Manages all G1 IT courses (14 courses)
+- **G1 KCFS Head Teacher**: Manages all G1 KCFS courses (14 courses)
+- ... (same for G2-G6)
 
-### Extra Policies and Indexes (Expected)
-- 7 RLS policies instead of 4 → Some existing policies from previous migrations
-- 8 indexes instead of 5 → UNIQUE constraints auto-create additional indexes
-- Both are **harmless** and do not affect functionality
+### Course Architecture (方案 A - 一班三師)
+```
+Class: G4 Seekers
+├── Course 1: G4 Seekers - LT (teacher_id: NULL → to be assigned)
+├── Course 2: G4 Seekers - IT (teacher_id: NULL → to be assigned)
+└── Course 3: G4 Seekers - KCFS (teacher_id: NULL → to be assigned)
+```
+
+### Track Field
+- **classes.track**: Always NULL (班級不屬於單一 track)
+- **users.track**: Stores HT's course_type responsibility (LT/IT/KCFS)
+- **courses.course_type**: Stores actual course type (LT/IT/KCFS)
+
+---
+
+## 🐛 Known Issues & Resolutions
+
+### ✅ RESOLVED: RLS Policy Error
+- **Issue**: Head Teacher permission used `u.track = c.track` but classes.track is NULL
+- **Fix**: Changed to `u.track::text = courses.course_type::text`
+- **Status**: Fixed in Step 2
+
+### ✅ RESOLVED: Level Format
+- **Issue**: ENUM only supported E1/E2/E3, not G1E1~G6E3
+- **Fix**: Changed to TEXT with format validation
+- **Status**: Fixed in Step 1
+
+### Expected Behavior
+- Extra RLS policies (7+) and indexes (8+) are normal
+- UNIQUE constraints auto-create additional indexes
+- This does not affect functionality
 
 ---
 
 **Last Updated**: 2025-10-17
-**Migration Version**: 007 + 008 + RLS 003
-**Test Data Version**: v1.0
+**Migration Version**: 007 + 008 + 009 + RLS 003 (Fixed)
+**Academic Year**: 2025-2026
+**Real Data**: 84 classes + 252 courses (Linkou Campus)
