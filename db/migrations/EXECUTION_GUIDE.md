@@ -12,6 +12,44 @@ This guide provides step-by-step instructions for deploying the complete LMS dat
 
 ## 🎯 Execution Steps
 
+### Step 0: Remove Track NOT NULL Constraint ⚠️ **REQUIRED FIRST**
+
+**File**: `010_remove_track_not_null.sql`
+
+**Purpose**: Allow NULL values in `classes.track` and `students.track` columns
+
+**Why**: In the "one class, three teachers" architecture, classes don't belong to a single track. Track concept only exists in `courses.course_type`.
+
+**Instructions**:
+1. Open Supabase Dashboard → SQL Editor
+2. Copy and paste the entire contents of `010_remove_track_not_null.sql`
+3. Click "Run" button
+4. Verify results in the output tables
+
+**Expected Output**:
+```
+=== TRACK COLUMN NULLABLE STATUS ===
+table_name | column_name | is_nullable | status
+-----------|-------------|-------------|---------------
+classes    | track       | YES         | ✅ NULLABLE
+students   | track       | YES         | ✅ NULLABLE
+
+✅ Track NULL constraint test PASSED - NULL values accepted
+
+=== MIGRATION 010 COMPLETED ===
+status: Track columns now allow NULL values
+```
+
+**What This Does**:
+- Removes NOT NULL constraint from `classes.track`
+- Removes NOT NULL constraint from `students.track`
+- Allows classes to have NULL track (符合「一班三師」架構)
+- Existing data with track values remains unchanged
+
+**Critical**: This migration MUST be executed before CREATE_REAL_CLASSES_2025.sql
+
+---
+
 ### Step 1: Modify Level Field Type ✅ Ready
 
 **File**: `009_change_level_to_text.sql`
@@ -182,6 +220,11 @@ overall_status: 🎉 ALL CHECKS PASSED ✅
 
 ## 🔍 Troubleshooting
 
+### Issue: "null value in column track violates not-null constraint" ⚠️ **COMMON**
+**Error**: `ERROR: 23502: null value in column "track" of relation "classes" violates not-null constraint`
+**Solution**: Execute Step 0 (Migration 010) FIRST to remove NOT NULL constraint
+**Why**: Classes don't belong to a single track in the "one class, three teachers" architecture
+
 ### Issue: "column level cannot be cast to type text"
 **Solution**: Make sure to execute Step 1 (Migration 009) first
 
@@ -232,6 +275,7 @@ All courses initially have `teacher_id = NULL` (to be assigned by admin)
 
 - [x] Migration 007: User self-registration policy active
 - [x] Migration 008: Courses table created
+- [ ] **Migration 010**: Track NOT NULL constraint removed → **Execute Step 0** ⚠️ **FIRST**
 - [ ] **Migration 009**: Level field changed to TEXT → **Execute Step 1**
 - [ ] **RLS 003 Fix**: Head Teacher permissions corrected → **Execute Step 2**
 - [ ] **Real Data**: 84 classes created → **Execute Step 3**
@@ -292,6 +336,7 @@ Class: G4 Seekers
 ---
 
 **Last Updated**: 2025-10-17
-**Migration Version**: 007 + 008 + 009 + RLS 003 (Fixed)
+**Migration Version**: 007 + 008 + 009 + 010 + RLS 003 (Fixed)
 **Academic Year**: 2025-2026
 **Real Data**: 84 classes + 252 courses (Linkou Campus)
+**Critical Fix**: Migration 010 removes track NOT NULL constraint (required for Step 3)
