@@ -107,8 +107,8 @@ export async function POST(request: NextRequest) {
       full_name: fullName,
       role: 'teacher',  // Fixed - always teacher
       teacher_type: teacherType,
-      grade: null,  // Not applicable for teachers
-      track: null,  // Not applicable for teachers
+      grade: null,  // Not applicable for teachers (only for Head Teachers)
+      track: null,  // Not applicable for teachers (track is for classes, not individual teachers)
       is_active: false,  // Requires admin approval
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

@@ -341,7 +341,6 @@ export type Database = {
           course_type: 'LT' | 'IT' | 'KCFS'
           teacher_id: string | null
           academic_year: string
-          course_name: string
           is_active: boolean
           created_at: string
           updated_at: string
@@ -351,7 +350,7 @@ export type Database = {
           class_id: string
           course_type: 'LT' | 'IT' | 'KCFS'
           teacher_id?: string | null
-          academic_year?: string
+          academic_year: string
           is_active?: boolean
           created_at?: string
           updated_at?: string
