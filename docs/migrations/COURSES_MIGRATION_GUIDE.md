@@ -9,13 +9,14 @@
 This migration implements the **Course Assignment Architecture** (方案 A) which enables:
 - One class to have three different course types: LT, IT, and KCFS
 - Each course type can be taught by a different teacher
-- Preserves existing `track` field for administrative classification (local/international)
+- Track field semantics clarified: classes.track = NULL, users.track = HT responsibility, courses.course_type = actual type
 
 ## Architecture Benefits
-✅ **No Breaking Changes** - Preserves existing RLS policies and data structure
-✅ **Clear Separation** - `track` = campus classification, `course_type` = teacher specialization
+✅ **Clear Architecture** - One Class, Three Teachers model fully implemented
+✅ **Clear Separation** - `classes.track` = NULL, `users.track` = HT responsibility, `courses.course_type` = actual type
 ✅ **Flexible** - Easy to add more course types in the future
 ✅ **Scalable** - Supports complex course-teacher assignments
+✅ **RLS Compliant** - Head Teacher permissions based on Grade + Course Type
 
 ## Files Created
 

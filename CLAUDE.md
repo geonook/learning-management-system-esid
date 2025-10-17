@@ -36,7 +36,7 @@ This file provides essential guidance to Claude Code (claude.ai/code) when worki
 - 前後端皆使用 `/lib/grade` 同一套函式（或 SQL/視圖同邏輯）驗證一致性
 
 ### Assessment 顯示名稱覆寫（HT）
-- 顯示名與代碼分離：Class > Grade×Campus > Default；缺值回退
+- 顯示名與代碼分離：Class > Grade×Track > Default；缺值回退
 - 僅影響 UI 與報表標題；計算仍用代碼
 - 資料表：`assessment_titles`（見下方 schema）
 

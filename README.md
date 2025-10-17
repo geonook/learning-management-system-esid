@@ -176,11 +176,11 @@ npm run deploy          # Deploy to Zeabur
 #### System Administrator
 - `admin@school.edu` - Full system access
 
-#### Head Teachers (Primary Focus: G4, G6) 
-- `head.g4.local@school.edu` - Grade 4 Local Campus Head
-- `head.g4.intl@school.edu` - Grade 4 International Campus Head
-- `head.g6.local@school.edu` - Grade 6 Local Campus Head
-> **Testing Focus**: Assessment Title management, grade-level statistics, RLS boundary testing
+#### Head Teachers (Primary Focus: G4, G6)
+- `head.g4.lt@school.edu` - Grade 4 LT Head Teacher (manages G4 LT courses)
+- `head.g4.it@school.edu` - Grade 4 IT Head Teacher (manages G4 IT courses)
+- `head.g6.kcfs@school.edu` - Grade 6 KCFS Head Teacher (manages G6 KCFS courses)
+> **Testing Focus**: Assessment Title management, grade-level statistics, RLS boundary testing, Grade+CourseType permissions
 
 #### Subject Teachers
 - `teacher.lt.1@school.edu` - Local Teacher (LT English)
@@ -199,9 +199,9 @@ npm run deploy          # Deploy to Zeabur
 ## 📊 Key Features
 
 ### Primary School Dashboard with Analytics
-- **Admin**: System-wide analytics and user management across all campuses with advanced statistical insights
-- **Head Teachers**: Grade×campus-specific insights and course controls (ELA + KCFS) with performance tracking
-- **Teachers**: Class-specific course management and student progress (ELA or KCFS) with learning analytics
+- **Admin**: System-wide analytics and user management across all grades and course types with advanced statistical insights
+- **Head Teachers**: Grade×CourseType-specific insights and course controls (LT/IT/KCFS) with performance tracking
+- **Teachers**: Class-specific course management and student progress (assigned courses) with learning analytics
 
 ### 🧠 Analytics System (Phase 3A-1 ✅ Complete)
 - **40+ TypeScript Interfaces** - Comprehensive type system for all analytics data structures
@@ -231,7 +231,7 @@ npm run deploy          # Deploy to Zeabur
 - **Weighted grade calculations** following primary school standards
 
 ### Reporting & Advanced Analytics
-- **Performance tracking** by class, grade, and campus across all courses with statistical analysis
+- **Performance tracking** by class, grade, and course type across all courses with statistical analysis
 - **Course comparison** between LT ELA, IT ELA, and KCFS performance with trend visualization
 - **Learning Analytics** - Student risk identification, improvement tracking, consistency analysis
 - **Predictive Insights** - Early warning systems and intervention recommendations
@@ -297,5 +297,5 @@ npm run deploy          # Deploy to Zeabur
 
 ---
 
-**🎯 Primary School ELA LMS |康橋小學英語學習管理系統 | v1.2.0**  
-🏫 Features: G1-G6 支援 | ELA三課程架構 | Campus管理系統 | CSV批量匯入 | 📊 Analytics引擎 | 🧠 智能分析
+**🎯 Primary School ELA LMS |康橋小學英語學習管理系統 | v1.2.0**
+🏫 Features: G1-G6 支援 | 一班三師架構 | Grade×CourseType 權限 | CSV批量匯入 | 📊 Analytics引擎 | 🧠 智能分析
