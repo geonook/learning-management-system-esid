@@ -423,7 +423,108 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      student_grade_aggregates: {
+        Row: {
+          student_id: string
+          student_number: string
+          student_name: string
+          grade: number
+          track: 'local' | 'international' | null
+          level: string | null
+          class_id: string | null
+          class_name: string | null
+          course_id: string | null
+          course_type: 'LT' | 'IT' | 'KCFS' | null
+          course_name: string | null
+          teacher_id: string | null
+          teacher_name: string | null
+          academic_year: string | null
+          fa_count: number | null
+          sa_count: number | null
+          final_count: number | null
+          fa1_score: number | null
+          fa2_score: number | null
+          fa3_score: number | null
+          fa4_score: number | null
+          fa5_score: number | null
+          fa6_score: number | null
+          fa7_score: number | null
+          fa8_score: number | null
+          sa1_score: number | null
+          sa2_score: number | null
+          sa3_score: number | null
+          sa4_score: number | null
+          final_score: number | null
+          formative_average: number | null
+          summative_average: number | null
+          semester_grade: number | null
+          min_score: number | null
+          max_score: number | null
+          at_risk: boolean | null
+          last_assessment_date: string | null
+          total_assessments_completed: number | null
+        }
+      }
+      class_statistics: {
+        Row: {
+          class_id: string
+          class_name: string
+          grade: number
+          track: 'local' | 'international' | null
+          class_level: string | null
+          academic_year: string
+          course_id: string | null
+          course_type: 'LT' | 'IT' | 'KCFS' | null
+          course_name: string | null
+          teacher_id: string | null
+          teacher_name: string | null
+          teacher_type: 'LT' | 'IT' | 'KCFS' | null
+          total_students: number | null
+          active_students: number | null
+          students_with_scores: number | null
+          completion_rate_percent: number | null
+          class_average: number | null
+          class_median: number | null
+          class_min: number | null
+          class_max: number | null
+          class_stddev: number | null
+          grades_90_plus: number | null
+          grades_80_89: number | null
+          grades_70_79: number | null
+          grades_60_69: number | null
+          grades_below_60: number | null
+          formative_class_avg: number | null
+          summative_class_avg: number | null
+          final_class_avg: number | null
+          failing_assessments: number | null
+          last_update: string | null
+          total_exams: number | null
+        }
+      }
+      teacher_performance: {
+        Row: {
+          teacher_id: string
+          teacher_name: string
+          teacher_email: string
+          teacher_type: 'LT' | 'IT' | 'KCFS' | null
+          assigned_grade: number | null
+          assigned_track: 'local' | 'international' | null
+          courses_taught: number | null
+          classes_taught: number | null
+          total_students_taught: number | null
+          overall_class_average: number | null
+          overall_median: number | null
+          exams_conducted: number | null
+          assessments_completed: number | null
+          students_above_80_percent: number | null
+          students_below_60_percent: number | null
+          class_consistency: number | null
+          assessments_per_student: number | null
+          last_grade_entry: string | null
+          at_risk_students: number | null
+          subject_specialization: string | null
+        }
+      }
     }
     Functions: {
       get_table_names: {

@@ -238,6 +238,7 @@ export interface PerformanceDistribution {
   ranges: Array<{
     min: number
     max: number
+    range: string        // Format: "90-100", "80-89", etc.
     count: number
     percentage: number
     label: string
