@@ -222,15 +222,18 @@ ON CONFLICT (student_id, course_id) DO NOTHING;
 UPDATE scores
 SET course_id = (
     SELECT c.id
-    FROM exams e
-    INNER JOIN courses c ON c.class_id = e.class_id
-    WHERE e.id = scores.exam_id
+    FROM courses c
+    WHERE c.class_id = (
+        SELECT class_id
+        FROM exams
+        WHERE id = scores.exam_id
+    )
     LIMIT 1  -- Take first matching course (may need manual refinement)
 )
 WHERE course_id IS NULL
   AND EXISTS (
-      SELECT 1 FROM exams e
-      WHERE e.id = scores.exam_id
+      SELECT 1 FROM exams
+      WHERE id = scores.exam_id
   );
 
 -- ========================================
