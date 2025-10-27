@@ -264,23 +264,23 @@ SELECT
   c.academic_year,
 
   -- Assessment counts by category
-  COUNT(CASE WHEN sc.assessment_code LIKE 'FA%' AND sc.score > 0 THEN 1 END) as fa_count,
-  COUNT(CASE WHEN sc.assessment_code LIKE 'SA%' AND sc.score > 0 THEN 1 END) as sa_count,
+  COUNT(CASE WHEN sc.assessment_code IN ('FA1', 'FA2', 'FA3', 'FA4', 'FA5', 'FA6', 'FA7', 'FA8') AND sc.score > 0 THEN 1 END) as fa_count,
+  COUNT(CASE WHEN sc.assessment_code IN ('SA1', 'SA2', 'SA3', 'SA4') AND sc.score > 0 THEN 1 END) as sa_count,
   COUNT(CASE WHEN sc.assessment_code = 'FINAL' AND sc.score > 0 THEN 1 END) as final_count,
 
   -- Calculated averages (following /lib/grade logic)
   ROUND(
       CASE
-          WHEN COUNT(CASE WHEN sc.assessment_code LIKE 'FA%' AND sc.score > 0 THEN 1 END) > 0
-          THEN AVG(CASE WHEN sc.assessment_code LIKE 'FA%' AND sc.score > 0 THEN sc.score END)::numeric
+          WHEN COUNT(CASE WHEN sc.assessment_code IN ('FA1', 'FA2', 'FA3', 'FA4', 'FA5', 'FA6', 'FA7', 'FA8') AND sc.score > 0 THEN 1 END) > 0
+          THEN AVG(CASE WHEN sc.assessment_code IN ('FA1', 'FA2', 'FA3', 'FA4', 'FA5', 'FA6', 'FA7', 'FA8') AND sc.score > 0 THEN sc.score END)::numeric
           ELSE NULL
       END, 2
   ) as formative_average,
 
   ROUND(
       CASE
-          WHEN COUNT(CASE WHEN sc.assessment_code LIKE 'SA%' AND sc.score > 0 THEN 1 END) > 0
-          THEN AVG(CASE WHEN sc.assessment_code LIKE 'SA%' AND sc.score > 0 THEN sc.score END)::numeric
+          WHEN COUNT(CASE WHEN sc.assessment_code IN ('SA1', 'SA2', 'SA3', 'SA4') AND sc.score > 0 THEN 1 END) > 0
+          THEN AVG(CASE WHEN sc.assessment_code IN ('SA1', 'SA2', 'SA3', 'SA4') AND sc.score > 0 THEN sc.score END)::numeric
           ELSE NULL
       END, 2
   ) as summative_average,
@@ -291,13 +291,13 @@ SELECT
   -- Semester grade calculation: (F×0.15 + S×0.2 + Final×0.1) ÷ 0.45
   ROUND(
       CASE
-          WHEN AVG(CASE WHEN sc.assessment_code LIKE 'FA%' AND sc.score > 0 THEN sc.score END) IS NOT NULL
-              AND AVG(CASE WHEN sc.assessment_code LIKE 'SA%' AND sc.score > 0 THEN sc.score END) IS NOT NULL
+          WHEN AVG(CASE WHEN sc.assessment_code IN ('FA1', 'FA2', 'FA3', 'FA4', 'FA5', 'FA6', 'FA7', 'FA8') AND sc.score > 0 THEN sc.score END) IS NOT NULL
+              AND AVG(CASE WHEN sc.assessment_code IN ('SA1', 'SA2', 'SA3', 'SA4') AND sc.score > 0 THEN sc.score END) IS NOT NULL
               AND MAX(CASE WHEN sc.assessment_code = 'FINAL' THEN sc.score END) IS NOT NULL
               AND MAX(CASE WHEN sc.assessment_code = 'FINAL' THEN sc.score END) > 0
           THEN (
-              AVG(CASE WHEN sc.assessment_code LIKE 'FA%' AND sc.score > 0 THEN sc.score END)::numeric * 0.15 +
-              AVG(CASE WHEN sc.assessment_code LIKE 'SA%' AND sc.score > 0 THEN sc.score END)::numeric * 0.20 +
+              AVG(CASE WHEN sc.assessment_code IN ('FA1', 'FA2', 'FA3', 'FA4', 'FA5', 'FA6', 'FA7', 'FA8') AND sc.score > 0 THEN sc.score END)::numeric * 0.15 +
+              AVG(CASE WHEN sc.assessment_code IN ('SA1', 'SA2', 'SA3', 'SA4') AND sc.score > 0 THEN sc.score END)::numeric * 0.20 +
               MAX(CASE WHEN sc.assessment_code = 'FINAL' THEN sc.score END)::numeric * 0.10
           ) / 0.45
           ELSE NULL
@@ -306,9 +306,9 @@ SELECT
 
   -- Performance indicators
   CASE
-      WHEN AVG(CASE WHEN sc.assessment_code LIKE 'FA%' AND sc.score > 0 THEN sc.score END) < 60 THEN true
-      WHEN AVG(CASE WHEN sc.assessment_code LIKE 'SA%' AND sc.score > 0 THEN sc.score END) < 60 THEN true
-      WHEN COUNT(CASE WHEN sc.assessment_code LIKE 'FA%' AND sc.score > 0 THEN 1 END) < 3 THEN true
+      WHEN AVG(CASE WHEN sc.assessment_code IN ('FA1', 'FA2', 'FA3', 'FA4', 'FA5', 'FA6', 'FA7', 'FA8') AND sc.score > 0 THEN sc.score END) < 60 THEN true
+      WHEN AVG(CASE WHEN sc.assessment_code IN ('SA1', 'SA2', 'SA3', 'SA4') AND sc.score > 0 THEN sc.score END) < 60 THEN true
+      WHEN COUNT(CASE WHEN sc.assessment_code IN ('FA1', 'FA2', 'FA3', 'FA4', 'FA5', 'FA6', 'FA7', 'FA8') AND sc.score > 0 THEN 1 END) < 3 THEN true
       ELSE false
   END as at_risk,
 
@@ -376,10 +376,10 @@ SELECT
 
   -- Assessment type averages
   ROUND(
-      AVG(CASE WHEN sc.assessment_code LIKE 'FA%' AND sc.score > 0 THEN sc.score END)::numeric, 2
+      AVG(CASE WHEN sc.assessment_code IN ('FA1', 'FA2', 'FA3', 'FA4', 'FA5', 'FA6', 'FA7', 'FA8') AND sc.score > 0 THEN sc.score END)::numeric, 2
   ) as formative_class_avg,
   ROUND(
-      AVG(CASE WHEN sc.assessment_code LIKE 'SA%' AND sc.score > 0 THEN sc.score END)::numeric, 2
+      AVG(CASE WHEN sc.assessment_code IN ('SA1', 'SA2', 'SA3', 'SA4') AND sc.score > 0 THEN sc.score END)::numeric, 2
   ) as summative_class_avg,
   ROUND(
       AVG(CASE WHEN sc.assessment_code = 'FINAL' AND sc.score > 0 THEN sc.score END)::numeric, 2
