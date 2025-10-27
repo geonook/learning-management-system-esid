@@ -115,19 +115,32 @@ This file provides essential guidance to Claude Code (claude.ai/code) when worki
 - **工作流程支援**: 課程建立（teacher_id = NULL）→ 教師指派（更新 teacher_id）
 - **影響範圍**: 252 筆課程記錄（84 × 3）
 
-#### Migration 014: Track 欄位型別修正 (2025-10-27) ✅
-- **變更內容**: 將 `users.track` 和 `students.track` 從 `track_type` ENUM 改為 `course_type` ENUM
-- **原因**: Head Teacher 需要儲存課程類型職責（LT/IT/KCFS），而非 track（local/international）
+#### Migration 014: Track 欄位型別修正 + Analytics 視圖重建 (2025-10-27) ✅
+- **變更內容**:
+  - 將 `users.track` 和 `students.track` 從 `track_type` ENUM 改為 `course_type` ENUM
+  - 重建 3 個 Analytics 資料庫視圖（因視圖依賴問題）
+- **原因**:
+  - Head Teacher 需要儲存課程類型職責（LT/IT/KCFS），而非 track（local/international）
+  - PostgreSQL 不允許修改被視圖引用的欄位型別
 - **影響範圍**:
   - `users.track`: `track_type` → `course_type` (nullable)
   - `students.track`: `track_type` → `course_type` (nullable, 設為 NULL)
   - `classes.track`: 保持為 `track_type` (nullable)
+  - **Analytics 視圖**: `student_grade_aggregates`, `class_statistics`, `teacher_performance`（刪除並重建）
+- **技術挑戰與解決**:
+  - **問題 1**: RLS 政策依賴 → 解決：Drop-Recreate Pattern
+  - **問題 2**: Analytics 視圖依賴 → 解決：Part 0A 刪除視圖，Part 6 重建視圖
+  - 採用完整的 Drop-Modify-Recreate 流程
 - **設計理由**:
   - `users.track` 儲存 Head Teacher 的課程類型職責（LT/IT/KCFS）
   - `students.track` 已棄用（改用 `students.level` 欄位）
   - `classes.track` 保持不變（歷史相容性）
-- **依賴關係**: Migration 012 的 RLS 政策依賴此型別變更
+- **依賴關係**:
+  - Migration 012 的 RLS 政策依賴此型別變更
+  - Analytics 視圖依賴 `track` 欄位型別
 - **執行順序**: **必須先於** Migration 012 執行
+- **檔案大小**: ~550 lines（包含完整視圖定義）
+- **相關文件**: `docs/testing/MIGRATION_014_VIEW_DEPENDENCY_FIX.md`
 
 ### 📊 真實資料部署狀態
 
@@ -275,9 +288,77 @@ UI Component → API Layer → Analytics Engine → Supabase (with RLS)
 - **測試帳號**: 6種角色完整覆蓋 (admin/head/teacher)
 - **開發環境**: localhost:3000 + Claude Code CLI 就緒
 
-## ⚠️ 已知問題與解決方案 (2025-10-16)
+## ⚠️ 已知問題與解決方案 (最後更新: 2025-10-27)
 
-### 🔥 Claude Code 環境變數快取問題
+### 🗄️ Migration 014: Analytics 視圖依賴問題 (2025-10-27) ✅ **已解決**
+
+**問題描述**：
+- 執行 Migration 014 時遇到錯誤：`cannot alter type of a column used by a view or rule`
+- 3 個 Analytics 資料庫視圖依賴 `track` 欄位：
+  - `student_grade_aggregates` → 依賴 `students.track`
+  - `class_statistics` → 依賴 `classes.track`
+  - `teacher_performance` → 依賴 `users.track`
+- PostgreSQL 不允許修改被視圖引用的欄位型別
+
+**症狀識別**：
+```
+ERROR:  0A000: cannot alter type of a column used by a view or rule
+DETAIL:  rule _RETURN on view student_grade_aggregates depends on column "track"
+```
+
+**根本原因**：
+- 視圖儲存的是查詢定義，依賴於基礎表的欄位型別
+- ALTER TYPE 操作會被視圖依賴阻止
+- 這是 PostgreSQL 的設計限制，為了保護資料完整性
+
+**解決方案**：Drop-Recreate Pattern
+```sql
+-- Part 0A: 刪除依賴的視圖
+DROP VIEW IF EXISTS student_grade_aggregates CASCADE;
+DROP VIEW IF EXISTS class_statistics CASCADE;
+DROP VIEW IF EXISTS teacher_performance CASCADE;
+
+-- Part 1-5: 修改欄位型別 + 重建 RLS 政策（原有邏輯）
+
+-- Part 6: 重建 Analytics 視圖（新增）
+CREATE OR REPLACE VIEW student_grade_aggregates AS ...
+CREATE OR REPLACE VIEW class_statistics AS ...
+CREATE OR REPLACE VIEW teacher_performance AS ...
+```
+
+**實施結果**：
+- ✅ Migration 014 檔案從 276 lines 增加到 ~550 lines
+- ✅ 完整的視圖定義包含在 migration 中，確保冪等性
+- ✅ Rollback 指令也更新以處理視圖還原
+
+**驗證方式**：
+```sql
+-- 檢查視圖是否存在
+SELECT COUNT(*) FROM information_schema.views
+WHERE table_schema = 'public'
+AND table_name IN ('student_grade_aggregates', 'class_statistics', 'teacher_performance');
+-- 預期: 3
+
+-- 測試視圖查詢
+SELECT COUNT(*) FROM student_grade_aggregates;
+SELECT COUNT(*) FROM class_statistics;
+SELECT COUNT(*) FROM teacher_performance;
+```
+
+**相關文件**：
+- Migration 檔案: `db/migrations/014_fix_track_column_type.sql`
+- 詳細說明: `docs/testing/MIGRATION_014_VIEW_DEPENDENCY_FIX.md`
+- 驗證腳本: `scripts/verify-migrations-014-012-013.sql`
+
+**學習要點**：
+- PostgreSQL 視圖與型別依賴的關係
+- Drop-Modify-Recreate 是處理依賴問題的標準模式
+- CASCADE 選項可自動處理連鎖依賴
+- 與 RLS 政策依賴問題的處理方式相同
+
+---
+
+### 🔥 Claude Code 環境變數快取問題 (2025-10-16) ✅ **已解決**
 
 **問題描述**：
 - Claude Code 會將 `.env.local` 內容儲存在會話歷史檔案中 (`~/.claude/projects/.../*.jsonl`)

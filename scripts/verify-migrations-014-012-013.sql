@@ -76,6 +76,52 @@ WHERE schemaname = 'public'
   AND tablename = 'courses'
   AND policyname = 'head_teacher_access_courses';
 
+-- 1.6: Check Analytics Views existence
+SELECT
+  '✅ Analytics Views recreated' as check_name,
+  COUNT(*) as views_count,
+  CASE
+    WHEN COUNT(*) = 3 THEN '✅ ALL 3 VIEWS EXIST'
+    WHEN COUNT(*) > 0 THEN '⚠️ PARTIAL (' || COUNT(*) || ' views found)'
+    ELSE '❌ NO VIEWS FOUND'
+  END as status
+FROM information_schema.views
+WHERE table_schema = 'public'
+  AND table_name IN ('student_grade_aggregates', 'class_statistics', 'teacher_performance');
+
+-- 1.7: List Analytics Views details
+SELECT
+  '📊 Analytics View details' as info,
+  table_name,
+  CASE
+    WHEN table_name = 'student_grade_aggregates' THEN '✅ Student performance analytics'
+    WHEN table_name = 'class_statistics' THEN '✅ Class-level statistics'
+    WHEN table_name = 'teacher_performance' THEN '✅ Teacher effectiveness metrics'
+  END as description
+FROM information_schema.views
+WHERE table_schema = 'public'
+  AND table_name IN ('student_grade_aggregates', 'class_statistics', 'teacher_performance')
+ORDER BY table_name;
+
+-- 1.8: Verify Analytics Views can be queried (should not error)
+SELECT
+  '✅ student_grade_aggregates query test' as check_name,
+  COUNT(*) as row_count,
+  '✅ VIEW WORKS' as status
+FROM student_grade_aggregates;
+
+SELECT
+  '✅ class_statistics query test' as check_name,
+  COUNT(*) as row_count,
+  '✅ VIEW WORKS' as status
+FROM class_statistics;
+
+SELECT
+  '✅ teacher_performance query test' as check_name,
+  COUNT(*) as row_count,
+  '✅ VIEW WORKS' as status
+FROM teacher_performance;
+
 -- ================================================================
 -- STEP 2: Verify Migration 012 (Missing Architecture)
 -- ================================================================
@@ -230,10 +276,15 @@ SELECT
       SELECT udt_name FROM information_schema.columns
       WHERE table_name = 'students' AND column_name = 'track'
     ) = 'course_type'
+    AND (
+      SELECT COUNT(*) FROM information_schema.views
+      WHERE table_schema = 'public'
+      AND table_name IN ('student_grade_aggregates', 'class_statistics', 'teacher_performance')
+    ) = 3
     THEN '✅ PASSED'
     ELSE '❌ FAILED'
   END as status,
-  'Track column type fix' as description
+  'Track column type fix + Analytics Views' as description
 
 UNION ALL
 
@@ -271,10 +322,16 @@ SELECT
   'Overall Phase 1',
   CASE
     WHEN (
-      -- Check Migration 014
+      -- Check Migration 014 (track types)
       SELECT udt_name FROM information_schema.columns
       WHERE table_name = 'users' AND column_name = 'track'
     ) = 'course_type'
+    AND (
+      -- Check Migration 014 (Analytics Views)
+      SELECT COUNT(*) FROM information_schema.views
+      WHERE table_schema = 'public'
+      AND table_name IN ('student_grade_aggregates', 'class_statistics', 'teacher_performance')
+    ) = 3
     AND (
       -- Check Migration 012
       EXISTS (SELECT 1 FROM student_courses LIMIT 1)
@@ -339,6 +396,11 @@ SELECT
       SELECT udt_name FROM information_schema.columns
       WHERE table_name = 'users' AND column_name = 'track'
     ) = 'course_type'
+    AND (
+      SELECT COUNT(*) FROM information_schema.views
+      WHERE table_schema = 'public'
+      AND table_name IN ('student_grade_aggregates', 'class_statistics', 'teacher_performance')
+    ) = 3
     AND EXISTS (SELECT 1 FROM student_courses LIMIT 1)
     AND NOT EXISTS (
       SELECT 1 FROM pg_policies
@@ -349,7 +411,12 @@ SELECT
       SELECT udt_name FROM information_schema.columns
       WHERE table_name = 'users' AND column_name = 'track'
     ) != 'course_type'
-    THEN '❌ Run Migration 014 first'
+    OR (
+      SELECT COUNT(*) FROM information_schema.views
+      WHERE table_schema = 'public'
+      AND table_name IN ('student_grade_aggregates', 'class_statistics', 'teacher_performance')
+    ) != 3
+    THEN '❌ Run Migration 014 first (track types + Analytics Views)'
     WHEN NOT EXISTS (SELECT 1 FROM student_courses LIMIT 1)
     THEN '❌ Run Migration 012 next'
     WHEN EXISTS (
