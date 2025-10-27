@@ -168,7 +168,7 @@ BEGIN
                     WHERE u.id = auth.uid()
                     AND u.role = 'head'
                     AND u.grade = cls.grade
-                    AND u.track = c.course_type::text  -- Head's track matches course type
+                    AND u.track = c.course_type  -- ✅ Fixed: Both are course_type ENUM (after Migration 014)
                 )
             );
 

@@ -51,10 +51,11 @@ This file provides essential guidance to Claude Code (claude.ai/code) when worki
   - LT English Language Arts (ELA) - 本地教師
   - IT English Language Arts (ELA) - 國際教師
   - KCFS - 康橋未來技能課程（獨立課程）
-- **Track 欄位語意**：
-  - `classes.track`: **永遠為 NULL**（班級不屬於任何單一 track）
-  - `users.track`: 儲存 Head Teacher 的課程類型職責（LT/IT/KCFS）
-  - `courses.course_type`: 儲存實際課程類型（LT/IT/KCFS）
+- **Track 欄位語意**（✅ Migration 014 已實施）：
+  - `classes.track`: **永遠為 NULL**（班級不屬於任何單一 track，型別為 `track_type` ENUM）
+  - `users.track`: 儲存 Head Teacher 的課程類型職責（**LT/IT/KCFS**，型別為 `course_type` ENUM）
+  - `students.track`: **已棄用**（設為 NULL，改用 `students.level` 欄位，型別為 `course_type` ENUM）
+  - `courses.course_type`: 儲存實際課程類型（LT/IT/KCFS，型別為 `course_type` ENUM）
 - **課程-教師關聯**：透過 `courses` 表實現，支援一個班級有三位不同類型的教師
 
 ### 小學年段系統（G1-G6）
@@ -113,6 +114,20 @@ This file provides essential guidance to Claude Code (claude.ai/code) when worki
 - **變更內容**: `courses.teacher_id` 允許 NULL 值
 - **工作流程支援**: 課程建立（teacher_id = NULL）→ 教師指派（更新 teacher_id）
 - **影響範圍**: 252 筆課程記錄（84 × 3）
+
+#### Migration 014: Track 欄位型別修正 (2025-10-27) ✅
+- **變更內容**: 將 `users.track` 和 `students.track` 從 `track_type` ENUM 改為 `course_type` ENUM
+- **原因**: Head Teacher 需要儲存課程類型職責（LT/IT/KCFS），而非 track（local/international）
+- **影響範圍**:
+  - `users.track`: `track_type` → `course_type` (nullable)
+  - `students.track`: `track_type` → `course_type` (nullable, 設為 NULL)
+  - `classes.track`: 保持為 `track_type` (nullable)
+- **設計理由**:
+  - `users.track` 儲存 Head Teacher 的課程類型職責（LT/IT/KCFS）
+  - `students.track` 已棄用（改用 `students.level` 欄位）
+  - `classes.track` 保持不變（歷史相容性）
+- **依賴關係**: Migration 012 的 RLS 政策依賴此型別變更
+- **執行順序**: **必須先於** Migration 012 執行
 
 ### 📊 真實資料部署狀態
 

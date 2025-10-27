@@ -18,7 +18,7 @@ export type StudentWithClass = Student & {
     id: string
     name: string
     grade: number
-    track: 'local' | 'international'
+    track: 'LT' | 'IT' | 'KCFS' | null  // ✅ Updated: classes.track is now course_type ENUM (nullable)
     academic_year: string
   }
 }
@@ -29,7 +29,7 @@ export type StudentWithCourses = Student & {
     id: string
     name: string
     grade: number
-    track: 'local' | 'international'
+    track: 'LT' | 'IT' | 'KCFS' | null  // ✅ Updated: classes.track is now course_type ENUM (nullable)
     academic_year: string
     courses?: Array<{
       id: string
