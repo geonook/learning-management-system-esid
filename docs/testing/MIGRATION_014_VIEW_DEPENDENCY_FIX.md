@@ -1,8 +1,8 @@
 # Migration 014 視圖依賴問題修復說明
 
 > **日期**: 2025-10-27
-> **問題**: Analytics 視圖依賴 track 欄位，阻止型別變更
-> **解決方案**: Drop-Recreate Pattern
+> **問題**: Analytics 視圖依賴 track 欄位 + scores.course_id 循環依賴
+> **解決方案**: Migration 014 刪除視圖，Migration 012 重建視圖
 > **狀態**: ✅ 已修復
 
 ---
