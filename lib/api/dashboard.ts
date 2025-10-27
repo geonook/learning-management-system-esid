@@ -465,7 +465,7 @@ export async function getUpcomingDeadlines(
       const today = new Date()
       const diffTime = examDate.getTime() - today.getTime()
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-      
+
       let dueText = ''
       if (diffDays === 0) {
         dueText = 'Today'
@@ -475,9 +475,11 @@ export async function getUpcomingDeadlines(
         dueText = `${diffDays} days`
       }
 
+      const classData = exam.classes as unknown as { name: string; grade: number; track: string | null; is_active: boolean }
+
       return {
         id: exam.id,
-        title: `${exam.name} (${exam.classes?.name})`,
+        title: `${exam.name} (${classData.name})`,
         due_at: dueText
       }
     })
@@ -522,10 +524,12 @@ export async function getRecentAlerts(
       .limit(5)
 
     for (const exam of recentExams || []) {
+      const classData = exam.classes as unknown as { id: string; name: string; grade: number; track: string | null }
+
       const { count: totalStudents } = await supabase
         .from('students')
         .select('*', { count: 'exact' })
-        .eq('class_id', exam.classes.id)
+        .eq('class_id', classData.id)
         .eq('is_active', true)
 
       const { count: submittedScores } = await supabase
@@ -535,11 +539,11 @@ export async function getRecentAlerts(
 
       if (totalStudents && submittedScores !== null) {
         const completionRate = (submittedScores / totalStudents) * 100
-        
+
         if (completionRate < 70) {
           alerts.push({
             id: `alert-${exam.id}`,
-            message: `Low completion rate (${Math.round(completionRate)}%) for ${exam.name} in ${exam.classes.name}`,
+            message: `Low completion rate (${Math.round(completionRate)}%) for ${exam.name} in ${classData.name}`,
             when: '1 day ago'
           })
         }
@@ -596,7 +600,7 @@ export interface OverdueTableRow {
   examName: string
   grade: number
   className: string
-  track: 'local' | 'international'
+  track: 'local' | 'international' | null
   coverage: number
   missing: number
   dueIn: string
@@ -657,11 +661,13 @@ export async function getOverdueTable(): Promise<OverdueTableRow[]> {
     const overdueData: OverdueTableRow[] = []
 
     for (const exam of exams || []) {
+      const classData = exam.classes as unknown as { id: string; name: string; grade: number; track: string | null }
+
       // Get total students in class
       const { count: totalStudents } = await supabase
         .from('students')
         .select('*', { count: 'exact' })
-        .eq('class_id', exam.classes.id)
+        .eq('class_id', classData.id)
         .eq('is_active', true)
 
       // Get students with scores for this exam
@@ -673,20 +679,20 @@ export async function getOverdueTable(): Promise<OverdueTableRow[]> {
       const coverage = totalStudents && totalStudents > 0
         ? Math.round((studentsWithScores || 0) / totalStudents * 100)
         : 0
-      
+
       const missing = (totalStudents || 0) - (studentsWithScores || 0)
 
       // Calculate days overdue
       const examDate = new Date(exam.exam_date)
       const diffTime = Date.now() - examDate.getTime()
       const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-      
+
       overdueData.push({
         examId: exam.id,
         examName: exam.name,
-        grade: exam.classes.grade,
-        className: exam.classes.name,
-        track: exam.classes.track,
+        grade: classData.grade,
+        className: classData.name,
+        track: classData.track as 'local' | 'international' | null,
         coverage,
         missing,
         dueIn: `${diffDays} days ago`,
@@ -1005,7 +1011,8 @@ export async function getGradeClassSummary(
       let kcfsTeacher = null
 
       for (const course of courses || []) {
-        const teacherName = course.users?.full_name || 'Unassigned'
+        const userData = course.users as unknown as { full_name: string } | null
+        const teacherName = userData?.full_name || 'Unassigned'
         switch (course.course_type) {
           case 'LT':
             ltTeacher = teacherName

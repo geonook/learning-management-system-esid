@@ -29,7 +29,7 @@ export interface Notification {
   targetRole?: 'admin' | 'head' | 'teacher' | 'student'
   targetUserId?: string
   targetGrade?: number
-  targetTrack?: 'local' | 'international'
+  targetTrack?: 'local' | 'international' | null
   isRead: boolean
   isActive: boolean
   createdAt: string
@@ -83,11 +83,13 @@ export async function generateSystemNotifications(): Promise<Notification[]> {
       .limit(20)
 
     for (const exam of overdueExams || []) {
+      const classData = exam.classes as unknown as { id: string; name: string; grade: number; track: string | null }
+
       // Check completion rate
       const { count: totalStudents } = await supabase
         .from('students')
         .select('*', { count: 'exact' })
-        .eq('class_id', exam.classes.id)
+        .eq('class_id', classData.id)
         .eq('is_active', true)
 
       const { count: submittedScores } = await supabase
@@ -95,29 +97,29 @@ export async function generateSystemNotifications(): Promise<Notification[]> {
         .select('*', { count: 'exact' })
         .eq('exam_id', exam.id)
 
-      const completionRate = totalStudents && totalStudents > 0 
-        ? (submittedScores || 0) / totalStudents * 100 
+      const completionRate = totalStudents && totalStudents > 0
+        ? (submittedScores || 0) / totalStudents * 100
         : 0
 
       if (completionRate < 80) { // Threshold for notification
         const daysOverdue = Math.floor((now.getTime() - new Date(exam.exam_date).getTime()) / (1000 * 60 * 60 * 24))
-        
+
         notifications.push({
           id: `overdue-${exam.id}`,
           type: 'exam_overdue',
           priority: daysOverdue > 7 ? 'urgent' : daysOverdue > 3 ? 'high' : 'medium',
           title: 'Overdue Exam Submission',
-          message: `${exam.name} in ${exam.classes.name} is ${daysOverdue} days overdue with ${Math.round(completionRate)}% completion`,
+          message: `${exam.name} in ${classData.name} is ${daysOverdue} days overdue with ${Math.round(completionRate)}% completion`,
           metadata: {
             examId: exam.id,
             examName: exam.name,
-            className: exam.classes.name,
+            className: classData.name,
             completionRate,
             daysOverdue
           },
           targetRole: 'admin',
-          targetGrade: exam.classes.grade,
-          targetTrack: exam.classes.track,
+          targetGrade: classData.grade,
+          targetTrack: classData.track as 'local' | 'international' | null,
           isRead: false,
           isActive: true,
           createdAt: now.toISOString()
@@ -146,10 +148,12 @@ export async function generateSystemNotifications(): Promise<Notification[]> {
       .lte('exam_date', today)
 
     for (const exam of recentExams || []) {
+      const classData = exam.classes as unknown as { id: string; name: string; grade: number; track: string | null }
+
       const { count: totalStudents } = await supabase
         .from('students')
         .select('*', { count: 'exact' })
-        .eq('class_id', exam.classes.id)
+        .eq('class_id', classData.id)
         .eq('is_active', true)
 
       const { count: submittedScores } = await supabase
@@ -157,8 +161,8 @@ export async function generateSystemNotifications(): Promise<Notification[]> {
         .select('*', { count: 'exact' })
         .eq('exam_id', exam.id)
 
-      const completionRate = totalStudents && totalStudents > 0 
-        ? (submittedScores || 0) / totalStudents * 100 
+      const completionRate = totalStudents && totalStudents > 0
+        ? (submittedScores || 0) / totalStudents * 100
         : 0
 
       if (completionRate < 70) { // Lower threshold for recent exams
@@ -167,16 +171,16 @@ export async function generateSystemNotifications(): Promise<Notification[]> {
           type: 'low_completion',
           priority: completionRate < 50 ? 'high' : 'medium',
           title: 'Low Score Submission Rate',
-          message: `${exam.name} in ${exam.classes.name} has only ${Math.round(completionRate)}% score submission`,
+          message: `${exam.name} in ${classData.name} has only ${Math.round(completionRate)}% score submission`,
           metadata: {
             examId: exam.id,
             examName: exam.name,
-            className: exam.classes.name,
+            className: classData.name,
             completionRate
           },
           targetRole: 'head',
-          targetGrade: exam.classes.grade,
-          targetTrack: exam.classes.track,
+          targetGrade: classData.grade,
+          targetTrack: classData.track as 'local' | 'international' | null,
           isRead: false,
           isActive: true,
           createdAt: now.toISOString()
@@ -209,19 +213,27 @@ export async function generateSystemNotifications(): Promise<Notification[]> {
       .lte('exam_date', threeDaysFromNow)
 
     for (const exam of upcomingExams || []) {
+      const classData = exam.classes as unknown as {
+        id: string
+        name: string
+        grade: number
+        track: string | null
+        courses: Array<{ teacher_id: string | null; course_type: string }>
+      }
+
       // Notify teachers about upcoming deadlines
-      for (const course of exam.classes.courses || []) {
+      for (const course of classData.courses || []) {
         notifications.push({
           id: `deadline-${exam.id}-${course.teacher_id}`,
           type: 'assignment_due',
           priority: 'medium',
           title: 'Upcoming Assessment Deadline',
-          message: `${exam.name} is due on ${exam.exam_date} for ${exam.classes.name}`,
+          message: `${exam.name} is due on ${exam.exam_date} for ${classData.name}`,
           metadata: {
             examId: exam.id,
             examName: exam.name,
             examDate: exam.exam_date,
-            className: exam.classes.name,
+            className: classData.name,
             courseType: course.course_type
           },
           targetRole: 'teacher',

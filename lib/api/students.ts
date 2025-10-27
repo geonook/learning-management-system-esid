@@ -298,7 +298,9 @@ export async function getStudentStatistics() {
 
   data.forEach(student => {
     stats.byGrade[student.grade] = (stats.byGrade[student.grade] || 0) + 1
-    stats.byTrack[student.track] += 1
+    if (student.track === 'local' || student.track === 'international') {
+      stats.byTrack[student.track as 'local' | 'international'] += 1
+    }
     if (!student.class_id) {
       stats.unassigned += 1
     }

@@ -40,8 +40,8 @@ function calculateStatistics(values: number[]): {
     mean: Math.round(mean * 100) / 100,
     median: Math.round(median * 100) / 100,
     standardDeviation: Math.round(standardDeviation * 100) / 100,
-    min: sorted[0],
-    max: sorted[count - 1],
+    min: sorted[0]!,
+    max: sorted[count - 1]!,
     count
   }
 }

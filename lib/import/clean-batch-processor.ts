@@ -592,7 +592,7 @@ export async function executeScoresImport(
       
       examId = newExam.id
       // Update resolver cache
-      resolver.addExamMapping(score.exam_name, examId)
+      resolver.addExamMapping(score.exam_name, examId!)
     }
     
     return {

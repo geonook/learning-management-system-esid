@@ -209,9 +209,9 @@ export async function getUserStatistics() {
   }
 
   data.forEach(user => {
-    stats.byRole[user.role] += 1
-    if (user.teacher_type) {
-      stats.byTeacherType[user.teacher_type] += 1
+    stats.byRole[user.role as keyof typeof stats.byRole] += 1
+    if (user.teacher_type === 'LT' || user.teacher_type === 'IT' || user.teacher_type === 'KCFS') {
+      stats.byTeacherType[user.teacher_type as 'LT' | 'IT' | 'KCFS'] += 1
     }
   })
 

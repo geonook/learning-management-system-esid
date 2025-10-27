@@ -138,10 +138,10 @@ describe('Analytics Validation Tests - Phase 3A-1', () => {
         .limit(3)
       
       expect(studentsError).toBeNull()
-      
+
       if (students && students.length > 0) {
-        const studentId = students[0].id
-        
+        const studentId = students[0]!.id
+
         // Get aggregated data from view
         const { data: aggregateData, error: aggError } = await supabase
           .from('student_grade_aggregates')
@@ -189,7 +189,7 @@ describe('Analytics Validation Tests - Phase 3A-1', () => {
       expect(error).toBeNull()
       
       if (students && students.length > 0) {
-        const studentId = students[0].id
+        const studentId = students[0]!.id
         const metrics = await analyticsEngine.calculateStudentMetrics(studentId, testFilters)
         
         if (metrics) {
@@ -212,7 +212,7 @@ describe('Analytics Validation Tests - Phase 3A-1', () => {
       expect(error).toBeNull()
       
       if (classes && classes.length > 0) {
-        const classId = classes[0].id
+        const classId = classes[0]!.id
         const metrics = await analyticsEngine.calculateClassMetrics(classId, testFilters)
         
         if (metrics) {

@@ -202,7 +202,9 @@ export async function getClassStatistics(academicYear?: string) {
 
   data.forEach(cls => {
     stats.byGrade[cls.grade] = (stats.byGrade[cls.grade] || 0) + 1
-    stats.byTrack[cls.track] += 1
+    if (cls.track === 'local' || cls.track === 'international') {
+      stats.byTrack[cls.track as 'local' | 'international'] += 1
+    }
   })
 
   return stats

@@ -82,10 +82,11 @@ async function createStudentCourseMap(): Promise<Map<string, string>> {
   const map = new Map<string, string>()
   
   studentCourses?.forEach(sc => {
+    const courseData = sc.courses as unknown as { course_type: string; class_id: string; classes: { name: string } }
     const student_id = sc.student_id
-    const course_type = sc.courses.course_type
+    const course_type = courseData.course_type
     const course_id = sc.course_id
-    
+
     // Create mapping key: student_id:course_type
     const key = `${student_id}:${course_type}`
     map.set(key, course_id)
