@@ -7,7 +7,7 @@
 -- ========================================
 
 -- ========================================
--- Part 1: Change users.track type from track_type to course_type
+-- Part 0: Drop RLS policies that depend on users.track
 -- ========================================
 
 DO $$
@@ -15,6 +15,28 @@ BEGIN
     RAISE NOTICE '========================================';
     RAISE NOTICE 'Migration 014: Fix Track Column Type';
     RAISE NOTICE '========================================';
+    RAISE NOTICE 'Step 0: Dropping RLS policies that depend on users.track...';
+END $$;
+
+-- Drop the head_teacher_access_courses policy (depends on users.track)
+-- This policy uses: u.track::text = courses.course_type::text
+DROP POLICY IF EXISTS "head_teacher_access_courses" ON courses;
+
+-- Drop the Head Teacher policy on student_courses if it exists
+-- This policy might be created by Migration 012
+DROP POLICY IF EXISTS "Heads can see enrollments in their jurisdiction" ON student_courses;
+
+DO $$
+BEGIN
+    RAISE NOTICE '✅ Dependent RLS policies dropped';
+END $$;
+
+-- ========================================
+-- Part 1: Change users.track type from track_type to course_type
+-- ========================================
+
+DO $$
+BEGIN
     RAISE NOTICE 'Step 1: Modifying users.track column type...';
 END $$;
 
@@ -135,7 +157,46 @@ BEGIN
 END $$;
 
 -- ========================================
--- Part 5: Update related ENUM type comments
+-- Part 5: Recreate RLS policies with corrected types
+-- ========================================
+
+DO $$
+BEGIN
+    RAISE NOTICE 'Step 5: Recreating RLS policies with corrected types...';
+END $$;
+
+-- Recreate head_teacher_access_courses policy
+-- Now u.track and courses.course_type are both course_type ENUM
+-- No more type casting needed!
+CREATE POLICY "head_teacher_access_courses"
+ON courses
+FOR ALL
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM users u
+    JOIN classes c ON courses.class_id = c.id
+    WHERE u.id = auth.uid()
+    AND u.role = 'head'
+    AND u.is_active = TRUE
+    AND u.grade = c.grade
+    AND u.track = courses.course_type  -- ✅ Both are course_type ENUM now
+  )
+);
+
+COMMENT ON POLICY "head_teacher_access_courses" ON courses
+IS 'Head Teachers can manage courses in their grade and course_type';
+
+DO $$
+BEGIN
+    RAISE NOTICE '✅ RLS policies recreated with correct types';
+END $$;
+
+-- Note: Migration 012 will recreate the student_courses Head Teacher policy
+-- with the correct type comparison
+
+-- ========================================
+-- Part 6: Update related ENUM type comments
 -- ========================================
 
 COMMENT ON TYPE course_type IS 'Course type: LT (Local Teacher ELA), IT (International Teacher ELA), KCFS (Kang Chiao Future Skills). Also used for Head Teacher course type responsibility.';
@@ -150,16 +211,38 @@ COMMENT ON TYPE track_type IS 'DEPRECATED: Legacy track type (local/internationa
 
 BEGIN;
 
--- 1. Restore users.track to track_type
+-- 1. Drop policies first (to allow type change)
+DROP POLICY IF EXISTS "head_teacher_access_courses" ON courses;
+DROP POLICY IF EXISTS "Heads can see enrollments in their jurisdiction" ON student_courses;
+
+-- 2. Restore users.track to track_type
 ALTER TABLE users
     ALTER COLUMN track TYPE track_type USING NULL;
 
--- 2. Restore students.track to track_type with NOT NULL
+-- 3. Restore students.track to track_type with NOT NULL
 ALTER TABLE students
     ALTER COLUMN track TYPE track_type USING 'local'::track_type,
     ALTER COLUMN track SET NOT NULL;
 
--- 3. Remove comments
+-- 4. Recreate policy with old type casting
+CREATE POLICY "head_teacher_access_courses" ON courses
+FOR ALL TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM users u
+    JOIN classes c ON courses.class_id = c.id
+    WHERE u.id = auth.uid()
+    AND u.role = 'head'
+    AND u.is_active = TRUE
+    AND u.grade = c.grade
+    AND u.track::text = courses.course_type::text
+  )
+);
+
+COMMENT ON POLICY "head_teacher_access_courses" ON courses
+IS 'Head Teachers can manage courses in their grade and track';
+
+-- 5. Remove comments
 COMMENT ON COLUMN users.track IS NULL;
 COMMENT ON COLUMN students.track IS NULL;
 COMMENT ON TYPE course_type IS 'Course type: LT (Local Teacher ELA), IT (International Teacher ELA), KCFS (Kang Chiao Future Skills)';
@@ -177,11 +260,16 @@ BEGIN
     RAISE NOTICE '';
     RAISE NOTICE '🎉 Migration 014 Complete!';
     RAISE NOTICE '';
+    RAISE NOTICE 'What was done:';
+    RAISE NOTICE '  ✅ Dropped dependent RLS policies';
+    RAISE NOTICE '  ✅ Changed users.track: track_type → course_type';
+    RAISE NOTICE '  ✅ Changed students.track: track_type → course_type (NULL)';
+    RAISE NOTICE '  ✅ Recreated RLS policies with correct types';
+    RAISE NOTICE '';
     RAISE NOTICE 'Next Steps:';
     RAISE NOTICE '1. Execute Migration 012 (with fixed RLS policy)';
-    RAISE NOTICE '2. Execute Migration 013';
+    RAISE NOTICE '2. Execute Migration 013 (RLS security)';
     RAISE NOTICE '3. Run: npm run gen:types';
-    RAISE NOTICE '4. Update hardcoded track values in code';
-    RAISE NOTICE '5. Test and verify';
+    RAISE NOTICE '4. Test and verify';
     RAISE NOTICE '';
 END $$;
