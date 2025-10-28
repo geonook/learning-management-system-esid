@@ -1,10 +1,10 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 1.6
-> **Last Updated**: 2025-10-17
+> **Documentation Version**: 1.7
+> **Last Updated**: 2025-10-28
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics
-> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, CSV Import System, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**
+> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, CSV Import System, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**
 
 This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -115,6 +115,10 @@ This file provides essential guidance to Claude Code (claude.ai/code) when worki
 - **工作流程支援**: 課程建立（teacher_id = NULL）→ 教師指派（更新 teacher_id）
 - **影響範圍**: 252 筆課程記錄（84 × 3）
 
+#### Migration 012-013: Student Courses + RLS Security (2025-10-17) ✅
+- **Migration 012**: 建立 `student_courses` 表和相關 RLS policies
+- **Migration 013**: 修復 RLS policies 安全漏洞，移除匿名存取
+
 #### Migration 014: Track 欄位型別修正 + Analytics 視圖重建 (2025-10-27) ✅
 - **變更內容**:
   - 將 `users.track` 和 `students.track` 從 `track_type` ENUM 改為 `course_type` ENUM
@@ -141,6 +145,39 @@ This file provides essential guidance to Claude Code (claude.ai/code) when worki
 - **執行順序**: **必須先於** Migration 012 執行
 - **檔案大小**: ~550 lines（包含完整視圖定義）
 - **相關文件**: `docs/testing/MIGRATION_014_VIEW_DEPENDENCY_FIX.md`
+
+#### Migration 015: RLS Performance Optimization (2025-10-28) ✅ **100% 完成**
+- **目的**: 優化所有 RLS policies 中的 `auth.uid()` 呼叫，解決 44+ 個 `auth_rls_initplan` 效能警告
+- **優化方法**: 將直接呼叫 `auth.uid()` 改為 `(SELECT auth.uid())`，啟用 PostgreSQL InitPlan 快取機制
+- **效能改善**:
+  - 查詢複雜度：O(n) → O(1)
+  - 預期效能提升：50-200%
+  - auth.uid() 呼叫次數：每行重複 → 一次快取
+- **執行成果**:
+  - ✅ 優化了 49 個 policies（100%）
+  - ✅ 涵蓋全部 9 個核心資料表
+  - ✅ Database Linter: auth_rls_initplan 警告從 44+ 降至 **0**
+- **技術發現**:
+  - PostgreSQL 自動將 `(SELECT auth.uid())` 儲存為 `( SELECT auth.uid() AS uid)`
+  - Supabase SQL Editor 不顯示 RAISE NOTICE 訊息，需使用 SELECT 版本工具
+  - Migration 015b 已部分執行（47/49 policies），需診斷後修復剩餘 2 個
+- **執行檔案**:
+  - `015b_optimize_rls_performance_idempotent.sql` - 主要 migration（部分執行）
+  - `015c_optimize_step1_users_policies.sql` - users 表測試版本
+  - `FIX_REMAINING_2_POLICIES.sql` - 最終修復腳本 ✅
+- **診斷工具**:
+  - `DIAGNOSE_POLICY_CONFLICTS_SELECT.sql` - SELECT 版本診斷工具
+  - `SIMPLE_CHECK_FIXED.sql` - 修復版狀態檢查工具
+  - `DEBUG_CHECK_USERS_POLICIES.sql` - Debug 工具
+- **文件**:
+  - `MIGRATION_015_SUCCESS_SUMMARY.md` - 成功完成報告
+  - `MIGRATION_015_FINAL_REPORT.md` - 完整執行報告
+  - `TROUBLESHOOTING_MIGRATION_015.md` - 疑難排解指南
+- **影響範圍**:
+  - 全部 9 個資料表：users, classes, courses, students, student_courses, exams, scores, assessment_codes, assessment_titles
+  - 49 個 RLS policies 全部優化
+  - service_role_bypass: 9 個
+  - authenticated_read: 10 個
 
 ### 📊 真實資料部署狀態
 
