@@ -2,72 +2,122 @@
 -- Policy Conflict Diagnostic Script
 -- Purpose: Diagnose why Migration 015 failed
 -- Date: 2025-10-28
+-- Compatibility: Supabase SQL Editor
 -- ========================================
 
-\echo '========================================';
-\echo 'Migration 015 Conflict Diagnostic';
-\echo '========================================';
-\echo '';
+-- ========================================
+-- Header
+-- ========================================
+
+DO $$
+BEGIN
+    RAISE NOTICE '========================================';
+    RAISE NOTICE 'Migration 015 Conflict Diagnostic';
+    RAISE NOTICE '========================================';
+    RAISE NOTICE '';
+END $$;
 
 -- ========================================
 -- Test 1: Check for Conflicting Policies
 -- ========================================
 
-\echo 'Test 1: Checking for Policies that Conflict with Migration 015';
-\echo '--------------------------------------------------------------';
-\echo '';
+DO $$
+BEGIN
+    RAISE NOTICE 'Test 1: Checking for Policies that Conflict with Migration 015';
+    RAISE NOTICE '--------------------------------------------------------------';
+    RAISE NOTICE '';
+END $$;
 
 -- List all service_role_bypass policies
-SELECT
-    'service_role_bypass policies' as policy_type,
-    tablename,
-    policyname,
-    '❌ CONFLICTS with Migration 015 Part 11' as status
-FROM pg_policies
-WHERE schemaname = 'public'
-  AND policyname = 'service_role_bypass'
-ORDER BY tablename;
+DO $$
+DECLARE
+    policy_record RECORD;
+    found_count INTEGER := 0;
+BEGIN
+    RAISE NOTICE 'Service Role Bypass Policies:';
+    FOR policy_record IN
+        SELECT tablename, policyname
+        FROM pg_policies
+        WHERE schemaname = 'public'
+          AND policyname = 'service_role_bypass'
+        ORDER BY tablename
+    LOOP
+        RAISE NOTICE '  ❌ %.% - CONFLICTS with Migration 015 Part 11', policy_record.tablename, policy_record.policyname;
+        found_count := found_count + 1;
+    END LOOP;
 
-\echo '';
+    IF found_count = 0 THEN
+        RAISE NOTICE '  ✅ No service_role_bypass policies found';
+    END IF;
+    RAISE NOTICE '';
+END $$;
 
 -- List all authenticated_read policies
-SELECT
-    'authenticated_read policies' as policy_type,
-    tablename,
-    policyname,
-    '❌ CONFLICTS with Migration 015 Part 12' as status
-FROM pg_policies
-WHERE schemaname = 'public'
-  AND (policyname LIKE '%authenticated%read%' OR policyname = 'users_own_profile')
-ORDER BY tablename, policyname;
+DO $$
+DECLARE
+    policy_record RECORD;
+    found_count INTEGER := 0;
+BEGIN
+    RAISE NOTICE 'Authenticated Read Policies:';
+    FOR policy_record IN
+        SELECT tablename, policyname
+        FROM pg_policies
+        WHERE schemaname = 'public'
+          AND (policyname LIKE '%authenticated%read%' OR policyname = 'users_own_profile')
+        ORDER BY tablename, policyname
+    LOOP
+        RAISE NOTICE '  ❌ %.% - CONFLICTS with Migration 015 Part 12', policy_record.tablename, policy_record.policyname;
+        found_count := found_count + 1;
+    END LOOP;
 
-\echo '';
+    IF found_count = 0 THEN
+        RAISE NOTICE '  ✅ No authenticated_read policies found';
+    END IF;
+    RAISE NOTICE '';
+END $$;
 
 -- ========================================
 -- Test 2: Count All Existing Policies
 -- ========================================
 
-\echo 'Test 2: Count of All RLS Policies by Table';
-\echo '------------------------------------------';
+DO $$
+BEGIN
+    RAISE NOTICE 'Test 2: Count of All RLS Policies by Table';
+    RAISE NOTICE '------------------------------------------';
+    RAISE NOTICE '';
+END $$;
 
-SELECT
-    tablename,
-    COUNT(*) as policy_count,
-    string_agg(policyname, ', ' ORDER BY policyname) as policy_names
-FROM pg_policies
-WHERE schemaname = 'public'
-  AND tablename IN ('users', 'classes', 'courses', 'students', 'student_courses', 'exams', 'scores', 'assessment_codes', 'assessment_titles')
-GROUP BY tablename
-ORDER BY tablename;
-
-\echo '';
+DO $$
+DECLARE
+    table_record RECORD;
+BEGIN
+    FOR table_record IN
+        SELECT
+            tablename,
+            COUNT(*) as policy_count,
+            string_agg(policyname, ', ' ORDER BY policyname) as policy_names
+        FROM pg_policies
+        WHERE schemaname = 'public'
+          AND tablename IN ('users', 'classes', 'courses', 'students', 'student_courses', 'exams', 'scores', 'assessment_codes', 'assessment_titles')
+        GROUP BY tablename
+        ORDER BY tablename
+    LOOP
+        RAISE NOTICE '%: % policies', table_record.tablename, table_record.policy_count;
+        RAISE NOTICE '  → %', table_record.policy_names;
+    END LOOP;
+    RAISE NOTICE '';
+END $$;
 
 -- ========================================
 -- Test 3: Check Which Part of Migration 015 Was Executed
 -- ========================================
 
-\echo 'Test 3: Analyzing Migration 015 Execution Status';
-\echo '------------------------------------------------';
+DO $$
+BEGIN
+    RAISE NOTICE 'Test 3: Analyzing Migration 015 Execution Status';
+    RAISE NOTICE '------------------------------------------------';
+    RAISE NOTICE '';
+END $$;
 
 DO $$
 DECLARE
@@ -102,7 +152,6 @@ BEGIN
     WHERE schemaname = 'public'
       AND (policyname LIKE '%authenticated%read%' OR policyname = 'users_own_profile');
 
-    RAISE NOTICE '';
     RAISE NOTICE 'Migration 015 Execution Analysis:';
     RAISE NOTICE '  Part 1-10 (Core Policies): % policies found', part1_policies;
     RAISE NOTICE '  Part 11 (service_role_bypass): % policies found', part11_policies;
@@ -129,74 +178,108 @@ BEGIN
         RAISE NOTICE '❌ Status: UNEXPECTED state';
         RAISE NOTICE '   → Manual review required';
     END IF;
+    RAISE NOTICE '';
 END $$;
-
-\echo '';
 
 -- ========================================
 -- Test 4: Check for Non-Optimized Policies
 -- ========================================
 
-\echo 'Test 4: Checking if Existing Policies are Optimized';
-\echo '---------------------------------------------------';
+DO $$
+BEGIN
+    RAISE NOTICE 'Test 4: Checking if Existing Policies are Optimized';
+    RAISE NOTICE '---------------------------------------------------';
+    RAISE NOTICE '';
+END $$;
 
-WITH policy_analysis AS (
-    SELECT
-        tablename,
-        policyname,
-        CASE
-            WHEN qual::text LIKE '%auth.uid()%' AND qual::text NOT LIKE '%(SELECT auth.uid())%' THEN true
-            WHEN with_check::text LIKE '%auth.uid()%' AND with_check::text NOT LIKE '%(SELECT auth.uid())%' THEN true
-            ELSE false
-        END as has_unoptimized_call
-    FROM pg_policies
-    WHERE schemaname = 'public'
-)
-SELECT
-    tablename,
-    COUNT(*) as total_policies,
-    SUM(CASE WHEN has_unoptimized_call THEN 1 ELSE 0 END) as unoptimized_policies,
-    CASE
-        WHEN SUM(CASE WHEN has_unoptimized_call THEN 1 ELSE 0 END) = 0 THEN '✅ All Optimized'
-        WHEN SUM(CASE WHEN has_unoptimized_call THEN 1 ELSE 0 END) = COUNT(*) THEN '❌ None Optimized'
-        ELSE '⚠️  Partially Optimized'
-    END as optimization_status
-FROM policy_analysis
-GROUP BY tablename
-ORDER BY tablename;
-
-\echo '';
+DO $$
+DECLARE
+    table_record RECORD;
+BEGIN
+    FOR table_record IN
+        WITH policy_analysis AS (
+            SELECT
+                tablename,
+                policyname,
+                CASE
+                    WHEN qual::text LIKE '%auth.uid()%' AND qual::text NOT LIKE '%(SELECT auth.uid())%' THEN true
+                    WHEN with_check::text LIKE '%auth.uid()%' AND with_check::text NOT LIKE '%(SELECT auth.uid())%' THEN true
+                    ELSE false
+                END as has_unoptimized_call
+            FROM pg_policies
+            WHERE schemaname = 'public'
+        )
+        SELECT
+            tablename,
+            COUNT(*) as total_policies,
+            SUM(CASE WHEN has_unoptimized_call THEN 1 ELSE 0 END) as unoptimized_policies,
+            CASE
+                WHEN SUM(CASE WHEN has_unoptimized_call THEN 1 ELSE 0 END) = 0 THEN '✅ All Optimized'
+                WHEN SUM(CASE WHEN has_unoptimized_call THEN 1 ELSE 0 END) = COUNT(*) THEN '❌ None Optimized'
+                ELSE '⚠️  Partially Optimized'
+            END as optimization_status
+        FROM policy_analysis
+        GROUP BY tablename
+        ORDER BY tablename
+    LOOP
+        RAISE NOTICE '%: % total, % unoptimized - %',
+            table_record.tablename,
+            table_record.total_policies,
+            table_record.unoptimized_policies,
+            table_record.optimization_status;
+    END LOOP;
+    RAISE NOTICE '';
+END $$;
 
 -- ========================================
 -- Test 5: List All Policies on Affected Tables
 -- ========================================
 
-\echo 'Test 5: Complete Policy List (All 9 Tables)';
-\echo '-------------------------------------------';
+DO $$
+BEGIN
+    RAISE NOTICE 'Test 5: Complete Policy List (All 9 Tables)';
+    RAISE NOTICE '-------------------------------------------';
+    RAISE NOTICE '';
+END $$;
 
-SELECT
-    tablename,
-    policyname,
-    cmd as operation,
-    CASE
-        WHEN policyname = 'service_role_bypass' THEN '🔴 CONFLICTS (Part 11)'
-        WHEN policyname LIKE '%authenticated%read%' OR policyname = 'users_own_profile' THEN '🟡 CONFLICTS (Part 12)'
-        ELSE '🟢 OK'
-    END as conflict_status
-FROM pg_policies
-WHERE schemaname = 'public'
-  AND tablename IN ('users', 'classes', 'courses', 'students', 'student_courses', 'exams', 'scores', 'assessment_codes', 'assessment_titles')
-ORDER BY tablename, policyname;
-
-\echo '';
+DO $$
+DECLARE
+    policy_record RECORD;
+BEGIN
+    FOR policy_record IN
+        SELECT
+            tablename,
+            policyname,
+            cmd as operation,
+            CASE
+                WHEN policyname = 'service_role_bypass' THEN '🔴 CONFLICTS (Part 11)'
+                WHEN policyname LIKE '%authenticated%read%' OR policyname = 'users_own_profile' THEN '🟡 CONFLICTS (Part 12)'
+                ELSE '🟢 OK'
+            END as conflict_status
+        FROM pg_policies
+        WHERE schemaname = 'public'
+          AND tablename IN ('users', 'classes', 'courses', 'students', 'student_courses', 'exams', 'scores', 'assessment_codes', 'assessment_titles')
+        ORDER BY tablename, policyname
+    LOOP
+        RAISE NOTICE '%.%: % - %',
+            policy_record.tablename,
+            policy_record.policyname,
+            policy_record.operation,
+            policy_record.conflict_status;
+    END LOOP;
+    RAISE NOTICE '';
+END $$;
 
 -- ========================================
 -- Summary and Recommendations
 -- ========================================
 
-\echo '========================================';
-\echo 'DIAGNOSTIC SUMMARY & RECOMMENDATIONS';
-\echo '========================================';
+DO $$
+BEGIN
+    RAISE NOTICE '========================================';
+    RAISE NOTICE 'DIAGNOSTIC SUMMARY & RECOMMENDATIONS';
+    RAISE NOTICE '========================================';
+END $$;
 
 DO $$
 DECLARE
@@ -268,6 +351,9 @@ BEGIN
     RAISE NOTICE '========================================';
 END $$;
 
-\echo '';
-\echo 'Diagnostic complete. See recommendations above.';
-\echo '';
+DO $$
+BEGIN
+    RAISE NOTICE '';
+    RAISE NOTICE 'Diagnostic complete. See recommendations above.';
+    RAISE NOTICE '';
+END $$;

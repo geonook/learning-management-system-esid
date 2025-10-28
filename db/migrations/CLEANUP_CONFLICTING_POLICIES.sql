@@ -3,23 +3,25 @@
 -- Purpose: Remove policies that conflict with Migration 015
 -- Date: 2025-10-28
 -- Safety: This script only removes policies that will be recreated
+-- Compatibility: Supabase SQL Editor
 -- ========================================
 
-\echo '========================================';
-\echo 'Cleanup Conflicting Policies';
-\echo '========================================';
-\echo '';
-\echo '⚠️  WARNING: This will remove policies that conflict with Migration 015';
-\echo '   These policies will be recreated when you run Migration 015b';
-\echo '';
-\echo 'Press Ctrl+C within 5 seconds to cancel...';
-\echo '';
+-- ========================================
+-- Header
+-- ========================================
 
--- Add a small delay (PostgreSQL doesn't have SLEEP, but we can simulate with a query)
-SELECT pg_sleep(5);
-
-\echo 'Proceeding with cleanup...';
-\echo '';
+DO $$
+BEGIN
+    RAISE NOTICE '========================================';
+    RAISE NOTICE 'Cleanup Conflicting Policies';
+    RAISE NOTICE '========================================';
+    RAISE NOTICE '';
+    RAISE NOTICE '⚠️  WARNING: This will remove policies that conflict with Migration 015';
+    RAISE NOTICE '   These policies will be recreated when you run Migration 015b';
+    RAISE NOTICE '';
+    RAISE NOTICE 'Starting cleanup in Supabase SQL Editor...';
+    RAISE NOTICE '';
+END $$;
 
 -- ========================================
 -- Part 1: Remove service_role_bypass Policies
@@ -159,24 +161,41 @@ END $$;
 -- Part 4: Display Current Policy Status
 -- ========================================
 
-\echo '';
-\echo 'Current RLS Policy Count by Table:';
-\echo '----------------------------------';
+DO $$
+BEGIN
+    RAISE NOTICE '';
+    RAISE NOTICE 'Current RLS Policy Count by Table:';
+    RAISE NOTICE '----------------------------------';
+END $$;
 
-SELECT
-    tablename,
-    COUNT(*) as policy_count,
-    string_agg(policyname, ', ' ORDER BY policyname) as policies
-FROM pg_policies
-WHERE schemaname = 'public'
-  AND tablename IN ('users', 'classes', 'courses', 'students', 'student_courses', 'exams', 'scores', 'assessment_codes', 'assessment_titles')
-GROUP BY tablename
-ORDER BY tablename;
+DO $$
+DECLARE
+    table_record RECORD;
+BEGIN
+    FOR table_record IN
+        SELECT
+            tablename,
+            COUNT(*) as policy_count,
+            string_agg(policyname, ', ' ORDER BY policyname) as policies
+        FROM pg_policies
+        WHERE schemaname = 'public'
+          AND tablename IN ('users', 'classes', 'courses', 'students', 'student_courses', 'exams', 'scores', 'assessment_codes', 'assessment_titles')
+        GROUP BY tablename
+        ORDER BY tablename
+    LOOP
+        RAISE NOTICE '%: % policies', table_record.tablename, table_record.policy_count;
+        RAISE NOTICE '  → %', table_record.policies;
+    END LOOP;
+    RAISE NOTICE '';
+END $$;
 
-\echo '';
-\echo '========================================';
-\echo 'Cleanup Complete';
-\echo '========================================';
-\echo '';
-\echo 'You can now safely run Migration 015b';
-\echo '';
+DO $$
+BEGIN
+    RAISE NOTICE '';
+    RAISE NOTICE '========================================';
+    RAISE NOTICE 'Cleanup Complete';
+    RAISE NOTICE '========================================';
+    RAISE NOTICE '';
+    RAISE NOTICE 'You can now safely run Migration 015b';
+    RAISE NOTICE '';
+END $$;
