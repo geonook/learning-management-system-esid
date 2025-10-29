@@ -1,0 +1,15 @@
+class_name,grade,level,academic_year,campus
+G1 Explorers,1,G1E1,2025-2026,Linkou
+G1 Discoverers,1,G1E1,2025-2026,Linkou
+G1 Adventurers,1,G1E2,2025-2026,Linkou
+G1 Pioneers,1,G1E3,2025-2026,Linkou
+G2 Navigators,2,G2E1,2025-2026,Linkou
+G2 Voyagers,2,G2E2,2025-2026,Linkou
+G3 Seekers,3,G3E1,2025-2026,Linkou
+G3 Questors,3,G3E2,2025-2026,Linkou
+G4 Innovators,4,G4E1,2025-2026,Linkou
+G4 Creators,4,G4E2,2025-2026,Linkou
+G5 Leaders,5,G5E1,2025-2026,Linkou
+G5 Champions,5,G5E2,2025-2026,Linkou
+G6 Achievers,6,G6E1,2025-2026,Linkou
+G6 Scholars,6,G6E2,2025-2026,Linkou

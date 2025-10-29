@@ -1,0 +1,19 @@
+student_id,full_name,grade,level,class_name
+S2025001,Alex Chen,1,G1E1,G1 Explorers
+S2025002,Bella Wang,1,G1E1,G1 Explorers
+S2025003,Charlie Liu,1,G1E1,G1 Discoverers
+S2025004,Diana Zhang,1,G1E2,G1 Adventurers
+S2025005,Ethan Lin,1,G1E2,G1 Adventurers
+S2025006,Fiona Huang,1,G1E3,G1 Pioneers
+S2025007,George Wu,2,G2E1,G2 Navigators
+S2025008,Hannah Lee,2,G2E1,G2 Navigators
+S2025009,Isaac Chang,2,G2E2,G2 Voyagers
+S2025010,Julia Yang,2,G2E2,G2 Voyagers
+S2025011,Kevin Hsu,3,G3E1,G3 Seekers
+S2025012,Lily Chen,3,G3E2,G3 Questors
+S2025013,Mason Wang,4,G4E1,G4 Innovators
+S2025014,Nora Liu,4,G4E2,G4 Creators
+S2025015,Oliver Zhang,5,G5E1,G5 Leaders
+S2025016,Penny Lin,5,G5E2,G5 Champions
+S2025017,Quinn Huang,6,G6E1,G6 Achievers
+S2025018,Ryan Wu,6,G6E2,G6 Scholars

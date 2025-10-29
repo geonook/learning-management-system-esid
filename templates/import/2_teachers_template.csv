@@ -1,0 +1,15 @@
+full_name,email,teacher_type,grade,role
+Ming-Li Chang,chang.mingli@kcis.ntpc.edu.tw,LT,,teacher
+Chih-Ming Lee,lee.chihming@kcis.ntpc.edu.tw,LT,,teacher
+Mei-Hua Wang,wang.meihua@kcis.ntpc.edu.tw,IT,,teacher
+John Smith,john.smith@kcis.ntpc.edu.tw,IT,,teacher
+Mary Jones,mary.jones@kcis.ntpc.edu.tw,IT,,teacher
+David Chen,david.chen@kcis.ntpc.edu.tw,KCFS,,teacher
+Emily Lin,emily.lin@kcis.ntpc.edu.tw,KCFS,,teacher
+G1 LT Head Teacher,g1-lt-head@kcis.ntpc.edu.tw,LT,1,head
+G1 IT Head Teacher,g1-it-head@kcis.ntpc.edu.tw,IT,1,head
+G1 KCFS Head Teacher,g1-kcfs-head@kcis.ntpc.edu.tw,KCFS,1,head
+G2 LT Head Teacher,g2-lt-head@kcis.ntpc.edu.tw,LT,2,head
+G2 IT Head Teacher,g2-it-head@kcis.ntpc.edu.tw,IT,2,head
+G2 KCFS Head Teacher,g2-kcfs-head@kcis.ntpc.edu.tw,KCFS,2,head
+System Administrator,admin@kcis.ntpc.edu.tw,,,admin
