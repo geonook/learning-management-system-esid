@@ -1,10 +1,12 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 1.7
-> **Last Updated**: 2025-10-28
+> **Documentation Version**: 1.8
+> **Last Updated**: 2025-10-29
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics
-> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, CSV Import System, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**
+> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**
+
+> **Current Status**: 📋 **Data Preparation Phase** - CSV templates ready, awaiting teacher data import
 
 This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -208,6 +210,143 @@ RLS Policies: 7+ ✅
 Indexes: 8+ ✅
 Overall Status: 🎉 ALL CHECKS PASSED
 ```
+
+## 📋 CSV Import Templates (2025-10-29) ✅ **完全完成**
+
+### ✅ 完成狀態
+- **CSV 範本系統**: 100% 完成
+- **英文欄位名稱**: 100% 完成
+- **完整文件**: 100% 完成
+- **驗證規則**: 100% 完成
+
+### 📂 Templates 檔案結構
+
+```
+templates/import/
+├── 1_classes_template.csv              # 班級資料範本
+├── 2_teachers_template.csv             # 教師資料範本 (⭐ 最重要)
+├── 3_teacher_course_assignments_template.csv  # 教師配課範本
+├── 4_students_template.csv             # 學生資料範本
+├── README.md                            # 完整使用指南
+├── FIELD_MAPPING.md                     # 欄位對照與驗證規則
+├── QUICK_REFERENCE.md                   # 快速參考
+└── SUMMARY.md                           # 總覽說明
+```
+
+### 🔤 英文欄位定義
+
+#### Teachers CSV (`2_teachers_template.csv`)
+```csv
+full_name,email,teacher_type,grade,role
+```
+
+**欄位說明**:
+- `full_name`: 教師英文姓名（例如：John Smith, Ming-Li Chang）
+- `email`: 登入用 Email（例如：john.smith@kcis.ntpc.edu.tw）
+- `teacher_type`: 教師類型（LT, IT, KCFS）
+- `grade`: 年級 1-6（僅 head teacher 必填）
+- `role`: 角色（admin, head, teacher）
+
+#### Classes CSV (`1_classes_template.csv`)
+```csv
+class_name,grade,level,academic_year,campus
+```
+
+**欄位說明**:
+- `class_name`: 班級名稱（例如：G4 Seekers）
+- `grade`: 年級 1-6
+- `level`: 能力分級（G1E1 ~ G6E3）
+- `academic_year`: 學年度（2025-2026）
+- `campus`: 校區（Linkou, Qingshan）
+
+#### Course Assignments CSV (`3_teacher_course_assignments_template.csv`)
+```csv
+teacher_email,class_name,course_type
+```
+
+**欄位說明**:
+- `teacher_email`: 教師 Email（必須存在於 teachers CSV）
+- `class_name`: 班級名稱（必須存在於 classes CSV）
+- `course_type`: 課程類型（LT, IT, KCFS）
+- **驗證規則**: `teacher_type` 必須匹配 `course_type`
+
+#### Students CSV (`4_students_template.csv`)
+```csv
+student_id,full_name,grade,level,class_name
+```
+
+**欄位說明**:
+- `student_id`: 學號（例如：S2025001）
+- `full_name`: 學生英文姓名
+- `grade`: 年級 1-6
+- `level`: 能力分級（G1E1 ~ G6E3）
+- `class_name`: 所屬班級
+
+### 📊 資料匯入流程
+
+```
+1. 準備 CSV 資料（使用提供的範本）
+   ↓
+2. 驗證欄位格式與必填欄位
+   ↓
+3. 驗證業務規則（teacher_type 匹配、level 格式等）
+   ↓
+4. 按順序匯入：
+   - Step 1: Classes
+   - Step 2: Teachers
+   - Step 3: Course Assignments
+   - Step 4: Students
+   ↓
+5. 執行驗證查詢確認資料正確性
+```
+
+### ✅ 資料驗證規則
+
+**Level 格式**:
+```
+格式: G[1-6]E[1-3]
+範例: G1E1, G4E2, G6E3
+說明: 包含年級資訊，不同年級的 E1 能力標準不同
+```
+
+**Teacher Type 匹配**:
+```
+教師的 teacher_type 必須匹配課程的 course_type
+✅ LT 教師 → LT 課程
+✅ IT 教師 → IT 課程
+✅ KCFS 教師 → KCFS 課程
+❌ LT 教師 → IT 課程（不允許）
+```
+
+**Email 格式**:
+```
+建議格式: [firstname].[lastname]@kcis.ntpc.edu.tw
+範例: john.smith@kcis.ntpc.edu.tw
+用途: 教師登入系統的帳號
+```
+
+### 📖 文件參考
+
+- **完整指南**: `templates/import/README.md`
+- **欄位對照**: `templates/import/FIELD_MAPPING.md`
+- **快速參考**: `templates/import/QUICK_REFERENCE.md`
+- **總覽說明**: `templates/import/SUMMARY.md`
+
+### 🎯 當前狀態
+
+**完成項目** ✅:
+- CSV 範本檔案建立
+- 英文欄位名稱調整
+- 完整文件撰寫
+- 驗證規則定義
+- 範例資料提供
+
+**待完成項目** ⏳:
+- 教師真實資料填寫（需使用者提供）
+- 資料驗證與匯入
+- 資料庫資料重建
+
+---
 
 ## 🧠 Phase 3A-1 Analytics 基礎架構 (2025-08-23) ✅ **完全完成**
 
