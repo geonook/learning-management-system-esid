@@ -1,12 +1,14 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 1.8
-> **Last Updated**: 2025-10-29
+> **Documentation Version**: 1.9
+> **Last Updated**: 2025-11-13
 > **Project**: learning-management-system-esid
-> **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics
-> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**
+> **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Planning)**
+> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (📋 Planning)**
 
-> **Current Status**: 📋 **Data Preparation Phase** - CSV templates ready, awaiting teacher data import
+> **Current Status**:
+> - 📋 **Data Preparation Phase** - CSV templates ready, awaiting teacher data import
+> - 📋 **SSO Planning Phase** - Architecture designed, awaiting Info Hub secrets to begin implementation
 
 This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -345,6 +347,122 @@ student_id,full_name,grade,level,class_name
 - 教師真實資料填寫（需使用者提供）
 - 資料驗證與匯入
 - 資料庫資料重建
+
+---
+
+## 🔐 Info Hub SSO Integration (2025-11-13) 📋 **Planning Phase**
+
+### 🎯 Overview
+
+**Purpose**: Enable Single Sign-On (SSO) between Info Hub (Identity Provider) and LMS (Service Provider) using OAuth 2.0 + PKCE standard.
+
+**Key Objectives**:
+- ✅ Unified authentication (login once, access both systems)
+- ✅ Zero Service Key sharing (LMS maintains complete control)
+- ✅ Industry-standard security (OAuth 2.0 + PKCE)
+- ✅ Supabase as single source of truth for user data
+
+### 🏗️ Architecture Decision
+
+**Selected Approach**: OAuth 2.0 Authorization Code Flow + PKCE
+
+**Rejected Approach** (方案 B): Info Hub generates Supabase tokens
+- ❌ Security Risk: Requires sharing LMS's Supabase Service Role Key
+- ❌ RLS Bypass: Service Key bypasses all 49 RLS policies
+- ❌ Violates Principle of Least Privilege
+
+**Final Design**:
+```
+User → Info Hub (Google OAuth) → Authorization Code →
+LMS (Token Exchange) → Supabase User Sync → Session Creation → Dashboard
+```
+
+### 🔑 Technical Specifications
+
+**OAuth Flow**:
+1. User clicks "Login with Info Hub SSO" on LMS
+2. LMS generates PKCE challenge, redirects to Info Hub
+3. Info Hub authenticates user (Google OAuth)
+4. Info Hub syncs user to Supabase via Webhook
+5. Info Hub returns Authorization Code to LMS
+6. LMS exchanges code for user data (server-side)
+7. LMS creates Supabase session using Admin API
+8. User logged into LMS Dashboard
+
+**Security Measures**:
+- PKCE (Proof Key for Code Exchange) - prevents code interception
+- CSRF State Token - prevents cross-site request forgery
+- Webhook Secret - authenticates user sync requests
+- Service Role Key Isolation - LMS never shares credentials
+- RLS Policy Enforcement - all queries respect permissions
+
+### 📋 Implementation Status
+
+**Info Hub Responsibilities** (11-14 days):
+- Phase 1: Database schema updates (SSO fields + OAuth code table) ✅ Designed
+- Phase 2: OAuth Authorization Server (`/oauth/authorize`, `/oauth/token`) ⏳ Pending
+- Phase 3: Role mapping & Admin UI (teacher_type, grade_level) ⏳ Pending
+- Phase 4-6: Config, testing, documentation ⏳ Pending
+
+**LMS Responsibilities** (10.5 days):
+- Phase 1: Environment configuration ⏳ Waiting for secrets
+- Phase 2: Webhook receiver (`/api/webhook/user-sync`) ⏳ Pending
+- Phase 3: OAuth PKCE Client ⏳ Pending
+- Phase 4: Callback handler + session creation ⏳ Pending
+- Phase 5-7: Error handling, testing, deployment ⏳ Pending
+
+**Current Blockers**:
+- ⏳ OAuth Client Secret (from Info Hub)
+- ⏳ Webhook Secret (from Info Hub)
+- ⏳ Test accounts (5 roles: admin, head, teacher×3, viewer)
+
+### 🔗 Role Mapping
+
+| Info Hub Role | LMS Role | Teacher Type | Grade | Track |
+|---------------|----------|--------------|-------|-------|
+| admin | admin | null | null | null |
+| office_member | head | null | null | null |
+| teacher (IT) | teacher | IT | null | international |
+| teacher (LT) | teacher | LT | null | local |
+| teacher (KCFS) | teacher | KCFS | null | null |
+| viewer | ❌ Denied | - | - | - |
+
+### 📊 Timeline
+
+- **Week 1**: Parallel development (DB + Webhook + OAuth Client)
+- **Week 2**: Integration testing (OAuth E2E flow)
+- **Week 3**: Security audit + Staging deployment
+- **Week 4**: Production deployment (target: 2025-12-09)
+
+### 📚 Documentation
+
+Comprehensive SSO documentation available in `docs/sso/`:
+- [SSO Integration Overview](../docs/sso/SSO_INTEGRATION_OVERVIEW.md) - Architecture & decisions
+- [SSO Implementation Plan - LMS](../docs/sso/SSO_IMPLEMENTATION_PLAN_LMS.md) - Detailed tasks
+- [SSO Security Analysis](../docs/sso/SSO_SECURITY_ANALYSIS.md) - Security review
+- [SSO API Reference](../docs/sso/SSO_API_REFERENCE.md) - API specifications
+- [SSO Testing Guide](../docs/sso/SSO_TESTING_GUIDE.md) - Test strategy
+- [SSO Deployment Guide](../docs/sso/SSO_DEPLOYMENT_GUIDE.md) - Deployment steps
+
+### 🎯 Success Criteria
+
+**Functional**:
+- [ ] Info Hub users can SSO login to LMS
+- [ ] First-time login creates Supabase account
+- [ ] Roles correctly mapped (admin/head/teacher)
+- [ ] Viewer role correctly denied
+
+**Security**:
+- [ ] PKCE verification enforced (100% pass rate)
+- [ ] CSRF state validation (100% pass rate)
+- [ ] Webhook secret verified (100% pass rate)
+- [ ] RLS policies apply (100% enforcement)
+- [ ] No Service Key exposure
+
+**Performance**:
+- [ ] SSO flow < 5 seconds
+- [ ] Webhook sync < 2 seconds
+- [ ] Session creation < 1 second
 
 ---
 

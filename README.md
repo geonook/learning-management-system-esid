@@ -2,16 +2,17 @@
 
 A comprehensive **Primary School (G1-G6)** Learning Management System featuring English Language Arts (ELA) and KCFS courses with advanced **Analytics Engine** and **Database Analytics Views**. Features **One Class, Three Teachers (一班三師)** architecture where each class has dedicated LT, IT, and KCFS instructors, plus real-time performance analytics, intelligent insights, and comprehensive testing framework. Built with Next.js, TypeScript, Tailwind CSS, and Supabase Cloud.
 
-## 🎯 Current Status (Updated 2025-10-17)
-- **Database Migrations**: ✅ Migrations 007-011 完全部署
+## 🎯 Current Status (Updated 2025-11-13)
+- **Database Migrations**: ✅ Migrations 007-015 完全部署
 - **Real Data Deployment**: ✅ 84 classes + 252 courses (2025-2026 學年度)
 - **Supabase Cloud**: ✅ Official cloud migration complete
 - **Analytics Engine**: ✅ Complete with 40+ TypeScript interfaces
 - **Database Views**: ✅ 3 professional analytics views deployed
 - **Performance**: ✅ Average query time 146ms (target <500ms)
+- **RLS Optimization**: ✅ 49 policies optimized (auth_rls_initplan: 0 warnings)
 - **Testing Framework**: ✅ 90-minute comprehensive testing workflow
-- **Known Issues**: ⚠️ Claude Code env cache (See [TROUBLESHOOTING](CLAUDE.md#⚠️-已知問題與解決方案-2025-10-16))
-- **Ready for**: 👥 Teacher Assignment + Student Import
+- **SSO Integration**: 📋 Planning phase - Architecture designed, awaiting Info Hub secrets
+- **Ready for**: 👥 Teacher Assignment + Student Import + SSO Implementation
 
 ## Quick Start
 
