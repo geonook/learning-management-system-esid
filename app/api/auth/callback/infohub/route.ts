@@ -254,14 +254,19 @@ export async function GET(request: NextRequest) {
     // - State is single-use and expires in 10 minutes
     // - PKCE provides additional security
 
-    // 2. Get code verifier from request (passed from client)
-    const codeVerifier = searchParams.get('code_verifier')
+    // 2. Get code verifier from secure cookie
+    // Cookie was set by SSOLoginButton before redirect
+    const cookies = request.cookies
+    const codeVerifier = cookies.get('pkce_verifier')?.value
+
     if (!codeVerifier) {
-      console.error('[OAuth] Missing code_verifier parameter')
+      console.error('[OAuth] Missing code_verifier in cookie')
       return NextResponse.redirect(
         new URL('/auth/login?error=missing_code_verifier', request.url)
       )
     }
+
+    console.log('[OAuth] Code verifier retrieved from cookie')
 
     // 3. Exchange authorization code for user data
     const tokenData = await exchangeToken(callbackParams.code, codeVerifier)
@@ -302,9 +307,20 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // 7. Redirect to dashboard (or specified redirect URL)
+    // 7. Clear pkce_verifier cookie (security best practice)
+    const response = NextResponse.redirect(new URL(url, request.url))
+    response.cookies.set('pkce_verifier', '', {
+      path: '/',
+      maxAge: 0, // Immediately expire
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+    })
+    console.log('[OAuth] Cleared pkce_verifier cookie')
+
+    // 8. Redirect to dashboard (or specified redirect URL)
     console.log(`[OAuth] SSO login successful for: ${tokenData.user.email}`)
-    return NextResponse.redirect(new URL(url, request.url))
+    return response
   } catch (error) {
     console.error('[OAuth] Callback error:', error)
 

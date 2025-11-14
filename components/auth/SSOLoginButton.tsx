@@ -78,6 +78,12 @@ export function SSOLoginButton({
 
       const authUrl = `${config.authUrl}?${authParams.toString()}`
 
+      // Store code_verifier in secure cookie for server-side callback
+      // Required because server-side API routes cannot access sessionStorage
+      // Cookie security: Secure (HTTPS only), SameSite=Lax (CSRF protection), max-age=600 (10 min)
+      document.cookie = `pkce_verifier=${pkceParams.codeVerifier}; path=/; SameSite=Lax; Secure; max-age=600`
+      console.log('[SSO] Code verifier stored in secure cookie (expires in 10 minutes)')
+
       console.log('[SSO] Redirecting to Info Hub authorization page...')
       console.log('[SSO] Redirect URI:', callbackUri)
 
