@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Eye, EyeOff, GraduationCap, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/lib/supabase/client"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { GoogleIcon } from "@/components/icons/google-icon"
+import { SSOLoginButton } from "@/components/auth/SSOLoginButton"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -25,7 +26,34 @@ export default function LoginPage() {
   })
 
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { toast } = useToast()
+
+  // Handle SSO error messages from URL parameters
+  useEffect(() => {
+    const error = searchParams.get('error')
+    const description = searchParams.get('description')
+
+    if (error) {
+      const errorMessages: Record<string, string> = {
+        'viewer_access_denied': 'Viewer 角色無法存取 LMS 系統',
+        'oauth_callback_failed': 'OAuth 回調處理失敗',
+        'session_creation_failed': 'Session 建立失敗',
+        'invalid_callback': '無效的回調參數',
+        'missing_code_verifier': '缺少 PKCE 驗證參數',
+        'access_denied': '使用者拒絕授權',
+      }
+
+      toast({
+        title: 'SSO 登入失敗',
+        description: errorMessages[error] || description || error,
+        variant: 'destructive',
+      })
+
+      // Clear error parameters from URL
+      router.replace('/auth/login')
+    }
+  }, [searchParams, toast, router])
 
   // Google OAuth login handler
   const handleGoogleLogin = async () => {
@@ -161,6 +189,23 @@ export default function LoginPage() {
           </CardHeader>
 
           <CardContent>
+            {/* Info Hub SSO Login Button */}
+            <SSOLoginButton
+              disabled={googleLoading || loading}
+            />
+
+            {/* Divider */}
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  或
+                </span>
+              </div>
+            </div>
+
             {/* Google Login Button */}
             <Button
               type="button"
