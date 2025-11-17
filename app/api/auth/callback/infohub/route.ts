@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/server'
-import { getSSOConfig } from '@/lib/config/sso'
+import { getSSOConfig, getOAuthCallbackUrl } from '@/lib/config/sso'
 import {
   OAuthTokenRequest,
   OAuthTokenResponse,
@@ -41,7 +41,7 @@ async function exchangeToken(
     code,
     code_verifier: codeVerifier,
     grant_type: 'authorization_code',
-    redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/callback/infohub`,
+    redirect_uri: getOAuthCallbackUrl(), // Use unified helper function
   }
 
   const response = await fetch(config.tokenUrl, {

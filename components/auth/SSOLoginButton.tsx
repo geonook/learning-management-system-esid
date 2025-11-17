@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast'
 import { GoogleIcon } from '@/components/icons/google-icon'
 import { generatePKCEParams } from '@/lib/auth/pkce'
 import { initiateSSOLogin } from '@/lib/auth/sso-state'
-import { getPublicSSOConfig } from '@/lib/config/sso'
+import { getPublicSSOConfig, getOAuthCallbackUrl } from '@/lib/config/sso'
 
 interface SSOLoginButtonProps {
   /** Button variant */
@@ -64,7 +64,8 @@ export function SSOLoginButton({
       console.log('[SSO] State token saved to sessionStorage')
 
       // 4. Build OAuth authorization URL
-      const callbackUri = `${window.location.origin}/api/auth/callback/infohub`
+      // Use unified callback URL helper to ensure consistency with token exchange
+      const callbackUri = getOAuthCallbackUrl()
 
       const authParams = new URLSearchParams({
         client_id: config.clientId,
