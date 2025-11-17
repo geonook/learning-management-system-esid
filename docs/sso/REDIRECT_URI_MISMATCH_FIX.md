@@ -304,11 +304,128 @@ eb88b24e-8392-45c4-b7f7-39f03b6df208
 
 ---
 
+---
+
+## 🔄 Additional Issue: Zeabur Build Cache Problem (2025-11-17)
+
+### Problem Discovery
+
+**After implementing the fix above**, testing on Staging environment still showed `localhost:3000`:
+
+```
+Callback URL: http://localhost:3000/api/auth/callback/infohub?code=...&state=...
+```
+
+### Root Cause Analysis
+
+**The issue was NOT in the code, but in the deployment**:
+
+1. ✅ `.env.local` correctly contains `NEXT_PUBLIC_APP_URL=https://lms-staging.zeabur.app`
+2. ✅ Zeabur Environment Variables correctly set
+3. ❌ **But** the JavaScript bundle was built **before** environment variables were updated
+
+**Why this happens**:
+- `NEXT_PUBLIC_*` variables are **hard-coded into JavaScript bundle at BUILD TIME**
+- They are **NOT** read at runtime
+- Updating environment variables in Zeabur has **zero effect** until you **rebuild**
+
+**Timeline Evidence**:
+- `.env.local` updated: **2025-11-17 14:11:39** (3 days ago)
+- Build artifacts created: **2025-11-14 16:24:05** (7 days ago)
+- **Build is 3 days older than environment variable update** ❌
+
+### Solution: Trigger Zeabur Rebuild
+
+**Two methods to trigger rebuild**:
+
+#### Method 1: Git Push (Recommended)
+```bash
+# Commit any code changes (diagnostic tools, documentation)
+git add .
+git commit -m "fix(sso): add diagnostic tools for Zeabur environment variable verification"
+git push origin main
+
+# Zeabur auto-detects GitHub update and rebuilds (2-3 minutes)
+```
+
+#### Method 2: Manual Redeploy
+```
+1. Login to Zeabur Dashboard
+2. Select LMS Staging project
+3. Click "..." menu → "Redeploy"
+4. Wait for build completion (2-3 minutes)
+```
+
+### Verification Steps
+
+**Step 1: Check Diagnostic API**
+
+Visit: `https://lms-staging.zeabur.app/api/debug/env`
+
+**Expected Output**:
+```json
+{
+  "NEXT_PUBLIC_APP_URL": "https://lms-staging.zeabur.app",
+  "computed": {
+    "oauth_callback_url": "https://lms-staging.zeabur.app/api/auth/callback/infohub"
+  },
+  "NODE_ENV": "production"
+}
+```
+
+**Step 2: Test SSO Login**
+
+1. Visit: `https://lms-staging.zeabur.app/auth/login`
+2. Click "Login with Google"
+3. Check Browser DevTools → Network tab
+4. Verify `redirect_uri` parameter:
+   ```
+   redirect_uri=https://lms-staging.zeabur.app/api/auth/callback/infohub
+   ```
+   ⚠️ Should **NOT** be `localhost:3000`
+
+**Step 3: Complete OAuth Flow**
+
+1. Login with Google account
+2. Callback URL should be:
+   ```
+   https://lms-staging.zeabur.app/api/auth/callback/infohub?code=...&state=...
+   ```
+3. Token exchange should succeed
+4. Redirect to Dashboard
+
+### Created Tools
+
+**Diagnostic API**: `app/api/debug/env/route.ts`
+- GET `/api/debug/env` shows all environment variables
+- Helps verify correct values after deployment
+
+**Deployment Guide**: `docs/sso/ZEABUR_REDEPLOY_GUIDE.md`
+- Complete guide for triggering Zeabur rebuild
+- Troubleshooting steps
+- Verification procedures
+
+**Environment Checklist**: `docs/sso/ZEABUR_ENV_CHECKLIST.md`
+- Complete list of required Zeabur environment variables
+- Validation checklist
+
+### Lesson Learned
+
+**Critical Understanding**:
+- `.env.local` is **ONLY for local development**
+- Zeabur deployments **MUST** have environment variables set in Zeabur Dashboard
+- After updating environment variables in Zeabur, **MUST** trigger rebuild
+- Diagnostic tools are essential for verifying deployment configuration
+
+---
+
 ## 📚 Related Documentation
 
 - [SSO Integration Overview](./SSO_INTEGRATION_OVERVIEW.md)
 - [SSO Testing Guide](./SSO_INTEGRATION_TEST_GUIDE.md)
 - [SSO Integration Test Progress](./SSO_INTEGRATION_TEST_PROGRESS.md)
+- [Zeabur Redeploy Guide](./ZEABUR_REDEPLOY_GUIDE.md) 🆕
+- [Zeabur Environment Variables Checklist](./ZEABUR_ENV_CHECKLIST.md) 🆕
 - [OAuth 2.0 RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749)
 
 ---
@@ -318,11 +435,11 @@ eb88b24e-8392-45c4-b7f7-39f03b6df208
 **Issue Reporter**: LMS Development Team
 **Fix Implementer**: Claude Code
 **Date**: 2025-11-17
-**Verification Pending**: Info Hub team confirmation
+**Verification Pending**: Zeabur rebuild and E2E testing
 
 ---
 
-**Status**: ✅ **Code Fix Complete** - Awaiting Info Hub verification and E2E testing
+**Status**: ✅ **Code Fix Complete** + 🔧 **Zeabur Rebuild Required**
 
 ---
 
