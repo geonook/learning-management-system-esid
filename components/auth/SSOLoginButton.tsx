@@ -9,10 +9,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { useToast } from '@/hooks/use-toast'
+import { GoogleIcon } from '@/components/icons/google-icon'
 import { generatePKCEParams } from '@/lib/auth/pkce'
 import { initiateSSOLogin } from '@/lib/auth/sso-state'
 import { getPublicSSOConfig } from '@/lib/config/sso'
@@ -45,8 +45,8 @@ export function SSOLoginButton({
       const config = getPublicSSOConfig()
       if (!config.enableSSO) {
         toast({
-          title: 'SSO 未啟用',
-          description: 'SSO 功能目前未啟用，請使用 Email/密碼登入',
+          title: 'SSO Not Enabled',
+          description: 'SSO authentication is currently disabled. Please contact IT support.',
           variant: 'destructive',
         })
         setLoading(false)
@@ -95,8 +95,8 @@ export function SSOLoginButton({
       console.error('[SSO] Login error:', error)
 
       toast({
-        title: 'SSO 登入失敗',
-        description: error instanceof Error ? error.message : '發生未預期的錯誤',
+        title: 'Login Failed',
+        description: error instanceof Error ? error.message : 'An unexpected error occurred',
         variant: 'destructive',
       })
 
@@ -115,12 +115,12 @@ export function SSOLoginButton({
       {loading ? (
         <>
           <LoadingSpinner size="sm" className="mr-2" />
-          連接 Info Hub...
+          Redirecting to Google authentication...
         </>
       ) : (
         <>
-          <Building2 className="mr-2 h-5 w-5" />
-          使用 Info Hub SSO 登入
+          <GoogleIcon className="mr-2 h-5 w-5" />
+          Login with Google
         </>
       )}
     </Button>
