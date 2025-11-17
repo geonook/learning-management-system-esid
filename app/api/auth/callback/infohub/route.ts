@@ -44,6 +44,11 @@ async function exchangeToken(
     redirect_uri: getOAuthCallbackUrl(), // Use unified helper function
   }
 
+  console.log('[OAuth/exchangeToken] Request to:', config.tokenUrl)
+  console.log('[OAuth/exchangeToken] Redirect URI:', tokenRequest.redirect_uri)
+  console.log('[OAuth/exchangeToken] Code length:', code.length)
+  console.log('[OAuth/exchangeToken] Verifier length:', codeVerifier.length)
+
   const response = await fetch(config.tokenUrl, {
     method: 'POST',
     headers: {
@@ -52,13 +57,20 @@ async function exchangeToken(
     body: JSON.stringify(tokenRequest),
   })
 
+  console.log('[OAuth/exchangeToken] Response status:', response.status)
+
   if (!response.ok) {
     const errorText = await response.text()
-    console.error('[OAuth] Token exchange failed:', errorText)
+    console.error('[OAuth/exchangeToken] Failed with status:', response.status)
+    console.error('[OAuth/exchangeToken] Error body:', errorText)
     throw new Error(`Token exchange failed: ${response.status} ${errorText}`)
   }
 
   const tokenData = (await response.json()) as OAuthTokenResponse
+
+  console.log('[OAuth/exchangeToken] Success! User email:', tokenData.user.email)
+  console.log('[OAuth/exchangeToken] User role:', tokenData.user.role)
+  console.log('[OAuth/exchangeToken] Webhook success:', tokenData.webhook_status.success)
 
   return tokenData
 }
@@ -256,6 +268,13 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    console.log('[OAuth] ===== SSO CALLBACK START =====')
+    console.log('[OAuth] Callback params:', {
+      hasCode: !!callbackParams.code,
+      hasState: !!callbackParams.state,
+      codeLength: callbackParams.code?.length || 0,
+    })
+
     // 1. Retrieve and validate state from session storage (client-side)
     // Note: State validation happens client-side because sessionStorage is browser-only
     // We trust the state parameter here because:
@@ -270,15 +289,20 @@ export async function GET(request: NextRequest) {
 
     if (!codeVerifier) {
       console.error('[OAuth] Missing code_verifier in cookie')
+      console.error('[OAuth] Available cookies:', cookies.getAll().map(c => c.name))
       return NextResponse.redirect(
         new URL('/auth/login?error=missing_code_verifier', request.url)
       )
     }
 
-    console.log('[OAuth] Code verifier retrieved from cookie')
+    console.log('[OAuth] ✓ Code verifier retrieved from cookie')
 
     // 3. Exchange authorization code for user data
+    console.log('[OAuth] Step 3: Exchanging authorization code...')
     const tokenData = await exchangeToken(callbackParams.code, codeVerifier)
+    console.log('[OAuth] ✓ Token exchange successful')
+    console.log('[OAuth] User role:', tokenData.user.role)
+    console.log('[OAuth] Webhook status:', tokenData.webhook_status.success ? 'SUCCESS' : 'FAILED')
 
     // 4. Check for viewer role (denied access)
     if (tokenData.user.role === 'viewer') {
@@ -289,8 +313,10 @@ export async function GET(request: NextRequest) {
     }
 
     // 5. Compensatory sync if webhook failed
+    console.log('[OAuth] Step 5: Checking webhook status...')
     if (!tokenData.webhook_status.success) {
-      console.warn('[OAuth] Webhook failed, performing compensatory sync')
+      console.warn('[OAuth] ⚠ Webhook failed, performing compensatory sync')
+      console.log('[OAuth] Webhook error:', tokenData.webhook_status.error)
 
       const userParams: CreateSupabaseUserParams = {
         email: tokenData.user.email,
@@ -303,18 +329,31 @@ export async function GET(request: NextRequest) {
         avatarUrl: tokenData.user.avatar_url,
       }
 
+      console.log('[OAuth] Compensatory sync params:', {
+        email: userParams.email,
+        role: userParams.role,
+        hasTeacherType: !!userParams.teacherType,
+      })
+
       await createOrUpdateUser(userParams)
+      console.log('[OAuth] ✓ Compensatory sync completed')
+    } else {
+      console.log('[OAuth] ✓ Webhook sync successful, skipping compensatory sync')
     }
 
     // 6. Create Supabase session
+    console.log('[OAuth] Step 6: Creating Supabase session for:', tokenData.user.email)
     const { url, error } = await createSupabaseSession(tokenData.user.email)
 
     if (error) {
-      console.error('[OAuth] Session creation failed:', error)
+      console.error('[OAuth] ✗ Session creation failed!')
+      console.error('[OAuth] Error details:', error)
       return NextResponse.redirect(
         new URL('/auth/login?error=session_creation_failed', request.url)
       )
     }
+
+    console.log('[OAuth] ✓ Session created successfully')
 
     // 7. Clear pkce_verifier cookie (security best practice)
     const response = NextResponse.redirect(new URL(url, request.url))
@@ -328,13 +367,24 @@ export async function GET(request: NextRequest) {
     console.log('[OAuth] Cleared pkce_verifier cookie')
 
     // 8. Redirect to dashboard (or specified redirect URL)
-    console.log(`[OAuth] SSO login successful for: ${tokenData.user.email}`)
+    console.log('[OAuth] Step 8: Redirecting to dashboard')
+    console.log(`[OAuth] ===== SSO LOGIN SUCCESSFUL for: ${tokenData.user.email} =====`)
     return response
   } catch (error) {
-    console.error('[OAuth] Callback error:', error)
+    console.error('[OAuth] ===== CALLBACK ERROR =====')
+    console.error('[OAuth] Error type:', error instanceof Error ? error.constructor.name : typeof error)
+    console.error('[OAuth] Error message:', error instanceof Error ? error.message : String(error))
+    console.error('[OAuth] Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+
+    // Log full error object for debugging
+    if (error && typeof error === 'object') {
+      console.error('[OAuth] Error object:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
+    }
 
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error'
+
+    console.error('[OAuth] Redirecting to login with error:', errorMessage)
 
     return NextResponse.redirect(
       new URL(
