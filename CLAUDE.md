@@ -1,14 +1,14 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 1.9
-> **Last Updated**: 2025-11-13
+> **Documentation Version**: 2.0
+> **Last Updated**: 2025-11-17
 > **Project**: learning-management-system-esid
-> **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Planning)**
-> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (📋 Planning)**
+> **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Testing)**
+> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (🔄 Phase 1-6 Complete, Testing In Progress)**
 
 > **Current Status**:
 > - 📋 **Data Preparation Phase** - CSV templates ready, awaiting teacher data import
-> - 📋 **SSO Planning Phase** - Architecture designed, awaiting Info Hub secrets to begin implementation
+> - 🔄 **SSO Integration Testing** - LMS implementation complete (Phase 1-6), Info Hub debugging in progress (~80%), environment verified (6/6 tests passing)
 
 This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -350,7 +350,7 @@ student_id,full_name,grade,level,class_name
 
 ---
 
-## 🔐 Info Hub SSO Integration (2025-11-13) 🔄 **Phase 1-2 Complete**
+## 🔐 Info Hub SSO Integration (2025-11-17) 🔄 **Phase 1-5 Complete, Testing In Progress**
 
 ### 🎯 Overview
 
@@ -361,6 +361,7 @@ student_id,full_name,grade,level,class_name
 - ✅ Zero Service Key sharing (LMS maintains complete control)
 - ✅ Industry-standard security (OAuth 2.0 + PKCE)
 - ✅ Supabase as single source of truth for user data
+- ✅ 30-day session persistence (Info Hub default implementation)
 
 ### 🏗️ Architecture Decision
 
@@ -398,29 +399,36 @@ LMS (Token Exchange) → Supabase User Sync → Session Creation → Dashboard
 
 ### 📋 Implementation Status
 
-**Info Hub Responsibilities** (11-14 days):
-- Phase 1: Database schema updates (SSO fields + OAuth code table) ✅ Designed
-- Phase 2: OAuth Authorization Server (`/oauth/authorize`, `/oauth/token`) ⏳ Pending
-- Phase 3: Role mapping & Admin UI (teacher_type, grade_level) ⏳ Pending
-- Phase 4-6: Config, testing, documentation ⏳ Pending
+**Info Hub Responsibilities**:
+- Phase 1: Database schema updates ✅ **Complete**
+- Phase 2: OAuth Authorization Server ✅ **Complete**
+- Phase 3: 30-day session management ✅ **Complete** (better than requested)
+- Phase 4: Environment configuration ✅ **Complete (2025-11-17)**
+- Phase 5: OAuth flow debugging 🔄 **In Progress (~80%)**
+- Phase 6: Integration testing ⏳ Pending
 
-**LMS Responsibilities** (10.5 days):
+**LMS Responsibilities**:
 - Phase 1: Environment configuration ✅ **Complete (2025-11-13)**
 - Phase 2: Webhook receiver (`/api/webhook/user-sync`) ✅ **Complete (2025-11-13)**
 - Phase 3: OAuth PKCE Client + SSO Login UI ✅ **Complete (2025-11-13)**
 - Phase 4: Callback handler + session creation ✅ **Complete (2025-11-13)**
-- Phase 5-7: Error handling, testing, deployment ⏳ Pending
+- Phase 5: Login page simplification ✅ **Complete (2025-11-17)**
+- Phase 6: Environment testing & diagnostic tools ✅ **Complete (2025-11-17)**
+- Phase 7: Integration testing ⏳ **Pending Info Hub debugging completion**
+- Phase 8: Production deployment ⏳ **Target: 2025-12-09**
 
-**LMS Phase 1-4 Completed** 🎉:
+**LMS Phase 1-6 Completed** 🎉:
 - ✅ OAuth credentials configured (.env.local)
 - ✅ TypeScript type system (40+ interfaces, 380 lines)
 - ✅ PKCE RFC 7636 implementation (180 lines)
 - ✅ SSO state manager with CSRF protection (220 lines)
 - ✅ Webhook receiver endpoint (270 lines)
 - ✅ OAuth callback handler (280 lines)
-- ✅ SSO login button component (120 lines)
-- ✅ Login page integration with error handling
+- ✅ SSO login button rebranded as "Login with Google" (120 lines)
+- ✅ Login page simplified to SSO-only (79% code reduction: 343 → 71 lines)
 - ✅ Type safety: 0 TypeScript errors
+- ✅ Environment diagnostic tools created (3 comprehensive documents)
+- ✅ Automated test script (6 comprehensive tests, all passing)
 
 **Files Created**:
 - `types/sso.ts` - Complete SSO type definitions
@@ -429,15 +437,20 @@ LMS (Token Exchange) → Supabase User Sync → Session Creation → Dashboard
 - `lib/auth/sso-state.ts` - State management
 - `app/api/webhook/user-sync/route.ts` - Webhook receiver
 - `app/api/auth/callback/infohub/route.ts` - OAuth callback
-- `components/auth/SSOLoginButton.tsx` - SSO login button UI
+- `components/auth/SSOLoginButton.tsx` - SSO login button UI (rebranded)
+- `docs/sso/INFOHUB_SESSION_MANAGEMENT_REQUEST.md` - Session management request (v1.1)
+- `docs/sso/INFO_HUB_STAGING_CONFIG_REQUEST.md` - Environment configuration request
+- `docs/sso/INFO_HUB_ENV_DIAGNOSTIC_CHECKLIST.md` - Complete diagnostic checklist (60+ variables)
+- `docs/sso/INFOHUB_CLAUDE_CODE_PROMPT.md` - Claude Code executable prompt
+- `docs/sso/SSO_INTEGRATION_TEST_PROGRESS.md` - Testing progress tracking
+- `scripts/test-infohub-oauth-redirect.sh` - Automated verification script (6 tests)
 
 **Files Modified**:
-- `app/auth/login/page.tsx` - Added SSO button + error handling
+- `app/auth/login/page.tsx` - Simplified to SSO-only authentication (79% reduction)
 
-**Remaining Tasks**:
-- ⏳ Phase 5: Additional error handling & UX improvements
-- ⏳ Phase 6: Integration testing with Info Hub
-- ⏳ Phase 7: Production deployment
+**Current Blocker**:
+- 🔄 Info Hub OAuth flow debugging in progress (~80% complete)
+- ✅ Environment configuration verified (all 6 automated tests passing)
 
 ### 🔗 Role Mapping
 
@@ -460,12 +473,24 @@ LMS (Token Exchange) → Supabase User Sync → Session Creation → Dashboard
 ### 📚 Documentation
 
 Comprehensive SSO documentation available in `docs/sso/`:
-- [SSO Integration Overview](../docs/sso/SSO_INTEGRATION_OVERVIEW.md) - Architecture & decisions
-- [SSO Implementation Plan - LMS](../docs/sso/SSO_IMPLEMENTATION_PLAN_LMS.md) - Detailed tasks
-- [SSO Security Analysis](../docs/sso/SSO_SECURITY_ANALYSIS.md) - Security review
-- [SSO API Reference](../docs/sso/SSO_API_REFERENCE.md) - API specifications
-- [SSO Testing Guide](../docs/sso/SSO_TESTING_GUIDE.md) - Test strategy
-- [SSO Deployment Guide](../docs/sso/SSO_DEPLOYMENT_GUIDE.md) - Deployment steps
+
+**Architecture & Planning**:
+- [SSO Integration Overview](./docs/sso/SSO_INTEGRATION_OVERVIEW.md) - Architecture & decisions
+- [SSO Implementation Plan - LMS](./docs/sso/SSO_IMPLEMENTATION_PLAN_LMS.md) - Detailed tasks
+- [SSO Security Analysis](./docs/sso/SSO_SECURITY_ANALYSIS.md) - Security review
+- [SSO API Reference](./docs/sso/SSO_API_REFERENCE.md) - API specifications
+- [SSO Testing Guide](./docs/sso/SSO_INTEGRATION_TEST_GUIDE.md) - Test strategy
+- [SSO Deployment Guide](./docs/sso/SSO_DEPLOYMENT_GUIDE.md) - Deployment steps
+
+**Info Hub Integration** (2025-11-17):
+- [Session Management Request v1.1](./docs/sso/INFOHUB_SESSION_MANAGEMENT_REQUEST.md) - ✅ Implemented by Info Hub
+- [Staging Configuration Request](./docs/sso/INFO_HUB_STAGING_CONFIG_REQUEST.md) - ✅ Environment fix complete
+- [Environment Diagnostic Checklist](./docs/sso/INFO_HUB_ENV_DIAGNOSTIC_CHECKLIST.md) - Complete 60+ variable checklist
+- [Claude Code Executable Prompt](./docs/sso/INFOHUB_CLAUDE_CODE_PROMPT.md) - Automated diagnostic tool
+
+**Testing & Progress** (2025-11-17):
+- [SSO Integration Test Progress](./docs/sso/SSO_INTEGRATION_TEST_PROGRESS.md) - Current status tracking
+- [OAuth Redirect Test Script](./scripts/test-infohub-oauth-redirect.sh) - Automated verification (6 tests, all passing ✅)
 
 ### 🎯 Success Criteria
 
