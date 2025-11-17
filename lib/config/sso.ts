@@ -150,9 +150,22 @@ export function isValidClientSecret(secret: string): boolean {
  * 取得 OAuth 回調 URL
  * 用於 redirect_uri 參數
  *
+ * IMPORTANT:
+ * - Client-side: Uses window.location.origin (runtime value from browser)
+ * - Server-side: Uses NEXT_PUBLIC_APP_URL environment variable
+ *
+ * This ensures correct redirect_uri in all deployment environments without
+ * relying on build-time environment variable substitution.
+ *
  * @returns OAuth callback URL
  */
 export function getOAuthCallbackUrl(): string {
+  // Client-side: Use browser's current origin (always correct for current deployment)
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/api/auth/callback/infohub`
+  }
+
+  // Server-side: Use environment variable
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   return `${baseUrl}/api/auth/callback/infohub`
