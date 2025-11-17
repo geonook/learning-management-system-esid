@@ -185,14 +185,15 @@ CREATE TABLE oauth_authorization_codes (
 
 **Mapping Rules**:
 
-| Info Hub Role | LMS Role | Teacher Type | Grade | Track |
-|---------------|----------|--------------|-------|-------|
-| admin | admin | null | null | null |
-| office_member | head | null | null (set by Admin) | null |
-| teacher (IT domain) | teacher | IT | null | international |
-| teacher (LT domain) | teacher | LT | null | local |
-| teacher (KCFS domain) | teacher | KCFS | null | null |
-| viewer | ❌ Denied | - | - | - |
+| Info Hub Role | LMS Role | Permissions | Teacher Type | Grade | Track |
+|---------------|----------|-------------|--------------|-------|-------|
+| admin | admin | Full system access | null | null | null |
+| office_member | office_member | **Read-only** all grades (G1-G6) | null | null | null |
+| head | head | Grade + course type management | null | null (set by Admin) | course_type |
+| teacher (IT) | teacher | Own classes only | IT | null | international |
+| teacher (LT) | teacher | Own classes only | LT | null | local |
+| teacher (KCFS) | teacher | Own classes only | KCFS | null | null |
+| viewer | ❌ Denied | No access | - | - | - |
 
 **Teacher Type Determination**:
 1. **Priority 1**: Admin manual setting in Info Hub UI

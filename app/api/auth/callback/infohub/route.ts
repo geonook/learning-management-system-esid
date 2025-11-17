@@ -66,6 +66,13 @@ async function exchangeToken(
 /**
  * Map Info Hub role to LMS role
  *
+ * Info Hub Roles → LMS Roles:
+ * - admin → admin (full system access)
+ * - office_member → office_member (read-only access to all grades)
+ * - head → head (grade + course type management)
+ * - teacher → teacher (own classes only)
+ * - viewer → DENIED (no access)
+ *
  * @param infohubRole - Info Hub role
  * @returns LMS role
  */
@@ -74,6 +81,8 @@ function mapRole(infohubRole: string): UserRole {
     case 'admin':
       return 'admin'
     case 'office_member':
+      return 'office_member'  // Read-only access to all grades
+    case 'head':
       return 'head'
     case 'teacher':
       return 'teacher'

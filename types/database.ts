@@ -543,7 +543,7 @@ export type Database = {
       }
     }
     Enums: {
-      user_role: 'admin' | 'head' | 'teacher' | 'student'
+      user_role: 'admin' | 'head' | 'teacher' | 'student' | 'office_member'
       teacher_type: 'LT' | 'IT' | 'KCFS'
       course_type: 'LT' | 'IT' | 'KCFS'
       track_type: 'local' | 'international'
