@@ -67,6 +67,13 @@ export function SSOLoginButton({
       // Use unified callback URL helper to ensure consistency with token exchange
       const callbackUri = getOAuthCallbackUrl()
 
+      // 🔍 DIAGNOSTIC: Log all configuration values
+      console.log('[SSO] ===== DIAGNOSTIC START =====')
+      console.log('[SSO] window.location.origin:', window.location.origin)
+      console.log('[SSO] config.clientId:', config.clientId)
+      console.log('[SSO] config.authUrl:', config.authUrl)
+      console.log('[SSO] callbackUri (computed):', callbackUri)
+
       const authParams = new URLSearchParams({
         client_id: config.clientId,
         redirect_uri: callbackUri,
@@ -79,6 +86,18 @@ export function SSOLoginButton({
 
       const authUrl = `${config.authUrl}?${authParams.toString()}`
 
+      // 🔍 DIAGNOSTIC: Log complete authorization URL
+      console.log('[SSO] Complete authUrl:', authUrl)
+      console.log('[SSO] authParams breakdown:')
+      authParams.forEach((value, key) => {
+        if (key === 'code_challenge' || key === 'state') {
+          console.log(`  ${key}: ${value.substring(0, 20)}...`)
+        } else {
+          console.log(`  ${key}: ${value}`)
+        }
+      })
+      console.log('[SSO] ===== DIAGNOSTIC END =====')
+
       // Store code_verifier in secure cookie for server-side callback
       // Required because server-side API routes cannot access sessionStorage
       // Cookie security: Secure (HTTPS only), SameSite=Lax (CSRF protection), max-age=600 (10 min)
@@ -87,6 +106,7 @@ export function SSOLoginButton({
 
       console.log('[SSO] Redirecting to Info Hub authorization page...')
       console.log('[SSO] Redirect URI:', callbackUri)
+      console.log('[SSO] About to execute: window.location.href =', authUrl)
 
       // 5. Redirect to Info Hub OAuth authorization page
       window.location.href = authUrl
