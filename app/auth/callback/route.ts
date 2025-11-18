@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { buildRedirectUrl } from '@/lib/utils/url'
 
 /**
  * OAuth Callback Route Handler
@@ -17,7 +18,6 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
-  const origin = requestUrl.origin
 
   // If there's a code, exchange it for a session
   if (code) {
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
         // Redirect to login with error message
         return NextResponse.redirect(
-          `${origin}/auth/login?error=${encodeURIComponent(error.message)}`
+          buildRedirectUrl(`/auth/login?error=${encodeURIComponent(error.message)}`)
         )
       }
 
@@ -52,21 +52,21 @@ export async function GET(request: NextRequest) {
         if (profileError || !userProfile) {
           // First-time OAuth user - redirect to role selection
           console.log('First-time OAuth user, redirecting to role selection')
-          return NextResponse.redirect(`${origin}/auth/role-select`)
+          return NextResponse.redirect(buildRedirectUrl('/auth/role-select'))
         }
 
         // Existing user - redirect to dashboard
         console.log('Existing user, redirecting to dashboard')
-        return NextResponse.redirect(`${origin}/dashboard`)
+        return NextResponse.redirect(buildRedirectUrl('/dashboard'))
       }
     } catch (error: any) {
       console.error('OAuth exchange exception:', error)
       return NextResponse.redirect(
-        `${origin}/auth/login?error=${encodeURIComponent('OAuth authentication failed')}`
+        buildRedirectUrl('/auth/login?error=' + encodeURIComponent('OAuth authentication failed'))
       )
     }
   }
 
   // No code present, redirect to login
-  return NextResponse.redirect(`${origin}/auth/login`)
+  return NextResponse.redirect(buildRedirectUrl('/auth/login'))
 }

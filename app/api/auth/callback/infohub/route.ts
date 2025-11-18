@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { getSSOConfig, getOAuthCallbackUrl } from '@/lib/config/sso'
+import { buildRedirectUrl } from '@/lib/utils/url'
 import {
   OAuthTokenRequest,
   OAuthTokenResponse,
@@ -252,9 +253,8 @@ export async function GET(request: NextRequest) {
   if (callbackParams.error) {
     console.error('[OAuth] Authorization error:', callbackParams.error)
     return NextResponse.redirect(
-      new URL(
-        `/auth/login?error=${callbackParams.error}&description=${encodeURIComponent(callbackParams.error_description || '')}`,
-        request.url
+      buildRedirectUrl(
+        `/auth/login?error=${callbackParams.error}&description=${encodeURIComponent(callbackParams.error_description || '')}`
       )
     )
   }
@@ -263,7 +263,7 @@ export async function GET(request: NextRequest) {
   if (!callbackParams.code || !callbackParams.state) {
     console.error('[OAuth] Missing code or state parameter')
     return NextResponse.redirect(
-      new URL('/auth/login?error=invalid_callback', request.url)
+      buildRedirectUrl('/auth/login?error=invalid_callback')
     )
   }
 
@@ -291,7 +291,7 @@ export async function GET(request: NextRequest) {
       console.error('[OAuth] Missing code_verifier in cookie')
       console.error('[OAuth] Available cookies:', cookies.getAll().map(c => c.name))
       return NextResponse.redirect(
-        new URL('/auth/login?error=missing_code_verifier', request.url)
+        buildRedirectUrl('/auth/login?error=missing_code_verifier')
       )
     }
 
@@ -308,7 +308,7 @@ export async function GET(request: NextRequest) {
     if (tokenData.user.role === 'viewer') {
       console.warn('[OAuth] Viewer role denied access:', tokenData.user.email)
       return NextResponse.redirect(
-        new URL('/auth/login?error=viewer_access_denied', request.url)
+        buildRedirectUrl('/auth/login?error=viewer_access_denied')
       )
     }
 
@@ -349,14 +349,14 @@ export async function GET(request: NextRequest) {
       console.error('[OAuth] ✗ Session creation failed!')
       console.error('[OAuth] Error details:', error)
       return NextResponse.redirect(
-        new URL('/auth/login?error=session_creation_failed', request.url)
+        buildRedirectUrl('/auth/login?error=session_creation_failed')
       )
     }
 
     console.log('[OAuth] ✓ Session created successfully')
 
     // 7. Clear pkce_verifier cookie (security best practice)
-    const response = NextResponse.redirect(new URL(url, request.url))
+    const response = NextResponse.redirect(buildRedirectUrl(url))
     response.cookies.set('pkce_verifier', '', {
       path: '/',
       maxAge: 0, // Immediately expire
@@ -387,9 +387,8 @@ export async function GET(request: NextRequest) {
     console.error('[OAuth] Redirecting to login with error:', errorMessage)
 
     return NextResponse.redirect(
-      new URL(
-        `/auth/login?error=oauth_callback_failed&description=${encodeURIComponent(errorMessage)}`,
-        request.url
+      buildRedirectUrl(
+        `/auth/login?error=oauth_callback_failed&description=${encodeURIComponent(errorMessage)}`
       )
     )
   }
