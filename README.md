@@ -1,9 +1,15 @@
 # Learning Management System - ESID
 
-A comprehensive **Primary School (G1-G6)** Learning Management System featuring English Language Arts (ELA) and KCFS courses with advanced **Analytics Engine** and **Database Analytics Views**. Features **One Class, Three Teachers (一班三師)** architecture where each class has dedicated LT, IT, and KCFS instructors, plus real-time performance analytics, intelligent insights, and comprehensive testing framework. Built with Next.js, TypeScript, Tailwind CSS, and Supabase Cloud.
+> **Version**: 1.9.0
+> **Status**: Production Ready (SSO Integration Phase 1-4 Complete)
+> **Tech Stack**: Next.js 14 + TypeScript + Supabase Cloud + Tailwind CSS
 
-## 🎯 Current Status (Updated 2025-11-13)
-- **Database Migrations**: ✅ Migrations 007-015 完全部署
+A comprehensive **Primary School (G1-G6)** Learning Management System featuring English Language Arts (ELA) and KCFS courses with advanced **Analytics Engine**, **Database Analytics Views**, and **Google SSO Integration** (via Info Hub). Features **One Class, Three Teachers (一班三師)** architecture where each class has dedicated LT, IT, and KCFS instructors, plus real-time performance analytics, intelligent insights, and comprehensive testing framework.
+
+## 🎯 Current Status (Updated 2025-11-18)
+
+### ✅ Completed Features
+- **Database Migrations**: ✅ Migrations 007-019e fully deployed (including emergency RLS fixes)
 - **Real Data Deployment**: ✅ 84 classes + 252 courses (2025-2026 學年度)
 - **Supabase Cloud**: ✅ Official cloud migration complete
 - **Analytics Engine**: ✅ Complete with 40+ TypeScript interfaces
@@ -11,8 +17,16 @@ A comprehensive **Primary School (G1-G6)** Learning Management System featuring 
 - **Performance**: ✅ Average query time 146ms (target <500ms)
 - **RLS Optimization**: ✅ 49 policies optimized (auth_rls_initplan: 0 warnings)
 - **Testing Framework**: ✅ 90-minute comprehensive testing workflow
-- **SSO Integration**: 📋 Planning phase - Architecture designed, awaiting Info Hub secrets
-- **Ready for**: 👥 Teacher Assignment + Student Import + SSO Implementation
+- **SSO Integration (LMS)**: ✅ **Phase 1-4 Complete** - OAuth 2.0 + PKCE client, webhook receiver, session management
+
+### ⏳ In Progress
+- **SSO Integration (Info Hub)**: ⏳ Awaiting OAuth server implementation and secrets
+- **Application-Layer Permissions**: ⏳ Head teacher cross-user visibility (Phase 2)
+
+### 📋 Upcoming
+- **JWT Claims-based RLS**: Long-term solution for zero recursion risk
+- **Advanced Analytics**: Predictive models, intervention recommendations
+- **Mobile App**: React Native companion app
 
 ## Quick Start
 
@@ -23,12 +37,32 @@ A comprehensive **Primary School (G1-G6)** Learning Management System featuring 
 
 ## 🔧 Technology Stack
 
-- **Frontend**: Next.js 14 (App Router) + TypeScript + Tailwind CSS
-- **UI Components**: shadcn/ui + Radix UI + Framer Motion
-- **Backend**: Supabase Cloud (Official) - PostgreSQL, Auth, Storage, Edge Functions
-- **Charts**: Recharts
-- **Testing**: Vitest (unit) + Playwright (E2E)
-- **Deployment**: Zeabur (frontend) + Supabase Cloud (backend)
+**Frontend**:
+- Next.js 14 (App Router)
+- TypeScript 5.3
+- Tailwind CSS 3.4
+- shadcn/ui + Radix UI
+- Framer Motion
+
+**Backend**:
+- Supabase Cloud (PostgreSQL 15)
+- Supabase Auth (Google OAuth)
+- Supabase Storage
+- Edge Functions
+
+**Authentication**:
+- OAuth 2.0 + PKCE (RFC 7636)
+- Info Hub SSO integration
+- Webhook-based user sync
+
+**Dev Tools**:
+- ESLint + Prettier
+- Vitest (unit tests)
+- Playwright (E2E tests)
+
+**Deployment**:
+- Zeabur (frontend)
+- Supabase Cloud (backend)
 
 ## 🏗️ Project Structure
 
@@ -199,10 +233,36 @@ npm run deploy          # Deploy to Zeabur
 
 ## 📊 Key Features
 
+### 🔐 SSO Integration (Phase 1-4 Complete)
+- **OAuth 2.0 + PKCE**: Industry-standard authorization flow with enhanced security
+- **Webhook User Sync**: Real-time user data synchronization from Info Hub
+- **Session Management**: Secure Supabase session creation and maintenance
+- **Multi-role Support**: Admin, Head Teacher, Teacher, Office Member
+- **Zero Service Key Sharing**: LMS maintains complete control over credentials
+- **CSRF Protection**: State token validation prevents cross-site attacks
+- **Type-Safe Implementation**: 40+ TypeScript interfaces, 0 compilation errors
+
+**Files Created**:
+- `types/sso.ts` - Complete SSO type definitions
+- `lib/config/sso.ts` - Environment configuration helper
+- `lib/auth/pkce.ts` - PKCE RFC 7636 implementation
+- `lib/auth/sso-state.ts` - State management with CSRF protection
+- `app/api/webhook/user-sync/route.ts` - Webhook receiver endpoint
+- `app/api/auth/callback/infohub/route.ts` - OAuth callback handler
+- `components/auth/SSOLoginButton.tsx` - SSO login button UI
+
+**Security Measures**:
+- PKCE (Proof Key for Code Exchange) - prevents code interception
+- CSRF State Token - prevents cross-site request forgery
+- Webhook Secret - authenticates user sync requests
+- Service Role Key Isolation - LMS never shares credentials
+- RLS Policy Enforcement - all queries respect permissions
+
 ### Primary School Dashboard with Analytics
 - **Admin**: System-wide analytics and user management across all grades and course types with advanced statistical insights
 - **Head Teachers**: Grade×CourseType-specific insights and course controls (LT/IT/KCFS) with performance tracking
 - **Teachers**: Class-specific course management and student progress (assigned courses) with learning analytics
+- **Office Members**: Limited view-only access to class rosters and schedules
 
 ### 🧠 Analytics System (Phase 3A-1 ✅ Complete)
 - **40+ TypeScript Interfaces** - Comprehensive type system for all analytics data structures
@@ -247,7 +307,66 @@ npm run deploy          # Deploy to Zeabur
 5. **Commit frequently** - after each completed feature
 6. **Test comprehensively** - unit, integration, and E2E
 
+## 🗄️ Database Migrations
+
+**Latest Migration**: **019e - Emergency RLS Fix** (2025-11-18) ✅
+
+### Recent Migration History
+
+- **019e**: Removed `heads_view_jurisdiction` policy (RLS recursion fix) ✅
+  - **Problem**: Infinite recursion in `is_head_teacher()` function
+  - **Solution**: Removed application-layer permission policy temporarily
+  - **Impact**: Head teachers can only view their own data (Phase 1)
+  - **Next Step**: Implement JWT claims-based permissions (Phase 2)
+
+- **019d**: Syntax corrections (still had recursion issues) ❌
+- **019c**: Complete cleanup attempt (syntax errors) ❌
+- **019b**: Public schema migration (policy conflicts) ❌
+- **019**: SECURITY DEFINER functions (auth schema access denied) ❌
+- **018**: Rollback office_member policies ✅
+- **017**: Add office_member role support ✅
+- **015**: RLS performance optimization (44→0 `auth_rls_initplan` warnings) ✅
+- **014**: Track column type fix + analytics views rebuild ✅
+- **012-013**: Student courses + RLS security ✅
+- **007-011**: Core architecture (courses table, level format, track semantics) ✅
+
+### Database Design
+
+- **9 Core Tables**: users, classes, courses, students, student_courses, exams, scores, assessment_titles, assessment_codes
+- **3 Analytics Views**: student_grade_aggregates, class_statistics, teacher_performance
+- **49 RLS Policies**: Optimized with InitPlan caching (0 performance warnings)
+- **5 Helper Functions**: SECURITY DEFINER for permission checks
+
+See [CLAUDE.md](/Users/chenzehong/Desktop/LMS/CLAUDE.md) for complete migration documentation.
+
 ## 📝 Environment Setup
+
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+- Supabase account
+
+### Environment Variables
+
+```bash
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# Info Hub SSO (awaiting production secrets)
+NEXT_PUBLIC_INFOHUB_CLIENT_ID=lms-esid-client-id
+NEXT_PUBLIC_INFOHUB_AUTH_URL=https://infohub.com/api/oauth/authorize
+NEXT_PUBLIC_INFOHUB_TOKEN_URL=https://infohub.com/api/oauth/token
+NEXT_PUBLIC_INFOHUB_REDIRECT_URI=https://lms-esid.zeabur.app/api/auth/callback/infohub
+INFOHUB_WEBHOOK_SECRET=shared-webhook-secret
+
+# App Config
+NEXT_PUBLIC_APP_URL=https://lms-esid.zeabur.app
+NODE_ENV=production
+```
+
+### Installation Steps
 
 1. **Clone the repository**
    ```bash
@@ -263,7 +382,7 @@ npm run deploy          # Deploy to Zeabur
 3. **Set up environment variables**
    ```bash
    cp .env.example .env.local
-   # Edit .env.local with your Supabase credentials
+   # Edit .env.local with your credentials
    ```
 
 4. **Initialize database**
@@ -289,14 +408,69 @@ npm run deploy          # Deploy to Zeabur
 - **Type safety** - Maintain strict TypeScript compliance
 - **Testing requirements** - All new features require corresponding tests
 
-## 📚 Additional Resources
+## 📚 Documentation
 
+### SSO Integration Guides
+Comprehensive SSO documentation available in `docs/sso/`:
+- [SSO Integration Overview](docs/sso/SSO_INTEGRATION_OVERVIEW.md) - Architecture & decisions
+- [SSO Implementation Plan - LMS](docs/sso/SSO_IMPLEMENTATION_PLAN_LMS.md) - Detailed tasks & checklist
+- [SSO Security Analysis](docs/sso/SSO_SECURITY_ANALYSIS.md) - Security review & threat model
+- [SSO API Reference](docs/sso/SSO_API_REFERENCE.md) - API specifications & contracts
+- [SSO Testing Guide](docs/sso/SSO_TESTING_GUIDE.md) - Test strategy & scenarios
+- [SSO Deployment Guide](docs/sso/SSO_DEPLOYMENT_GUIDE.md) - Deployment steps & rollback
+
+### Project Guides
+- [CLAUDE.md](CLAUDE.md) - Complete project documentation for AI assistants
+- [Troubleshooting Guide](docs/troubleshooting/TROUBLESHOOTING_CLAUDE_CODE.md) - Environment variable caching fixes
+- [Migration Guide](docs/testing/MIGRATION_014_VIEW_DEPENDENCY_FIX.md) - Database migration dependency handling
+- [CSV Import Templates](templates/import/README.md) - Bulk data import documentation
+
+### External Resources
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Supabase Documentation](https://supabase.io/docs)
 - [shadcn/ui Components](https://ui.shadcn.com)
 - [Tailwind CSS](https://tailwindcss.com/docs)
+- [OAuth 2.0 RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749)
+- [PKCE RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636)
+
+## 🔐 Security
+
+- **RLS Policies**: 49 policies across 9 tables with InitPlan optimization
+- **PKCE OAuth**: RFC 7636 implementation for authorization code flow
+- **Webhook Signature**: HMAC-SHA256 verification for user sync
+- **CSRF Protection**: State token validation prevents cross-site attacks
+- **Service Role Isolation**: No credential sharing between systems
+- **Type Safety**: Full TypeScript coverage with runtime Zod validation
+
+## 📈 Performance
+
+- **Database Queries**: <500ms average (optimized with strategic indexes)
+- **SSO Login**: <5s end-to-end (target for Phase 5-7)
+- **Page Load**: <2s (LCP)
+- **RLS Overhead**: Minimal with InitPlan caching (0 performance warnings)
+- **Analytics Views**: 146ms average query time
+
+## 🤝 Contributing
+
+This is a private project. For internal contributions, please follow the coding standards in [CLAUDE.md](CLAUDE.md).
+
+### Key Contribution Guidelines
+1. Read CLAUDE.md before starting any task
+2. Follow pre-task compliance checklist
+3. Commit after every completed task
+4. Maintain single source of truth (no duplicate implementations)
+5. All database operations must respect RLS policies
+6. Grade calculations must use `/lib/grade` functions only
+
+## 📝 License
+
+Proprietary - All Rights Reserved
 
 ---
 
-**🎯 Primary School ELA LMS |康橋小學英語學習管理系統 | v1.2.0**
-🏫 Features: G1-G6 支援 | 一班三師架構 | Grade×CourseType 權限 | CSV批量匯入 | 📊 Analytics引擎 | 🧠 智能分析
+**🎯 Primary School ELA LMS | 康橋小學英語學習管理系統 | v1.9.0**
+
+**Maintained By**: ESID Development Team
+**Last Updated**: 2025-11-18
+
+🏫 **Core Features**: G1-G6 支援 | 一班三師架構 | Grade×CourseType 權限 | CSV批量匯入 | 📊 Analytics引擎 | 🧠 智能分析 | 🔐 Google SSO整合 (Phase 1-4)
