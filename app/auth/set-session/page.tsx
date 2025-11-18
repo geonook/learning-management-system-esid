@@ -1,14 +1,14 @@
 /**
  * Client-Side Session Setup Page
  *
- * This page receives access_token and refresh_token from OAuth callback
- * and sets the session in the browser context (client-side).
+ * This page receives OTP token_hash from OAuth callback
+ * and verifies it in the browser context to set session cookies.
  *
  * Flow:
- * 1. OAuth callback generates tokens (server-side)
- * 2. Redirects to this page with tokens as URL parameters
- * 3. This page sets session in browser (client-side)
- * 4. Redirects to dashboard with session cookies set
+ * 1. OAuth callback generates OTP (hashed_token) server-side
+ * 2. Redirects to this page with token_hash as URL parameter
+ * 3. This page calls verifyOtp() in browser to set session cookies
+ * 4. Redirects to dashboard with session established
  *
  * @version 1.0.0
  * @date 2025-11-18
