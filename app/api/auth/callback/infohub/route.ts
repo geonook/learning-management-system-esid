@@ -180,10 +180,20 @@ async function createOrUpdateUser(
 }
 
 /**
- * Create Supabase session for user
+ * Generate OTP link for client-side session setup
+ *
+ * NEW APPROACH (2025-11-18):
+ * Instead of creating session server-side (which doesn't set browser cookies),
+ * we generate a magic link OTP and redirect to client-side page to verify it.
+ *
+ * Flow:
+ * 1. Server: Generate magic link OTP (hashed_token)
+ * 2. Server: Redirect to /auth/set-session with token_hash
+ * 3. Client: Verify OTP in browser context (sets cookies)
+ * 4. Client: Redirect to dashboard
  *
  * @param email - User email
- * @returns Session creation result
+ * @returns URL with OTP hash for client-side verification
  */
 async function createSupabaseSession(email: string): Promise<{
   url: string
@@ -192,7 +202,7 @@ async function createSupabaseSession(email: string): Promise<{
   const supabase = createServiceRoleClient()
 
   try {
-    // Generate magic link (OTP) for the user
+    // Generate magic link OTP for the user
     const { data, error } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
       email,
@@ -203,30 +213,26 @@ async function createSupabaseSession(email: string): Promise<{
       throw error || new Error('No data returned from generateLink')
     }
 
-    // Extract the access_token and refresh_token from the hashed_token
-    const { hashed_token } = data.properties
+    // Extract the hashed_token from the response
+    const tokenHash = data.properties.hashed_token
 
-    // Exchange the token for a session
-    const { data: sessionData, error: sessionError } =
-      await supabase.auth.verifyOtp({
-        type: 'magiclink',
-        token_hash: hashed_token,
-      })
-
-    if (sessionError || !sessionData.session) {
-      console.error('[OAuth] Failed to verify OTP:', sessionError)
-      throw sessionError || new Error('No session returned from verifyOtp')
+    if (!tokenHash) {
+      throw new Error('Missing hashed_token from generateLink')
     }
 
-    console.log(`[OAuth] Created session for: ${email}`)
+    console.log(`[OAuth] Generated OTP for: ${email}`)
 
-    // Return success with redirect to dashboard
+    // Redirect to client-side session setup page with token_hash
+    // The /auth/set-session page will:
+    // 1. Call supabase.auth.verifyOtp() in browser context
+    // 2. This sets session cookies in browser
+    // 3. Then redirect to dashboard
     return {
-      url: '/dashboard',
+      url: `/auth/set-session?token_hash=${encodeURIComponent(tokenHash)}&type=magiclink&email=${encodeURIComponent(email)}`,
       error: null,
     }
   } catch (error) {
-    console.error('[OAuth] Session creation error:', error)
+    console.error('[OAuth] OTP generation error:', error)
     return {
       url: '/auth/login?error=session_creation_failed',
       error: error instanceof Error ? error : new Error('Unknown error'),
