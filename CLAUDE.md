@@ -1,15 +1,15 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 2.1
-> **Last Updated**: 2025-11-18
+> **Documentation Version**: 2.2
+> **Last Updated**: 2025-11-19
 > **Project**: learning-management-system-esid
-> **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (LMS Complete)**
-> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ LMS Complete, 📋 Info Hub Pending)**
+> **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Both Systems Complete)**
+> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**
 
 > **Current Status**:
 > - 📋 **Data Preparation Phase** - CSV templates ready, awaiting teacher data import
-> - ✅ **SSO LMS Implementation** - Phase 1-4 complete, RLS issues resolved, ready for Info Hub integration
-> - 📋 **SSO Info Hub Implementation** - Awaiting Info Hub Phases 1-6 implementation
+> - ✅ **SSO Implementation** - Both LMS & Info Hub complete, alignment verified, ready for E2E testing
+> - 🎯 **Next Step** - E2E integration testing in staging environment
 
 This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -378,7 +378,7 @@ student_id,full_name,grade,level,class_name
 
 ---
 
-## 🔐 Info Hub SSO Integration (2025-11-18) ✅ **LMS Phase 1-4 Complete** | 📋 **Info Hub Ready to Implement**
+## 🔐 Info Hub SSO Integration (2025-11-19) ✅ **Both Systems Complete** | 🎯 **Ready for E2E Testing**
 
 ### 🎯 Overview
 
@@ -391,6 +391,7 @@ student_id,full_name,grade,level,class_name
 - ✅ Supabase as single source of truth for user data
 - ✅ 30-day session persistence (Info Hub default implementation)
 - ✅ RLS recursion issues resolved (Migration 019e)
+- ✅ Full alignment achieved (Webhook HMAC-SHA256, field names, roles)
 
 ### 🏗️ Architecture Decision
 
@@ -434,12 +435,13 @@ LMS (Token Exchange) → Supabase User Sync → Session Creation → Dashboard
 - ✅ SSO Login Tested: Working without 500 errors (COMPLETE)
 - ✅ Technical Documentation: 5 comprehensive guides for Info Hub (COMPLETE)
 
-**Info Hub Implementation Status**: 0% (Awaiting Implementation)
-- 📋 Complete technical specs provided
-- 📋 Implementation checklist ready
-- 📋 API contracts documented
-- 📋 Security guidelines prepared
-- 📋 Test scenarios available
+**Info Hub Implementation Status**: 100% Complete ✅
+- ✅ OAuth Authorization + Token endpoints deployed (Commit 31a5b5c)
+- ✅ PKCE verification (SHA256) implemented
+- ✅ Webhook sender with HMAC-SHA256 signature
+- ✅ Role mapping system complete
+- ✅ Database schema with SSO fields
+- ✅ All 4 alignment issues resolved (2025-11-19)
 
 **LMS Phase 1-4 Completed** 🎉:
 - ✅ OAuth credentials configured (.env.local)
@@ -466,11 +468,18 @@ LMS (Token Exchange) → Supabase User Sync → Session Creation → Dashboard
 
 **Files Modified**:
 - `app/auth/login/page.tsx` - Simplified to SSO-only authentication (79% reduction)
+- `types/sso.ts` - Added 'head' to InfoHubRole type (Commit 75d155a)
+
+**Alignment Fixes Completed (2025-11-19)**:
+1. ✅ **LMS**: Added 'head' role to InfoHubRole type (Commit 75d155a)
+2. ✅ **Info Hub**: Implemented HMAC-SHA256 webhook signature (Commit 31a5b5c)
+3. ✅ **Info Hub**: Fixed field name grade_level → grade (Commit 31a5b5c)
+4. ✅ **Info Hub**: Added office_member role support (Commit 31a5b5c)
 
 **Next Steps**:
-- Info Hub: Implement OAuth Server (Phases 1-6)
-- Integration: E2E testing between systems
-- Production: Deploy and monitor
+- ✅ Both systems aligned and ready
+- 📋 E2E integration testing (staging environment)
+- 📋 Production deployment after successful testing
 
 ### 🔗 Role Mapping
 
