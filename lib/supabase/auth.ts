@@ -2,7 +2,7 @@ import { createClient } from './server'
 import { User } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 
-export type UserRole = 'admin' | 'head' | 'teacher' | 'student'
+export type UserRole = 'admin' | 'office_member' | 'head' | 'teacher' | 'student'
 export type TeacherType = 'LT' | 'IT' | 'KCFS'
 export type TrackType = 'local' | 'international'
 
@@ -63,6 +63,10 @@ export async function canAccessGradeTrack(
 
   // Admin can access everything
   if (profile.role === 'admin') return true
+
+  // Office member can view all grades and tracks (read-only)
+  // RLS policies enforce read-only access
+  if (profile.role === 'office_member') return true
 
   // Head can access their grade and track
   if (profile.role === 'head') {

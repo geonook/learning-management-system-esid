@@ -3,8 +3,12 @@
  * Info Hub ↔ LMS Single Sign-On
  * OAuth 2.0 + PKCE Implementation
  *
- * @version 1.0.0
- * @date 2025-11-13
+ * Updated to align with Info Hub implementation:
+ * - Webhook signature: X-Webhook-Signature (HMAC-SHA256)
+ * - Events: user.created, user.updated only (no user.deleted)
+ *
+ * @version 1.1.0
+ * @date 2025-11-19
  */
 
 import { Database } from './database'
@@ -140,16 +144,18 @@ export interface RoleMapping {
 
 /**
  * Webhook 事件類型
+ * Info Hub only sends user.created and user.updated events
  */
-export type WebhookEventType = 'user.created' | 'user.updated' | 'user.deleted'
+export type WebhookEventType = 'user.created' | 'user.updated'
 
 /**
  * Webhook 請求標頭
+ * Info Hub uses X-Webhook-Signature with HMAC-SHA256
  */
 export interface WebhookHeaders {
-  /** Authorization: Bearer <LMS_WEBHOOK_SECRET> */
-  authorization: string
-  /** X-Webhook-Event: user.created | user.updated | user.deleted */
+  /** X-Webhook-Signature: HMAC-SHA256 signature (hex) */
+  'x-webhook-signature': string
+  /** X-Webhook-Event: user.created | user.updated */
   'x-webhook-event': WebhookEventType
   /** X-Webhook-Retry: 0 | 1 | 2 */
   'x-webhook-retry': string

@@ -2,10 +2,11 @@
  * Webhook Receiver Endpoint
  * Info Hub → LMS User Synchronization
  *
- * Handles user.created, user.updated, user.deleted events
+ * Handles user.created and user.updated events
+ * Uses HMAC-SHA256 signature verification (X-Webhook-Signature header)
  *
- * @version 1.0.0
- * @date 2025-11-13
+ * @version 1.1.0
+ * @date 2025-11-19
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -24,35 +25,56 @@ type CourseType = Database['public']['Enums']['course_type']
 
 /**
  * 驗證 Webhook 簽章
- * 使用 timing-safe comparison 防止 timing attacks
+ * 使用 HMAC-SHA256 + timing-safe comparison 防止 timing attacks
+ *
+ * Info Hub 發送格式: X-Webhook-Signature: <HMAC-SHA256-hex>
  *
  * @param request - Incoming request
- * @param body - Request body
+ * @param body - Request body (JSON string)
  * @returns true if signature is valid
  */
 async function verifyWebhookSignature(
   request: NextRequest,
   body: string
 ): Promise<boolean> {
-  const signature = request.headers.get('authorization')
+  const receivedSignature = request.headers.get('x-webhook-signature')
   const config = getSSOConfig()
 
-  if (!signature) {
-    console.error('[Webhook] Missing authorization header')
+  if (!receivedSignature) {
+    console.error('[Webhook] Missing X-Webhook-Signature header')
     return false
   }
 
-  // Expected format: "Bearer <LMS_WEBHOOK_SECRET>"
-  const expectedAuth = `Bearer ${config.webhookSecret}`
+  // Compute HMAC-SHA256 signature using Web Crypto API
+  const encoder = new TextEncoder()
+  const keyData = encoder.encode(config.webhookSecret)
+  const messageData = encoder.encode(body)
+
+  // Import secret as HMAC key
+  const key = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  )
+
+  // Compute signature
+  const signatureBuffer = await crypto.subtle.sign('HMAC', key, messageData)
+
+  // Convert to hex string
+  const expectedSignature = Array.from(new Uint8Array(signatureBuffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
 
   // Timing-safe comparison
-  if (signature.length !== expectedAuth.length) {
+  if (receivedSignature.length !== expectedSignature.length) {
     return false
   }
 
   let isValid = true
-  for (let i = 0; i < signature.length; i++) {
-    if (signature.charCodeAt(i) !== expectedAuth.charCodeAt(i)) {
+  for (let i = 0; i < receivedSignature.length; i++) {
+    if (receivedSignature.charCodeAt(i) !== expectedSignature.charCodeAt(i)) {
       isValid = false
     }
   }
@@ -187,40 +209,6 @@ async function syncUserToSupabase(
 }
 
 /**
- * 刪除 Supabase 使用者
- *
- * @param user - Info Hub user data
- * @returns Deleted user ID
- */
-async function deleteUserFromSupabase(user: InfoHubUser): Promise<string> {
-  const supabase = createServiceRoleClient()
-
-  // Find user by email
-  const { data: existingUser } = await supabase
-    .from('users')
-    .select('id')
-    .eq('email', user.email)
-    .single()
-
-  if (!existingUser) {
-    throw new Error(`User not found: ${user.email}`)
-  }
-
-  // Delete from auth.users (cascade will handle public.users)
-  const { error: authError } = await supabase.auth.admin.deleteUser(
-    existingUser.id
-  )
-
-  if (authError) {
-    console.error('[Webhook] Failed to delete auth user:', authError)
-    throw authError
-  }
-
-  console.log(`[Webhook] Deleted user: ${user.email} (${existingUser.id})`)
-  return existingUser.id
-}
-
-/**
  * POST /api/webhook/user-sync
  * 處理 Info Hub 的使用者同步 Webhook
  */
@@ -259,11 +247,8 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. Validate event type
-    const validEvents: WebhookEventType[] = [
-      'user.created',
-      'user.updated',
-      'user.deleted',
-    ]
+    // Info Hub only sends user.created and user.updated events
+    const validEvents: WebhookEventType[] = ['user.created', 'user.updated']
     if (!validEvents.includes(payload.event)) {
       console.error('[Webhook] Invalid event type:', payload.event)
       return NextResponse.json(
@@ -283,10 +268,6 @@ export async function POST(request: NextRequest) {
       case 'user.created':
       case 'user.updated':
         userId = await syncUserToSupabase(payload.user, payload.event)
-        break
-
-      case 'user.deleted':
-        userId = await deleteUserFromSupabase(payload.user)
         break
 
       default:
