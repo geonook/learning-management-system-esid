@@ -71,7 +71,7 @@ export interface RecentAlert {
  * Get students data based on user role and permissions
  */
 export async function getDashboardStudents(
-  userRole: 'admin' | 'head' | 'teacher' | 'student',
+  userRole: 'admin' | 'office_member' | 'head' | 'teacher' | 'student',
   userId?: string,
   grade?: number,
   track?: 'local' | 'international'
@@ -312,7 +312,7 @@ export async function getAdminKpis(): Promise<AdminKpis> {
  * Get class score distribution for charts
  */
 export async function getClassDistribution(
-  userRole: 'admin' | 'head' | 'teacher' | 'student',
+  userRole: 'admin' | 'office_member' | 'head' | 'teacher' | 'student',
   userId?: string,
   grade?: number,
   track?: 'local' | 'international'
@@ -402,7 +402,7 @@ export async function getClassDistribution(
  * Get upcoming deadlines for exams and assessments
  */
 export async function getUpcomingDeadlines(
-  userRole: 'admin' | 'head' | 'teacher' | 'student',
+  userRole: 'admin' | 'office_member' | 'head' | 'teacher' | 'student',
   userId?: string,
   grade?: number,
   track?: 'local' | 'international'
@@ -494,7 +494,7 @@ export async function getUpcomingDeadlines(
  * Get recent alerts and notifications
  */
 export async function getRecentAlerts(
-  userRole: 'admin' | 'head' | 'teacher' | 'student',
+  userRole: 'admin' | 'office_member' | 'head' | 'teacher' | 'student',
   userId?: string
 ): Promise<RecentAlert[]> {
   // For now, return static alerts similar to mock data
@@ -579,7 +579,7 @@ export async function getRecentAlerts(
  * Get scatter plot data for class performance analysis
  */
 export async function getScatterData(
-  userRole: 'admin' | 'head' | 'teacher' | 'student',
+  userRole: 'admin' | 'office_member' | 'head' | 'teacher' | 'student',
   userId?: string
 ): Promise<ScatterPoint[]> {
   // This is a placeholder implementation

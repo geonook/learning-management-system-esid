@@ -26,7 +26,7 @@ export interface Notification {
   title: string
   message: string
   metadata?: Record<string, any> // Additional context data
-  targetRole?: 'admin' | 'head' | 'teacher' | 'student'
+  targetRole?: 'admin' | 'office_member' | 'head' | 'teacher' | 'student'
   targetUserId?: string
   targetGrade?: number
   targetTrack?: 'local' | 'international' | null
@@ -259,7 +259,7 @@ export async function generateSystemNotifications(): Promise<Notification[]> {
  */
 export async function getUserNotifications(
   userId: string,
-  userRole: 'admin' | 'head' | 'teacher' | 'student',
+  userRole: 'admin' | 'office_member' | 'head' | 'teacher' | 'student',
   grade?: number,
   track?: 'local' | 'international',
   limit: number = 20
@@ -329,7 +329,7 @@ export async function markNotificationAsRead(notificationId: string): Promise<bo
  */
 export async function getNotificationSummary(
   userId: string,
-  userRole: 'admin' | 'head' | 'teacher' | 'student',
+  userRole: 'admin' | 'office_member' | 'head' | 'teacher' | 'student',
   grade?: number,
   track?: 'local' | 'international'
 ): Promise<{

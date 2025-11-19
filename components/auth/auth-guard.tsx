@@ -7,7 +7,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner'
 
 interface AuthGuardProps {
   children: React.ReactNode
-  requiredRoles?: ('admin' | 'head' | 'teacher' | 'student')[]
+  requiredRoles?: ('admin' | 'office_member' | 'head' | 'teacher' | 'student')[]
   redirectTo?: string
 }
 

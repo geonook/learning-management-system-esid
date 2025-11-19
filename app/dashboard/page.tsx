@@ -91,7 +91,8 @@ export default function Dashboard() {
         if (userRole === 'teacher') {
           const teacherKpiData = await getTeacherKpis(user.id)
           setTeacherKpis(teacherKpiData)
-        } else if (userRole === 'admin') {
+        } else if (userRole === 'admin' || userRole === 'office_member') {
+          // office_member sees same KPIs as admin (read-only view of all data)
           const adminKpiData = await getAdminKpis()
           setAdminKpis(adminKpiData)
         } else if (userRole === 'head' && userPermissions?.grade && userPermissions?.track) {
@@ -119,7 +120,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <AuthGuard requiredRoles={['admin', 'head', 'teacher']}>
+      <AuthGuard requiredRoles={['admin', 'office_member', 'head', 'teacher']}>
         <div className="flex items-center justify-center min-h-[400px]">
           <LoadingSpinner />
         </div>
@@ -128,12 +129,13 @@ export default function Dashboard() {
   }
 
   return (
-    <AuthGuard requiredRoles={['admin', 'head', 'teacher']}>
+    <AuthGuard requiredRoles={['admin', 'office_member', 'head', 'teacher']}>
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">
-          {userRole === 'admin' ? 'Admin Dashboard' : 
-           userRole === 'head' ? 'Head Teacher Dashboard' : 
+          {userRole === 'admin' ? 'Admin Dashboard' :
+           userRole === 'office_member' ? 'Office Member Dashboard' :
+           userRole === 'head' ? 'Head Teacher Dashboard' :
            'Teacher Dashboard'}
         </h1>
       </div>
@@ -174,6 +176,46 @@ export default function Dashboard() {
 
       {/* Admin KPIs */}
       {userRole === 'admin' && (
+        <div className="grid gap-3 md:grid-cols-5">
+          <StatCard
+            label="Total Exams"
+            value={adminKpis.totalExams.toString()}
+            delta="+12"
+            icon={<BarChart2 className="w-4 h-4" />}
+          />
+          <StatCard
+            label="Due Soon"
+            value={adminKpis.notDue.toString()}
+            delta="+3"
+            icon={<AlertCircle className="w-4 h-4" />}
+            tone="warning"
+          />
+          <StatCard
+            label="Overdue"
+            value={adminKpis.overdue.toString()}
+            delta="-2"
+            icon={<AlertCircle className="w-4 h-4" />}
+            tone={adminKpis.overdue > 0 ? "danger" : "success"}
+          />
+          <StatCard
+            label="Coverage"
+            value={`${adminKpis.coverage}%`}
+            delta="+5.2%"
+            icon={<CheckCircle2 className="w-4 h-4" />}
+            tone="success"
+          />
+          <StatCard
+            label="On Time"
+            value={`${adminKpis.onTime}%`}
+            delta="+1.8%"
+            icon={<CheckSquare className="w-4 h-4" />}
+            tone="success"
+          />
+        </div>
+      )}
+
+      {/* Office Member KPIs (Read-only view of system metrics) */}
+      {userRole === 'office_member' && (
         <div className="grid gap-3 md:grid-cols-5">
           <StatCard
             label="Total Exams"
