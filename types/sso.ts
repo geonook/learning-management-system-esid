@@ -121,7 +121,7 @@ export interface InfoHubUser {
 /**
  * Info Hub 角色列舉
  */
-export type InfoHubRole = 'admin' | 'office_member' | 'teacher' | 'viewer'
+export type InfoHubRole = 'admin' | 'office_member' | 'head' | 'teacher' | 'viewer'
 
 /**
  * 教師類型列舉
