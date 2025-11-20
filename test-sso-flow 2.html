@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>SSO Flow Test - LMS Staging</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-left: 4px solid #2196F3;
+            border-radius: 4px;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.success { background: #4CAF50; color: white; }
+        .status.error { background: #f44336; color: white; }
+        .status.warning { background: #ff9800; color: white; }
+        .param {
+            margin: 8px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+        .key {
+            color: #1976D2;
+            font-weight: bold;
+        }
+        .value {
+            color: #388E3C;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button.secondary {
+            background: #2196F3;
+        }
+        button.secondary:hover {
+            background: #0b7dda;
+        }
+        .warning-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .success-box {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        code {
+            background: #e0e0e0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 SSO Flow Test - LMS Staging Environment</h1>
+
+        <div class="success-box">
+            ✅ <strong>部署成功！</strong>正在驗證 OAuth 參數...
+        </div>
+
+        <div class="section">
+            <h2>📍 當前環境</h2>
+            <div class="param">
+                <span class="key">Current Origin:</span>
+                <span class="value" id="current-origin"></span>
+            </div>
+            <div class="param">
+                <span class="key">Current URL:</span>
+                <span class="value" id="current-url"></span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔧 計算的 redirect_uri</h2>
+            <div class="param">
+                <span class="key">redirect_uri:</span>
+                <span class="value" id="redirect-uri"></span>
+                <span id="redirect-status"></span>
+            </div>
+            <div class="param">
+                <span class="key">計算方式:</span>
+                <span class="value">window.location.origin + '/api/auth/callback/infohub'</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🌐 完整授權 URL</h2>
+            <div id="auth-url-display" style="word-break: break-all; margin: 10px 0;"></div>
+            <button onclick="copyAuthUrl()">📋 複製授權 URL</button>
+        </div>
+
+        <div class="section">
+            <h2>📊 URL 參數詳細解析</h2>
+            <div id="params-display"></div>
+        </div>
+
+        <div class="warning-box" id="test-info">
+            <strong>⚠️ 測試說明：</strong>
+            <ul>
+                <li>點擊下方按鈕將開啟瀏覽器 DevTools</li>
+                <li>切換到 <strong>Network</strong> 標籤</li>
+                <li>觀察完整的重定向流程</li>
+                <li>檢查是否正確重定向回 LMS（而非 localhost:8080）</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <button onclick="testSSOLogin()" style="font-size: 18px; padding: 20px 40px;">
+                🚀 開始測試 SSO 登入
+            </button>
+            <button class="secondary" onclick="openDevTools()">
+                🔍 開啟 DevTools
+            </button>
+        </div>
+
+        <div class="section">
+            <h2>✅ 預期行為 vs ❌ 之前的錯誤</h2>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="background: #4CAF50; color: white;">
+                    <th style="padding: 10px; border: 1px solid #ddd;">步驟</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;">✅ 預期（正確）</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;">❌ 之前（錯誤）</th>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #ddd;"><strong>1. 授權請求</strong></td>
+                    <td style="padding: 10px; border: 1px solid #ddd; background: #d4edda;">
+                        redirect_uri=<code>https://lms-staging.zeabur.app/api/auth/callback/infohub</code>
+                    </td>
+                    <td style="padding: 10px; border: 1px solid #ddd; background: #f8d7da;">
+                        redirect_uri=<code>http://localhost:3000/...</code>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #ddd;"><strong>2. Google 登入</strong></td>
+                    <td style="padding: 10px; border: 1px solid #ddd; background: #d4edda;">
+                        成功登入 Google
+                    </td>
+                    <td style="padding: 10px; border: 1px solid #ddd; background: #d4edda;">
+                        成功登入 Google ✅
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #ddd;"><strong>3. Info Hub 重定向</strong></td>
+                    <td style="padding: 10px; border: 1px solid #ddd; background: #d4edda;">
+                        重定向到 <code>https://lms-staging.zeabur.app/api/auth/callback/infohub?code=...</code>
+                    </td>
+                    <td style="padding: 10px; border: 1px solid #ddd; background: #f8d7da;">
+                        重定向到 <code>https://localhost:8080/dashboard</code> ❌
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #ddd;"><strong>4. 最終結果</strong></td>
+                    <td style="padding: 10px; border: 1px solid #ddd; background: #d4edda;">
+                        成功登入 LMS Dashboard
+                    </td>
+                    <td style="padding: 10px; border: 1px solid #ddd; background: #f8d7da;">
+                        ERR_CONNECTION_REFUSED ❌
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // 模擬 getOAuthCallbackUrl() 函式
+        function getOAuthCallbackUrl() {
+            if (typeof window !== 'undefined') {
+                return `${window.location.origin}/api/auth/callback/infohub`
+            }
+            return 'http://localhost:3000/api/auth/callback/infohub'
+        }
+
+        // 初始化顯示
+        const currentOrigin = window.location.origin
+        const currentUrl = window.location.href
+        const redirectUri = getOAuthCallbackUrl()
+
+        document.getElementById('current-origin').textContent = currentOrigin
+        document.getElementById('current-url').textContent = currentUrl
+        document.getElementById('redirect-uri').textContent = redirectUri
+
+        // 檢查 redirect_uri 是否正確
+        const redirectStatus = document.getElementById('redirect-status')
+        if (redirectUri.includes('lms-staging.zeabur.app')) {
+            redirectStatus.innerHTML = '<span class="status success">✅ 正確</span>'
+        } else if (redirectUri.includes('localhost')) {
+            redirectStatus.innerHTML = '<span class="status error">❌ 錯誤（使用 localhost）</span>'
+        } else {
+            redirectStatus.innerHTML = '<span class="status warning">⚠️ 未知環境</span>'
+        }
+
+        // 建構授權 URL（使用真實的 staging 配置）
+        const config = {
+            clientId: 'eb88b24e-8392-45c4-b7f7-39f03b6df208',
+            authUrl: 'https://next14-landing.zeabur.app/api/oauth/authorize'
+        }
+
+        // 生成簡單的測試用 PKCE challenge（實際應用會使用 SHA-256）
+        const testCodeChallenge = btoa('test_code_verifier_for_debugging_only').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
+        const testState = 'test_state_' + Math.random().toString(36).substring(7)
+
+        const authParams = new URLSearchParams({
+            client_id: config.clientId,
+            redirect_uri: redirectUri,
+            response_type: 'code',
+            code_challenge: testCodeChallenge,
+            code_challenge_method: 'S256',
+            state: testState,
+            scope: 'openid profile email',
+        })
+
+        const authUrl = `${config.authUrl}?${authParams.toString()}`
+
+        // 顯示授權 URL
+        document.getElementById('auth-url-display').innerHTML =
+            `<code style="display: block; padding: 15px; background: #e0e0e0; border-radius: 5px; overflow-x: auto;">${authUrl}</code>`
+
+        // 顯示參數
+        let paramsHtml = ''
+        authParams.forEach((value, key) => {
+            let displayValue = value
+            if (key === 'code_challenge' && value.length > 50) {
+                displayValue = value.substring(0, 50) + '...'
+            }
+            paramsHtml += `
+                <div class="param">
+                    <span class="key">${key}:</span>
+                    <span class="value">${displayValue}</span>
+                </div>
+            `
+        })
+        document.getElementById('params-display').innerHTML = paramsHtml
+
+        // 複製授權 URL
+        function copyAuthUrl() {
+            navigator.clipboard.writeText(authUrl).then(() => {
+                alert('✅ 授權 URL 已複製到剪貼板！')
+            }).catch(err => {
+                console.error('複製失敗:', err)
+                prompt('請手動複製此 URL:', authUrl)
+            })
+        }
+
+        // 開啟 DevTools
+        function openDevTools() {
+            alert('請按 F12 或 Cmd+Option+I (Mac) 開啟 DevTools，然後切換到 Network 標籤')
+        }
+
+        // 測試 SSO 登入
+        function testSSOLogin() {
+            if (confirm(
+                '即將開始 SSO 登入測試\n\n' +
+                '✅ redirect_uri: ' + redirectUri + '\n\n' +
+                '請確認：\n' +
+                '1. DevTools 已開啟並切換到 Network 標籤\n' +
+                '2. 準備觀察完整的重定向流程\n' +
+                '3. 檢查最終是否重定向到 LMS（而非 localhost:8080）\n\n' +
+                '確定要繼續嗎？'
+            )) {
+                console.log('[SSO Test] Starting SSO login flow...')
+                console.log('[SSO Test] redirect_uri:', redirectUri)
+                console.log('[SSO Test] Full auth URL:', authUrl)
+
+                // 實際重定向
+                window.location.href = authUrl
+            }
+        }
+
+        // 自動執行檢查
+        console.log('=== SSO Configuration Check ===')
+        console.log('Current Origin:', currentOrigin)
+        console.log('redirect_uri:', redirectUri)
+        console.log('Is Correct?', redirectUri.includes('lms-staging.zeabur.app'))
+        console.log('Full Auth URL:', authUrl)
+    </script>
+</body>
+</html>

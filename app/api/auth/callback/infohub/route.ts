@@ -8,20 +8,20 @@
  * @date 2025-11-13
  */
 
-import { NextRequest, NextResponse } from 'next/server'
-import { createServiceRoleClient } from '@/lib/supabase/server'
-import { getSSOConfig, getOAuthCallbackUrl } from '@/lib/config/sso'
-import { buildRedirectUrl } from '@/lib/utils/url'
+import { NextRequest, NextResponse } from "next/server";
+import { createServiceRoleClient } from "@/lib/supabase/server";
+import { getSSOConfig, getOAuthCallbackUrl } from "@/lib/config/sso";
+import { buildRedirectUrl } from "@/lib/utils/url";
 import {
   OAuthTokenRequest,
   OAuthTokenResponse,
   SSOCallbackParams,
   CreateSupabaseUserParams,
-} from '@/types/sso'
-import { Database } from '@/types/database'
+} from "@/types/sso";
+import { Database } from "@/types/database";
 
-type UserRole = Database['public']['Enums']['user_role']
-type CourseType = Database['public']['Enums']['course_type']
+type UserRole = Database["public"]["Enums"]["user_role"];
+type CourseType = Database["public"]["Enums"]["course_type"];
 
 /**
  * Exchange authorization code for user data
@@ -34,46 +34,52 @@ async function exchangeToken(
   code: string,
   codeVerifier: string
 ): Promise<OAuthTokenResponse> {
-  const config = getSSOConfig()
+  const config = getSSOConfig();
 
   const tokenRequest: OAuthTokenRequest = {
     client_id: config.clientId,
     client_secret: config.clientSecret,
     code,
     code_verifier: codeVerifier,
-    grant_type: 'authorization_code',
+    grant_type: "authorization_code",
     redirect_uri: getOAuthCallbackUrl(), // Use unified helper function
-  }
+  };
 
-  console.log('[OAuth/exchangeToken] Request to:', config.tokenUrl)
-  console.log('[OAuth/exchangeToken] Redirect URI:', tokenRequest.redirect_uri)
-  console.log('[OAuth/exchangeToken] Code length:', code.length)
-  console.log('[OAuth/exchangeToken] Verifier length:', codeVerifier.length)
+  console.log("[OAuth/exchangeToken] Request to:", config.tokenUrl);
+  console.log("[OAuth/exchangeToken] Redirect URI:", tokenRequest.redirect_uri);
+  console.log("[OAuth/exchangeToken] Code length:", code.length);
+  console.log("[OAuth/exchangeToken] Verifier length:", codeVerifier.length);
 
   const response = await fetch(config.tokenUrl, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(tokenRequest),
-  })
+  });
 
-  console.log('[OAuth/exchangeToken] Response status:', response.status)
+  console.log("[OAuth/exchangeToken] Response status:", response.status);
 
   if (!response.ok) {
-    const errorText = await response.text()
-    console.error('[OAuth/exchangeToken] Failed with status:', response.status)
-    console.error('[OAuth/exchangeToken] Error body:', errorText)
-    throw new Error(`Token exchange failed: ${response.status} ${errorText}`)
+    const errorText = await response.text();
+    console.error("[OAuth/exchangeToken] Failed with status:", response.status);
+    console.error("[OAuth/exchangeToken] Error body:", errorText);
+    throw new Error(`Token exchange failed: ${response.status} ${errorText}`);
   }
 
-  const tokenData = (await response.json()) as OAuthTokenResponse
+  const tokenData = (await response.json()) as OAuthTokenResponse;
 
-  console.log('[OAuth/exchangeToken] Success! User email:', tokenData.user.email)
-  console.log('[OAuth/exchangeToken] User role:', tokenData.user.role)
-  console.log('[OAuth/exchangeToken] Webhook success:', tokenData.webhook_status.success)
+  console.log(
+    "[OAuth/exchangeToken] Success! User email:",
+    tokenData.user.email
+  );
+  console.log("[OAuth/exchangeToken] User role:", tokenData.user.role);
+  console.log(
+    "[OAuth/exchangeToken] Webhook success:",
+    tokenData.webhook_status.success
+  );
 
-  return tokenData
+  return tokenData;
 }
 
 /**
@@ -91,16 +97,16 @@ async function exchangeToken(
  */
 function mapRole(infohubRole: string): UserRole {
   switch (infohubRole) {
-    case 'admin':
-      return 'admin'
-    case 'office_member':
-      return 'office_member'  // Read-only access to all grades
-    case 'head':
-      return 'head'
-    case 'teacher':
-      return 'teacher'
+    case "admin":
+      return "admin";
+    case "office_member":
+      return "office_member"; // Read-only access to all grades
+    case "head":
+      return "head";
+    case "teacher":
+      return "teacher";
     default:
-      throw new Error(`Unsupported Info Hub role: ${infohubRole}`)
+      throw new Error(`Unsupported Info Hub role: ${infohubRole}`);
   }
 }
 
@@ -114,69 +120,110 @@ function mapRole(infohubRole: string): UserRole {
 async function createOrUpdateUser(
   params: CreateSupabaseUserParams
 ): Promise<string> {
-  const supabase = createServiceRoleClient()
+  const supabase = createServiceRoleClient();
 
   // Check if user exists
   const { data: existingUser } = await supabase
-    .from('users')
-    .select('id')
-    .eq('email', params.email)
-    .single()
+    .from("users")
+    .select("id")
+    .eq("email", params.email)
+    .single();
 
   if (existingUser) {
     // Update existing user
     const { error } = await supabase
-      .from('users')
+      .from("users")
       .update({
         full_name: params.fullName,
         role: params.role,
-        track: params.teacherType as CourseType | null,
+        teacher_type: params.teacherType as CourseType | null,
+        track: params.track,
         grade: params.grade || null,
       })
-      .eq('id', existingUser.id)
+      .eq("id", existingUser.id);
 
     if (error) {
-      console.error('[OAuth] Failed to update user:', error)
-      throw error
+      console.error("[OAuth] Failed to update user:", error);
+      throw error;
     }
 
-    console.log(`[OAuth] Updated user via compensatory sync: ${params.email}`)
-    return existingUser.id
+    console.log(`[OAuth] Updated user via compensatory sync: ${params.email}`);
+    return existingUser.id;
   }
 
   // Create new user
-  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-    email: params.email,
-    email_confirm: true,
-    user_metadata: {
-      full_name: params.fullName,
-      avatar_url: params.avatarUrl,
-      infohub_user_id: params.infohubUserId,
-    },
-  })
+  let userId = "";
 
-  if (authError || !authData.user) {
-    console.error('[OAuth] Failed to create auth user:', authError)
-    throw authError || new Error('No user returned from auth.createUser')
+  const { data: authData, error: authError } =
+    await supabase.auth.admin.createUser({
+      email: params.email,
+      email_confirm: true,
+      user_metadata: {
+        full_name: params.fullName,
+        avatar_url: params.avatarUrl,
+        infohub_user_id: params.infohubUserId,
+      },
+    });
+
+  if (authError) {
+    // Handle "User already registered" case
+    if (
+      authError.message?.includes("already registered") ||
+      authError.status === 422
+    ) {
+      console.log("[OAuth] User already exists in Auth, fetching ID...");
+      const { data: users, error: listError } =
+        await supabase.auth.admin.listUsers();
+
+      if (listError) {
+        console.error("[OAuth] Failed to list users for recovery:", listError);
+        throw authError;
+      }
+
+      const foundUser = users.users.find(
+        (u) => u.email?.toLowerCase() === params.email.toLowerCase()
+      );
+
+      if (foundUser) {
+        console.log(
+          "[OAuth] Found existing Auth user, recovering...",
+          foundUser.id
+        );
+        userId = foundUser.id;
+      } else {
+        console.error(
+          "[OAuth] User reported as registered but not found in list."
+        );
+        throw authError;
+      }
+    } else {
+      console.error("[OAuth] Failed to create auth user:", authError);
+      throw authError;
+    }
+  } else if (authData.user) {
+    userId = authData.user.id;
+  } else {
+    throw new Error("No user returned from auth.createUser");
   }
 
-  const { error: userError } = await supabase.from('users').insert({
-    id: authData.user.id,
+  const { error: userError } = await supabase.from("users").insert({
+    id: userId,
     email: params.email,
     full_name: params.fullName,
     role: params.role,
-    track: params.teacherType as CourseType | null,
+    teacher_type: params.teacherType as CourseType | null,
+    track: params.track,
     grade: params.grade || null,
     created_at: new Date().toISOString(),
-  })
+  });
 
   if (userError) {
-    console.error('[OAuth] Failed to create public user:', userError)
-    throw userError
+    console.error("[OAuth] Failed to create public user:", userError);
+    throw userError;
   }
 
-  console.log(`[OAuth] Created user via compensatory sync: ${params.email}`)
-  return authData.user.id
+  console.log(`[OAuth] Created user via compensatory sync: ${params.email}`);
+  return userId;
 }
 
 /**
@@ -196,31 +243,31 @@ async function createOrUpdateUser(
  * @returns URL with OTP hash for client-side verification
  */
 async function createSupabaseSession(email: string): Promise<{
-  url: string
-  error: Error | null
+  url: string;
+  error: Error | null;
 }> {
-  const supabase = createServiceRoleClient()
+  const supabase = createServiceRoleClient();
 
   try {
     // Generate magic link OTP for the user
     const { data, error } = await supabase.auth.admin.generateLink({
-      type: 'magiclink',
+      type: "magiclink",
       email,
-    })
+    });
 
     if (error || !data) {
-      console.error('[OAuth] Failed to generate magic link:', error)
-      throw error || new Error('No data returned from generateLink')
+      console.error("[OAuth] Failed to generate magic link:", error);
+      throw error || new Error("No data returned from generateLink");
     }
 
     // Extract the hashed_token from the response
-    const tokenHash = data.properties.hashed_token
+    const tokenHash = data.properties.hashed_token;
 
     if (!tokenHash) {
-      throw new Error('Missing hashed_token from generateLink')
+      throw new Error("Missing hashed_token from generateLink");
     }
 
-    console.log(`[OAuth] Generated OTP for: ${email}`)
+    console.log(`[OAuth] Generated OTP for: ${email}`);
 
     // Redirect to client-side session setup page with token_hash
     // The /auth/set-session page will:
@@ -228,15 +275,17 @@ async function createSupabaseSession(email: string): Promise<{
     // 2. This sets session cookies in browser
     // 3. Then redirect to dashboard
     return {
-      url: `/auth/set-session?token_hash=${encodeURIComponent(tokenHash)}&type=magiclink&email=${encodeURIComponent(email)}`,
+      url: `/auth/set-session?token_hash=${encodeURIComponent(
+        tokenHash
+      )}&type=magiclink&email=${encodeURIComponent(email)}`,
       error: null,
-    }
+    };
   } catch (error) {
-    console.error('[OAuth] OTP generation error:', error)
+    console.error("[OAuth] OTP generation error:", error);
     return {
-      url: '/auth/login?error=session_creation_failed',
-      error: error instanceof Error ? error : new Error('Unknown error'),
-    }
+      url: "/auth/login?error=session_creation_failed",
+      error: error instanceof Error ? error : new Error("Unknown error"),
+    };
   }
 }
 
@@ -245,84 +294,102 @@ async function createSupabaseSession(email: string): Promise<{
  * OAuth callback endpoint - receives authorization code from Info Hub
  */
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams
+  const searchParams = request.nextUrl.searchParams;
 
   // Parse callback parameters
   const callbackParams: SSOCallbackParams = {
-    code: searchParams.get('code') || '',
-    state: searchParams.get('state') || '',
-    error: searchParams.get('error') || undefined,
-    error_description: searchParams.get('error_description') || undefined,
-  }
+    code: searchParams.get("code") || "",
+    state: searchParams.get("state") || "",
+    error: searchParams.get("error") || undefined,
+    error_description: searchParams.get("error_description") || undefined,
+  };
 
   // Handle authorization errors
   if (callbackParams.error) {
-    console.error('[OAuth] Authorization error:', callbackParams.error)
+    console.error("[OAuth] Authorization error:", callbackParams.error);
     return NextResponse.redirect(
       buildRedirectUrl(
-        `/auth/login?error=${callbackParams.error}&description=${encodeURIComponent(callbackParams.error_description || '')}`
+        `/auth/login?error=${
+          callbackParams.error
+        }&description=${encodeURIComponent(
+          callbackParams.error_description || ""
+        )}`
       )
-    )
+    );
   }
 
   // Validate required parameters
   if (!callbackParams.code || !callbackParams.state) {
-    console.error('[OAuth] Missing code or state parameter')
+    console.error("[OAuth] Missing code or state parameter");
     return NextResponse.redirect(
-      buildRedirectUrl('/auth/login?error=invalid_callback')
-    )
+      buildRedirectUrl("/auth/login?error=invalid_callback")
+    );
   }
 
   try {
-    console.log('[OAuth] ===== SSO CALLBACK START =====')
-    console.log('[OAuth] Callback params:', {
+    console.log("[OAuth] ===== SSO CALLBACK START =====");
+    console.log("[OAuth] Callback params:", {
       hasCode: !!callbackParams.code,
       hasState: !!callbackParams.state,
       codeLength: callbackParams.code?.length || 0,
-    })
+    });
 
-    // 1. Retrieve and validate state from session storage (client-side)
-    // Note: State validation happens client-side because sessionStorage is browser-only
-    // We trust the state parameter here because:
-    // - HTTPS prevents MITM attacks
-    // - State is single-use and expires in 10 minutes
-    // - PKCE provides additional security
+    // 1. Retrieve and validate state from cookie (Server-side validation)
+    const cookies = request.cookies;
+    const cookieState = cookies.get("sso_state")?.value;
 
-    // 2. Get code verifier from secure cookie
-    // Cookie was set by SSOLoginButton before redirect
-    const cookies = request.cookies
-    const codeVerifier = cookies.get('pkce_verifier')?.value
-
-    if (!codeVerifier) {
-      console.error('[OAuth] Missing code_verifier in cookie')
-      console.error('[OAuth] Available cookies:', cookies.getAll().map(c => c.name))
+    if (!cookieState || cookieState !== callbackParams.state) {
+      console.error("[OAuth] State validation failed");
+      console.error(
+        "[OAuth] Cookie state:",
+        cookieState ? "Present" : "Missing"
+      );
+      console.error("[OAuth] Param state:", callbackParams.state);
       return NextResponse.redirect(
-        buildRedirectUrl('/auth/login?error=missing_code_verifier')
-      )
+        buildRedirectUrl("/auth/login?error=invalid_state")
+      );
     }
 
-    console.log('[OAuth] ✓ Code verifier retrieved from cookie')
+    console.log("[OAuth] ✓ State validated successfully");
+
+    // 2. Get code verifier from secure cookie
+    const codeVerifier = cookies.get("pkce_verifier")?.value;
+
+    if (!codeVerifier) {
+      console.error("[OAuth] Missing code_verifier in cookie");
+      return NextResponse.redirect(
+        buildRedirectUrl("/auth/login?error=missing_code_verifier")
+      );
+    }
+
+    console.log("[OAuth] ✓ Code verifier retrieved from cookie");
 
     // 3. Exchange authorization code for user data
-    console.log('[OAuth] Step 3: Exchanging authorization code...')
-    const tokenData = await exchangeToken(callbackParams.code, codeVerifier)
-    console.log('[OAuth] ✓ Token exchange successful')
-    console.log('[OAuth] User role:', tokenData.user.role)
-    console.log('[OAuth] Webhook status:', tokenData.webhook_status.success ? 'SUCCESS' : 'FAILED')
+    console.log("[OAuth] Step 3: Exchanging authorization code...");
+    const tokenData = await exchangeToken(callbackParams.code, codeVerifier);
+
+    // Normalize email to lowercase immediately
+    tokenData.user.email = tokenData.user.email.toLowerCase();
+
+    console.log("[OAuth] ✓ Token exchange successful");
+    console.log("[OAuth] User email (normalized):", tokenData.user.email);
+    console.log("[OAuth] User role:", tokenData.user.role);
 
     // 4. Check for viewer role (denied access)
-    if (tokenData.user.role === 'viewer') {
-      console.warn('[OAuth] Viewer role denied access:', tokenData.user.email)
+    if (tokenData.user.role === "viewer") {
+      console.warn("[OAuth] Viewer role denied access:", tokenData.user.email);
       return NextResponse.redirect(
-        buildRedirectUrl('/auth/login?error=viewer_access_denied')
-      )
+        buildRedirectUrl(
+          "/auth/login?error=access_denied&description=Viewer_role_not_allowed"
+        )
+      );
     }
 
     // 5. Compensatory sync if webhook failed
-    console.log('[OAuth] Step 5: Checking webhook status...')
+    console.log("[OAuth] Step 5: Checking webhook status...");
     if (!tokenData.webhook_status.success) {
-      console.warn('[OAuth] ⚠ Webhook failed, performing compensatory sync')
-      console.log('[OAuth] Webhook error:', tokenData.webhook_status.error)
+      console.warn("[OAuth] ⚠ Webhook failed, performing compensatory sync");
+      console.log("[OAuth] Webhook error:", tokenData.webhook_status.error);
 
       const userParams: CreateSupabaseUserParams = {
         email: tokenData.user.email,
@@ -333,69 +400,100 @@ export async function GET(request: NextRequest) {
         track: tokenData.user.track,
         infohubUserId: tokenData.user.infohub_user_id,
         avatarUrl: tokenData.user.avatar_url,
-      }
+      };
 
-      console.log('[OAuth] Compensatory sync params:', {
+      console.log("[OAuth] Compensatory sync params:", {
         email: userParams.email,
         role: userParams.role,
         hasTeacherType: !!userParams.teacherType,
-      })
+      });
 
-      await createOrUpdateUser(userParams)
-      console.log('[OAuth] ✓ Compensatory sync completed')
+      await createOrUpdateUser(userParams);
+      console.log("[OAuth] ✓ Compensatory sync completed");
     } else {
-      console.log('[OAuth] ✓ Webhook sync successful, skipping compensatory sync')
+      console.log(
+        "[OAuth] ✓ Webhook sync successful, skipping compensatory sync"
+      );
     }
 
     // 6. Create Supabase session
-    console.log('[OAuth] Step 6: Creating Supabase session for:', tokenData.user.email)
-    const { url, error } = await createSupabaseSession(tokenData.user.email)
+    console.log(
+      "[OAuth] Step 6: Creating Supabase session for:",
+      tokenData.user.email
+    );
+    const { url, error } = await createSupabaseSession(tokenData.user.email);
 
     if (error) {
-      console.error('[OAuth] ✗ Session creation failed!')
-      console.error('[OAuth] Error details:', error)
+      console.error("[OAuth] ✗ Session creation failed!");
+      console.error("[OAuth] Error details:", error);
       return NextResponse.redirect(
-        buildRedirectUrl('/auth/login?error=session_creation_failed')
-      )
+        buildRedirectUrl("/auth/login?error=session_creation_failed")
+      );
     }
 
-    console.log('[OAuth] ✓ Session created successfully')
+    console.log("[OAuth] ✓ Session created successfully");
 
-    // 7. Clear pkce_verifier cookie (security best practice)
-    const response = NextResponse.redirect(buildRedirectUrl(url))
-    response.cookies.set('pkce_verifier', '', {
-      path: '/',
+    // 7. Clear cookies (security best practice)
+    const response = NextResponse.redirect(buildRedirectUrl(url));
+
+    const cookieOptions = {
+      path: "/",
       maxAge: 0, // Immediately expire
       httpOnly: true,
       secure: true,
-      sameSite: 'lax',
-    })
-    console.log('[OAuth] Cleared pkce_verifier cookie')
+      sameSite: "lax" as const,
+    };
+
+    response.cookies.set("pkce_verifier", "", cookieOptions);
+    response.cookies.set("sso_state", "", cookieOptions);
+
+    console.log("[OAuth] Cleared security cookies");
 
     // 8. Redirect to dashboard (or specified redirect URL)
-    console.log('[OAuth] Step 8: Redirecting to dashboard')
-    console.log(`[OAuth] ===== SSO LOGIN SUCCESSFUL for: ${tokenData.user.email} =====`)
-    return response
+    console.log("[OAuth] Step 8: Redirecting to dashboard");
+    console.log(
+      `[OAuth] ===== SSO LOGIN SUCCESSFUL for: ${tokenData.user.email} =====`
+    );
+    return response;
   } catch (error) {
-    console.error('[OAuth] ===== CALLBACK ERROR =====')
-    console.error('[OAuth] Error type:', error instanceof Error ? error.constructor.name : typeof error)
-    console.error('[OAuth] Error message:', error instanceof Error ? error.message : String(error))
-    console.error('[OAuth] Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+    console.error("[OAuth] ===== CALLBACK ERROR =====");
+    console.error(
+      "[OAuth] Error type:",
+      error instanceof Error ? error.constructor.name : typeof error
+    );
+    console.error(
+      "[OAuth] Error message:",
+      error instanceof Error ? error.message : String(error)
+    );
+    console.error(
+      "[OAuth] Error stack:",
+      error instanceof Error ? error.stack : "No stack trace"
+    );
 
     // Log full error object for debugging
-    if (error && typeof error === 'object') {
-      console.error('[OAuth] Error object:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
+    if (error && typeof error === "object") {
+      try {
+        console.error("[OAuth] Error object:", JSON.stringify(error, null, 2));
+      } catch (e) {
+        console.error("[OAuth] Error object (not stringifiable):", error);
+      }
     }
 
     const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error'
+      error instanceof Error
+        ? error.message
+        : typeof error === "object" && error !== null && "message" in error
+        ? String((error as any).message)
+        : JSON.stringify(error);
 
-    console.error('[OAuth] Redirecting to login with error:', errorMessage)
+    console.error("[OAuth] Redirecting to login with error:", errorMessage);
 
     return NextResponse.redirect(
       buildRedirectUrl(
-        `/auth/login?error=oauth_callback_failed&description=${encodeURIComponent(errorMessage)}`
+        `/auth/login?error=oauth_callback_failed&description=${encodeURIComponent(
+          errorMessage
+        )}`
       )
-    )
+    );
   }
 }

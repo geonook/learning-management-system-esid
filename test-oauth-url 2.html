@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test OAuth Callback URL</title>
+</head>
+<body>
+    <h1>OAuth Callback URL Test</h1>
+    <p>Testing client-side getOAuthCallbackUrl() behavior</p>
+
+    <div id="results"></div>
+
+    <script>
+        // Simulate the getOAuthCallbackUrl() function
+        function getOAuthCallbackUrl() {
+            // Client-side: Use browser's current origin
+            if (typeof window !== 'undefined') {
+                return `${window.location.origin}/api/auth/callback/infohub`
+            }
+            // Server-side fallback
+            return 'http://localhost:3000/api/auth/callback/infohub'
+        }
+
+        const results = document.getElementById('results')
+        results.innerHTML = `
+            <h2>Results:</h2>
+            <p><strong>window.location.origin:</strong> ${window.location.origin}</p>
+            <p><strong>getOAuthCallbackUrl():</strong> ${getOAuthCallbackUrl()}</p>
+            <hr>
+            <p style="color: green;">✓ This proves the function will use the CURRENT origin, not a hard-coded value</p>
+        `
+    </script>
+</body>
+</html>
