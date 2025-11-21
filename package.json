@@ -13,6 +13,7 @@
     "test:e2e": "playwright test",
     "test:watch": "vitest --watch",
     "db:migrate": "supabase db push",
+    "db:migrate:prod": "npx tsx scripts/migrate-production.ts",
     "db:seed": "npx tsx scripts/batch-import.ts --generate-samples",
     "db:reset": "supabase db reset",
     "gen:types": "supabase gen types typescript --project-id piwbooidofbaqklhijup > types/database.ts",
