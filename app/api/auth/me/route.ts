@@ -12,7 +12,7 @@ export async function GET() {
   } = await supabase.auth.getUser();
 
   if (error || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ user: null });
   }
 
   return NextResponse.json({ user });
