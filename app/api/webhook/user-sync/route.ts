@@ -9,19 +9,19 @@
  * @date 2025-11-19
  */
 
-import { NextRequest, NextResponse } from 'next/server'
-import { createServiceRoleClient } from '@/lib/supabase/server'
-import { getSSOConfig } from '@/lib/config/sso'
+import { NextRequest, NextResponse } from "next/server";
+import { createServiceRoleClient } from "@/lib/supabase/server";
+import { getSSOConfig } from "@/lib/config/sso";
 import {
   WebhookPayload,
   WebhookResponse,
   InfoHubUser,
   WebhookEventType,
-} from '@/types/sso'
-import { Database } from '@/types/database'
+} from "@/types/sso";
+import { Database } from "@/types/database";
 
-type UserRole = Database['public']['Enums']['user_role']
-type CourseType = Database['public']['Enums']['course_type']
+type UserRole = Database["public"]["Enums"]["user_role"];
+type CourseType = Database["public"]["Enums"]["course_type"];
 
 /**
  * 驗證 Webhook 簽章
@@ -37,49 +37,49 @@ async function verifyWebhookSignature(
   request: NextRequest,
   body: string
 ): Promise<boolean> {
-  const receivedSignature = request.headers.get('x-webhook-signature')
-  const config = getSSOConfig()
+  const receivedSignature = request.headers.get("x-webhook-signature");
+  const config = getSSOConfig();
 
   if (!receivedSignature) {
-    console.error('[Webhook] Missing X-Webhook-Signature header')
-    return false
+    console.error("[Webhook] Missing X-Webhook-Signature header");
+    return false;
   }
 
   // Compute HMAC-SHA256 signature using Web Crypto API
-  const encoder = new TextEncoder()
-  const keyData = encoder.encode(config.webhookSecret)
-  const messageData = encoder.encode(body)
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(config.webhookSecret);
+  const messageData = encoder.encode(body);
 
   // Import secret as HMAC key
   const key = await crypto.subtle.importKey(
-    'raw',
+    "raw",
     keyData,
-    { name: 'HMAC', hash: 'SHA-256' },
+    { name: "HMAC", hash: "SHA-256" },
     false,
-    ['sign']
-  )
+    ["sign"]
+  );
 
   // Compute signature
-  const signatureBuffer = await crypto.subtle.sign('HMAC', key, messageData)
+  const signatureBuffer = await crypto.subtle.sign("HMAC", key, messageData);
 
   // Convert to hex string
   const expectedSignature = Array.from(new Uint8Array(signatureBuffer))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 
   // Timing-safe comparison
   if (receivedSignature.length !== expectedSignature.length) {
-    return false
+    return false;
   }
 
-  let isValid = true
+  let isValid = true;
   for (let i = 0; i < receivedSignature.length; i++) {
     if (receivedSignature.charCodeAt(i) !== expectedSignature.charCodeAt(i)) {
-      isValid = false
+      isValid = false;
     }
   }
 
-  return isValid
+  return isValid;
 }
 
 /**
@@ -100,16 +100,16 @@ async function verifyWebhookSignature(
  */
 function mapRole(infohubRole: string): UserRole {
   switch (infohubRole) {
-    case 'admin':
-      return 'admin'
-    case 'office_member':
-      return 'office_member'  // Read-only access to all grades
-    case 'head':
-      return 'head'
-    case 'teacher':
-      return 'teacher'
+    case "admin":
+      return "admin";
+    case "office_member":
+      return "office_member"; // Read-only access to all grades
+    case "head":
+      return "head";
+    case "teacher":
+      return "teacher";
     default:
-      throw new Error(`Unsupported Info Hub role: ${infohubRole}`)
+      throw new Error(`Unsupported Info Hub role: ${infohubRole}`);
   }
 }
 
@@ -124,52 +124,56 @@ async function syncUserToSupabase(
   user: InfoHubUser,
   eventType: WebhookEventType
 ): Promise<string> {
-  const supabase = createServiceRoleClient()
+  const supabase = createServiceRoleClient();
 
   // Reject viewer role
-  if (user.role === 'viewer') {
-    throw new Error('Viewer role is not allowed in LMS')
+  if (user.role === "viewer") {
+    throw new Error("Viewer role is not allowed in LMS");
   }
 
   // Map Info Hub role to LMS role
-  const lmsRole = mapRole(user.role)
+  const lmsRole = mapRole(user.role);
 
   // Map teacher_type to course_type if applicable
-  let courseType: CourseType | null = null
-  if (user.teacher_type) {
-    courseType = user.teacher_type as CourseType
+  let courseType: CourseType | null = null;
+  if (user.track) {
+    courseType = user.track as CourseType;
+  } else if (user.teacher_type) {
+    // Fallback for backward compatibility
+    courseType = user.teacher_type as CourseType;
   }
 
   // Check if user already exists
   const { data: existingUser } = await supabase
-    .from('users')
-    .select('id')
-    .eq('email', user.email)
-    .single()
+    .from("users")
+    .select("id")
+    .eq("email", user.email)
+    .single();
 
-  if (eventType === 'user.created' || !existingUser) {
+  if (eventType === "user.created" || !existingUser) {
     // Create new user in auth.users
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: user.email,
-      email_confirm: true,
-      user_metadata: {
-        full_name: user.full_name,
-        avatar_url: user.avatar_url,
-        infohub_user_id: user.infohub_user_id,
-      },
-    })
+    const { data: authData, error: authError } =
+      await supabase.auth.admin.createUser({
+        email: user.email,
+        email_confirm: true,
+        user_metadata: {
+          full_name: user.full_name,
+          avatar_url: user.avatar_url,
+          infohub_user_id: user.infohub_user_id,
+        },
+      });
 
     if (authError) {
-      console.error('[Webhook] Failed to create auth user:', authError)
-      throw authError
+      console.error("[Webhook] Failed to create auth user:", authError);
+      throw authError;
     }
 
     if (!authData.user) {
-      throw new Error('Failed to create auth user: no user returned')
+      throw new Error("Failed to create auth user: no user returned");
     }
 
     // Create user in public.users table
-    const { error: userError } = await supabase.from('users').insert({
+    const { error: userError } = await supabase.from("users").insert({
       id: authData.user.id,
       email: user.email,
       full_name: user.full_name,
@@ -177,34 +181,34 @@ async function syncUserToSupabase(
       track: courseType, // For head teachers, stores their course type responsibility
       grade: user.grade,
       created_at: new Date().toISOString(),
-    })
+    });
 
     if (userError) {
-      console.error('[Webhook] Failed to create public user:', userError)
-      throw userError
+      console.error("[Webhook] Failed to create public user:", userError);
+      throw userError;
     }
 
-    console.log(`[Webhook] Created user: ${user.email} (${authData.user.id})`)
-    return authData.user.id
+    console.log(`[Webhook] Created user: ${user.email} (${authData.user.id})`);
+    return authData.user.id;
   } else {
     // Update existing user
     const { error: updateError } = await supabase
-      .from('users')
+      .from("users")
       .update({
         full_name: user.full_name,
         role: lmsRole,
         track: courseType,
         grade: user.grade,
       })
-      .eq('id', existingUser.id)
+      .eq("id", existingUser.id);
 
     if (updateError) {
-      console.error('[Webhook] Failed to update user:', updateError)
-      throw updateError
+      console.error("[Webhook] Failed to update user:", updateError);
+      throw updateError;
     }
 
-    console.log(`[Webhook] Updated user: ${user.email} (${existingUser.id})`)
-    return existingUser.id
+    console.log(`[Webhook] Updated user: ${user.email} (${existingUser.id})`);
+    return existingUser.id;
   }
 }
 
@@ -215,42 +219,42 @@ async function syncUserToSupabase(
 export async function POST(request: NextRequest) {
   try {
     // 1. Parse request body
-    const bodyText = await request.text()
-    let payload: WebhookPayload
+    const bodyText = await request.text();
+    let payload: WebhookPayload;
 
     try {
-      payload = JSON.parse(bodyText) as WebhookPayload
+      payload = JSON.parse(bodyText) as WebhookPayload;
     } catch (error) {
-      console.error('[Webhook] Invalid JSON payload:', error)
+      console.error("[Webhook] Invalid JSON payload:", error);
       return NextResponse.json(
         {
           success: false,
-          error: 'Invalid JSON payload',
+          error: "Invalid JSON payload",
           timestamp: new Date().toISOString(),
         } satisfies WebhookResponse,
         { status: 400 }
-      )
+      );
     }
 
     // 2. Verify webhook signature
-    const isValidSignature = await verifyWebhookSignature(request, bodyText)
+    const isValidSignature = await verifyWebhookSignature(request, bodyText);
     if (!isValidSignature) {
-      console.error('[Webhook] Invalid signature')
+      console.error("[Webhook] Invalid signature");
       return NextResponse.json(
         {
           success: false,
-          error: 'Invalid webhook signature',
+          error: "Invalid webhook signature",
           timestamp: new Date().toISOString(),
         } satisfies WebhookResponse,
         { status: 401 }
-      )
+      );
     }
 
     // 3. Validate event type
     // Info Hub only sends user.created and user.updated events
-    const validEvents: WebhookEventType[] = ['user.created', 'user.updated']
+    const validEvents: WebhookEventType[] = ["user.created", "user.updated"];
     if (!validEvents.includes(payload.event)) {
-      console.error('[Webhook] Invalid event type:', payload.event)
+      console.error("[Webhook] Invalid event type:", payload.event);
       return NextResponse.json(
         {
           success: false,
@@ -258,20 +262,20 @@ export async function POST(request: NextRequest) {
           timestamp: new Date().toISOString(),
         } satisfies WebhookResponse,
         { status: 400 }
-      )
+      );
     }
 
     // 4. Handle event
-    let userId: string
+    let userId: string;
 
     switch (payload.event) {
-      case 'user.created':
-      case 'user.updated':
-        userId = await syncUserToSupabase(payload.user, payload.event)
-        break
+      case "user.created":
+      case "user.updated":
+        userId = await syncUserToSupabase(payload.user, payload.event);
+        break;
 
       default:
-        throw new Error(`Unsupported event type: ${payload.event}`)
+        throw new Error(`Unsupported event type: ${payload.event}`);
     }
 
     // 5. Return success response
@@ -279,23 +283,26 @@ export async function POST(request: NextRequest) {
       success: true,
       lms_user_id: userId,
       timestamp: new Date().toISOString(),
-    }
+    };
 
-    console.log(`[Webhook] Successfully processed ${payload.event} for ${payload.user.email}`)
+    console.log(
+      `[Webhook] Successfully processed ${payload.event} for ${payload.user.email}`
+    );
 
-    return NextResponse.json(response, { status: 200 })
+    return NextResponse.json(response, { status: 200 });
   } catch (error) {
-    console.error('[Webhook] Error processing webhook:', error)
+    console.error("[Webhook] Error processing webhook:", error);
 
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
 
     const response: WebhookResponse = {
       success: false,
       error: errorMessage,
       timestamp: new Date().toISOString(),
-    }
+    };
 
-    return NextResponse.json(response, { status: 500 })
+    return NextResponse.json(response, { status: 500 });
   }
 }
 
@@ -305,8 +312,8 @@ export async function POST(request: NextRequest) {
  */
 export async function GET() {
   return NextResponse.json({
-    status: 'ok',
-    message: 'LMS Webhook receiver is running',
+    status: "ok",
+    message: "LMS Webhook receiver is running",
     timestamp: new Date().toISOString(),
-  })
+  });
 }
