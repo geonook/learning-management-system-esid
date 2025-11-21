@@ -299,8 +299,8 @@ export interface CreateSupabaseUserParams {
   teacherType?: TeacherType | null;
   /** Grade level (1-6, for Head Teachers) */
   grade?: number | null;
-  /** Track (local/international) */
-  track?: "local" | "international" | null;
+  /** Track (course_type: LT/IT/KCFS) */
+  track?: "LT" | "IT" | "KCFS" | null;
   /** Info Hub user ID */
   infohubUserId: string;
   /** Avatar URL */
