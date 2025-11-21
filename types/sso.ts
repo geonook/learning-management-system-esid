@@ -11,7 +11,7 @@
  * @date 2025-11-19
  */
 
-import { Database } from './database'
+import { Database } from "./database";
 
 // ========================================
 // OAUTH 2.0 + PKCE TYPES
@@ -23,11 +23,11 @@ import { Database } from './database'
  */
 export interface PKCEParams {
   /** Code verifier (43-128 chars, base64url encoded) */
-  codeVerifier: string
+  codeVerifier: string;
   /** Code challenge (SHA-256 hash of verifier) */
-  codeChallenge: string
+  codeChallenge: string;
   /** Challenge method (always 'S256' for SHA-256) */
-  codeChallengeMethod: 'S256'
+  codeChallengeMethod: "S256";
 }
 
 /**
@@ -36,19 +36,19 @@ export interface PKCEParams {
  */
 export interface OAuthAuthorizationRequest {
   /** OAuth Client ID */
-  client_id: string
+  client_id: string;
   /** Redirect URI (must match registered URI) */
-  redirect_uri: string
+  redirect_uri: string;
   /** Response type (always 'code' for authorization code flow) */
-  response_type: 'code'
+  response_type: "code";
   /** PKCE code challenge */
-  code_challenge: string
+  code_challenge: string;
   /** PKCE challenge method */
-  code_challenge_method: 'S256'
+  code_challenge_method: "S256";
   /** CSRF protection state token */
-  state: string
+  state: string;
   /** Requested scopes (space-separated) */
-  scope?: string
+  scope?: string;
 }
 
 /**
@@ -57,17 +57,17 @@ export interface OAuthAuthorizationRequest {
  */
 export interface OAuthTokenRequest {
   /** OAuth Client ID */
-  client_id: string
+  client_id: string;
   /** OAuth Client Secret */
-  client_secret: string
+  client_secret: string;
   /** Authorization code from callback */
-  code: string
+  code: string;
   /** PKCE code verifier */
-  code_verifier: string
+  code_verifier: string;
   /** Grant type (always 'authorization_code') */
-  grant_type: 'authorization_code'
+  grant_type: "authorization_code";
   /** Redirect URI (must match authorization request) */
-  redirect_uri: string
+  redirect_uri: string;
 }
 
 /**
@@ -76,15 +76,15 @@ export interface OAuthTokenRequest {
  */
 export interface OAuthTokenResponse {
   /** Access token (contains user data JSON) */
-  access_token: string
+  access_token: string;
   /** Token type (always 'Bearer') */
-  token_type: 'Bearer'
+  token_type: "Bearer";
   /** Token expiry time (seconds) */
-  expires_in: number
+  expires_in: number;
   /** User data from Info Hub */
-  user: InfoHubUser
+  user: InfoHubUser;
   /** Webhook sync status */
-  webhook_status: WebhookSyncStatus
+  webhook_status: WebhookSyncStatus;
 }
 
 // ========================================
@@ -97,45 +97,50 @@ export interface OAuthTokenResponse {
  */
 export interface InfoHubUser {
   /** User email (login credential) */
-  email: string
+  email: string;
   /** Full name in English */
-  full_name: string
+  full_name: string;
   /** Info Hub user ID (UUID v4) */
-  infohub_user_id: string
+  infohub_user_id: string;
   /** User role in Info Hub */
-  role: InfoHubRole
+  role: InfoHubRole;
   /** Teacher type (LT/IT/KCFS) */
-  teacher_type: TeacherType | null
-  /** Track (local/international) */
-  track: 'local' | 'international' | null
+  teacher_type: TeacherType | null;
+  /** Track (course_type: LT/IT/KCFS) - Aligned with Migration 014 */
+  track: "LT" | "IT" | "KCFS" | null;
   /** Grade level (1-6, for Head Teachers) */
-  grade: number | null
+  grade: number | null;
   /** Google OAuth profile picture URL */
-  avatar_url?: string
+  avatar_url?: string;
   /** LMS user ID (if already synced) */
-  lms_user_id?: string
+  lms_user_id?: string;
   /** Last sync timestamp */
-  lms_synced_at?: string
+  lms_synced_at?: string;
 }
 
 /**
  * Info Hub 角色列舉
  */
-export type InfoHubRole = 'admin' | 'office_member' | 'head' | 'teacher' | 'viewer'
+export type InfoHubRole =
+  | "admin"
+  | "office_member"
+  | "head"
+  | "teacher"
+  | "viewer";
 
 /**
  * 教師類型列舉
  */
-export type TeacherType = 'LT' | 'IT' | 'KCFS'
+export type TeacherType = "LT" | "IT" | "KCFS";
 
 /**
  * Info Hub → LMS 角色對應
  */
 export interface RoleMapping {
-  infohubRole: InfoHubRole
-  lmsRole: Database['public']['Enums']['user_role']
-  teacherType: TeacherType | null
-  grade: number | null
+  infohubRole: InfoHubRole;
+  lmsRole: Database["public"]["Enums"]["user_role"];
+  teacherType: TeacherType | null;
+  grade: number | null;
 }
 
 // ========================================
@@ -146,7 +151,7 @@ export interface RoleMapping {
  * Webhook 事件類型
  * Info Hub only sends user.created and user.updated events
  */
-export type WebhookEventType = 'user.created' | 'user.updated'
+export type WebhookEventType = "user.created" | "user.updated";
 
 /**
  * Webhook 請求標頭
@@ -154,15 +159,15 @@ export type WebhookEventType = 'user.created' | 'user.updated'
  */
 export interface WebhookHeaders {
   /** X-Webhook-Signature: HMAC-SHA256 signature (hex) */
-  'x-webhook-signature': string
+  "x-webhook-signature": string;
   /** X-Webhook-Event: user.created | user.updated */
-  'x-webhook-event': WebhookEventType
+  "x-webhook-event": WebhookEventType;
   /** X-Webhook-Retry: 0 | 1 | 2 */
-  'x-webhook-retry': string
+  "x-webhook-retry": string;
   /** X-Webhook-Timestamp: ISO 8601 format */
-  'x-webhook-timestamp': string
+  "x-webhook-timestamp": string;
   /** Content-Type: application/json */
-  'content-type': 'application/json'
+  "content-type": "application/json";
 }
 
 /**
@@ -170,13 +175,13 @@ export interface WebhookHeaders {
  */
 export interface WebhookPayload {
   /** Event type */
-  event: WebhookEventType
+  event: WebhookEventType;
   /** User data */
-  user: InfoHubUser
+  user: InfoHubUser;
   /** Event timestamp */
-  timestamp: string
+  timestamp: string;
   /** HMAC signature for verification */
-  signature: string
+  signature: string;
 }
 
 /**
@@ -184,13 +189,13 @@ export interface WebhookPayload {
  */
 export interface WebhookResponse {
   /** Success status */
-  success: boolean
+  success: boolean;
   /** LMS user ID (UUID) */
-  lms_user_id?: string
+  lms_user_id?: string;
   /** Error message (if failed) */
-  error?: string
+  error?: string;
   /** Timestamp */
-  timestamp: string
+  timestamp: string;
 }
 
 /**
@@ -199,13 +204,13 @@ export interface WebhookResponse {
  */
 export interface WebhookSyncStatus {
   /** Webhook sent status */
-  sent: boolean
+  sent: boolean;
   /** Webhook success status */
-  success: boolean
+  success: boolean;
   /** Retry attempt number (0-3) */
-  attempt: number
+  attempt: number;
   /** Error message (if failed) */
-  error: string | null
+  error: string | null;
 }
 
 // ========================================
@@ -217,13 +222,13 @@ export interface WebhookSyncStatus {
  */
 export interface SSOState {
   /** CSRF protection state token */
-  state: string
+  state: string;
   /** PKCE code verifier */
-  codeVerifier: string
+  codeVerifier: string;
   /** Redirect URL after successful login */
-  redirectUrl?: string
+  redirectUrl?: string;
   /** Timestamp when state was created */
-  createdAt: number
+  createdAt: number;
 }
 
 /**
@@ -231,13 +236,13 @@ export interface SSOState {
  */
 export interface SSOCallbackParams {
   /** Authorization code */
-  code: string
+  code: string;
   /** State token (for CSRF validation) */
-  state: string
+  state: string;
   /** Error code (if authorization failed) */
-  error?: string
+  error?: string;
   /** Error description */
-  error_description?: string
+  error_description?: string;
 }
 
 // ========================================
@@ -248,32 +253,32 @@ export interface SSOCallbackParams {
  * SSO 錯誤類型
  */
 export type SSOErrorCode =
-  | 'invalid_request'
-  | 'unauthorized_client'
-  | 'access_denied'
-  | 'unsupported_response_type'
-  | 'invalid_scope'
-  | 'server_error'
-  | 'temporarily_unavailable'
-  | 'invalid_grant'
-  | 'invalid_state'
-  | 'pkce_verification_failed'
-  | 'webhook_failed'
-  | 'user_creation_failed'
-  | 'viewer_access_denied'
+  | "invalid_request"
+  | "unauthorized_client"
+  | "access_denied"
+  | "unsupported_response_type"
+  | "invalid_scope"
+  | "server_error"
+  | "temporarily_unavailable"
+  | "invalid_grant"
+  | "invalid_state"
+  | "pkce_verification_failed"
+  | "webhook_failed"
+  | "user_creation_failed"
+  | "viewer_access_denied";
 
 /**
  * SSO 錯誤結構
  */
 export interface SSOError {
   /** Error code */
-  code: SSOErrorCode
+  code: SSOErrorCode;
   /** Human-readable error message */
-  message: string
+  message: string;
   /** Detailed error description */
-  description?: string
+  description?: string;
   /** Original error object */
-  originalError?: Error
+  originalError?: Error;
 }
 
 // ========================================
@@ -285,21 +290,21 @@ export interface SSOError {
  */
 export interface CreateSupabaseUserParams {
   /** User email */
-  email: string
+  email: string;
   /** Full name */
-  fullName: string
+  fullName: string;
   /** User role (admin/head/teacher) */
-  role: Database['public']['Enums']['user_role']
+  role: Database["public"]["Enums"]["user_role"];
   /** Teacher type (LT/IT/KCFS) */
-  teacherType?: TeacherType | null
+  teacherType?: TeacherType | null;
   /** Grade level (1-6, for Head Teachers) */
-  grade?: number | null
+  grade?: number | null;
   /** Track (local/international) */
-  track?: 'local' | 'international' | null
+  track?: "local" | "international" | null;
   /** Info Hub user ID */
-  infohubUserId: string
+  infohubUserId: string;
   /** Avatar URL */
-  avatarUrl?: string
+  avatarUrl?: string;
 }
 
 /**
@@ -307,11 +312,11 @@ export interface CreateSupabaseUserParams {
  */
 export interface CreateSupabaseUserResult {
   /** Success status */
-  success: boolean
+  success: boolean;
   /** Created user ID */
-  userId?: string
+  userId?: string;
   /** Error message (if failed) */
-  error?: string
+  error?: string;
 }
 
 // ========================================
@@ -323,19 +328,19 @@ export interface CreateSupabaseUserResult {
  */
 export interface SSOConfig {
   /** OAuth Client ID */
-  clientId: string
+  clientId: string;
   /** OAuth Client Secret (server-side only) */
-  clientSecret: string
+  clientSecret: string;
   /** Info Hub Authorization URL */
-  authUrl: string
+  authUrl: string;
   /** Info Hub Token URL */
-  tokenUrl: string
+  tokenUrl: string;
   /** LMS Webhook Secret */
-  webhookSecret: string
+  webhookSecret: string;
   /** LMS Webhook URL */
-  webhookUrl: string
+  webhookUrl: string;
   /** Enable SSO feature */
-  enableSSO: boolean
+  enableSSO: boolean;
   /** Enable Email/Password authentication */
-  enableEmailPassword: boolean
+  enableEmailPassword: boolean;
 }
