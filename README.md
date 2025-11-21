@@ -1,14 +1,15 @@
 # Learning Management System - ESID
 
-> **Version**: 1.9.0
-> **Status**: Production Ready (SSO Integration Phase 1-4 Complete)
+> **Version**: 1.10.0
+> **Status**: Production Ready (SSO Integration Complete)
 > **Tech Stack**: Next.js 14 + TypeScript + Supabase Cloud + Tailwind CSS
 
 A comprehensive **Primary School (G1-G6)** Learning Management System featuring English Language Arts (ELA) and KCFS courses with advanced **Analytics Engine**, **Database Analytics Views**, and **Google SSO Integration** (via Info Hub). Features **One Class, Three Teachers (一班三師)** architecture where each class has dedicated LT, IT, and KCFS instructors, plus real-time performance analytics, intelligent insights, and comprehensive testing framework.
 
-## 🎯 Current Status (Updated 2025-11-18)
+## 🎯 Current Status (Updated 2025-11-21)
 
 ### ✅ Completed Features
+
 - **Database Migrations**: ✅ Migrations 007-019e fully deployed (including emergency RLS fixes)
 - **Real Data Deployment**: ✅ 84 classes + 252 courses (2025-2026 學年度)
 - **Supabase Cloud**: ✅ Official cloud migration complete
@@ -17,13 +18,14 @@ A comprehensive **Primary School (G1-G6)** Learning Management System featuring 
 - **Performance**: ✅ Average query time 146ms (target <500ms)
 - **RLS Optimization**: ✅ 49 policies optimized (auth_rls_initplan: 0 warnings)
 - **Testing Framework**: ✅ 90-minute comprehensive testing workflow
-- **SSO Integration (LMS)**: ✅ **Phase 1-4 Complete** - OAuth 2.0 + PKCE client, webhook receiver, session management
+- **SSO Integration**: ✅ **Complete** - Full OAuth 2.0 + PKCE flow with Info Hub, Role Mapping, and Webhook Sync.
 
 ### ⏳ In Progress
-- **SSO Integration (Info Hub)**: ⏳ Awaiting OAuth server implementation and secrets
+
 - **Application-Layer Permissions**: ⏳ Head teacher cross-user visibility (Phase 2)
 
 ### 📋 Upcoming
+
 - **JWT Claims-based RLS**: Long-term solution for zero recursion risk
 - **Advanced Analytics**: Predictive models, intervention recommendations
 - **Mobile App**: React Native companion app
@@ -38,6 +40,7 @@ A comprehensive **Primary School (G1-G6)** Learning Management System featuring 
 ## 🔧 Technology Stack
 
 **Frontend**:
+
 - Next.js 14 (App Router)
 - TypeScript 5.3
 - Tailwind CSS 3.4
@@ -45,22 +48,26 @@ A comprehensive **Primary School (G1-G6)** Learning Management System featuring 
 - Framer Motion
 
 **Backend**:
+
 - Supabase Cloud (PostgreSQL 15)
 - Supabase Auth (Google OAuth)
 - Supabase Storage
 - Edge Functions
 
 **Authentication**:
+
 - OAuth 2.0 + PKCE (RFC 7636)
 - Info Hub SSO integration
 - Webhook-based user sync
 
 **Dev Tools**:
+
 - ESLint + Prettier
 - Vitest (unit tests)
 - Playwright (E2E tests)
 
 **Deployment**:
+
 - Zeabur (frontend)
 - Supabase Cloud (backend)
 
@@ -103,11 +110,13 @@ learning-management-system-esid/
 The system uses a strict numerical scoring approach with these rules:
 
 ### Assessment Codes (Single Source of Truth)
+
 - **Formative**: FA1, FA2, FA3, FA4, FA5, FA6, FA7, FA8
 - **Summative**: SA1, SA2, SA3, SA4
 - **Final**: FINAL
 
 ### Calculation Rules
+
 - **Only count scores > 0** (null and 0 are excluded from averages)
 - **Formative Average** = Average of all FA scores > 0
 - **Summative Average** = Average of all SA scores > 0
@@ -115,6 +124,7 @@ The system uses a strict numerical scoring approach with these rules:
 - **Rounding**: All final grades rounded to 2 decimal places
 
 ### Key Features
+
 - ✅ **No letter grades or 等第** - Pure numerical system
 - ✅ **Frontend-backend consistency** - Same calculation logic everywhere
 - ✅ **Comprehensive testing** - Unit tests for all scenarios
@@ -123,12 +133,15 @@ The system uses a strict numerical scoring approach with these rules:
 ## 🎓 ELA Course Architecture
 
 ### Unified Course Structure
+
 Every class includes three standardized courses:
+
 - **LT English Language Arts (ELA)** - Local Teacher instruction
-- **IT English Language Arts (ELA)** - International Teacher instruction  
+- **IT English Language Arts (ELA)** - International Teacher instruction
 - **KCFS** - Kang Chiao Future Skill program (independent course)
 
 ### Course-Teacher Assignment System
+
 - **One Class, Three Teachers (一班三師)**: Each class has three dedicated course instructors
   - **LT Course**: Local Teacher for ELA
   - **IT Course**: International Teacher for ELA
@@ -142,6 +155,7 @@ Every class includes three standardized courses:
 ## 🔐 Security & Permissions
 
 ### Role-Based Access Control (RLS)
+
 - **Admin**: Full system access across all grades and course types
 - **Head Teacher (HT)**: Access to specific Grade + Course Type combinations
   - Example: G4 LT Head Teacher manages all G4 LT courses (14 courses)
@@ -149,11 +163,13 @@ Every class includes three standardized courses:
 - **Teacher** (LT/IT/KCFS): Access only to assigned classes and courses
 
 ### Row Level Security
+
 All database operations enforce user permissions automatically through Supabase RLS policies.
 
 ## 🎨 Assessment Display Names
 
 Head teachers can customize assessment display names:
+
 - **Priority**: Class-specific > Grade×Track > Default
 - **Examples**: "FA1" → "Reading Assessment 1", "SA1" → "Midterm Exam"
 - **Note**: Display names only affect UI, never calculations
@@ -187,18 +203,21 @@ npm run deploy          # Deploy to Zeabur
 ## 🧪 Testing Strategy
 
 ### Unit Tests (Vitest)
+
 - **Grade calculations** - All scenarios including edge cases with snapshots
 - **Analytics functions** - Statistical calculations, risk assessment algorithms
 - **Utility functions** - Helper functions and validation
 - **Components** - UI component behavior
 
 ### E2E Tests (Playwright)
+
 - **Authentication flow** - Login/logout/role-based access
 - **Grade entry workflow** - Complete score import to dashboard update
 - **Analytics workflow** - Data visualization and real-time updates
 - **Multi-role scenarios** - Admin, head teacher, teacher workflows
 
 ### Contract Tests
+
 - **API endpoints** - Scores bulk upsert, exams CRUD, analytics queries
 - **Database operations** - RLS policy enforcement
 - **Assessment overrides** - Display name resolution
@@ -206,24 +225,29 @@ npm run deploy          # Deploy to Zeabur
 ## 🧪 Test Environment
 
 ### Available Test Accounts 🆕 Updated for Primary School System
+
 > **Important**: All accounts updated to comply with G1-G6 primary school system
 
 #### System Administrator
+
 - `admin@school.edu` - Full system access
 
 #### Head Teachers (Primary Focus: G4, G6)
+
 - `head.g4.lt@school.edu` - Grade 4 LT Head Teacher (manages G4 LT courses)
 - `head.g4.it@school.edu` - Grade 4 IT Head Teacher (manages G4 IT courses)
 - `head.g6.kcfs@school.edu` - Grade 6 KCFS Head Teacher (manages G6 KCFS courses)
-> **Testing Focus**: Assessment Title management, grade-level statistics, RLS boundary testing, Grade+CourseType permissions
+  > **Testing Focus**: Assessment Title management, grade-level statistics, RLS boundary testing, Grade+CourseType permissions
 
 #### Subject Teachers
+
 - `teacher.lt.1@school.edu` - Local Teacher (LT English)
 - `teacher.it.1@school.edu` - International Teacher (IT English)
 - `teacher.kcfs.1@school.edu` - KCFS Teacher (Future Skills)
-> **Testing Focus**: Grade entry, course permissions, personal analytics
+  > **Testing Focus**: Grade entry, course permissions, personal analytics
 
 ### Test Data Overview 🆕 Optimized for Testing
+
 - **Test Students**: 57 students (verified count for analytics)
 - **Test Teachers**: 9 teachers (complete role coverage)
 - **Course Structure**: ELA Three-Track System (LT + IT + KCFS)
@@ -234,6 +258,7 @@ npm run deploy          # Deploy to Zeabur
 ## 📊 Key Features
 
 ### 🔐 SSO Integration (Phase 1-4 Complete)
+
 - **OAuth 2.0 + PKCE**: Industry-standard authorization flow with enhanced security
 - **Webhook User Sync**: Real-time user data synchronization from Info Hub
 - **Session Management**: Secure Supabase session creation and maintenance
@@ -243,6 +268,7 @@ npm run deploy          # Deploy to Zeabur
 - **Type-Safe Implementation**: 40+ TypeScript interfaces, 0 compilation errors
 
 **Files Created**:
+
 - `types/sso.ts` - Complete SSO type definitions
 - `lib/config/sso.ts` - Environment configuration helper
 - `lib/auth/pkce.ts` - PKCE RFC 7636 implementation
@@ -252,6 +278,7 @@ npm run deploy          # Deploy to Zeabur
 - `components/auth/SSOLoginButton.tsx` - SSO login button UI
 
 **Security Measures**:
+
 - PKCE (Proof Key for Code Exchange) - prevents code interception
 - CSRF State Token - prevents cross-site request forgery
 - Webhook Secret - authenticates user sync requests
@@ -259,12 +286,14 @@ npm run deploy          # Deploy to Zeabur
 - RLS Policy Enforcement - all queries respect permissions
 
 ### Primary School Dashboard with Analytics
+
 - **Admin**: System-wide analytics and user management across all grades and course types with advanced statistical insights
 - **Head Teachers**: Grade×CourseType-specific insights and course controls (LT/IT/KCFS) with performance tracking
 - **Teachers**: Class-specific course management and student progress (assigned courses) with learning analytics
 - **Office Members**: Limited view-only access to class rosters and schedules
 
 ### 🧠 Analytics System (Phase 3A-1 ✅ Complete)
+
 - **40+ TypeScript Interfaces** - Comprehensive type system for all analytics data structures
 - **Statistical Calculations** - Mean, median, standard deviation, trend analysis, risk assessment
 - **Performance Metrics** - Student learning trajectories, improvement rates, engagement tracking
@@ -273,25 +302,29 @@ npm run deploy          # Deploy to Zeabur
 - **Grade Integration** - Seamless integration with existing grade calculation system
 
 ### 📊 Database Analytics Views 🆕 (Deployed 2025-08-23)
+
 - **student_grade_aggregates** - Student performance aggregation with risk assessment
-- **class_statistics** - Class-level statistical analysis and comparisons  
+- **class_statistics** - Class-level statistical analysis and comparisons
 - **teacher_performance** - Teacher effectiveness monitoring and metrics
 - **PostgreSQL Optimized** - ::numeric type casting for accurate calculations
 - **Performance Verified** - Average query time 146ms (well under 500ms target)
 - **Index Optimized** - 8 strategic indexes for maximum query performance
 
 ### 🧪 Comprehensive Testing Framework ✅
+
 - **90-Minute Test Workflow** - Complete Phase 1-7 testing process
 - **Primary School Compliant** - All test data adjusted to G1-G6 system
 - **Role-Complete Testing** - 6 user types with full permission coverage
 - **Development Ready** - localhost:3000 + Claude Code CLI setup
 
 ### Grade Management
+
 - **Unified CSV import system** with validation and error handling for all three courses (LT/IT ELA + KCFS)
 - **Individual score entry** with real-time calculation across LT/IT/KCFS
 - **Weighted grade calculations** following primary school standards
 
 ### Reporting & Advanced Analytics
+
 - **Performance tracking** by class, grade, and course type across all courses with statistical analysis
 - **Course comparison** between LT ELA, IT ELA, and KCFS performance with trend visualization
 - **Learning Analytics** - Student risk identification, improvement tracking, consistency analysis
@@ -314,6 +347,7 @@ npm run deploy          # Deploy to Zeabur
 ### Recent Migration History
 
 - **019e**: Removed `heads_view_jurisdiction` policy (RLS recursion fix) ✅
+
   - **Problem**: Infinite recursion in `is_head_teacher()` function
   - **Solution**: Removed application-layer permission policy temporarily
   - **Impact**: Head teachers can only view their own data (Phase 1)
@@ -342,6 +376,7 @@ See [CLAUDE.md](/Users/chenzehong/Desktop/LMS/CLAUDE.md) for complete migration 
 ## 📝 Environment Setup
 
 ### Prerequisites
+
 - Node.js 18+
 - npm or yarn
 - Supabase account
@@ -369,23 +404,27 @@ NODE_ENV=production
 ### Installation Steps
 
 1. **Clone the repository**
+
    ```bash
    git clone [repository-url]
    cd learning-management-system-esid
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Set up environment variables**
+
    ```bash
    cp .env.example .env.local
    # Edit .env.local with your credentials
    ```
 
 4. **Initialize database**
+
    ```bash
    npm run db:migrate
    npm run db:seed
@@ -411,7 +450,9 @@ NODE_ENV=production
 ## 📚 Documentation
 
 ### SSO Integration Guides
+
 Comprehensive SSO documentation available in `docs/sso/`:
+
 - [SSO Integration Overview](docs/sso/SSO_INTEGRATION_OVERVIEW.md) - Architecture & decisions
 - [SSO Implementation Plan - LMS](docs/sso/SSO_IMPLEMENTATION_PLAN_LMS.md) - Detailed tasks & checklist
 - [SSO Security Analysis](docs/sso/SSO_SECURITY_ANALYSIS.md) - Security review & threat model
@@ -420,12 +461,14 @@ Comprehensive SSO documentation available in `docs/sso/`:
 - [SSO Deployment Guide](docs/sso/SSO_DEPLOYMENT_GUIDE.md) - Deployment steps & rollback
 
 ### Project Guides
+
 - [CLAUDE.md](CLAUDE.md) - Complete project documentation for AI assistants
 - [Troubleshooting Guide](docs/troubleshooting/TROUBLESHOOTING_CLAUDE_CODE.md) - Environment variable caching fixes
 - [Migration Guide](docs/testing/MIGRATION_014_VIEW_DEPENDENCY_FIX.md) - Database migration dependency handling
 - [CSV Import Templates](templates/import/README.md) - Bulk data import documentation
 
 ### External Resources
+
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Supabase Documentation](https://supabase.io/docs)
 - [shadcn/ui Components](https://ui.shadcn.com)
@@ -455,6 +498,7 @@ Comprehensive SSO documentation available in `docs/sso/`:
 This is a private project. For internal contributions, please follow the coding standards in [CLAUDE.md](CLAUDE.md).
 
 ### Key Contribution Guidelines
+
 1. Read CLAUDE.md before starting any task
 2. Follow pre-task compliance checklist
 3. Commit after every completed task
@@ -473,4 +517,4 @@ Proprietary - All Rights Reserved
 **Maintained By**: ESID Development Team
 **Last Updated**: 2025-11-18
 
-🏫 **Core Features**: G1-G6 支援 | 一班三師架構 | Grade×CourseType 權限 | CSV批量匯入 | 📊 Analytics引擎 | 🧠 智能分析 | 🔐 Google SSO整合 (Phase 1-4)
+🏫 **Core Features**: G1-G6 支援 | 一班三師架構 | Grade×CourseType 權限 | CSV 批量匯入 | 📊 Analytics 引擎 | 🧠 智能分析 | 🔐 Google SSO 整合 (Phase 1-4)
