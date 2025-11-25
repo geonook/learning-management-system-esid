@@ -113,3 +113,12 @@ temp/
 
 # Import reports
 import-reports/
+
+# Debug and build output files
+build-output*.txt
+debug-*.html
+test-*.html
+
+# Environment files for specific deployments
+.env.production
+.env.staging
