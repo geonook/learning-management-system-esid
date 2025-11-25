@@ -1,62 +1,64 @@
-"use client"
+"use client";
 
-import { usePathname } from "next/navigation"
-import { Search } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { useAppStore } from "@/lib/store"
-import NotificationCenter from "@/components/ui/notification-center"
-import { useCurrentUser } from "@/hooks/use-current-user"
+import { usePathname } from "next/navigation";
+import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { useAppStore } from "@/lib/store";
+import NotificationCenter from "@/components/ui/notification-center";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 // Page title mapping
 const pageTitles: Record<string, string> = {
   "/": "Home",
-  "/dashboard": "Teacher Dashboard", 
+  "/dashboard": "Teacher Dashboard",
   "/admin": "Admin Dashboard",
   "/scores": "Grade Management",
   "/students": "Student Management",
   "/attendance/today": "Today's Attendance",
-  "/attendance/weekly": "Weekly Attendance", 
+  "/attendance/weekly": "Weekly Attendance",
   "/reports": "Reports & Analytics",
   "/settings": "System Settings",
   "/auth/login": "Login",
-  "/auth/role-select": "Role Selection"
-}
+  "/auth/role-select": "Role Selection",
+};
 
 // Breadcrumb generation
 function generateBreadcrumbs(pathname: string) {
-  const segments = pathname.split("/").filter(Boolean)
-  const breadcrumbs = [{ label: "Home", href: "/" }]
-  
-  let currentPath = ""
+  const segments = pathname.split("/").filter(Boolean);
+  const breadcrumbs = [{ label: "Home", href: "/" }];
+
+  let currentPath = "";
   segments.forEach((segment) => {
-    currentPath += `/${segment}`
-    const label = pageTitles[currentPath] || segment.charAt(0).toUpperCase() + segment.slice(1)
-    breadcrumbs.push({ label, href: currentPath })
-  })
-  
-  return breadcrumbs
+    currentPath += `/${segment}`;
+    const label =
+      pageTitles[currentPath] ||
+      segment.charAt(0).toUpperCase() + segment.slice(1);
+    breadcrumbs.push({ label, href: currentPath });
+  });
+
+  return breadcrumbs;
 }
 
 export default function Header() {
-  const pathname = usePathname()
-  const { grade, klass, track } = useAppStore((s) => s.selections)
-  const currentRole = useAppStore((s) => s.role)
-  const { user, loading: userLoading } = useCurrentUser()
-  
-  const pageTitle = pageTitles[pathname] || "Learning Management System"
-  const breadcrumbs = generateBreadcrumbs(pathname)
-  
+  const pathname = usePathname();
+  const { grade, klass, track } = useAppStore((s) => s.selections);
+  const currentRole = useAppStore((s) => s.role);
+  const { user, loading: userLoading } = useCurrentUser();
+
+  const pageTitle = pageTitles[pathname] || "Learning Management System";
+  const breadcrumbs = generateBreadcrumbs(pathname);
+
   // Get user display info
-  const userName = user?.full_name || 'Loading...'
-  const userEmail = user?.email || ''
+  const userName = user?.full_name || "Loading...";
+  const userEmail = user?.email || "";
   const userInitials = userName
-    .split(' ')
-    .map(name => name.charAt(0))
-    .join('')
+    .split(" ")
+    .map((name) => name.charAt(0))
+    .join("")
     .toUpperCase()
-    .slice(0, 2)
+    .slice(0, 2);
 
   return (
     <header className="flex h-16 items-center justify-between border-b bg-background px-6">
@@ -67,7 +69,11 @@ export default function Header() {
           {breadcrumbs.map((crumb, index) => (
             <div key={crumb.href} className="flex items-center gap-1">
               {index > 0 && <span>/</span>}
-              <span className={index === breadcrumbs.length - 1 ? "text-foreground" : ""}>
+              <span
+                className={
+                  index === breadcrumbs.length - 1 ? "text-foreground" : ""
+                }
+              >
                 {crumb.label}
               </span>
             </div>
@@ -104,7 +110,6 @@ export default function Header() {
         {/* Notifications */}
         <NotificationCenter />
 
-
         {/* User Menu */}
         <div className="flex items-center gap-2">
           <div className="hidden sm:flex flex-col text-right">
@@ -112,10 +117,10 @@ export default function Header() {
             <span className="text-xs text-muted-foreground">{userEmail}</span>
           </div>
           <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-            {userLoading ? '...' : userInitials}
+            {userLoading ? "..." : userInitials}
           </div>
         </div>
       </div>
     </header>
-  )
+  );
 }

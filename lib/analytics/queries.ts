@@ -441,8 +441,8 @@ export class AnalyticsQueries {
 
     try {
       let data: any
-      let keyInsights: string[] = []
-      let recommendations: string[] = []
+      const keyInsights: string[] = []
+      const recommendations: string[] = []
 
       switch (type) {
         case 'student':

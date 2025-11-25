@@ -1,16 +1,17 @@
 # Learning Management System - ESID
 
-> **Version**: 1.10.0
-> **Status**: Production Ready (SSO Integration Complete)
+> **Version**: 1.11.0
+> **Status**: Production Ready (SSO Integration Complete, Build Optimized)
 > **Tech Stack**: Next.js 14 + TypeScript + Supabase Cloud + Tailwind CSS
+> **Last Updated**: 2025-11-25
 
 A comprehensive **Primary School (G1-G6)** Learning Management System featuring English Language Arts (ELA) and KCFS courses with advanced **Analytics Engine**, **Database Analytics Views**, and **Google SSO Integration** (via Info Hub). Features **One Class, Three Teachers (一班三師)** architecture where each class has dedicated LT, IT, and KCFS instructors, plus real-time performance analytics, intelligent insights, and comprehensive testing framework.
 
-## 🎯 Current Status (Updated 2025-11-21)
+## 🎯 Current Status (Updated 2025-11-25)
 
 ### ✅ Completed Features
 
-- **Database Migrations**: ✅ Migrations 007-019e fully deployed (including emergency RLS fixes)
+- **Database Migrations**: ✅ Migrations 007-021 fully deployed (including RLS recursion fixes)
 - **Real Data Deployment**: ✅ 84 classes + 252 courses (2025-2026 學年度)
 - **Supabase Cloud**: ✅ Official cloud migration complete
 - **Analytics Engine**: ✅ Complete with 40+ TypeScript interfaces
@@ -19,13 +20,17 @@ A comprehensive **Primary School (G1-G6)** Learning Management System featuring 
 - **RLS Optimization**: ✅ 49 policies optimized (auth_rls_initplan: 0 warnings)
 - **Testing Framework**: ✅ 90-minute comprehensive testing workflow
 - **SSO Integration**: ✅ **Complete** - Full OAuth 2.0 + PKCE flow with Info Hub, Role Mapping, and Webhook Sync.
+- **ESLint Configuration**: ✅ Configured with next/core-web-vitals and next/typescript
+- **Build Optimization**: ✅ Standalone output, dynamic rendering, security headers
 
 ### ⏳ In Progress
 
 - **Application-Layer Permissions**: ⏳ Head teacher cross-user visibility (Phase 2)
+- **ESLint Error Resolution**: ⏳ 274 errors to be fixed (tracked via GitHub Issues)
 
 ### 📋 Upcoming
 
+- **Production Deployment**: E2E testing completion, then production release
 - **JWT Claims-based RLS**: Long-term solution for zero recursion risk
 - **Advanced Analytics**: Predictive models, intervention recommendations
 - **Mobile App**: React Native companion app
@@ -342,21 +347,26 @@ npm run deploy          # Deploy to Zeabur
 
 ## 🗄️ Database Migrations
 
-**Latest Migration**: **019e - Emergency RLS Fix** (2025-11-18) ✅
+**Latest Migration**: **021 - Fix Courses RLS Recursion** (2025-11-21) ✅
 
 ### Recent Migration History
 
-- **019e**: Removed `heads_view_jurisdiction` policy (RLS recursion fix) ✅
+- **021**: SECURITY DEFINER function for courses table RLS ✅
+  - Created `get_user_role_safe()` function
+  - Eliminated RLS recursion in courses queries
+  - Dashboard 400 errors resolved
 
+- **020**: Disabled auto user sync trigger ✅
+  - Prevented OAuth callback conflicts
+  - User sync handled by application layer
+
+- **019e**: Removed `heads_view_jurisdiction` policy (RLS recursion fix) ✅
   - **Problem**: Infinite recursion in `is_head_teacher()` function
   - **Solution**: Removed application-layer permission policy temporarily
   - **Impact**: Head teachers can only view their own data (Phase 1)
   - **Next Step**: Implement JWT claims-based permissions (Phase 2)
 
 - **019d**: Syntax corrections (still had recursion issues) ❌
-- **019c**: Complete cleanup attempt (syntax errors) ❌
-- **019b**: Public schema migration (policy conflicts) ❌
-- **019**: SECURITY DEFINER functions (auth schema access denied) ❌
 - **018**: Rollback office_member policies ✅
 - **017**: Add office_member role support ✅
 - **015**: RLS performance optimization (44→0 `auth_rls_initplan` warnings) ✅
@@ -512,9 +522,9 @@ Proprietary - All Rights Reserved
 
 ---
 
-**🎯 Primary School ELA LMS | 康橋小學英語學習管理系統 | v1.9.0**
+**🎯 Primary School ELA LMS | 康橋小學英語學習管理系統 | v1.11.0**
 
 **Maintained By**: ESID Development Team
-**Last Updated**: 2025-11-18
+**Last Updated**: 2025-11-25
 
-🏫 **Core Features**: G1-G6 支援 | 一班三師架構 | Grade×CourseType 權限 | CSV 批量匯入 | 📊 Analytics 引擎 | 🧠 智能分析 | 🔐 Google SSO 整合 (Phase 1-4)
+🏫 **Core Features**: G1-G6 支援 | 一班三師架構 | Grade×CourseType 權限 | CSV 批量匯入 | 📊 Analytics 引擎 | 🧠 智能分析 | 🔐 Google SSO 整合 | ⚡ Build Optimization

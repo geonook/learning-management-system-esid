@@ -380,7 +380,7 @@ async function executeScoresImport(
         }
         
         // Try to find or create exam for this course and exam_name
-        let examUUID = examMap.get(score.exam_name)
+        const examUUID = examMap.get(score.exam_name)
         
         // Only return scores with valid references
         if (studentUUID && courseUUID) {

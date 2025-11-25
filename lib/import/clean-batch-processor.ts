@@ -39,7 +39,7 @@ async function performBatchInsert<T>(
 ): Promise<{ created: number; updated: number; errors: number }> {
   const supabase = createServiceRoleClient()
   let totalCreated = 0
-  let totalUpdated = 0
+  const totalUpdated = 0
   let totalErrors = 0
 
   console.log(`Starting ${stageName} batch import: ${records.length} records`)
