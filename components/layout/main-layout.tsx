@@ -26,7 +26,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   
   // Mock role assignment for development - only after hydration
   useEffect(() => {
-    if (isHydrated && !role && !noLayoutPages.includes(pathname)) {
+    if (isHydrated && !role && pathname && !noLayoutPages.includes(pathname)) {
       // In development, auto-assign admin role for CSV import testing
       // In production, this would redirect to login
       useAppStore.getState().setRole("admin")
@@ -34,7 +34,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   }, [isHydrated, role, pathname])
 
   // If it's an auth page or no-layout page, render without layout
-  if (noLayoutPages.includes(pathname)) {
+  if (pathname && noLayoutPages.includes(pathname)) {
     return <>{children}</>
   }
 

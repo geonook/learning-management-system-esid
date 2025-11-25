@@ -130,7 +130,7 @@ export default function Sidebar({ className }: SidebarProps) {
       <nav className="flex-1 space-y-1 p-2">
         {filteredItems.map((item) => {
           const Icon = item.icon
-          const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+          const isActive = pathname === item.href || (pathname?.startsWith(item.href + "/") ?? false)
           const hasSubItems = item.subItems && item.subItems.length > 0
           const isExpanded = expandedItem === item.href
 

@@ -47,8 +47,8 @@ export default function Header() {
   const currentRole = useAppStore((s) => s.role);
   const { user, loading: userLoading } = useCurrentUser();
 
-  const pageTitle = pageTitles[pathname] || "Learning Management System";
-  const breadcrumbs = generateBreadcrumbs(pathname);
+  const pageTitle = (pathname && pageTitles[pathname]) || "Learning Management System";
+  const breadcrumbs = generateBreadcrumbs(pathname || '/');
 
   // Get user display info
   const userName = user?.full_name || "Loading...";

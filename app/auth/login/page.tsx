@@ -14,8 +14,8 @@ export default function LoginPage() {
 
   // Handle SSO error messages from URL parameters
   useEffect(() => {
-    const error = searchParams.get('error')
-    const description = searchParams.get('description')
+    const error = searchParams?.get('error')
+    const description = searchParams?.get('description')
 
     if (error) {
       const errorMessages: Record<string, string> = {

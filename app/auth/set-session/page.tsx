@@ -31,9 +31,9 @@ export default function SetSessionPage() {
     const setupSession = async () => {
       try {
         // 1. Extract OTP parameters from URL
-        const tokenHash = searchParams.get('token_hash')
-        const type = searchParams.get('type')
-        const email = searchParams.get('email')
+        const tokenHash = searchParams?.get('token_hash')
+        const type = searchParams?.get('type')
+        const email = searchParams?.get('email')
 
         if (!tokenHash || !type || !email) {
           throw new Error('Missing authentication parameters')
