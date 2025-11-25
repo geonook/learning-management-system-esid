@@ -7,6 +7,9 @@ import { AuthProvider } from "@/lib/supabase/auth-context"
 
 const inter = Inter({ subsets: ["latin"] })
 
+// Force dynamic rendering for all routes (required for AuthProvider context)
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: "Learning Management System ESID",
   description: "Full-stack Learning Management System with Next.js + TypeScript + Supabase",
