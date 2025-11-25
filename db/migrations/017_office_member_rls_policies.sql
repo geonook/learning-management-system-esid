@@ -18,6 +18,7 @@
 -- USERS TABLE: Read-only access
 -- ============================================================================
 
+DROP POLICY IF EXISTS "office_member_read_users" ON users;
 CREATE POLICY "office_member_read_users"
   ON users
   FOR SELECT
@@ -33,6 +34,7 @@ CREATE POLICY "office_member_read_users"
 -- CLASSES TABLE: Read-only access to all classes
 -- ============================================================================
 
+DROP POLICY IF EXISTS "office_member_read_classes" ON classes;
 CREATE POLICY "office_member_read_classes"
   ON classes
   FOR SELECT
@@ -48,6 +50,7 @@ CREATE POLICY "office_member_read_classes"
 -- COURSES TABLE: Read-only access to all courses
 -- ============================================================================
 
+DROP POLICY IF EXISTS "office_member_read_courses" ON courses;
 CREATE POLICY "office_member_read_courses"
   ON courses
   FOR SELECT
@@ -63,6 +66,7 @@ CREATE POLICY "office_member_read_courses"
 -- STUDENTS TABLE: Read-only access to all students
 -- ============================================================================
 
+DROP POLICY IF EXISTS "office_member_read_students" ON students;
 CREATE POLICY "office_member_read_students"
   ON students
   FOR SELECT
@@ -78,6 +82,7 @@ CREATE POLICY "office_member_read_students"
 -- STUDENT_COURSES TABLE: Read-only access to all student-course relationships
 -- ============================================================================
 
+DROP POLICY IF EXISTS "office_member_read_student_courses" ON student_courses;
 CREATE POLICY "office_member_read_student_courses"
   ON student_courses
   FOR SELECT
@@ -93,6 +98,7 @@ CREATE POLICY "office_member_read_student_courses"
 -- EXAMS TABLE: Read-only access to all exams
 -- ============================================================================
 
+DROP POLICY IF EXISTS "office_member_read_exams" ON exams;
 CREATE POLICY "office_member_read_exams"
   ON exams
   FOR SELECT
@@ -108,6 +114,7 @@ CREATE POLICY "office_member_read_exams"
 -- SCORES TABLE: Read-only access to all scores
 -- ============================================================================
 
+DROP POLICY IF EXISTS "office_member_read_scores" ON scores;
 CREATE POLICY "office_member_read_scores"
   ON scores
   FOR SELECT
@@ -123,6 +130,7 @@ CREATE POLICY "office_member_read_scores"
 -- ASSESSMENT_TITLES TABLE: Read-only access
 -- ============================================================================
 
+DROP POLICY IF EXISTS "office_member_read_assessment_titles" ON assessment_titles;
 CREATE POLICY "office_member_read_assessment_titles"
   ON assessment_titles
   FOR SELECT
@@ -138,6 +146,7 @@ CREATE POLICY "office_member_read_assessment_titles"
 -- ASSESSMENT_CODES TABLE: Read-only access
 -- ============================================================================
 
+DROP POLICY IF EXISTS "office_member_read_assessment_codes" ON assessment_codes;
 CREATE POLICY "office_member_read_assessment_codes"
   ON assessment_codes
   FOR SELECT

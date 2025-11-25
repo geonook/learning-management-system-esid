@@ -34,20 +34,7 @@ BEGIN
   END LOOP;
 END$$;
 
--- Drop any existing helper functions
-DROP FUNCTION IF EXISTS auth.is_admin();
-DROP FUNCTION IF EXISTS auth.is_head();
-DROP FUNCTION IF EXISTS auth.is_office_member();
-DROP FUNCTION IF EXISTS auth.get_user_role();
-DROP FUNCTION IF EXISTS auth.get_user_grade();
-
-DROP FUNCTION IF EXISTS public.is_admin();
-DROP FUNCTION IF EXISTS public.is_head();
-DROP FUNCTION IF EXISTS public.is_office_member();
-DROP FUNCTION IF EXISTS public.get_user_role();
-DROP FUNCTION IF EXISTS public.get_user_grade();
-
--- Drop office_member policies on other tables
+-- Drop office_member policies on other tables (SPACES)
 DROP POLICY IF EXISTS "office_member read classes" ON classes;
 DROP POLICY IF EXISTS "office_member read courses" ON courses;
 DROP POLICY IF EXISTS "office_member read students" ON students;
@@ -57,7 +44,32 @@ DROP POLICY IF EXISTS "office_member read scores" ON scores;
 DROP POLICY IF EXISTS "office_member read assessment_titles" ON assessment_titles;
 DROP POLICY IF EXISTS "office_member read assessment_codes" ON assessment_codes;
 
-RAISE NOTICE '✅ Cleanup complete - all old policies and functions removed';
+-- Drop office_member policies on other tables (UNDERSCORES)
+DROP POLICY IF EXISTS "office_member_read_classes" ON classes;
+DROP POLICY IF EXISTS "office_member_read_courses" ON courses;
+DROP POLICY IF EXISTS "office_member_read_students" ON students;
+DROP POLICY IF EXISTS "office_member_read_student_courses" ON student_courses;
+DROP POLICY IF EXISTS "office_member_read_exams" ON exams;
+DROP POLICY IF EXISTS "office_member_read_scores" ON scores;
+DROP POLICY IF EXISTS "office_member_read_assessment_titles" ON assessment_titles;
+DROP POLICY IF EXISTS "office_member_read_assessment_codes" ON assessment_codes;
+
+-- Drop any existing helper functions
+DROP FUNCTION IF EXISTS auth.is_admin() CASCADE;
+DROP FUNCTION IF EXISTS auth.is_head() CASCADE;
+DROP FUNCTION IF EXISTS auth.is_office_member() CASCADE;
+DROP FUNCTION IF EXISTS auth.get_user_role() CASCADE;
+DROP FUNCTION IF EXISTS auth.get_user_grade() CASCADE;
+
+DROP FUNCTION IF EXISTS public.is_admin() CASCADE;
+DROP FUNCTION IF EXISTS public.is_head() CASCADE;
+DROP FUNCTION IF EXISTS public.is_office_member() CASCADE;
+DROP FUNCTION IF EXISTS public.get_user_role() CASCADE;
+DROP FUNCTION IF EXISTS public.get_user_grade() CASCADE;
+
+DO $$ BEGIN
+  RAISE NOTICE '✅ Cleanup complete - all old policies and functions removed';
+END $$;
 
 -- ============================================================================
 -- PART 1: Create SECURITY DEFINER Helper Functions (PUBLIC SCHEMA)
@@ -145,7 +157,9 @@ BEGIN
 END;
 $$;
 
-RAISE NOTICE '✅ Created 5 helper functions in public schema';
+DO $$ BEGIN
+  RAISE NOTICE '✅ Created 5 helper functions in public schema';
+END $$;
 
 -- ============================================================================
 -- PART 2: Create Users Table Policies (No Recursion)
@@ -201,7 +215,9 @@ CREATE POLICY "office_member_read_users" ON users
         OR id = (SELECT auth.uid())
     );
 
-RAISE NOTICE '✅ Created 6 policies on users table';
+DO $$ BEGIN
+  RAISE NOTICE '✅ Created 6 policies on users table';
+END $$;
 
 -- ============================================================================
 -- PART 3: Create office_member Policies for Other Tables
@@ -239,7 +255,9 @@ CREATE POLICY "office_member_read_assessment_codes" ON assessment_codes
     FOR SELECT TO authenticated
     USING (public.is_office_member());
 
-RAISE NOTICE '✅ Created 8 office_member policies on other tables';
+DO $$ BEGIN
+  RAISE NOTICE '✅ Created 8 office_member policies on other tables';
+END $$;
 
 -- ============================================================================
 -- PART 4: Verification

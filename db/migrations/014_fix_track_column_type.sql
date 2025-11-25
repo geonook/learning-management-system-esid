@@ -41,6 +41,8 @@ END $$;
 -- Drop the head_teacher_access_courses policy (depends on users.track)
 -- This policy uses: u.track::text = courses.course_type::text
 DROP POLICY IF EXISTS "head_teacher_access_courses" ON courses;
+DROP POLICY IF EXISTS "Heads can see courses in their jurisdiction" ON courses;
+DROP POLICY IF EXISTS "Scores via course access" ON scores;
 
 -- Drop the Head Teacher policy on student_courses if it exists
 -- This policy might be created by Migration 012

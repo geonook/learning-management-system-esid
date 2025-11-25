@@ -92,12 +92,15 @@ END $$;
 -- 5. Verify all constraints have been updated
 SELECT 'Verifying updated grade constraints...' as step;
 SELECT 
-    table_name,
-    constraint_name,
-    check_clause
-FROM information_schema.check_constraints 
-WHERE constraint_name LIKE '%grade_check'
-ORDER BY table_name;
+    tc.table_name,
+    cc.constraint_name,
+    cc.check_clause
+FROM information_schema.check_constraints cc
+JOIN information_schema.table_constraints tc 
+    ON cc.constraint_name = tc.constraint_name 
+    AND cc.constraint_schema = tc.constraint_schema
+WHERE cc.constraint_name LIKE '%grade_check'
+ORDER BY tc.table_name;
 
 -- 6. Test the new constraints with sample data
 SELECT 'Testing new constraints...' as step;

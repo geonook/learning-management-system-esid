@@ -88,9 +88,9 @@ CREATE INDEX IF NOT EXISTS idx_analytics_scores_timeline
 
 -- Exam frequency and scheduling analysis
 CREATE INDEX IF NOT EXISTS idx_analytics_exams_timeline 
-    ON exams(class_id, exam_date, is_active) 
+    ON exams(class_id, exam_date, is_published) 
     INCLUDE (id, name, created_by)
-    WHERE is_active = true;
+    WHERE is_published = true;
 
 -- ========================================
 -- RISK ASSESSMENT INDEXES
@@ -181,14 +181,13 @@ CREATE INDEX IF NOT EXISTS idx_analytics_cover_teacher_performance
 CREATE INDEX IF NOT EXISTS idx_analytics_recent_activity 
     ON scores(entered_at DESC, student_id, course_id) 
     INCLUDE (assessment_code, score)
-    WHERE entered_at >= (CURRENT_DATE - INTERVAL '30 days') AND score > 0;
+    WHERE score > 0;
 
--- Current academic year focus
+-- Current academic year focus (removed dynamic predicate)
 CREATE INDEX IF NOT EXISTS idx_analytics_current_year_classes 
     ON classes(academic_year, grade, track, is_active) 
     INCLUDE (id, name, level)
-    WHERE academic_year = EXTRACT(YEAR FROM NOW())::TEXT || '-' || LPAD((EXTRACT(YEAR FROM NOW()) + 1)::TEXT, 2, '0')
-    AND is_active = true;
+    WHERE is_active = true;
 
 -- ========================================
 -- EXPRESSION INDEXES FOR CALCULATIONS
@@ -225,11 +224,11 @@ CREATE INDEX IF NOT EXISTS idx_analytics_hash_assessment_code
 
 -- Multi-dimensional Analytics searches
 CREATE INDEX IF NOT EXISTS idx_analytics_gin_student_attributes 
-    ON students USING gin((grade, track, level)) 
+    ON students (grade, track, level) 
     WHERE is_active = true;
 
 CREATE INDEX IF NOT EXISTS idx_analytics_gin_class_attributes 
-    ON classes USING gin((grade, track, level)) 
+    ON classes (grade, track, level) 
     WHERE is_active = true;
 
 -- ========================================

@@ -325,7 +325,7 @@ CREATE POLICY "Teachers can manage their exams" ON exams
     USING (
         EXISTS (
             SELECT 1 FROM courses
-            WHERE courses.id = exams.course_id
+            WHERE courses.class_id = exams.class_id
             AND courses.teacher_id = (SELECT auth.uid())  -- ✅ OPTIMIZED
             AND courses.is_active = TRUE
         )
@@ -333,7 +333,7 @@ CREATE POLICY "Teachers can manage their exams" ON exams
     WITH CHECK (
         EXISTS (
             SELECT 1 FROM courses
-            WHERE courses.id = exams.course_id
+            WHERE courses.class_id = exams.class_id
             AND courses.teacher_id = (SELECT auth.uid())  -- ✅ OPTIMIZED
             AND courses.is_active = TRUE
         )
@@ -345,8 +345,7 @@ CREATE POLICY "Heads can view exams in grade" ON exams
     USING (
         EXISTS (
             SELECT 1 FROM users
-            JOIN courses ON exams.course_id = courses.id
-            JOIN classes ON courses.class_id = classes.id
+            JOIN classes ON exams.class_id = classes.id
             WHERE users.id = (SELECT auth.uid())  -- ✅ OPTIMIZED
             AND users.role = 'head'
             AND users.grade = classes.grade
@@ -378,18 +377,16 @@ CREATE POLICY "Teachers can manage their scores" ON scores
     FOR ALL
     USING (
         EXISTS (
-            SELECT 1 FROM exams
-            JOIN courses ON exams.course_id = courses.id
-            WHERE scores.exam_id = exams.id
+            SELECT 1 FROM courses
+            WHERE scores.course_id = courses.id
             AND courses.teacher_id = (SELECT auth.uid())  -- ✅ OPTIMIZED
             AND courses.is_active = TRUE
         )
     )
     WITH CHECK (
         EXISTS (
-            SELECT 1 FROM exams
-            JOIN courses ON exams.course_id = courses.id
-            WHERE scores.exam_id = exams.id
+            SELECT 1 FROM courses
+            WHERE scores.course_id = courses.id
             AND courses.teacher_id = (SELECT auth.uid())  -- ✅ OPTIMIZED
             AND courses.is_active = TRUE
         )
@@ -401,8 +398,7 @@ CREATE POLICY "Heads can view scores in grade" ON scores
     USING (
         EXISTS (
             SELECT 1 FROM users
-            JOIN exams ON scores.exam_id = exams.id
-            JOIN courses ON exams.course_id = courses.id
+            JOIN courses ON scores.course_id = courses.id
             JOIN classes ON courses.class_id = classes.id
             WHERE users.id = (SELECT auth.uid())  -- ✅ OPTIMIZED
             AND users.role = 'head'

@@ -40,12 +40,14 @@ CREATE TABLE IF NOT EXISTS courses (
 );
 
 -- Create index for performance
-CREATE INDEX idx_courses_class ON courses(class_id);
-CREATE INDEX idx_courses_teacher ON courses(teacher_id);
-CREATE INDEX idx_courses_type ON courses(course_type);
-CREATE INDEX idx_courses_academic_year ON courses(academic_year);
+-- Create index for performance
+CREATE INDEX IF NOT EXISTS idx_courses_class ON courses(class_id);
+CREATE INDEX IF NOT EXISTS idx_courses_teacher ON courses(teacher_id);
+CREATE INDEX IF NOT EXISTS idx_courses_type ON courses(course_type);
+CREATE INDEX IF NOT EXISTS idx_courses_academic_year ON courses(academic_year);
 
 -- Add updated_at trigger
+DROP TRIGGER IF EXISTS update_courses_updated_at ON courses;
 CREATE TRIGGER update_courses_updated_at
   BEFORE UPDATE ON courses
   FOR EACH ROW
@@ -71,7 +73,7 @@ CROSS JOIN (
   VALUES ('LT'::course_type), ('IT'::course_type), ('KCFS'::course_type)
 ) AS ct(course_type)
 WHERE c.is_active = TRUE
-ON CONFLICT (class_id, course_type, academic_year) DO NOTHING;
+ON CONFLICT (class_id, course_type) DO NOTHING;
 
 -- Success message
 DO $$

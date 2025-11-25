@@ -40,7 +40,7 @@
 -- without causing recursion when called from users table policies
 
 -- Function 1: Check if current user is admin
-CREATE OR REPLACE FUNCTION auth.is_admin()
+CREATE OR REPLACE FUNCTION is_admin()
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER  -- Bypasses RLS
@@ -56,11 +56,11 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION auth.is_admin() IS
+COMMENT ON FUNCTION is_admin() IS
 'Check if current authenticated user has admin role. Used by RLS policies.';
 
 -- Function 2: Check if current user is head teacher
-CREATE OR REPLACE FUNCTION auth.is_head()
+CREATE OR REPLACE FUNCTION is_head()
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -76,11 +76,11 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION auth.is_head() IS
+COMMENT ON FUNCTION is_head() IS
 'Check if current authenticated user is a head teacher. Used by RLS policies.';
 
 -- Function 3: Check if current user is office_member
-CREATE OR REPLACE FUNCTION auth.is_office_member()
+CREATE OR REPLACE FUNCTION is_office_member()
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -96,11 +96,11 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION auth.is_office_member() IS
+COMMENT ON FUNCTION is_office_member() IS
 'Check if current authenticated user has office_member role (read-only access).';
 
 -- Function 4: Get current user's role
-CREATE OR REPLACE FUNCTION auth.get_user_role()
+CREATE OR REPLACE FUNCTION get_user_role()
 RETURNS user_role
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -118,11 +118,11 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION auth.get_user_role() IS
+COMMENT ON FUNCTION get_user_role() IS
 'Get the role of the current authenticated user. Returns NULL if user not found.';
 
 -- Function 5: Get current user's grade (for head teachers)
-CREATE OR REPLACE FUNCTION auth.get_user_grade()
+CREATE OR REPLACE FUNCTION get_user_grade()
 RETURNS INTEGER
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -140,7 +140,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION auth.get_user_grade() IS
+COMMENT ON FUNCTION get_user_grade() IS
 'Get the grade of the current authenticated user (for head teachers). Returns NULL if not set.';
 
 -- ============================================================================
@@ -149,6 +149,7 @@ COMMENT ON FUNCTION auth.get_user_grade() IS
 
 -- Remove the 3 policies that cause infinite recursion
 DROP POLICY IF EXISTS "Admin full access to users" ON users;
+DROP POLICY IF EXISTS "Users can view own profile" ON users;
 DROP POLICY IF EXISTS "Users can update own profile" ON users;
 DROP POLICY IF EXISTS "Heads can view users in jurisdiction" ON users;
 
@@ -161,7 +162,7 @@ DROP POLICY IF EXISTS "Heads can view users in jurisdiction" ON users;
 CREATE POLICY "Admin full access to users" ON users
     FOR ALL
     TO authenticated
-    USING (auth.is_admin());
+    USING (is_admin());
 
 -- Policy 2: Users can view their own profile
 -- ✅ Safe: only compares id with auth.uid()
@@ -178,7 +179,7 @@ CREATE POLICY "Users can update own profile" ON users
     USING (id = (SELECT auth.uid()))
     WITH CHECK (
         id = (SELECT auth.uid())
-        AND role = auth.get_user_role()  -- Prevent role escalation
+        AND role = get_user_role()  -- Prevent role escalation
     );
 
 -- Policy 4: Head teachers can view users in their jurisdiction
@@ -187,17 +188,17 @@ CREATE POLICY "Heads can view users in jurisdiction" ON users
     FOR SELECT
     TO authenticated
     USING (
-        auth.is_head()
+        is_head()
         AND (
             -- Same grade teachers
-            (users.role = 'teacher' AND users.grade = auth.get_user_grade())
+            (users.role = 'teacher' AND users.grade = get_user_grade())
             OR
             -- Students in their grade (through classes)
             (users.role = 'student' AND EXISTS (
                 SELECT 1 FROM students s
                 JOIN classes c ON s.class_id = c.id
                 WHERE s.id = users.id
-                AND c.grade = auth.get_user_grade()
+                AND c.grade = get_user_grade()
             ))
         )
     );
@@ -211,7 +212,7 @@ CREATE POLICY "office_member read users" ON users
     FOR SELECT
     TO authenticated
     USING (
-        auth.is_office_member()
+        is_office_member()
         OR id = (SELECT auth.uid())  -- Everyone can see own profile
     );
 
@@ -219,49 +220,49 @@ CREATE POLICY "office_member read users" ON users
 CREATE POLICY "office_member read classes" ON classes
     FOR SELECT
     TO authenticated
-    USING (auth.is_office_member());
+    USING (is_office_member());
 
 -- Policy 7: office_member can read all courses
 CREATE POLICY "office_member read courses" ON courses
     FOR SELECT
     TO authenticated
-    USING (auth.is_office_member());
+    USING (is_office_member());
 
 -- Policy 8: office_member can read all students
 CREATE POLICY "office_member read students" ON students
     FOR SELECT
     TO authenticated
-    USING (auth.is_office_member());
+    USING (is_office_member());
 
 -- Policy 9: office_member can read all student_courses
 CREATE POLICY "office_member read student_courses" ON student_courses
     FOR SELECT
     TO authenticated
-    USING (auth.is_office_member());
+    USING (is_office_member());
 
 -- Policy 10: office_member can read all exams
 CREATE POLICY "office_member read exams" ON exams
     FOR SELECT
     TO authenticated
-    USING (auth.is_office_member());
+    USING (is_office_member());
 
 -- Policy 11: office_member can read all scores
 CREATE POLICY "office_member read scores" ON scores
     FOR SELECT
     TO authenticated
-    USING (auth.is_office_member());
+    USING (is_office_member());
 
 -- Policy 12: office_member can read all assessment_titles
 CREATE POLICY "office_member read assessment_titles" ON assessment_titles
     FOR SELECT
     TO authenticated
-    USING (auth.is_office_member());
+    USING (is_office_member());
 
 -- Policy 13: office_member can read all assessment_codes
 CREATE POLICY "office_member read assessment_codes" ON assessment_codes
     FOR SELECT
     TO authenticated
-    USING (auth.is_office_member());
+    USING (is_office_member());
 
 -- ============================================================================
 -- PART 5: Verification and Summary
@@ -287,7 +288,7 @@ BEGIN
   SELECT COUNT(*) INTO function_count
   FROM pg_proc p
   JOIN pg_namespace n ON p.pronamespace = n.oid
-  WHERE n.nspname = 'auth'
+  WHERE n.nspname = 'public'
   AND p.proname IN ('is_admin', 'is_head', 'is_office_member', 'get_user_role', 'get_user_grade');
 
   IF function_count = 5 THEN
@@ -326,7 +327,8 @@ BEGIN
   SELECT COUNT(*) INTO total_functions
   FROM pg_proc p
   JOIN pg_namespace n ON p.pronamespace = n.oid
-  WHERE n.nspname = 'auth';
+  WHERE n.nspname = 'public'
+  AND p.proname IN ('is_admin', 'is_head', 'is_office_member', 'get_user_role', 'get_user_grade');
 
   -- Count users table policies
   SELECT COUNT(*) INTO users_policies
@@ -361,11 +363,11 @@ END $$;
  * To rollback this migration:
  *
  * 1. Drop helper functions:
- *    DROP FUNCTION IF EXISTS auth.is_admin();
- *    DROP FUNCTION IF EXISTS auth.is_head();
- *    DROP FUNCTION IF EXISTS auth.is_office_member();
- *    DROP FUNCTION IF EXISTS auth.get_user_role();
- *    DROP FUNCTION IF EXISTS auth.get_user_grade();
+ *    DROP FUNCTION IF EXISTS is_admin();
+ *    DROP FUNCTION IF EXISTS is_head();
+ *    DROP FUNCTION IF EXISTS is_office_member();
+ *    DROP FUNCTION IF EXISTS get_user_role();
+ *    DROP FUNCTION IF EXISTS get_user_grade();
  *
  * 2. Drop new policies:
  *    DROP POLICY IF EXISTS "Admin full access to users" ON users;
