@@ -14,7 +14,7 @@ export function TeacherOSLayout({ children }: TeacherOSLayoutProps) {
     <div className="h-screen w-screen overflow-hidden font-sans antialiased">
       <MenuBar />
       <Desktop>{children}</Desktop>
-      {/* <Dock /> */}
+      <Dock />
     </div>
   );
 }

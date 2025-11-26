@@ -29,31 +29,19 @@ interface DockItemProps {
 
 function DockItem({ icon, label, onClick, isActive }: DockItemProps) {
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            onClick={onClick}
-            className={cn(
-              "group relative flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200 hover:-translate-y-2 hover:scale-110",
-              "bg-white/10 backdrop-blur-md border border-white/20 shadow-lg",
-              isActive && "bg-white/30 border-white/40"
-            )}
-          >
-            <div className="text-white drop-shadow-md">{icon}</div>
-            {isActive && (
-              <div className="absolute -bottom-2 h-1 w-1 rounded-full bg-white/80" />
-            )}
-          </button>
-        </TooltipTrigger>
-        <TooltipContent
-          side="top"
-          className="bg-black/50 text-white border-white/10 backdrop-blur-md"
-        >
-          <p>{label}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <button
+      onClick={onClick}
+      className={cn(
+        "group relative flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200 hover:-translate-y-2 hover:scale-110",
+        "bg-white/10 backdrop-blur-md border border-white/20 shadow-lg",
+        isActive && "bg-white/30 border-white/40"
+      )}
+    >
+      <div className="text-white drop-shadow-md">{icon}</div>
+      {isActive && (
+        <div className="absolute -bottom-2 h-1 w-1 rounded-full bg-white/80" />
+      )}
+    </button>
   );
 }
 
