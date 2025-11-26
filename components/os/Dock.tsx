@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutGrid,
@@ -57,11 +58,34 @@ function DockItem({ icon, label, onClick, isActive }: DockItemProps) {
 }
 
 export function Dock() {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const handleNavigation = (path: string) => {
+    router.push(path);
+  };
+
+  const isActive = (path: string) => {
+    if (path === "/dashboard" && pathname === "/dashboard") return true;
+    if (path !== "/dashboard" && pathname?.startsWith(path)) return true;
+    return false;
+  };
+
   return (
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
       <div className="flex items-end space-x-2 rounded-3xl bg-white/20 px-4 py-3 shadow-2xl backdrop-blur-xl border border-white/20">
-        <DockItem icon={<LayoutGrid size={24} />} label="Dashboard" isActive />
-        <DockItem icon={<Folder size={24} />} label="Classes" />
+        <DockItem
+          icon={<LayoutGrid size={24} />}
+          label="Dashboard"
+          onClick={() => handleNavigation("/dashboard")}
+          isActive={isActive("/dashboard")}
+        />
+        <DockItem
+          icon={<Folder size={24} />}
+          label="Classes"
+          onClick={() => handleNavigation("/finder")}
+          isActive={isActive("/finder")}
+        />
         <DockItem icon={<Users size={24} />} label="Students" />
         <DockItem icon={<Calculator size={24} />} label="Gradebook" />
         <DockItem icon={<BookOpen size={24} />} label="Logs" />
