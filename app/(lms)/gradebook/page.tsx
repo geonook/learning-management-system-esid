@@ -35,29 +35,26 @@ export default async function GradebookPage({ searchParams }: PageProps) {
   }
 
   return (
-    <div className="h-full w-full p-4 flex flex-col">
-      <h2 className="text-xl font-bold mb-4">
-        DEBUG_VERSION_2: GRADEBOOK NO WINDOW
-      </h2>
-      {/* <Window
+    <div className="h-full w-full p-4 flex items-center justify-center">
+      <Window
         title={`${className} - Gradebook`}
         className="w-[95%] h-[90%] max-w-7xl flex flex-col bg-white text-black"
       >
-        <Toolbar /> */}
-      {error ? (
-        <div className="flex-1 flex items-center justify-center text-red-500">
-          {error}
-        </div>
-      ) : (
-        <Spreadsheet classId={classId} initialData={initialData} />
-      )}
+        <Toolbar />
+        {error ? (
+          <div className="flex-1 flex items-center justify-center text-red-500">
+            {error}
+          </div>
+        ) : (
+          <Spreadsheet classId={classId} initialData={initialData} />
+        )}
 
-      {/* Status Bar */}
-      {/* <div className="h-6 bg-[#f3f3f3] border-t border-[#d1d1d1] flex items-center px-4 text-[10px] text-gray-600 justify-between">
+        {/* Status Bar */}
+        <div className="h-6 bg-[#f3f3f3] border-t border-[#d1d1d1] flex items-center px-4 text-[10px] text-gray-600 justify-between">
           <span>{classId ? "Ready" : "No Class Selected"}</span>
           <span>Sum: 0</span>
         </div>
-      </Window> */}
+      </Window>
     </div>
   );
 }
