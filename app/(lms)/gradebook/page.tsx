@@ -40,7 +40,7 @@ export default async function GradebookPage({ searchParams }: PageProps) {
         title={`${className} - Gradebook`}
         className="w-[95%] h-[90%] max-w-7xl flex flex-col bg-white text-black"
       >
-        <Toolbar />
+        {/* <Toolbar /> */}
         {error ? (
           <div className="flex-1 flex items-center justify-center text-red-500">
             {error}
