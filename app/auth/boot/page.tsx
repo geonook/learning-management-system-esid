@@ -23,13 +23,13 @@ export default function BootPage() {
     }, 150);
 
     // Redirect after completion
-    const timeout = setTimeout(() => {
+    const timer = setTimeout(() => {
       router.push("/dashboard");
-    }, 2500);
+    }, 1500);
 
     return () => {
       clearInterval(interval);
-      clearTimeout(timeout);
+      clearTimeout(timer);
     };
   }, [router]);
 

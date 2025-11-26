@@ -1,139 +1,230 @@
 "use client";
 
-import React, { useState } from "react";
-import { FormulaEngine, GradeRow } from "./FormulaEngine";
+import React, { useState, useTransition } from "react";
+import { FormulaEngine, GradeRow } from "@/lib/gradebook/FormulaEngine";
 import { cn } from "@/lib/utils";
+import { FocusGradeInput } from "./FocusGradeInput";
+import { updateScore } from "@/lib/actions/gradebook";
+import { Loader2, AlertCircle } from "lucide-react";
 
-// Mock Initial Data
-const INITIAL_DATA: GradeRow[] = [
-  { id: "1", studentName: "Alice Chen", e: 85, f: 90, g: 95 },
-  { id: "2", studentName: "Bob Lin", e: 70, f: 75, g: 80 },
-  { id: "3", studentName: "Charlie Wang", e: 92, f: 88, g: 90 },
-  { id: "4", studentName: "David Wu", e: "", f: "", g: "" }, // Empty test
-  { id: "5", studentName: "Eva Zhang", e: 60, f: 55, g: 70 },
-];
+interface SpreadsheetProps {
+  classId: string;
+  initialData: GradeRow[];
+}
 
-export function Spreadsheet() {
-  const [data, setData] = useState<GradeRow[]>(INITIAL_DATA);
-  const [selectedCell, setSelectedCell] = useState<{
-    rowId: string;
-    col: string;
-  } | null>(null);
+export function Spreadsheet({ classId, initialData }: SpreadsheetProps) {
+  const [data, setData] = useState<GradeRow[]>(initialData);
+  const [focusModeCode, setFocusModeCode] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "error">(
+    "saved"
+  );
 
-  const handleInputChange = (rowId: string, col: string, value: string) => {
+  // Columns Configuration
+  const ASSESSMENT_COLS = [
+    { code: "MID", label: "Midterm", weight: "10%" },
+    ...Array.from({ length: 8 }, (_, i) => ({
+      code: `FA${i + 1}`,
+      label: `F.A.${i + 1}`,
+      weight: "Formative",
+    })),
+    ...Array.from({ length: 4 }, (_, i) => ({
+      code: `SA${i + 1}`,
+      label: `S.A.${i + 1}`,
+      weight: "Summative",
+    })),
+  ];
+
+  const handleScoreUpdate = (
+    studentId: string,
+    code: string,
+    value: number | null
+  ) => {
+    // 1. Optimistic Update
+    setSaveStatus("saving");
     setData((prev) =>
       prev.map((row) => {
-        if (row.id === rowId) {
-          return { ...row, [col]: value };
+        if (row.id === studentId) {
+          const newScores = { ...row.scores, [code]: value };
+          return { ...row, scores: newScores };
         }
         return row;
       })
     );
-  };
 
-  // Calculate Term Grade (Column D) dynamically
-  const getTermGrade = (row: GradeRow) => {
-    return FormulaEngine.calculateTermGrade(row.e, row.f, row.g);
+    // 2. Server Action
+    startTransition(async () => {
+      try {
+        await updateScore(classId, studentId, code, value);
+        setSaveStatus("saved");
+      } catch (error) {
+        console.error("Failed to save score:", error);
+        setSaveStatus("error");
+      }
+    });
   };
 
   return (
-    <div className="flex-1 overflow-auto bg-[#f0f0f0] p-8">
-      {/* Canvas / Sheet Container */}
-      <div className="bg-white shadow-sm border border-gray-300 rounded-sm overflow-hidden min-w-[800px]">
-        {/* Header Row */}
-        <div className="flex border-b border-gray-300 bg-[#f5f5f5]">
-          <div className="w-12 border-r border-gray-300 p-2 text-center text-xs font-bold text-gray-500">
-            #
-          </div>
-          <div className="w-48 border-r border-gray-300 p-2 text-sm font-bold text-gray-700">
-            Student Name
-          </div>
-          <div className="w-32 border-r border-gray-300 p-2 text-sm font-bold text-gray-700 bg-blue-50">
-            Term Grade (D)
-          </div>
-          <div className="w-32 border-r border-gray-300 p-2 text-sm font-bold text-gray-700">
-            Assessment 1 (E) <br />
-            <span className="text-[10px] font-normal text-gray-500">
-              Weight: 15%
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#f0f0f0]">
+      {/* Toolbar / Status Bar */}
+      <div className="bg-white border-b border-gray-200 px-6 py-2 flex justify-between items-center h-12 shrink-0">
+        <div className="text-sm text-gray-500">{data.length} Students</div>
+        <div className="flex items-center space-x-2">
+          {saveStatus === "saving" && (
+            <span className="text-xs text-blue-600 flex items-center">
+              <Loader2 className="w-3 h-3 mr-1 animate-spin" /> Saving...
             </span>
-          </div>
-          <div className="w-32 border-r border-gray-300 p-2 text-sm font-bold text-gray-700">
-            Assessment 2 (F) <br />
-            <span className="text-[10px] font-normal text-gray-500">
-              Weight: 20%
+          )}
+          {saveStatus === "saved" && (
+            <span className="text-xs text-green-600">All changes saved</span>
+          )}
+          {saveStatus === "error" && (
+            <span className="text-xs text-red-600 flex items-center">
+              <AlertCircle className="w-3 h-3 mr-1" /> Save failed
             </span>
-          </div>
-          <div className="w-32 border-r border-gray-300 p-2 text-sm font-bold text-gray-700">
-            Assessment 3 (G) <br />
-            <span className="text-[10px] font-normal text-gray-500">
-              Weight: 10%
-            </span>
-          </div>
+          )}
         </div>
+      </div>
 
-        {/* Data Rows */}
-        {data.map((row, index) => {
-          const termGrade = getTermGrade(row);
-          return (
-            <div
-              key={row.id}
-              className="flex border-b border-gray-200 hover:bg-blue-50/30"
-            >
-              {/* Row Number */}
-              <div className="w-12 border-r border-gray-300 bg-[#f9f9f9] p-2 text-center text-xs text-gray-500 flex items-center justify-center">
-                {index + 1}
+      {/* Main Grid */}
+      <div className="flex-1 overflow-auto p-8">
+        <div className="bg-white shadow-sm border border-gray-300 rounded-sm inline-block min-w-full">
+          {/* Header Row */}
+          <div className="flex border-b border-gray-300 bg-[#f5f5f5] sticky top-0 z-10">
+            {/* Fixed Columns */}
+            <div className="sticky left-0 z-20 flex shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+              <div className="w-12 border-r border-gray-300 p-2 text-center text-xs font-bold text-gray-500 bg-[#f5f5f5] flex items-center justify-center">
+                #
+              </div>
+              <div className="w-48 border-r border-gray-300 p-2 text-sm font-bold text-gray-700 bg-[#f5f5f5] flex items-center">
+                English Name
+              </div>
+              <div className="w-24 border-r border-gray-300 p-2 text-sm font-bold text-gray-700 bg-[#f5f5f5] flex items-center">
+                ID
+              </div>
+              <div className="w-24 border-r border-gray-300 p-2 text-sm font-bold text-blue-700 bg-blue-50 flex items-center justify-center">
+                Term Grade
+              </div>
+            </div>
+
+            {/* Scrollable Assessment Columns */}
+            <div className="flex">
+              <div className="w-24 border-r border-gray-300 p-2 text-xs font-bold text-gray-600 bg-[#f5f5f5] flex flex-col justify-center items-center">
+                Formative
+                <br />
+                Avg (15%)
+              </div>
+              <div className="w-24 border-r border-gray-300 p-2 text-xs font-bold text-gray-600 bg-[#f5f5f5] flex flex-col justify-center items-center">
+                Summative
+                <br />
+                Avg (20%)
               </div>
 
-              {/* Student Name */}
-              <div className="w-48 border-r border-gray-200 p-0">
-                <input
-                  className="w-full h-full px-2 py-1.5 outline-none bg-transparent text-sm font-medium"
-                  value={row.studentName}
-                  readOnly
-                />
-              </div>
-
-              {/* Term Grade (Calculated) */}
-              <div className="w-32 border-r border-gray-200 p-0 bg-blue-50/50">
+              {ASSESSMENT_COLS.map((col) => (
                 <div
-                  className={cn(
-                    "w-full h-full px-2 py-1.5 text-sm font-bold flex items-center justify-end",
-                    termGrade === null ? "text-gray-300" : "text-blue-600"
-                  )}
+                  key={col.code}
+                  className="w-24 border-r border-gray-300 p-1 text-sm font-bold text-gray-700 bg-[#f5f5f5] hover:bg-blue-100 cursor-pointer transition-colors group relative"
+                  onClick={() => setFocusModeCode(col.code)}
+                  title="Click to enter Focus Mode"
                 >
-                  {termGrade !== null ? termGrade : "-"}
-                </div>
-              </div>
-
-              {/* Input Columns */}
-              {["e", "f", "g"].map((col) => (
-                <div
-                  key={col}
-                  className="w-32 border-r border-gray-200 p-0 relative group"
-                >
-                  <input
-                    type="number"
-                    className={cn(
-                      "w-full h-full px-2 py-1.5 outline-none text-sm text-right transition-colors",
-                      "focus:bg-blue-100/50 focus:ring-2 focus:ring-inset focus:ring-blue-500",
-                      selectedCell?.rowId === row.id &&
-                        selectedCell?.col === col &&
-                        "bg-blue-100/50"
-                    )}
-                    value={row[col] || ""}
-                    onChange={(e) =>
-                      handleInputChange(row.id, col, e.target.value)
-                    }
-                    onFocus={() => setSelectedCell({ rowId: row.id, col })}
-                    onBlur={() => setSelectedCell(null)}
-                    placeholder="-"
-                  />
+                  <div className="h-full flex flex-col justify-center items-center">
+                    <span>{col.label}</span>
+                    <span className="text-[10px] font-normal text-gray-500 mt-0.5">
+                      {col.weight}
+                    </span>
+                    <div className="absolute inset-0 bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="text-[10px] text-blue-700 font-bold bg-white/80 px-1 rounded">
+                        FOCUS
+                      </span>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
-          );
-        })}
+          </div>
+
+          {/* Data Rows */}
+          {data.map((row, index) => {
+            const termGrade = FormulaEngine.calculateTermGrade(row.scores);
+            const formativeAvg = FormulaEngine.getFormativeAverage(row.scores);
+            const summativeAvg = FormulaEngine.getSummativeAverage(row.scores);
+
+            return (
+              <div
+                key={row.id}
+                className="flex border-b border-gray-200 hover:bg-blue-50/30 group"
+              >
+                {/* Fixed Columns */}
+                <div className="sticky left-0 z-20 flex shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                  <div className="w-12 border-r border-gray-300 bg-[#f9f9f9] p-2 text-center text-xs text-gray-500 flex items-center justify-center">
+                    {index + 1}
+                  </div>
+                  <div className="w-48 border-r border-gray-200 bg-white p-2 text-sm font-medium text-gray-900 flex items-center truncate">
+                    {row.studentName}
+                  </div>
+                  <div className="w-24 border-r border-gray-200 bg-white p-2 text-xs text-gray-500 flex items-center">
+                    {row.studentId}
+                  </div>
+                  <div className="w-24 border-r border-gray-200 bg-blue-50/50 p-2 text-sm font-bold text-blue-700 flex items-center justify-center">
+                    {termGrade ?? "-"}
+                  </div>
+                </div>
+
+                {/* Scrollable Columns */}
+                <div className="flex">
+                  {/* Averages */}
+                  <div className="w-24 border-r border-gray-200 bg-gray-50/50 p-2 text-sm text-gray-600 flex items-center justify-center font-medium">
+                    {formativeAvg ?? "-"}
+                  </div>
+                  <div className="w-24 border-r border-gray-200 bg-gray-50/50 p-2 text-sm text-gray-600 flex items-center justify-center font-medium">
+                    {summativeAvg ?? "-"}
+                  </div>
+
+                  {/* Inputs */}
+                  {ASSESSMENT_COLS.map((col) => (
+                    <div
+                      key={col.code}
+                      className="w-24 border-r border-gray-200 p-0 relative"
+                    >
+                      <input
+                        type="number"
+                        className={cn(
+                          "w-full h-full px-2 py-1 text-center text-sm outline-none bg-transparent transition-all",
+                          "focus:bg-blue-100 focus:ring-2 focus:ring-inset focus:ring-blue-500",
+                          row.scores[col.code] !== undefined &&
+                            row.scores[col.code] !== null &&
+                            "font-medium"
+                        )}
+                        placeholder="-"
+                        value={row.scores[col.code] ?? ""}
+                        onChange={(e) => {
+                          const val =
+                            e.target.value === ""
+                              ? null
+                              : Number(e.target.value);
+                          handleScoreUpdate(row.id, col.code, val);
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
+
+      {/* Focus Mode Modal */}
+      {focusModeCode && (
+        <FocusGradeInput
+          assessmentCode={focusModeCode}
+          students={data}
+          onClose={() => setFocusModeCode(null)}
+          onUpdateScore={(studentId, score) =>
+            handleScoreUpdate(studentId, focusModeCode, score)
+          }
+        />
+      )}
     </div>
   );
 }
