@@ -15,6 +15,7 @@ import { ColumnView } from "./ColumnView";
 import { FileSystemNode } from "./FinderItem";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
+import { useRouter } from "next/navigation";
 
 // Mock Data Generation
 const generateMockData = (role: string): FileSystemNode => {
@@ -114,6 +115,7 @@ interface FinderProps {
 }
 
 export function Finder({ role = "office" }: FinderProps) {
+  const router = useRouter();
   const [viewMode, setViewMode] = useState<"icon" | "column">("icon");
   const [currentPath, setCurrentPath] = useState<string>("/");
   const [history, setHistory] = useState<string[]>(["/"]);
@@ -170,8 +172,14 @@ export function Finder({ role = "office" }: FinderProps) {
 
   const handleNavigate = (node: FileSystemNode) => {
     if (node.type === "file") {
-      // Handle file action (e.g. open modal or redirect)
-      console.log("Open file:", node.name);
+      if (node.id === "gradebook" || node.name === "Gradebook") {
+        // Extract class ID from path (e.g. /G101/gradebook -> G101)
+        const pathParts = node.path.split("/");
+        const classId = pathParts[pathParts.length - 2];
+        router.push(`/gradebook?classId=${classId}&className=${classId}`);
+      } else {
+        console.log("Open file:", node.name);
+      }
       return;
     }
 
