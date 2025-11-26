@@ -50,7 +50,7 @@ export default function BootPage() {
             <Apple className="h-12 w-12 text-white fill-current" />
           </div>
           <h1 className="text-2xl font-semibold tracking-wide text-white/90">
-            TeacherOS
+            LMS
           </h1>
         </motion.div>
 
