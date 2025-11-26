@@ -18,6 +18,7 @@ const noLayoutPages = [
   "/auth/signup",
   "/_not-found",
   "/teacheros-test",
+  "/auth/boot",
 ];
 
 export default function MainLayout({ children }: MainLayoutProps) {
