@@ -85,10 +85,10 @@ export default function HomePage() {
   const role = useAppStore((s) => s.role);
   const { grade, klass, track } = useAppStore((s) => s.selections);
 
-  // Auto-redirect admin users to admin dashboard
+  // Auto-redirect authenticated users to dashboard
   useEffect(() => {
-    if (role === "admin") {
-      router.push("/admin");
+    if (role) {
+      router.push("/dashboard");
     }
   }, [role, router]);
 
