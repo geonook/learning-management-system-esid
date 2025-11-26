@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
-import MainLayout from "@/components/layout/main-layout";
 import { AuthProvider } from "@/lib/supabase/auth-context";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -31,9 +30,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
-            <MainLayout>{children}</MainLayout>
-          </AuthProvider>
+          <AuthProvider>{children}</AuthProvider>
           <Toaster />
         </ThemeProvider>
       </body>

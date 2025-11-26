@@ -1,19 +1,25 @@
-"use client"
+"use client";
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { useAppStore } from "@/lib/store"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { 
-  GraduationCap, 
-  Users, 
-  FileBarChart, 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAppStore } from "@/lib/store";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  GraduationCap,
+  Users,
+  FileBarChart,
   CalendarDays,
   TrendingUp,
-  BookOpen
-} from "lucide-react"
+  BookOpen,
+} from "lucide-react";
 
 const quickStats = [
   {
@@ -21,30 +27,30 @@ const quickStats = [
     value: "324",
     change: "+12",
     icon: Users,
-    color: "text-blue-600"
+    color: "text-blue-600",
   },
   {
-    label: "Active Classes", 
+    label: "Active Classes",
     value: "18",
     change: "+2",
     icon: GraduationCap,
-    color: "text-green-600"
+    color: "text-green-600",
   },
   {
     label: "Assessments Due",
     value: "7",
     change: "-3",
     icon: FileBarChart,
-    color: "text-orange-600"
+    color: "text-orange-600",
   },
   {
     label: "Attendance Rate",
     value: "94%",
-    change: "+2%", 
+    change: "+2%",
     icon: TrendingUp,
-    color: "text-purple-600"
-  }
-]
+    color: "text-purple-600",
+  },
+];
 
 const quickActions = [
   {
@@ -52,39 +58,39 @@ const quickActions = [
     description: "Check your daily overview and analytics",
     href: "/dashboard",
     icon: TrendingUp,
-    primary: true
+    primary: true,
   },
   {
-    title: "Manage Scores", 
+    title: "Manage Scores",
     description: "Enter and review student grades",
     href: "/scores",
-    icon: FileBarChart
+    icon: FileBarChart,
   },
   {
     title: "Take Attendance",
-    description: "Mark today's attendance records", 
+    description: "Mark today's attendance records",
     href: "/attendance/today",
-    icon: CalendarDays
+    icon: CalendarDays,
   },
   {
     title: "Student Records",
     description: "View and manage student information",
-    href: "/students", 
-    icon: Users
-  }
-]
+    href: "/students",
+    icon: Users,
+  },
+];
 
 export default function HomePage() {
-  const router = useRouter()
-  const role = useAppStore((s) => s.role)
-  const { grade, klass, track } = useAppStore((s) => s.selections)
+  const router = useRouter();
+  const role = useAppStore((s) => s.role);
+  const { grade, klass, track } = useAppStore((s) => s.selections);
 
   // Auto-redirect admin users to admin dashboard
   useEffect(() => {
     if (role === "admin") {
-      router.push("/admin")
+      router.push("/admin");
     }
-  }, [role, router])
+  }, [role, router]);
 
   return (
     <div className="space-y-6">
@@ -99,13 +105,17 @@ export default function HomePage() {
             </p>
           </div>
         </div>
-        
+
         {role && (
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Logged in as:</span>
-            <Badge variant="default" className="capitalize">{role}</Badge>
+            <Badge variant="default" className="capitalize">
+              {role}
+            </Badge>
             <span className="text-sm text-muted-foreground">•</span>
-            <Badge variant="secondary">Grade {grade} - {klass} ({track})</Badge>
+            <Badge variant="secondary">
+              Grade {grade} - {klass} ({track})
+            </Badge>
           </div>
         )}
       </div>
@@ -113,7 +123,7 @@ export default function HomePage() {
       {/* Quick Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {quickStats.map((stat) => {
-          const Icon = stat.icon
+          const Icon = stat.icon;
           return (
             <Card key={stat.label}>
               <CardContent className="p-6">
@@ -133,7 +143,7 @@ export default function HomePage() {
                 </div>
               </CardContent>
             </Card>
-          )
+          );
         })}
       </div>
 
@@ -142,9 +152,9 @@ export default function HomePage() {
         <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {quickActions.map((action) => {
-            const Icon = action.icon
+            const Icon = action.icon;
             return (
-              <Card 
+              <Card
                 key={action.href}
                 className="cursor-pointer transition-colors hover:bg-accent"
                 onClick={() => router.push(action.href)}
@@ -166,7 +176,7 @@ export default function HomePage() {
                   </div>
                 </CardHeader>
               </Card>
-            )
+            );
           })}
         </div>
       </div>
@@ -185,30 +195,37 @@ export default function HomePage() {
               {
                 time: "2 hours ago",
                 action: "New assignment scores entered",
-                detail: "FA5 Assessment - Grade 7A (24 students)"
+                detail: "FA5 Assessment - Grade 7A (24 students)",
               },
               {
-                time: "5 hours ago", 
+                time: "5 hours ago",
                 action: "Attendance recorded",
-                detail: "Today's attendance - 94% present rate"
+                detail: "Today's attendance - 94% present rate",
               },
               {
                 time: "1 day ago",
                 action: "Report generated",
-                detail: "Weekly performance summary exported"
-              }
+                detail: "Weekly performance summary exported",
+              },
             ].map((activity, index) => (
-              <div key={index} className="flex items-start gap-3 pb-3 border-b last:border-0">
+              <div
+                key={index}
+                className="flex items-start gap-3 pb-3 border-b last:border-0"
+              >
                 <div className="h-2 w-2 rounded-full bg-primary mt-2" />
                 <div className="flex-1 space-y-1">
                   <p className="text-sm font-medium">{activity.action}</p>
-                  <p className="text-xs text-muted-foreground">{activity.detail}</p>
-                  <p className="text-xs text-muted-foreground">{activity.time}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {activity.detail}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {activity.time}
+                  </p>
                 </div>
               </div>
             ))}
           </div>
-          
+
           <div className="mt-4 pt-4 border-t">
             <Button variant="outline" size="sm" className="w-full">
               View All Activity
@@ -217,5 +234,5 @@ export default function HomePage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

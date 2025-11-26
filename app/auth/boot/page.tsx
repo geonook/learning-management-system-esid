@@ -69,7 +69,7 @@ export default function BootPage() {
               ? "Initializing..."
               : progress < 70
               ? "Loading Workspace..."
-              : "Starting Services..."}
+              : "Opening LMS..."}
           </p>
         </div>
       </div>

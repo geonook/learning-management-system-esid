@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { Apple, Wifi, Battery, Search, Bell } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 export function MenuBar() {
   const [time, setTime] = useState<string>("");
@@ -33,7 +32,7 @@ export function MenuBar() {
         <button className="hover:bg-white/20 p-1 rounded">
           <Apple className="h-4 w-4 fill-current" />
         </button>
-        <span className="font-bold hidden sm:inline-block">TeacherOS</span>
+        <span className="font-bold hidden sm:inline-block">LMS</span>
         <div className="hidden md:flex space-x-4">
           <button className="hover:bg-white/20 px-2 py-0.5 rounded">
             File
