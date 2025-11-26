@@ -1,29 +1,40 @@
 "use client";
 
-import React from "react";
-import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
-interface DesktopProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-export function Desktop({ children, className }: DesktopProps) {
+export function Desktop({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className={cn(
-        "relative h-screen w-screen overflow-hidden bg-cover bg-center transition-all duration-500",
-        "bg-[url('https://images.unsplash.com/photo-1477346611705-65d1883cee1e?q=80&w=2070&auto=format&fit=crop')] dark:bg-[url('https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=2070&auto=format&fit=crop')]",
-        className
-      )}
-    >
-      {/* Overlay for better text contrast if needed */}
-      <div className="absolute inset-0 bg-background/20 backdrop-blur-[2px]" />
-
-      {/* Desktop Content */}
-      <div className="relative z-10 h-full w-full p-4 pt-12 pb-24">
-        {children}
+    <div className="relative h-full w-full overflow-hidden bg-[#f5f5f7] dark:bg-[#1e1e1e] text-slate-900 dark:text-white transition-colors duration-300">
+      {/* Animated Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-3xl"
+          animate={{
+            scale: [1, 1.2, 1],
+            rotate: [0, 180, 360],
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+        />
+        <motion.div
+          className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-blue-400/20 to-cyan-400/20 rounded-full blur-3xl"
+          animate={{
+            scale: [1.2, 1, 1.2],
+            rotate: [360, 180, 0],
+          }}
+          transition={{
+            duration: 25,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+        />
       </div>
+
+      {/* Content */}
+      <div className="relative z-10 h-full w-full">{children}</div>
     </div>
   );
 }

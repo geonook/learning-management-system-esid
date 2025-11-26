@@ -56,23 +56,39 @@
 
 ## 4. 重點功能詳細設計 (Key Features Detail)
 
-### 4.0 Office Member UI 解決方案 (Finder Views)
+### 4.0 核心導航設計 (Core Navigation: Sidebar + Tabs)
 
-為了提供最直觀的操作體驗，我們將模仿 macOS Finder 提供兩種檢視模式，使用者可隨時切換：
+為了容納 Gradebook 以外的多樣功能 (Logs, History, Schedule, Memos)，我們採用 **"Master-Detail"** 與 **"Contextual Tabs"** 的混合設計，取代原本的 Finder 層級。
 
-#### 4.0.1 Icon View (資料夾模式 - 預設)
+#### 4.0.1 Sidebar (全域導航)
 
-- **概念**: 類似 macOS 桌面或 Finder 的圖示檢視。
-- **層級一 (Root)**: 顯示 6 個「年段資料夾」 (G1 - G6)。
-- **層級二 (Grade)**: 點擊 G1 資料夾後，進入該年段，顯示該年段的所有「班級資料夾」 (G101, G102...)。
-- **層級三 (Class)**: 點擊班級資料夾後，顯示該班級的「功能圖示」 (Students, Gradebook, Logs)。
-- **優點**: 直觀、視覺化強、符合一般電腦操作習慣。
+左側固定側邊欄，用於切換「工作情境」：
 
-#### 4.0.2 Column View (分欄模式 - 進階)
+- **Overview**:
+  - **Dashboard**: 全局儀表板 (今日課表、待辦)。
+  - **Schedule**: 教師個人課表 (Calendar View)。
+- **My Classes (授課班級)**:
+  - `Grade 601`
+  - `Grade 602`
+  - `Grade 603`
+  - _(點擊班級後，右側內容區進入該班級的 Context)_
 
-- **概念**: 類似 macOS Finder 的分欄檢視，適合快速瀏覽與深層導航。
-- **操作**: 左欄點選 G1 -> 中欄顯示 G1 班級列表 -> 右欄顯示選定班級的詳細資訊。
-- **優點**: 減少點擊次數、快速在不同層級間切換。
+#### 4.0.2 Class Context (班級工作區)
+
+當在 Sidebar 選擇一個班級 (如 G601) 時，主畫面頂部會出現 **Feature Tabs (功能分頁)**，讓老師在不同功能間快速切換：
+
+1.  **Overview**: 班級概況、**Class Memos (備忘錄)**、近期事件。
+2.  **Gradebook**: 成績登記表 (Numbers 風格)。
+3.  **Attendance**: 出缺席點名。
+4.  **Students**: 學生名單列表。
+    - 點擊特定學生 -> 進入 **Student Profile (學生個人檔案)**。
+    - 包含：基本資料、**Grade History (成績歷程)**、**Communication Logs (電訪紀錄)**。
+
+#### 4.0.3 Spotlight (全域搜尋)
+
+- 快捷鍵 `Cmd+K`。
+- 支援搜尋：班級名稱、學生姓名、功能名稱 (e.g., "601 Logs")。
+- 搜尋結果直接開啟對應的 View。
 
 ### 4.1 Gradebook (成績登記表) - Numbers Style
 
