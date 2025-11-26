@@ -22,7 +22,12 @@ export default async function GradebookPage({ searchParams }: PageProps) {
   if (classId) {
     try {
       const result = await getGradebookData(classId);
-      initialData = result.students;
+      initialData = result.students.map((s) => ({
+        id: s.id,
+        studentName: s.full_name,
+        studentId: s.student_id,
+        scores: s.scores,
+      }));
     } catch (e) {
       console.error("Failed to load gradebook data:", e);
       error = "Failed to load data. Please try again.";
