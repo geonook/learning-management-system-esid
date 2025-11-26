@@ -46,7 +46,8 @@ export default async function GradebookPage({ searchParams }: PageProps) {
             {error}
           </div>
         ) : (
-          <Spreadsheet classId={classId} initialData={initialData} />
+          // <Spreadsheet classId={classId} initialData={initialData} />
+          <div className="p-10">Test Gradebook Page</div>
         )}
 
         {/* Status Bar */}
