@@ -12,9 +12,9 @@ interface TeacherOSLayoutProps {
 export function TeacherOSLayout({ children }: TeacherOSLayoutProps) {
   return (
     <div className="h-screen w-screen overflow-hidden font-sans antialiased">
-      {/* <MenuBar /> */}
+      <MenuBar />
       <Desktop>{children}</Desktop>
-      {/* <Dock /> */}
+      <Dock />
     </div>
   );
 }
