@@ -48,10 +48,11 @@ export function FinderItem({
             node.type === "file" && "text-gray-400"
           )}
         >
-          {typeof Icon === "function" ? (
-            <Icon size={64} strokeWidth={1} />
-          ) : (
+          {React.isValidElement(Icon) ? (
             Icon
+          ) : (
+            // @ts-ignore - We know it's a component type if it's not an element
+            <Icon size={64} strokeWidth={1} />
           )}
         </div>
         <span className="text-sm text-center font-medium text-white/90 truncate w-full px-2 select-none">
@@ -84,7 +85,12 @@ export function FinderItem({
             node.type === "file" && "text-gray-400"
           )}
         >
-          {typeof Icon === "function" ? <Icon size={16} /> : Icon}
+          {React.isValidElement(Icon) ? (
+            Icon
+          ) : (
+            // @ts-ignore
+            <Icon size={16} />
+          )}
         </div>
         <span className="truncate">{node.name}</span>
       </div>
