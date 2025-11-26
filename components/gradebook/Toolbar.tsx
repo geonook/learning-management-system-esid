@@ -14,13 +14,13 @@ import {
 import { cn } from "@/lib/utils";
 
 interface ToolbarButtonProps {
-  icon: React.ReactNode;
+  Icon: React.ElementType;
   label: string;
   onClick?: () => void;
   active?: boolean;
 }
 
-function ToolbarButton({ icon, label, onClick, active }: ToolbarButtonProps) {
+function ToolbarButton({ Icon, label, onClick, active }: ToolbarButtonProps) {
   return (
     <button
       onClick={onClick}
@@ -30,7 +30,9 @@ function ToolbarButton({ icon, label, onClick, active }: ToolbarButtonProps) {
         active && "bg-black/10"
       )}
     >
-      <div className="text-gray-700">{icon}</div>
+      <div className="text-gray-700">
+        <Icon size={20} />
+      </div>
       <span className="text-[10px] font-medium text-gray-600">{label}</span>
     </button>
   );
@@ -53,11 +55,11 @@ export function Toolbar() {
         </div>
 
         {/* Insert Objects */}
-        <ToolbarButton icon={<Table size={20} />} label="Table" />
-        <ToolbarButton icon={<BarChart size={20} />} label="Chart" />
-        <ToolbarButton icon={<Type size={20} />} label="Text" />
-        <ToolbarButton icon={<Shapes size={20} />} label="Shape" />
-        <ToolbarButton icon={<ImageIcon size={20} />} label="Media" />
+        <ToolbarButton Icon={Table} label="Table" />
+        <ToolbarButton Icon={BarChart} label="Chart" />
+        <ToolbarButton Icon={Type} label="Text" />
+        <ToolbarButton Icon={Shapes} label="Shape" />
+        <ToolbarButton Icon={ImageIcon} label="Media" />
       </div>
 
       <div className="flex items-center space-x-4">
