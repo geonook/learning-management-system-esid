@@ -175,7 +175,8 @@ export default function Dashboard() {
           <div className="flex h-full flex-col justify-center p-4">
             <h1 className="text-3xl font-bold text-white mb-2">
               {getGreeting()},{" "}
-              {user?.user_metadata?.full_name?.split(" ")[0] || "Teacher"}
+              {user?.user_metadata?.full_name?.split(" ")[0] || "Teacher"}{" "}
+              (v2.0.1)
             </h1>
             <p className="text-white/70 text-lg">
               Here&apos;s what&apos;s happening in your classes today.
