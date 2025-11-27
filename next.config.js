@@ -5,8 +5,8 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  // Use standalone output for deployment (includes minimal node_modules)
-  output: "standalone",
+  // Use standard output for reliability
+  // output: 'standalone',
   experimental: {
     serverComponentsExternalPackages: ["@supabase/supabase-js"],
   },
