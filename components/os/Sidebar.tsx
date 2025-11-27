@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/supabase/auth-context";
 import { getClassesByTeacher, Class } from "@/lib/api/classes";
 import { LayoutDashboard, Calendar, BookOpen } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -62,7 +63,11 @@ export function Sidebar() {
         </h3>
         <nav className="space-y-1">
           {loading ? (
-            <div className="px-2 text-sm text-slate-400">Loading...</div>
+            <div className="space-y-1 px-2">
+              <Skeleton className="h-9 w-full rounded-lg" />
+              <Skeleton className="h-9 w-full rounded-lg" />
+              <Skeleton className="h-9 w-full rounded-lg" />
+            </div>
           ) : classes.length === 0 ? (
             <div className="px-2 text-sm text-slate-400">No classes found</div>
           ) : (

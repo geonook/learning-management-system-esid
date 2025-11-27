@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/supabase/auth-context";
 import AuthGuard from "@/components/auth/auth-guard";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   AlertCircle,
   BarChart2,
@@ -34,19 +33,26 @@ import {
   BarChart,
   Bar,
   XAxis,
-  YAxis,
   Tooltip,
   ScatterChart,
   CartesianGrid,
   Scatter,
+  YAxis,
 } from "recharts";
 import { MissionControl } from "@/components/os/MissionControl";
 import { Widget } from "@/components/os/Widget";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Dashboard() {
   const { user, userPermissions } = useAuth();
   const userRole = userPermissions?.role;
-  const [loading, setLoading] = useState(true);
+
+  // Independent loading states
+  const [loadingKpis, setLoadingKpis] = useState(true);
+  const [loadingCharts, setLoadingCharts] = useState(true);
+  const [loadingLists, setLoadingLists] = useState(true);
+
+  // Data states
   const [teacherKpis, setTeacherKpis] = useState<TeacherKpis>({
     attendanceRate: 0,
     averageScore: 0,
@@ -74,73 +80,81 @@ export default function Dashboard() {
   const [alerts, setAlerts] = useState<RecentAlert[]>([]);
 
   useEffect(() => {
-    async function loadDashboardData() {
-      if (!user?.id || !userRole) return;
+    if (!user?.id || !userRole) return;
 
+    // 1. Load KPIs (Fastest)
+    const loadKpis = async () => {
       try {
-        setLoading(true);
-
-        // Load data based on user role
-        const [distData, scatterPoints, upcomingDeadlines, recentAlerts] =
-          await Promise.all([
-            getClassDistribution(
-              userRole,
-              user.id,
-              userPermissions?.grade || undefined,
-              userPermissions?.track || undefined
-            ),
-            getScatterData(userRole, user.id),
-            getUpcomingDeadlines(
-              userRole,
-              user.id,
-              userPermissions?.grade || undefined,
-              userPermissions?.track || undefined
-            ),
-            getRecentAlerts(userRole, user.id),
-          ]);
-
-        // Load role-specific KPIs
         if (userRole === "teacher") {
-          const teacherKpiData = await getTeacherKpis(user.id);
-          setTeacherKpis(teacherKpiData);
+          const data = await getTeacherKpis(user.id);
+          setTeacherKpis(data);
         } else if (userRole === "admin" || userRole === "office_member") {
-          const adminKpiData = await getAdminKpis();
-          setAdminKpis(adminKpiData);
+          const data = await getAdminKpis();
+          setAdminKpis(data);
         } else if (
           userRole === "head" &&
           userPermissions?.grade &&
           userPermissions?.track
         ) {
-          const [headKpiData] = await Promise.all([
+          const [data] = await Promise.all([
             getHeadTeacherKpis(userPermissions.grade, userPermissions.track),
-            // getGradeClassSummary(userPermissions.grade, userPermissions.track)
           ]);
-          setHeadKpis(headKpiData);
-          // setGradeClassSummary(classSummaryData)
+          setHeadKpis(data);
         }
+      } catch (e) {
+        console.error("Failed to load KPIs", e);
+      } finally {
+        setLoadingKpis(false);
+      }
+    };
+
+    // 2. Load Charts (Medium)
+    const loadCharts = async () => {
+      try {
+        const [distData, scatterPoints] = await Promise.all([
+          getClassDistribution(
+            userRole,
+            user.id,
+            userPermissions?.grade || undefined,
+            userPermissions?.track || undefined
+          ),
+          getScatterData(userRole, user.id),
+        ]);
         setDistribution(distData);
         setScatterData(scatterPoints);
+      } catch (e) {
+        console.error("Failed to load charts", e);
+      } finally {
+        setLoadingCharts(false);
+      }
+    };
+
+    // 3. Load Lists (Fast/Medium)
+    const loadLists = async () => {
+      try {
+        const [upcomingDeadlines, recentAlerts] = await Promise.all([
+          getUpcomingDeadlines(
+            userRole,
+            user.id,
+            userPermissions?.grade || undefined,
+            userPermissions?.track || undefined
+          ),
+          getRecentAlerts(userRole, user.id),
+        ]);
         setDeadlines(upcomingDeadlines);
         setAlerts(recentAlerts);
-      } catch (error) {
-        console.error("Error loading dashboard data:", error);
+      } catch (e) {
+        console.error("Failed to load lists", e);
       } finally {
-        setLoading(false);
+        setLoadingLists(false);
       }
-    }
+    };
 
-    loadDashboardData();
+    // Trigger all fetches independently
+    loadKpis();
+    loadCharts();
+    loadLists();
   }, [user?.id, userRole, userPermissions?.grade, userPermissions?.track]);
-
-  if (loading) {
-    return (
-      <AuthGuard requiredRoles={["admin", "office_member", "head", "teacher"]}>
-        <div className="flex h-screen w-full items-center justify-center bg-black/20 backdrop-blur-sm">
-          <LoadingSpinner size="lg" />
-        </div>
-      </AuthGuard>
-    );
-  }
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -152,7 +166,7 @@ export default function Dashboard() {
   return (
     <AuthGuard requiredRoles={["admin", "office_member", "head", "teacher"]}>
       <MissionControl>
-        {/* Welcome Widget */}
+        {/* Welcome Widget - Always visible immediately */}
         <Widget
           size="wide"
           className="bg-gradient-to-br from-blue-500/20 to-purple-500/20"
@@ -190,14 +204,21 @@ export default function Dashboard() {
               icon={<CheckSquare size={16} />}
               delay={1}
             >
-              <div className="flex h-full flex-col items-center justify-center">
-                <div className="text-3xl font-bold text-white">
-                  {teacherKpis.attendanceRate}%
+              {loadingKpis ? (
+                <div className="flex flex-col items-center justify-center h-full gap-2">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-3 w-24" />
                 </div>
-                <div className="text-xs text-green-400 mt-1">
-                  +2.1% vs last week
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center">
+                  <div className="text-3xl font-bold text-white">
+                    {teacherKpis.attendanceRate}%
+                  </div>
+                  <div className="text-xs text-green-400 mt-1">
+                    +2.1% vs last week
+                  </div>
                 </div>
-              </div>
+              )}
             </Widget>
             <Widget
               title="Avg Score"
@@ -205,14 +226,21 @@ export default function Dashboard() {
               icon={<BarChart2 size={16} />}
               delay={2}
             >
-              <div className="flex h-full flex-col items-center justify-center">
-                <div className="text-3xl font-bold text-white">
-                  {teacherKpis.averageScore}
+              {loadingKpis ? (
+                <div className="flex flex-col items-center justify-center h-full gap-2">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-3 w-24" />
                 </div>
-                <div className="text-xs text-green-400 mt-1">
-                  +1.4% vs last term
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center">
+                  <div className="text-3xl font-bold text-white">
+                    {teacherKpis.averageScore}
+                  </div>
+                  <div className="text-xs text-green-400 mt-1">
+                    +1.4% vs last term
+                  </div>
                 </div>
-              </div>
+              )}
             </Widget>
             <Widget
               title="Pass Rate"
@@ -220,14 +248,21 @@ export default function Dashboard() {
               icon={<CheckCircle2 size={16} />}
               delay={3}
             >
-              <div className="flex h-full flex-col items-center justify-center">
-                <div className="text-3xl font-bold text-white">
-                  {teacherKpis.passRate}%
+              {loadingKpis ? (
+                <div className="flex flex-col items-center justify-center h-full gap-2">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-3 w-24" />
                 </div>
-                <div className="text-xs text-green-400 mt-1">
-                  +0.9% improvement
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center">
+                  <div className="text-3xl font-bold text-white">
+                    {teacherKpis.passRate}%
+                  </div>
+                  <div className="text-xs text-green-400 mt-1">
+                    +0.9% improvement
+                  </div>
                 </div>
-              </div>
+              )}
             </Widget>
             <Widget
               title="Alerts"
@@ -235,14 +270,21 @@ export default function Dashboard() {
               icon={<AlertCircle size={16} />}
               delay={4}
             >
-              <div className="flex h-full flex-col items-center justify-center">
-                <div className="text-3xl font-bold text-white">
-                  {teacherKpis.activeAlerts}
+              {loadingKpis ? (
+                <div className="flex flex-col items-center justify-center h-full gap-2">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-3 w-24" />
                 </div>
-                <div className="text-xs text-yellow-400 mt-1">
-                  Requires attention
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center">
+                  <div className="text-3xl font-bold text-white">
+                    {teacherKpis.activeAlerts}
+                  </div>
+                  <div className="text-xs text-yellow-400 mt-1">
+                    Requires attention
+                  </div>
                 </div>
-              </div>
+              )}
             </Widget>
           </>
         )}
@@ -256,12 +298,19 @@ export default function Dashboard() {
               icon={<BarChart2 size={16} />}
               delay={1}
             >
-              <div className="flex h-full flex-col items-center justify-center">
-                <div className="text-3xl font-bold text-white">
-                  {adminKpis.totalExams}
+              {loadingKpis ? (
+                <div className="flex flex-col items-center justify-center h-full gap-2">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-3 w-24" />
                 </div>
-                <div className="text-xs text-green-400 mt-1">+12 new</div>
-              </div>
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center">
+                  <div className="text-3xl font-bold text-white">
+                    {adminKpis.totalExams}
+                  </div>
+                  <div className="text-xs text-green-400 mt-1">+12 new</div>
+                </div>
+              )}
             </Widget>
             <Widget
               title="Coverage"
@@ -269,12 +318,19 @@ export default function Dashboard() {
               icon={<CheckCircle2 size={16} />}
               delay={2}
             >
-              <div className="flex h-full flex-col items-center justify-center">
-                <div className="text-3xl font-bold text-white">
-                  {adminKpis.coverage}%
+              {loadingKpis ? (
+                <div className="flex flex-col items-center justify-center h-full gap-2">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-3 w-24" />
                 </div>
-                <div className="text-xs text-green-400 mt-1">On track</div>
-              </div>
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center">
+                  <div className="text-3xl font-bold text-white">
+                    {adminKpis.coverage}%
+                  </div>
+                  <div className="text-xs text-green-400 mt-1">On track</div>
+                </div>
+              )}
             </Widget>
             <Widget
               title="On Time"
@@ -282,14 +338,21 @@ export default function Dashboard() {
               icon={<CheckSquare size={16} />}
               delay={3}
             >
-              <div className="flex h-full flex-col items-center justify-center">
-                <div className="text-3xl font-bold text-white">
-                  {adminKpis.onTime}%
+              {loadingKpis ? (
+                <div className="flex flex-col items-center justify-center h-full gap-2">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-3 w-24" />
                 </div>
-                <div className="text-xs text-green-400 mt-1">
-                  Submission rate
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center">
+                  <div className="text-3xl font-bold text-white">
+                    {adminKpis.onTime}%
+                  </div>
+                  <div className="text-xs text-green-400 mt-1">
+                    Submission rate
+                  </div>
                 </div>
-              </div>
+              )}
             </Widget>
             <Widget
               title="Overdue"
@@ -297,12 +360,19 @@ export default function Dashboard() {
               icon={<AlertCircle size={16} />}
               delay={4}
             >
-              <div className="flex h-full flex-col items-center justify-center">
-                <div className="text-3xl font-bold text-red-400">
-                  {adminKpis.overdue}
+              {loadingKpis ? (
+                <div className="flex flex-col items-center justify-center h-full gap-2">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-3 w-24" />
                 </div>
-                <div className="text-xs text-red-300 mt-1">Action needed</div>
-              </div>
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center">
+                  <div className="text-3xl font-bold text-red-400">
+                    {adminKpis.overdue}
+                  </div>
+                  <div className="text-xs text-red-300 mt-1">Action needed</div>
+                </div>
+              )}
             </Widget>
           </>
         )}
@@ -316,12 +386,19 @@ export default function Dashboard() {
               icon={<BarChart2 size={16} />}
               delay={1}
             >
-              <div className="flex h-full flex-col items-center justify-center">
-                <div className="text-3xl font-bold text-white">
-                  {headKpis.totalClasses}
+              {loadingKpis ? (
+                <div className="flex flex-col items-center justify-center h-full gap-2">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-3 w-24" />
                 </div>
-                <div className="text-xs text-white/60">Total Classes</div>
-              </div>
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center">
+                  <div className="text-3xl font-bold text-white">
+                    {headKpis.totalClasses}
+                  </div>
+                  <div className="text-xs text-white/60">Total Classes</div>
+                </div>
+              )}
             </Widget>
             <Widget
               title="Students"
@@ -329,12 +406,19 @@ export default function Dashboard() {
               icon={<CheckSquare size={16} />}
               delay={2}
             >
-              <div className="flex h-full flex-col items-center justify-center">
-                <div className="text-3xl font-bold text-white">
-                  {headKpis.studentsCount}
+              {loadingKpis ? (
+                <div className="flex flex-col items-center justify-center h-full gap-2">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-3 w-24" />
                 </div>
-                <div className="text-xs text-white/60">Total Students</div>
-              </div>
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center">
+                  <div className="text-3xl font-bold text-white">
+                    {headKpis.studentsCount}
+                  </div>
+                  <div className="text-xs text-white/60">Total Students</div>
+                </div>
+              )}
             </Widget>
             <Widget
               title="Avg Score"
@@ -342,12 +426,21 @@ export default function Dashboard() {
               icon={<BarChart2 size={16} />}
               delay={3}
             >
-              <div className="flex h-full flex-col items-center justify-center">
-                <div className="text-3xl font-bold text-white">
-                  {headKpis.averageScore}
+              {loadingKpis ? (
+                <div className="flex flex-col items-center justify-center h-full gap-2">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-3 w-24" />
                 </div>
-                <div className="text-xs text-green-400 mt-1">Above target</div>
-              </div>
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center">
+                  <div className="text-3xl font-bold text-white">
+                    {headKpis.averageScore}
+                  </div>
+                  <div className="text-xs text-green-400 mt-1">
+                    Above target
+                  </div>
+                </div>
+              )}
             </Widget>
             <Widget
               title="Issues"
@@ -355,14 +448,21 @@ export default function Dashboard() {
               icon={<AlertCircle size={16} />}
               delay={4}
             >
-              <div className="flex h-full flex-col items-center justify-center">
-                <div className="text-3xl font-bold text-yellow-400">
-                  {headKpis.activeIssues}
+              {loadingKpis ? (
+                <div className="flex flex-col items-center justify-center h-full gap-2">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-3 w-24" />
                 </div>
-                <div className="text-xs text-yellow-300 mt-1">
-                  Active issues
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center">
+                  <div className="text-3xl font-bold text-yellow-400">
+                    {headKpis.activeIssues}
+                  </div>
+                  <div className="text-xs text-yellow-300 mt-1">
+                    Active issues
+                  </div>
                 </div>
-              </div>
+              )}
             </Widget>
           </>
         )}
@@ -374,29 +474,39 @@ export default function Dashboard() {
           icon={<BarChart2 size={16} />}
           delay={5}
         >
-          <div className="h-full w-full pt-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={distribution}>
-                <XAxis
-                  dataKey="bucket"
-                  stroke="rgba(255,255,255,0.5)"
-                  fontSize={10}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "rgba(0,0,0,0.8)",
-                    border: "none",
-                    borderRadius: "8px",
-                    color: "#fff",
-                  }}
-                  cursor={{ fill: "rgba(255,255,255,0.1)" }}
-                />
-                <Bar dataKey="count" fill="#60a5fa" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {loadingCharts ? (
+            <div className="h-full w-full pt-2 flex items-end justify-between gap-2 px-4 pb-4">
+              <Skeleton className="h-1/3 w-full" />
+              <Skeleton className="h-2/3 w-full" />
+              <Skeleton className="h-1/2 w-full" />
+              <Skeleton className="h-3/4 w-full" />
+              <Skeleton className="h-1/4 w-full" />
+            </div>
+          ) : (
+            <div className="h-full w-full pt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={distribution}>
+                  <XAxis
+                    dataKey="bucket"
+                    stroke="rgba(255,255,255,0.5)"
+                    fontSize={10}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "rgba(0,0,0,0.8)",
+                      border: "none",
+                      borderRadius: "8px",
+                      color: "#fff",
+                    }}
+                    cursor={{ fill: "rgba(255,255,255,0.1)" }}
+                  />
+                  <Bar dataKey="count" fill="#60a5fa" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </Widget>
 
         <Widget
@@ -405,46 +515,55 @@ export default function Dashboard() {
           icon={<BarChart2 size={16} />}
           delay={6}
         >
-          <div className="h-full w-full pt-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <ScatterChart>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="rgba(255,255,255,0.1)"
-                />
-                <XAxis
-                  type="number"
-                  dataKey="x"
-                  name="Avg"
-                  unit="%"
-                  stroke="rgba(255,255,255,0.5)"
-                  fontSize={10}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis
-                  type="number"
-                  dataKey="y"
-                  name="Coverage"
-                  unit="%"
-                  stroke="rgba(255,255,255,0.5)"
-                  fontSize={10}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <Tooltip
-                  cursor={{ strokeDasharray: "3 3" }}
-                  contentStyle={{
-                    backgroundColor: "rgba(0,0,0,0.8)",
-                    border: "none",
-                    borderRadius: "8px",
-                    color: "#fff",
-                  }}
-                />
-                <Scatter data={scatterData} fill="#34d399" />
-              </ScatterChart>
-            </ResponsiveContainer>
-          </div>
+          {loadingCharts ? (
+            <div className="h-full w-full pt-2 relative">
+              <Skeleton className="absolute bottom-4 left-4 h-2 w-2 rounded-full" />
+              <Skeleton className="absolute top-1/2 left-1/2 h-2 w-2 rounded-full" />
+              <Skeleton className="absolute top-1/4 right-1/4 h-2 w-2 rounded-full" />
+              <Skeleton className="absolute bottom-1/3 right-1/3 h-2 w-2 rounded-full" />
+            </div>
+          ) : (
+            <div className="h-full w-full pt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <ScatterChart>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="rgba(255,255,255,0.1)"
+                  />
+                  <XAxis
+                    type="number"
+                    dataKey="x"
+                    name="Avg"
+                    unit="%"
+                    stroke="rgba(255,255,255,0.5)"
+                    fontSize={10}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    type="number"
+                    dataKey="y"
+                    name="Coverage"
+                    unit="%"
+                    stroke="rgba(255,255,255,0.5)"
+                    fontSize={10}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <Tooltip
+                    cursor={{ strokeDasharray: "3 3" }}
+                    contentStyle={{
+                      backgroundColor: "rgba(0,0,0,0.8)",
+                      border: "none",
+                      borderRadius: "8px",
+                      color: "#fff",
+                    }}
+                  />
+                  <Scatter data={scatterData} fill="#34d399" />
+                </ScatterChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </Widget>
 
         {/* Lists */}
@@ -454,25 +573,33 @@ export default function Dashboard() {
           icon={<Calendar size={16} />}
           delay={7}
         >
-          <div className="space-y-3">
-            {deadlines.length > 0 ? (
-              deadlines.map((d) => (
-                <div
-                  key={d.id}
-                  className="flex flex-col space-y-1 border-b border-white/10 pb-2 last:border-0"
-                >
-                  <div className="font-medium text-sm text-white">
-                    {d.title}
+          {loadingLists ? (
+            <div className="space-y-3">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {deadlines.length > 0 ? (
+                deadlines.map((d) => (
+                  <div
+                    key={d.id}
+                    className="flex flex-col space-y-1 border-b border-white/10 pb-2 last:border-0"
+                  >
+                    <div className="font-medium text-sm text-white">
+                      {d.title}
+                    </div>
+                    <div className="text-xs text-white/50">{d.due_at}</div>
                   </div>
-                  <div className="text-xs text-white/50">{d.due_at}</div>
+                ))
+              ) : (
+                <div className="text-sm text-white/50 text-center py-4">
+                  No deadlines
                 </div>
-              ))
-            ) : (
-              <div className="text-sm text-white/50 text-center py-4">
-                No deadlines
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </Widget>
 
         <Widget
@@ -481,25 +608,33 @@ export default function Dashboard() {
           icon={<Bell size={16} />}
           delay={8}
         >
-          <div className="space-y-3">
-            {alerts.length > 0 ? (
-              alerts.map((a) => (
-                <div
-                  key={a.id}
-                  className="flex flex-col space-y-1 border-b border-white/10 pb-2 last:border-0"
-                >
-                  <div className="font-medium text-sm text-white">
-                    {a.message}
+          {loadingLists ? (
+            <div className="space-y-3">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {alerts.length > 0 ? (
+                alerts.map((a) => (
+                  <div
+                    key={a.id}
+                    className="flex flex-col space-y-1 border-b border-white/10 pb-2 last:border-0"
+                  >
+                    <div className="font-medium text-sm text-white">
+                      {a.message}
+                    </div>
+                    <div className="text-xs text-white/50">{a.when}</div>
                   </div>
-                  <div className="text-xs text-white/50">{a.when}</div>
+                ))
+              ) : (
+                <div className="text-sm text-white/50 text-center py-4">
+                  No alerts
                 </div>
-              ))
-            ) : (
-              <div className="text-sm text-white/50 text-center py-4">
-                No alerts
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </Widget>
       </MissionControl>
     </AuthGuard>
