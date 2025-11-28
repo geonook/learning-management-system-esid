@@ -32,6 +32,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUserPermissions = async (userId: string): Promise<UserPermissions | null> => {
     try {
+      console.log('[AuthContext] Fetching permissions for userId:', userId)
+
       const { data, error } = await supabase
         .from('users')
         .select('id, role, grade, track, teacher_type, full_name')
@@ -39,9 +41,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single()
 
       if (error) {
-        console.error('Error fetching user permissions:', error)
+        console.error('[AuthContext] Error fetching user permissions:', error)
+        console.error('[AuthContext] Error code:', error.code)
+        console.error('[AuthContext] Error message:', error.message)
+        console.error('[AuthContext] Error details:', error.details)
         return null
       }
+
+      console.log('[AuthContext] User permissions loaded:', {
+        userId: data.id,
+        role: data.role,
+        full_name: data.full_name
+      })
 
       return {
         userId: data.id,
@@ -52,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         full_name: data.full_name
       }
     } catch (error) {
-      console.error('Exception fetching user permissions:', error)
+      console.error('[AuthContext] Exception fetching user permissions:', error)
       return null
     }
   }
@@ -108,14 +119,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       // Real authentication: use actual Supabase session
-      const { data: { session } } = await supabase.auth.getSession()
-      
+      console.log('[AuthContext] Getting session...')
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+      if (sessionError) {
+        console.error('[AuthContext] Session error:', sessionError)
+      }
+
+      console.log('[AuthContext] Session result:', {
+        hasSession: !!session,
+        userEmail: session?.user?.email,
+        userId: session?.user?.id
+      })
+
       if (session?.user) {
         setUser(session.user)
         const permissions = await fetchUserPermissions(session.user.id)
+        console.log('[AuthContext] Permissions result:', permissions)
         setUserPermissions(permissions)
+      } else {
+        console.log('[AuthContext] No session found, user will be redirected to login')
       }
-      
+
       setLoading(false)
     }
 
