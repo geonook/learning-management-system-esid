@@ -1,16 +1,77 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { GraduationCap } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { SSOLoginButton } from "@/components/auth/SSOLoginButton"
+import { generatePKCEParams } from "@/lib/auth/pkce"
+import { initiateSSOLogin } from "@/lib/auth/sso-state"
+import { getPublicSSOConfig, getOAuthCallbackUrl } from "@/lib/config/sso"
 
 export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
+  const autoSSOTriggered = useRef(false)
+
+  // Handle auto_sso parameter - automatically trigger SSO flow when coming from Info Hub
+  useEffect(() => {
+    const autoSSO = searchParams?.get('auto_sso')
+
+    // Only trigger once and only if auto_sso=true
+    if (autoSSO === 'true' && !autoSSOTriggered.current) {
+      autoSSOTriggered.current = true
+
+      const triggerAutoSSO = async () => {
+        try {
+          console.log('[SSO] Auto SSO triggered from Info Hub')
+
+          // Check if SSO is enabled
+          const config = getPublicSSOConfig()
+          if (!config.enableSSO) {
+            console.warn('[SSO] SSO not enabled, falling back to manual login')
+            return
+          }
+
+          // Generate PKCE parameters
+          const pkceParams = await generatePKCEParams()
+
+          // Generate state token
+          const stateToken = initiateSSOLogin(pkceParams.codeVerifier, '/dashboard')
+
+          // Build OAuth authorization URL
+          const callbackUri = getOAuthCallbackUrl()
+
+          const authParams = new URLSearchParams({
+            client_id: config.clientId,
+            redirect_uri: callbackUri,
+            response_type: 'code',
+            code_challenge: pkceParams.codeChallenge,
+            code_challenge_method: 'S256',
+            state: stateToken,
+            scope: 'openid profile email',
+          })
+
+          const authUrl = `${config.authUrl}?${authParams.toString()}`
+
+          // Store PKCE verifier and state in cookies
+          const cookieOpts = '; path=/; SameSite=Lax; Secure; max-age=900'
+          document.cookie = `pkce_verifier=${pkceParams.codeVerifier}${cookieOpts}`
+          document.cookie = `sso_state=${stateToken}${cookieOpts}`
+
+          console.log('[SSO] Redirecting to Info Hub OAuth...')
+          window.location.href = authUrl
+        } catch (error) {
+          console.error('[SSO] Auto SSO failed:', error)
+          // Fall back to manual login - user can click the button
+        }
+      }
+
+      triggerAutoSSO()
+    }
+  }, [searchParams])
 
   // Handle SSO error messages from URL parameters
   useEffect(() => {
