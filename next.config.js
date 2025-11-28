@@ -29,6 +29,34 @@ const nextConfig = {
   async headers() {
     return [
       {
+        // Prevent caching of authentication pages (fixes "old page" issue)
+        source: "/auth/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-cache, no-store, must-revalidate, private",
+          },
+          {
+            key: "Pragma",
+            value: "no-cache",
+          },
+          {
+            key: "Expires",
+            value: "0",
+          },
+        ],
+      },
+      {
+        // Prevent caching of API auth routes
+        source: "/api/auth/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-cache, no-store, must-revalidate, private",
+          },
+        ],
+      },
+      {
         // Apply security headers to all routes
         source: "/:path*",
         headers: [
