@@ -15,8 +15,9 @@
  * @date 2025-11-28
  */
 
-import { NextResponse } from 'next/server'
-import crypto from 'crypto'
+import { NextResponse, NextRequest } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
+import * as crypto from 'crypto'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,23 +46,47 @@ function generateCodeChallenge(verifier: string): string {
     .replace(/=/g, '')
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   console.log('[SSO Redirect] Request received')
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
   try {
+    // 0. Check if user is already logged in - if so, skip SSO and go to dashboard
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value
+          },
+          set() {},
+          remove() {},
+        },
+      }
+    )
+
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (user) {
+      console.log('[SSO Redirect] User already logged in:', user.email)
+      console.log('[SSO Redirect] Skipping SSO, redirecting to dashboard')
+      return NextResponse.redirect(new URL('/dashboard', appUrl))
+    }
+
     // 1. Check if SSO is enabled
     const enableSSO = process.env.NEXT_PUBLIC_ENABLE_SSO === 'true'
     if (!enableSSO) {
       console.warn('[SSO Redirect] SSO is not enabled')
       return NextResponse.redirect(
-        new URL('/auth/login?error=sso_disabled', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
+        new URL('/auth/login?error=sso_disabled', appUrl)
       )
     }
 
     // 2. Validate required environment variables
     const clientId = process.env.NEXT_PUBLIC_INFOHUB_OAUTH_CLIENT_ID
     const authUrl = process.env.NEXT_PUBLIC_INFOHUB_AUTH_URL
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
     if (!clientId || !authUrl) {
       console.error('[SSO Redirect] Missing OAuth configuration')
@@ -134,7 +159,6 @@ export async function GET() {
   } catch (error) {
     console.error('[SSO Redirect] Error:', error)
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
     return NextResponse.redirect(
       new URL('/auth/login?error=sso_redirect_failed', appUrl)
     )
