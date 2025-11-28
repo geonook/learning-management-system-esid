@@ -1,16 +1,17 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 2.3
-> **Last Updated**: 2025-11-25
+> **Documentation Version**: 2.4
+> **Last Updated**: 2025-11-28
 > **Project**: learning-management-system-esid
-> **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Both Systems Complete)** > **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**
+> **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Both Systems Complete)** > **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**
 
 > **Current Status**:
 >
+> - ✅ **Phase 4.1 Complete** - One OS Interface Unification with Info Hub
+> - ✅ **Deployment Optimized** - Dockerfile standalone mode, multi-stage build
+> - ✅ **SSO Implementation** - Both LMS & Info Hub complete, alignment verified
 > - 📋 **Data Preparation Phase** - CSV templates ready, awaiting teacher data import
-> - ✅ **SSO Implementation** - Both LMS & Info Hub complete, alignment verified, E2E testing ready
-> - ✅ **Build Optimization** - ESLint configured, standalone output enabled, dynamic rendering
-> - 🎯 **Next Step** - Production deployment after E2E testing completion
+> - 🎯 **Next Step** - E2E testing and production deployment
 
 This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -780,6 +781,66 @@ LMS (Token Exchange) → Supabase User Sync → Session Creation → Dashboard
 - [ ] SSO flow < 5 seconds
 - [ ] Webhook sync < 2 seconds
 - [ ] Session creation < 1 second
+
+---
+
+## 🎨 Phase 4: One OS Interface Unification (2025-11-26~28) ✅ **完成**
+
+### Phase 4.1: TeacherOS Desktop UI
+
+**目標**：與 Info Hub 建立統一的 macOS 風格使用者體驗
+
+**已完成功能**：
+
+- **macOS 風格界面**：
+  - Desktop 桌面環境 + 動態壁紙
+  - Dock 底部工具列（應用程式啟動器）
+  - MenuBar 頂部選單列（系統狀態、時間）
+  - Window 視窗系統（Traffic lights 控制按鈕）
+
+- **壁紙一致化**：
+  - 與 Info Hub 使用相同的漸層背景設計
+  - 支援深色/淺色模式切換
+
+- **Dashboard 性能優化**：
+  - Incremental Loading 漸進式載入
+  - Skeleton UI 載入骨架畫面
+  - 減少首次渲染時間
+
+- **統一體驗**：
+  - 兩個系統（LMS + Info Hub）視覺風格完全對齊
+  - 無縫切換體驗（Dock 直接啟動）
+
+### 部署配置優化 (2025-11-27~28)
+
+**Dockerfile 優化**：
+
+```dockerfile
+# 多階段建置
+FROM node:18-alpine AS builder
+# ... build stage ...
+
+FROM node:18-alpine AS runner
+# standalone 模式運行
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+```
+
+**關鍵配置**：
+- **output: standalone** - Serverless 部署優化
+- **多階段建置** - 減少最終映像大小
+- **Static Assets** - 正確的資產複製路徑
+- **.dockerignore** - 防止複製本地 artifacts（node_modules, .next）
+
+**相關 Commits**（7 個）：
+- `fix: sync Dockerfile with successful Zeabur deployment config`
+- `fix: simplify Dockerfile to use standard npm start`
+- `fix: switch to multi-stage Dockerfile for robust standalone build`
+- `chore: optimize Dockerfile with combined RUN commands`
+- `fix: refine Dockerfile static asset copy paths`
+- `fix: add Dockerfile with static asset copy for standalone mode`
+- `chore: add .dockerignore to prevent copying local artifacts`
 
 ---
 

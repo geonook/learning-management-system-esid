@@ -1,16 +1,19 @@
 # Learning Management System - ESID
 
-> **Version**: 1.11.0
-> **Status**: Production Ready (SSO Integration Complete, Build Optimized)
+> **Version**: 1.12.0
+> **Status**: Production Ready (Phase 4.1 Complete, One OS Interface Unified)
 > **Tech Stack**: Next.js 14 + TypeScript + Supabase Cloud + Tailwind CSS
-> **Last Updated**: 2025-11-25
+> **Last Updated**: 2025-11-28
 
-A comprehensive **Primary School (G1-G6)** Learning Management System featuring English Language Arts (ELA) and KCFS courses with advanced **Analytics Engine**, **Database Analytics Views**, and **Google SSO Integration** (via Info Hub). Features **One Class, Three Teachers (一班三師)** architecture where each class has dedicated LT, IT, and KCFS instructors, plus real-time performance analytics, intelligent insights, and comprehensive testing framework.
+A comprehensive **Primary School (G1-G6)** Learning Management System featuring English Language Arts (ELA) and KCFS courses with advanced **Analytics Engine**, **Database Analytics Views**, and **Google SSO Integration** (via Info Hub). Features **One Class, Three Teachers (一班三師)** architecture where each class has dedicated LT, IT, and KCFS instructors, plus real-time performance analytics, intelligent insights, and comprehensive testing framework. Now with **macOS-style TeacherOS Desktop UI** unified with Info Hub.
 
-## 🎯 Current Status (Updated 2025-11-25)
+## 🎯 Current Status (Updated 2025-11-28)
 
 ### ✅ Completed Features
 
+- **Phase 4.1 One OS Interface**: ✅ macOS-style Desktop, Dock, MenuBar, Windows unified with Info Hub
+- **Dockerfile Optimization**: ✅ Multi-stage build, standalone mode, optimized for Zeabur deployment
+- **Dashboard Performance**: ✅ Incremental loading + Skeleton UI for faster perceived load times
 - **Database Migrations**: ✅ Migrations 007-021 fully deployed (including RLS recursion fixes)
 - **Real Data Deployment**: ✅ 84 classes + 252 courses (2025-2026 學年度)
 - **Supabase Cloud**: ✅ Official cloud migration complete
@@ -19,7 +22,7 @@ A comprehensive **Primary School (G1-G6)** Learning Management System featuring 
 - **Performance**: ✅ Average query time 146ms (target <500ms)
 - **RLS Optimization**: ✅ 49 policies optimized (auth_rls_initplan: 0 warnings)
 - **Testing Framework**: ✅ 90-minute comprehensive testing workflow
-- **SSO Integration**: ✅ **Complete** - Full OAuth 2.0 + PKCE flow with Info Hub, Role Mapping, and Webhook Sync.
+- **SSO Integration**: ✅ **Complete** - Full OAuth 2.0 + PKCE flow with Info Hub, Role Mapping, and Webhook Sync
 - **ESLint Configuration**: ✅ Configured with next/core-web-vitals and next/typescript
 - **Build Optimization**: ✅ Standalone output, dynamic rendering, security headers
 
@@ -27,13 +30,14 @@ A comprehensive **Primary School (G1-G6)** Learning Management System featuring 
 
 - **Application-Layer Permissions**: ⏳ Head teacher cross-user visibility (Phase 2)
 - **ESLint Error Resolution**: ⏳ 274 errors to be fixed (tracked via GitHub Issues)
+- **Data Import**: ⏳ Teacher and student data import (CSV templates ready)
 
 ### 📋 Upcoming
 
-- **Production Deployment**: E2E testing completion, then production release
+- **E2E Testing**: Integration testing with Info Hub SSO
+- **Production Deployment**: After E2E testing completion
 - **JWT Claims-based RLS**: Long-term solution for zero recursion risk
 - **Advanced Analytics**: Predictive models, intervention recommendations
-- **Mobile App**: React Native companion app
 
 ## Quick Start
 

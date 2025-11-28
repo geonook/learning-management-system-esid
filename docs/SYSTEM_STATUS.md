@@ -1,8 +1,8 @@
 # 系統狀態總覽 (System Status)
 
-> **最後更新**: 2025-11-19
-> **版本**: v1.4.0
-> **狀態**: 📋 SSO 整合完成，資料準備階段 (SSO Integration Complete, Data Preparation Phase)
+> **最後更新**: 2025-11-28
+> **版本**: v1.5.0
+> **狀態**: 🟢 Phase 4.1 完成，One OS Interface 統一 (Phase 4.1 Complete, One OS Interface Unified)
 
 本文件提供 LMS-ESID 系統當前狀態的快速查閱。
 
@@ -14,43 +14,46 @@
 
 | 項目 | 狀態 | 說明 |
 |------|------|------|
-| **資料庫 Migrations** | 🟢 完全部署 | 007-015 + 019e + RLS 003 全部完成 |
+| **Phase 4.1 UI** | 🟢 完成 | One OS Interface 與 Info Hub 統一 |
+| **Dockerfile 優化** | 🟢 完成 | Multi-stage build, standalone mode |
+| **Dashboard 性能** | 🟢 完成 | Incremental loading + Skeleton UI |
+| **資料庫 Migrations** | 🟢 完全部署 | 007-021 全部完成（含 RLS 遞迴修復） |
 | **SSO Integration** | 🟢 已完成 | Phase 1-4 + RLS Fix + Documentation ✅ |
 | **CSV Import Templates** | 🟢 已完成 | 英文欄位 + 完整文件 ✅ |
-| **真實資料** | 🟡 待匯入 | 架構就緒，等待資料填寫 |
-| **驗證測試** | 🟢 全部通過 | Migration 驗證 ✅ |
+| **真實資料結構** | 🟢 已部署 | 84 班級 + 252 課程架構就緒 |
+| **教師資料** | 🟡 待匯入 | CSV 範本已準備 |
 | **Supabase Cloud** | 🟢 運行中 | Official cloud instance |
 | **Analytics Engine** | 🟢 可用 | 40+ TypeScript interfaces |
 | **測試框架** | 🟢 就緒 | 90-minute comprehensive workflow |
-| **Documentation** | 🟢 整理完成 | 10 刪除, 33 歸檔 ✅ |
 
-### 🔢 資料統計 (2025-10-29)
+### 🔢 資料統計 (2025-11-28)
 
 ```
 學年度: 2025-2026
 校區: 林口 (Linkou)
 
-班級數: 0 classes ⚠️ (預期 84 - 待匯入)
-  - G1: 0/14 classes
-  - G2: 0/14 classes
-  - G3: 0/14 classes
-  - G4: 0/14 classes
-  - G5: 0/14 classes
-  - G6: 0/14 classes
+班級數: 84 classes ✅
+  - G1: 14 classes (Level: E1×5, E2×5, E3×4)
+  - G2: 14 classes (Level: E1×5, E2×5, E3×4)
+  - G3: 14 classes (Level: E1×4, E2×7, E3×3)
+  - G4: 14 classes (Level: E1×4, E2×7, E3×3)
+  - G5: 14 classes (Level: E1×3, E2×7, E3×4)
+  - G6: 14 classes (Level: E1×4, E2×7, E3×3)
 
-課程數: 0 courses ⚠️ (預期 252 - 待建立)
-  - LT 課程: 0/84
-  - IT 課程: 0/84
-  - KCFS 課程: 0/84
+課程數: 252 courses ✅ (84 classes × 3 course types)
+  - LT 課程: 84 ✅
+  - IT 課程: 84 ✅
+  - KCFS 課程: 84 ✅
+  - 教師指派狀態: teacher_id = NULL（待指派）
 
-教師數: 0 users ⚠️ (預期 ~60 - 待建立)
-  - Admin: 0/3
-  - Head Teachers: 0/18
-  - Teachers: 0/40+
+教師數: 待匯入 ⏳
+  - Admin: 待建立
+  - Head Teachers: 待建立 (18 位，每年級每課程類型 1 位)
+  - Teachers: 待建立 (~40+ 位)
 
-學生數: 0 students ⚠️ (預期 ~1400 - 待匯入)
+學生數: 待匯入 ⏳ (預期 ~1400)
 
-📋 CSV Templates: ✅ 已準備 (8 files)
+📋 CSV Templates: ✅ 已準備 (4 核心範本 + 完整文件)
 ```
 
 ---
@@ -66,10 +69,13 @@
 | **009** | ✅ | 2025-10-17 | Level format upgrade to G[1-6]E[1-3] |
 | **010** | ✅ | 2025-10-17 | Remove track NOT NULL constraint |
 | **011** | ✅ | 2025-10-17 | Remove teacher_id NOT NULL constraint |
+| **012-013** | ✅ | 2025-10-17 | Student courses + RLS security |
 | **RLS 003** | ✅ | 2025-10-17 | Courses RLS policies + HT fix |
 | **014** | ✅ | 2025-10-27 | Track column type fix + Analytics views rebuild |
 | **015** | ✅ | 2025-10-28 | RLS performance optimization (49 policies) |
-| **019e** | ✅ | 2025-11-19 | Emergency RLS fix - remove heads_view_jurisdiction |
+| **018-019e** | ✅ | 2025-11-18 | RLS recursion fix series |
+| **020** | ✅ | 2025-11-21 | Disable auto user sync trigger |
+| **021** | ✅ | 2025-11-21 | Fix courses RLS with SECURITY DEFINER |
 
 ### 資料庫架構要點
 
