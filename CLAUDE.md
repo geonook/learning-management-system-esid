@@ -10,8 +10,10 @@
 > - ✅ **Phase 4.1 Complete** - One OS Interface Unification with Info Hub
 > - ✅ **Deployment Optimized** - Dockerfile standalone mode, multi-stage build
 > - ✅ **SSO Implementation** - Both LMS & Info Hub complete, alignment verified
+> - ✅ **Cache-Control Headers** - Auth pages no-cache to fix old page issue
 > - 📋 **Data Preparation Phase** - CSV templates ready, awaiting teacher data import
-> - 🎯 **Next Step** - E2E testing and production deployment
+> - ⏳ **Production Migration** - Migration 022 (assessment_codes) pending
+> - 🎯 **Next Step** - Execute Migration 022 on Production, then E2E testing
 
 This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -386,6 +388,19 @@ npm run import:cli
   - ✅ courses 表查詢正常運作
   - ✅ Dashboard 400 錯誤已解決
 - **相關檔案**: `db/migrations/021_fix_courses_rls_recursion.sql`
+
+#### Migration 022: Fix Assessment Codes Schema (2025-11-28) ⏳ **待執行於 Production**
+
+- **目的**: 修復 `assessment_codes` 表缺少 `sequence_order` 欄位和種子資料的問題
+- **變更內容**:
+  - 添加 `sequence_order` 欄位（如不存在）
+  - 添加 `is_active` 欄位（如不存在）
+  - 插入 13 個 assessment codes（FA1-FA8, SA1-SA4, FINAL）
+- **部署狀態**:
+  - ✅ **Staging** (`kqvpcoolgyhjqleekmee`): 已有資料，不需執行
+  - ⏳ **Production** (`piwbooidofbaqklhijup`): 待執行（表為空）
+- **執行方式**: 在 Supabase Dashboard SQL Editor 執行
+- **相關檔案**: `db/migrations/022_fix_assessment_codes_schema.sql`
 
 ### 📊 真實資料部署狀態
 

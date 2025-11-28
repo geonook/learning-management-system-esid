@@ -17,7 +17,7 @@
 | **Phase 4.1 UI** | 🟢 完成 | One OS Interface 與 Info Hub 統一 |
 | **Dockerfile 優化** | 🟢 完成 | Multi-stage build, standalone mode |
 | **Dashboard 性能** | 🟢 完成 | Incremental loading + Skeleton UI |
-| **資料庫 Migrations** | 🟢 完全部署 | 007-021 全部完成（含 RLS 遞迴修復） |
+| **資料庫 Migrations** | 🟡 部分待執行 | 007-021 完成，022 待執行於 Production |
 | **SSO Integration** | 🟢 已完成 | Phase 1-4 + RLS Fix + Documentation ✅ |
 | **CSV Import Templates** | 🟢 已完成 | 英文欄位 + 完整文件 ✅ |
 | **真實資料結構** | 🟢 已部署 | 84 班級 + 252 課程架構就緒 |
@@ -76,6 +76,19 @@
 | **018-019e** | ✅ | 2025-11-18 | RLS recursion fix series |
 | **020** | ✅ | 2025-11-21 | Disable auto user sync trigger |
 | **021** | ✅ | 2025-11-21 | Fix courses RLS with SECURITY DEFINER |
+| **022** | ⏳ | 待執行 | Fix assessment_codes schema (Production only) |
+
+### Supabase 環境對照
+
+| 環境 | Project ID | 用途 | Migration 022 |
+|------|-----------|------|---------------|
+| **Staging** | `kqvpcoolgyhjqleekmee` | 測試環境 | ✅ 已有資料 |
+| **Production** | `piwbooidofbaqklhijup` | 正式環境 | ⏳ 待執行 |
+
+**Production 部署前步驟**:
+1. 在 Supabase Dashboard (Production) 進入 SQL Editor
+2. 執行 `db/migrations/022_fix_assessment_codes_schema.sql`
+3. 驗證 `assessment_codes` 表有 13 筆資料
 
 ### 資料庫架構要點
 
