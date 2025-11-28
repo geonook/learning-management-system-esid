@@ -52,7 +52,7 @@ export function Spotlight() {
       <div className="flex items-center border-b border-black/5 dark:border-white/5 px-3">
         <Search className="w-5 h-5 text-slate-400 mr-2" />
         <Command.Input
-          placeholder="Search classes, students, or commands..."
+          placeholder="Search classes or navigate..."
           className="flex-1 h-12 bg-transparent outline-none text-lg text-slate-800 dark:text-white placeholder:text-slate-400"
         />
       </div>

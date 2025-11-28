@@ -40,9 +40,8 @@ export default function NotFound() {
             <div className="mt-2 flex flex-wrap gap-2 justify-center">
               {[
                 { label: "Dashboard", href: "/dashboard" },
-                { label: "Scores", href: "/scores" },
-                { label: "Students", href: "/students" },
-                { label: "Attendance", href: "/attendance/today" }
+                { label: "Finder", href: "/finder" },
+                { label: "Settings", href: "/settings" }
               ].map((link) => (
                 <Link
                   key={link.href}

@@ -175,23 +175,16 @@ export default function Dashboard() {
           <div className="flex h-full flex-col justify-center p-4">
             <h1 className="text-3xl font-bold text-white mb-2">
               {getGreeting()},{" "}
-              {user?.user_metadata?.full_name?.split(" ")[0] || "Teacher"}{" "}
-              (v2.0.1)
+              {user?.user_metadata?.full_name?.split(" ")[0] || "Teacher"}
             </h1>
             <p className="text-white/70 text-lg">
               Here&apos;s what&apos;s happening in your classes today.
             </p>
-            <div className="mt-6 flex space-x-6">
-              <div className="flex items-center space-x-2">
-                <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
-                <span className="text-sm text-white/80">System Online</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Clock className="h-4 w-4 text-white/60" />
-                <span className="text-sm text-white/80">
-                  {new Date().toLocaleDateString()}
-                </span>
-              </div>
+            <div className="mt-6 flex items-center space-x-2">
+              <Clock className="h-4 w-4 text-white/60" />
+              <span className="text-sm text-white/80">
+                {new Date().toLocaleDateString()}
+              </span>
             </div>
           </div>
         </Widget>
@@ -215,8 +208,8 @@ export default function Dashboard() {
                   <div className="text-3xl font-bold text-white">
                     {teacherKpis.attendanceRate}%
                   </div>
-                  <div className="text-xs text-green-400 mt-1">
-                    +2.1% vs last week
+                  <div className="text-xs text-white/50 mt-1">
+                    This semester
                   </div>
                 </div>
               )}
@@ -237,8 +230,8 @@ export default function Dashboard() {
                   <div className="text-3xl font-bold text-white">
                     {teacherKpis.averageScore}
                   </div>
-                  <div className="text-xs text-green-400 mt-1">
-                    +1.4% vs last term
+                  <div className="text-xs text-white/50 mt-1">
+                    Class average
                   </div>
                 </div>
               )}
@@ -259,8 +252,8 @@ export default function Dashboard() {
                   <div className="text-3xl font-bold text-white">
                     {teacherKpis.passRate}%
                   </div>
-                  <div className="text-xs text-green-400 mt-1">
-                    +0.9% improvement
+                  <div className="text-xs text-white/50 mt-1">
+                    Above 60 points
                   </div>
                 </div>
               )}
@@ -309,7 +302,7 @@ export default function Dashboard() {
                   <div className="text-3xl font-bold text-white">
                     {adminKpis.totalExams}
                   </div>
-                  <div className="text-xs text-green-400 mt-1">+12 new</div>
+                  <div className="text-xs text-white/50 mt-1">This semester</div>
                 </div>
               )}
             </Widget>
@@ -329,7 +322,7 @@ export default function Dashboard() {
                   <div className="text-3xl font-bold text-white">
                     {adminKpis.coverage}%
                   </div>
-                  <div className="text-xs text-green-400 mt-1">On track</div>
+                  <div className="text-xs text-white/50 mt-1">Score coverage</div>
                 </div>
               )}
             </Widget>
@@ -349,7 +342,7 @@ export default function Dashboard() {
                   <div className="text-3xl font-bold text-white">
                     {adminKpis.onTime}%
                   </div>
-                  <div className="text-xs text-green-400 mt-1">
+                  <div className="text-xs text-white/50 mt-1">
                     Submission rate
                   </div>
                 </div>
@@ -437,8 +430,8 @@ export default function Dashboard() {
                   <div className="text-3xl font-bold text-white">
                     {headKpis.averageScore}
                   </div>
-                  <div className="text-xs text-green-400 mt-1">
-                    Above target
+                  <div className="text-xs text-white/50 mt-1">
+                    Grade average
                   </div>
                 </div>
               )}

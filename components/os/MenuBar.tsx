@@ -76,6 +76,7 @@ export function MenuBar({ onOpenEvents }: MenuBarProps) {
               variant="ghost"
               size="sm"
               className="h-6 px-2 hover:bg-white/20 dark:hover:bg-white/10 rounded text-[13px] font-medium text-slate-700 dark:text-slate-200 gap-1"
+              title={user?.user_metadata?.full_name || user?.email || "User"}
             >
               <User className="w-3.5 h-3.5" />
               <span className="hidden sm:inline max-w-[100px] truncate">
