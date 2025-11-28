@@ -6,14 +6,17 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/supabase/auth-context";
 import { getClassesByTeacher, Class } from "@/lib/api/classes";
-import { LayoutDashboard, Calendar, BookOpen } from "lucide-react";
+import { LayoutDashboard, Calendar, BookOpen, Users, School, Settings, Shield } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, userPermissions } = useAuth();
   const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const isAdmin = userPermissions?.role === 'admin';
+  const isHead = userPermissions?.role === 'head';
 
   useEffect(() => {
     async function fetchClasses() {
@@ -55,6 +58,64 @@ export function Sidebar() {
           />
         </nav>
       </div>
+
+      {/* Section: Admin (only for admin role) */}
+      {isAdmin && (
+        <div className="p-4 pt-0">
+          <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 px-2 mt-4">
+            Administration
+          </h3>
+          <nav className="space-y-1">
+            <SidebarItem
+              href="/admin/users"
+              icon={<Users className="w-4 h-4" />}
+              label="User Management"
+              active={pathname === "/admin/users"}
+            />
+            <SidebarItem
+              href="/admin/classes"
+              icon={<School className="w-4 h-4" />}
+              label="Class Management"
+              active={pathname === "/admin/classes"}
+            />
+            <SidebarItem
+              href="/admin/roles"
+              icon={<Shield className="w-4 h-4" />}
+              label="Role Permissions"
+              active={pathname === "/admin/roles"}
+            />
+            <SidebarItem
+              href="/admin/settings"
+              icon={<Settings className="w-4 h-4" />}
+              label="System Settings"
+              active={pathname === "/admin/settings"}
+            />
+          </nav>
+        </div>
+      )}
+
+      {/* Section: Head Teacher (for head and admin roles) */}
+      {(isAdmin || isHead) && (
+        <div className="p-4 pt-0">
+          <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 px-2 mt-4">
+            Grade Management
+          </h3>
+          <nav className="space-y-1">
+            <SidebarItem
+              href="/head/overview"
+              icon={<LayoutDashboard className="w-4 h-4" />}
+              label="Grade Overview"
+              active={pathname === "/head/overview"}
+            />
+            <SidebarItem
+              href="/head/teachers"
+              icon={<Users className="w-4 h-4" />}
+              label="Teacher Progress"
+              active={pathname === "/head/teachers"}
+            />
+          </nav>
+        </div>
+      )}
 
       {/* Section: My Classes */}
       <div className="flex-1 overflow-y-auto p-4 pt-0">
