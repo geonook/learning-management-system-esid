@@ -6,7 +6,20 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/supabase/auth-context";
 import { getClassesByTeacher, Class } from "@/lib/api/classes";
-import { LayoutDashboard, Calendar, BookOpen, Users, School, Settings, Shield } from "lucide-react";
+import {
+  LayoutDashboard,
+  Calendar,
+  BookOpen,
+  Users,
+  School,
+  Settings,
+  Shield,
+  GitCompare,
+  GraduationCap,
+  MessageSquare,
+  BarChart3,
+  Zap
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function Sidebar() {
@@ -17,6 +30,8 @@ export function Sidebar() {
 
   const isAdmin = userPermissions?.role === 'admin';
   const isHead = userPermissions?.role === 'head';
+  const isTeacher = userPermissions?.role === 'teacher';
+  const isOfficeMember = userPermissions?.role === 'office_member';
 
   useEffect(() => {
     async function fetchClasses() {
@@ -112,6 +127,87 @@ export function Sidebar() {
               icon={<Users className="w-4 h-4" />}
               label="Teacher Progress"
               active={pathname === "/head/teachers"}
+            />
+            <SidebarItem
+              href="/head/comparison"
+              icon={<GitCompare className="w-4 h-4" />}
+              label="Class Comparison"
+              active={pathname === "/head/comparison"}
+            />
+          </nav>
+        </div>
+      )}
+
+      {/* Section: Office Member Browse (for office_member and admin roles) */}
+      {(isAdmin || isOfficeMember) && (
+        <div className="p-4 pt-0">
+          <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 px-2 mt-4">
+            Browse Data
+          </h3>
+          <nav className="space-y-1">
+            <SidebarItem
+              href="/browse/classes"
+              icon={<School className="w-4 h-4" />}
+              label="All Classes"
+              active={pathname === "/browse/classes"}
+            />
+            <SidebarItem
+              href="/browse/teachers"
+              icon={<Users className="w-4 h-4" />}
+              label="All Teachers"
+              active={pathname === "/browse/teachers"}
+            />
+            <SidebarItem
+              href="/browse/students"
+              icon={<GraduationCap className="w-4 h-4" />}
+              label="All Students"
+              active={pathname === "/browse/students"}
+            />
+          </nav>
+        </div>
+      )}
+
+      {/* Section: Office Member Academic (for office_member and admin roles) */}
+      {(isAdmin || isOfficeMember) && (
+        <div className="p-4 pt-0">
+          <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 px-2 mt-4">
+            Academic
+          </h3>
+          <nav className="space-y-1">
+            <SidebarItem
+              href="/browse/gradebook"
+              icon={<BookOpen className="w-4 h-4" />}
+              label="Gradebook"
+              active={pathname === "/browse/gradebook"}
+            />
+            <SidebarItem
+              href="/browse/comms"
+              icon={<MessageSquare className="w-4 h-4" />}
+              label="Communications"
+              active={pathname === "/browse/comms"}
+            />
+            <SidebarItem
+              href="/browse/stats"
+              icon={<BarChart3 className="w-4 h-4" />}
+              label="Statistics"
+              active={pathname === "/browse/stats"}
+            />
+          </nav>
+        </div>
+      )}
+
+      {/* Section: Teacher Quick Actions (for teacher role) */}
+      {isTeacher && (
+        <div className="p-4 pt-0">
+          <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 px-2 mt-4">
+            Quick Actions
+          </h3>
+          <nav className="space-y-1">
+            <SidebarItem
+              href="/scores/entry"
+              icon={<Zap className="w-4 h-4" />}
+              label="Quick Score Entry"
+              active={pathname === "/scores/entry"}
             />
           </nav>
         </div>
