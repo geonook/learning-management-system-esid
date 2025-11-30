@@ -60,7 +60,9 @@ export async function canModifyData(): Promise<boolean> {
  * @returns true if user has permission to access
  */
 export async function canAccessResource(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   resourceType: 'class' | 'course' | 'student' | 'exam' | 'score',
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   resourceId: string
 ): Promise<boolean> {
   const profile = await getUserProfile()

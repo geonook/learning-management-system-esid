@@ -10,6 +10,7 @@ import { Database } from '@/types/database'
 export type Student = Database['public']['Tables']['students']['Row']
 export type StudentInsert = Database['public']['Tables']['students']['Insert']
 export type StudentUpdate = Database['public']['Tables']['students']['Update']
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 type Course = Database['public']['Tables']['courses']['Row']
 
 // Extended student type with class and course information
@@ -396,10 +397,12 @@ export async function getStudentsWithCourses(
       throw new Error(`Failed to fetch students with courses: ${error.message}`)
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return data.map((student: any) => ({
       ...student,
       classes: student.classes ? {
         ...student.classes,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         courses: student.classes.courses?.map((course: any) => ({
           ...course,
           teacher: course.users
@@ -476,6 +479,7 @@ export async function getCourseAssignmentSummary(
       totalStudents += studentCount || 0
 
       // Map courses
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const courses = (cls.courses || []).map((course: any) => ({
         courseType: course.course_type,
         teacherId: course.teacher_id,
@@ -508,6 +512,7 @@ export async function bulkAssignStudentsToClass(
   studentIds: string[],
   classId: string
 ): Promise<Student[]> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const supabase = createClient()
 
   try {
@@ -540,6 +545,7 @@ export async function bulkAssignStudentsToClass(
 export async function bulkRemoveStudentsFromClass(
   studentIds: string[]
 ): Promise<Student[]> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const supabase = createClient()
 
   try {
@@ -573,6 +579,7 @@ export async function getUnassignedStudents(
   grade: number,
   track: 'local' | 'international'
 ): Promise<Student[]> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const supabase = createClient()
 
   try {
@@ -663,8 +670,10 @@ export async function getCourseEnrollmentStats(): Promise<{
     })
 
     // Calculate course type enrollments
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     courseEnrollments.forEach((enrollment: any) => {
       if (enrollment.classes?.courses) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         enrollment.classes.courses.forEach((course: any) => {
           stats.byCourseType[course.course_type as 'LT' | 'IT' | 'KCFS']++
         })

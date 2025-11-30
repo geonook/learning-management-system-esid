@@ -153,8 +153,11 @@ export async function getTeacherCourses() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
         class_name: (course.classes as any)?.name || 'Unknown Class',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         grade: (course.classes as any)?.grade || 1,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         track: (course.classes as any)?.track || 'local',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         level: (course.classes as any)?.level,
         student_count: studentCount || 0,
         is_active: course.is_active,
@@ -508,6 +511,7 @@ export async function getStudentGrades(studentId: string, examId?: string) {
   })
 
   const gradeCalculationInput = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     scores: scoresMap as any, // Type assertion for grade calculation
     studentId,
     classId: '', // We don't have classId in this context

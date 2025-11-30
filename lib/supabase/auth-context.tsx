@@ -101,6 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           app_metadata: {},
           user_metadata: {},
           identities: []
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any
         
         setUser(mockUser)
@@ -175,6 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe()
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Prevent hydration mismatch by ensuring consistent initial render

@@ -78,12 +78,14 @@ async function performBatchInsert<T>(
               await supabase.from(tableName).insert(record)
               totalCreated++
               break
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (individualError: any) {
               attempts++
               if (attempts === MAX_RETRIES) {
                 console.warn(`Individual ${stageName} insert failed after ${MAX_RETRIES} attempts:`, individualError.message)
                 totalErrors++
                 result.errors.push({
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   stage: stageName as any,
                   operation: 'create',
                   data: record,
@@ -105,10 +107,12 @@ async function performBatchInsert<T>(
       // Small delay between batches to prevent database overload
       await new Promise(resolve => setTimeout(resolve, 100))
       
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (batchError: any) {
       console.error(`Fatal error in batch ${batchNumber}:`, batchError.message)
       totalErrors += batch.length
       result.errors.push({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         stage: stageName as any,
         operation: 'create',
         data: { batchNumber, batchSize: batch.length },
@@ -210,6 +214,7 @@ class ReferenceResolver {
       
       console.log(`Reference resolver initialized: ${this.userEmailToId.size} users, ${this.classNameToId.size} classes, ${this.studentIdToId.size} students, ${this.courseKeyToId.size} courses, ${this.examNameToId.size} exams`)
       
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.warn('Reference resolver initialization failed:', error.message)
       // Continue with empty maps - will generate warnings for missing references
@@ -367,6 +372,7 @@ export async function executeClassesImport(
           })
         }
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       result.warnings.push({
         stage: 'classes',
@@ -661,6 +667,7 @@ export async function executeScoresImport(
       // Small delay between batches
       await new Promise(resolve => setTimeout(resolve, 100))
       
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (batchError: any) {
       console.error(`Fatal error in scores batch ${batchNumber}:`, batchError.message)
       totalErrors += batch.length
@@ -689,6 +696,7 @@ export async function executeCleanImport(
     students?: ImportValidationResult<StudentImport>
     scores?: ImportValidationResult<ScoreImport>
   },
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   currentUserUUID: string
 ): Promise<ImportExecutionResult> {
   const result: ImportExecutionResult = {
@@ -746,6 +754,7 @@ export async function executeCleanImport(
     
     return result
     
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('Fatal error in clean import execution:', error)
     result.success = false

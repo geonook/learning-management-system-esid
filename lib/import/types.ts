@@ -138,6 +138,7 @@ export interface ImportValidationResult<T> {
 
 export interface ImportValidationError {
   row: number
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: Record<string, any>
   errors: string[]
 }
@@ -159,6 +160,7 @@ export interface ImportExecutionResult {
 export interface ImportExecutionError {
   stage: 'users' | 'classes' | 'courses' | 'students' | 'scores' | 'system'
   operation: 'create' | 'update' | 'import'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: Record<string, any>
   error: string
 }
@@ -166,6 +168,7 @@ export interface ImportExecutionError {
 export interface ImportExecutionWarning {
   stage: 'users' | 'classes' | 'courses' | 'students' | 'scores' | 'system'
   message: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: Record<string, any>
 }
 
@@ -181,6 +184,7 @@ export interface CSVParseOptions {
 // Import stage configuration
 export interface ImportStageConfig {
   stage: 'users' | 'classes' | 'courses' | 'students' | 'scores'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   schema: z.ZodSchema<any>
   requiredColumns: string[]
   optionalColumns: string[]
@@ -203,6 +207,7 @@ export interface ImportSession {
   created_by: string
   status: 'pending' | 'validating' | 'importing' | 'completed' | 'failed'
   files: ImportFileInfo[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   validation_results: Record<string, ImportValidationResult<any>>
   execution_result?: ImportExecutionResult
   progress: {

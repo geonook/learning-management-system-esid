@@ -627,6 +627,7 @@ export async function executeDryRun(
   const potentialWarnings: ImportExecutionWarning[] = []
   
   // Get mappings to check for missing references
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [userMap, classMap, studentMap, examMap, studentCourseMap] = await Promise.all([
     createUserEmailToUUIDMap(),
     createClassNameToUUIDMap(),

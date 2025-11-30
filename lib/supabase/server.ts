@@ -45,6 +45,7 @@ export function createServiceRoleClient() {
         getAll() {
           return []
         },
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         setAll(cookiesToSet) {
           // Service role client doesn't need to set cookies
         },

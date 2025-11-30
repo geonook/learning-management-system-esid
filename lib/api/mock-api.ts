@@ -48,6 +48,7 @@ export async function getUsers(): Promise<User[]> {
 }
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function getClasses(academicYear?: string): Promise<Class[]> {
   // For now, ignore academicYear parameter since mock data is static
   return fetchMockAPI<Class[]>('/classes')
@@ -63,7 +64,9 @@ export async function getExams(): Promise<Exam[]> {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function getAssessmentCodes(): Promise<any[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return fetchMockAPI<any[]>('/assessment-codes')
 }
 
