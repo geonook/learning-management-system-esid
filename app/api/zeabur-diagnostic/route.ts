@@ -4,11 +4,16 @@ import { NextRequest, NextResponse } from 'next/server'
  * Zeabur Supabase Diagnostic API
  * Helps identify the correct configuration for self-hosted Supabase on Zeabur
  */
-export async function GET(request: NextRequest) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function GET(_request: NextRequest) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const diagnostics = {
     timestamp: new Date().toISOString(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     zeabur_detection: {} as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     environment_analysis: {} as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     connection_attempts: {} as any,
     recommendations: [] as string[]
   }

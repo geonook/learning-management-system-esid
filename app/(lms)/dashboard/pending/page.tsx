@@ -71,7 +71,7 @@ export default function PendingApprovalPage() {
                   <div>
                     <p className="font-medium">Full Access Granted</p>
                     <p className="text-sm text-muted-foreground">
-                      You'll be able to log in and access all features based on your role
+                      You&apos;ll be able to log in and access all features based on your role
                     </p>
                   </div>
                 </div>

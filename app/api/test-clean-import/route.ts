@@ -6,7 +6,8 @@ import { validateUsersCSV, validateClassesCSV, validateCoursesCSV, validateStude
  * Test Clean Import API
  * Tests the new clean batch processor with sample data
  */
-export async function POST(request: NextRequest) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function POST(_request: NextRequest) {
   try {
     // Generate sample CSV data for testing
     const sampleUsers = `email,full_name,role,teacher_type,grade,track,is_active

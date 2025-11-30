@@ -1,10 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
-import { readFileSync } from 'fs'
-import { join } from 'path'
 
 // Admin-only API endpoint to fix RLS recursion issues
-export async function POST(request: NextRequest) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function POST(_request: NextRequest) {
   try {
     // Check if we have the service role key
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -77,7 +76,7 @@ export async function POST(request: NextRequest) {
 
     // Step 3: Test the fix
     console.log('🧪 Testing fixed policies...')
-    const { data: testData, error: testError } = await supabase
+    const { error: testError } = await supabase
       .from('users')
       .select('count')
       .limit(1)
@@ -102,6 +101,7 @@ export async function POST(request: NextRequest) {
       testResult: 'Database queries working normally'
     })
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('❌ RLS fix error:', error)
     return NextResponse.json(

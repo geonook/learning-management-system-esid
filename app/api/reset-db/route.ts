@@ -5,12 +5,16 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
  * Database Reset API
  * Safely removes all migration baggage and prepares for clean schema deployment
  */
-export async function POST(request: NextRequest) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function POST(_request: NextRequest) {
   try {
     const supabase = createServiceRoleClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const resetLog = {
       timestamp: new Date().toISOString(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       steps: [] as any[],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       errors: [] as any[],
       success: false
     }

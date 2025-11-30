@@ -1,7 +1,7 @@
 "use client";
 
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { GitCompare, TrendingUp, TrendingDown } from "lucide-react";
+import { GitCompare } from "lucide-react";
 
 export default function ClassComparisonPage() {
   return (

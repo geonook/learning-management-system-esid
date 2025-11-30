@@ -5,11 +5,13 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
  * Create Analytics Views API Route
  * Manually creates the essential Analytics views using predefined SQL
  */
-export async function POST(request: NextRequest) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function POST(_request: NextRequest) {
   try {
     console.log('🚀 Creating Analytics Views...')
-    
+
     const supabase = createServiceRoleClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const results: any[] = []
     
     // Define views as separate SQL statements
@@ -251,9 +253,9 @@ export async function POST(request: NextRequest) {
     for (const view of views) {
       try {
         console.log(`Creating view: ${view.name}`)
-        
+
         // Use raw SQL through rpc if available, or use a workaround
-        const { data, error } = await supabase.rpc('exec_sql', { sql_query: view.sql })
+        const { error } = await supabase.rpc('exec_sql', { sql_query: view.sql })
         
         if (error) {
           console.error(`Error creating ${view.name}:`, error)
@@ -269,7 +271,8 @@ export async function POST(request: NextRequest) {
             status: 'success'
           })
         }
-        
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         console.error(`Exception creating ${view.name}:`, err)
         results.push({
@@ -282,12 +285,15 @@ export async function POST(request: NextRequest) {
     
     // Test view access
     console.log('🔍 Testing view access...')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const testResults: any[] = []
     
     for (const view of views) {
       try {
         const startTime = Date.now()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await supabase
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .from(view.name as any)
           .select('*')
           .limit(1)
@@ -302,7 +308,8 @@ export async function POST(request: NextRequest) {
           duration,
           recordCount: data?.length || 0
         })
-        
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         testResults.push({
           view: view.name,
@@ -334,7 +341,8 @@ export async function POST(request: NextRequest) {
         ? 'Views may already exist or need manual creation via Supabase Studio'
         : 'Views created successfully'
     })
-    
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('💥 Analytics views creation failed:', error)
     return NextResponse.json({

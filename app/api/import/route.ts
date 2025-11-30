@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { executeCleanImport } from '@/lib/import/clean-batch-processor'
-import type { ImportValidationResult } from '@/lib/import/types'
 
 export async function POST(request: NextRequest) {
   try {
@@ -72,6 +71,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result)
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('Import API error:', error)
     return NextResponse.json(

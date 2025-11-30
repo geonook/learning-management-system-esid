@@ -7,25 +7,27 @@ import { join } from 'path'
  * Deploy Analytics Views API Route
  * POST /api/deploy-analytics
  */
-export async function POST(request: NextRequest) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function POST(_request: NextRequest) {
   try {
     console.log('🚀 Starting Analytics Views Deployment...')
-    
+
     // Create service role client
     const supabase = createClient()
-    
+
     // Read Analytics views SQL
     const viewsPath = join(process.cwd(), 'db/views/002_analytics_views.sql')
     const viewsSql = readFileSync(viewsPath, 'utf-8')
-    
+
     // Split into individual CREATE VIEW statements
     const statements = viewsSql
       .split(';')
       .map(stmt => stmt.trim())
       .filter(stmt => stmt.length > 10 && stmt.includes('CREATE'))
-    
+
     console.log(`📊 Found ${statements.length} statements to execute`)
-    
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const results: any[] = []
     let successCount = 0
     
@@ -35,9 +37,9 @@ export async function POST(request: NextRequest) {
       
       try {
         console.log(`Executing statement ${i + 1}/${statements.length}`)
-        
+
         // Execute raw SQL
-        const { data, error } = await supabase.rpc('exec_sql', {
+        const { error } = await supabase.rpc('exec_sql', {
           sql_query: statement
         })
         
@@ -58,7 +60,8 @@ export async function POST(request: NextRequest) {
           })
           successCount++
         }
-        
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         console.error(`Exception in statement ${i + 1}:`, err)
         results.push({
@@ -72,6 +75,7 @@ export async function POST(request: NextRequest) {
     
     // Test view access
     console.log('🔍 Testing view access...')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const viewTests: any[] = []
     
     const testViews = [
@@ -83,7 +87,9 @@ export async function POST(request: NextRequest) {
     for (const viewName of testViews) {
       try {
         const startTime = Date.now()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await supabase
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .from(viewName as any)
           .select('*')
           .limit(1)
@@ -98,7 +104,8 @@ export async function POST(request: NextRequest) {
           duration,
           recordCount: data?.length || 0
         })
-        
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         viewTests.push({
           view: viewName,
@@ -130,7 +137,8 @@ export async function POST(request: NextRequest) {
         ? `✅ Analytics deployment completed (${successCount}/${statements.length} statements successful)`
         : '❌ Analytics deployment failed'
     })
-    
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('💥 Analytics deployment failed:', error)
     return NextResponse.json({

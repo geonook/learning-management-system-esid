@@ -6,12 +6,17 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
  * Database Connection Test API
  * Tests both regular client and service role client connections
  */
-export async function GET(request: NextRequest) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function GET(_request: NextRequest) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const results = {
     timestamp: new Date().toISOString(),
     tests: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       regular_client: { status: 'pending', details: null as any },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       service_role_client: { status: 'pending', details: null as any },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       basic_write_test: { status: 'pending', details: null as any }
     },
     environment: {
