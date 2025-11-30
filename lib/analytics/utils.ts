@@ -46,9 +46,9 @@ export function calculateBasicStats(values: number[]) {
   const count = values.length
   const mean = values.reduce((sum, val) => sum + val, 0) / count
   
-  const median = count % 2 === 0 
-    ? (sorted[count / 2 - 1] + sorted[count / 2]) / 2
-    : sorted[Math.floor(count / 2)]
+  const median = count % 2 === 0
+    ? ((sorted[count / 2 - 1] ?? 0) + (sorted[count / 2] ?? 0)) / 2
+    : (sorted[Math.floor(count / 2)] ?? 0)
   
   const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / count
   const standardDeviation = Math.sqrt(variance)
@@ -81,7 +81,7 @@ export function calculateGradeAverages(scores: Array<{ assessment_code: string; 
   if (summativeScores.length > 0) {
     summativeAvg = Math.round((summativeScores.reduce((a, b) => a + b, 0) / summativeScores.length) * 100) / 100
   }
-  if (formativeAvg && summativeAvg && finalScores.length > 0) {
+  if (formativeAvg && summativeAvg && finalScores.length > 0 && finalScores[0] !== undefined) {
     semesterGrade = Math.round(((formativeAvg * 0.15 + summativeAvg * 0.2 + finalScores[0] * 0.1) / 0.45) * 100) / 100
   }
   

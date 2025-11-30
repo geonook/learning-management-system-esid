@@ -131,9 +131,14 @@ export class AnalyticsQueries {
       }
 
       // Get all classes taught by this teacher
-      const classIds = teacher.courses?.map(c => c.classes?.id).filter(Boolean) || []
-      const totalStudents = teacher.courses?.reduce((sum, course) => {
-        return sum + (course.classes?.students?.length || 0)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const classIds = teacher.courses?.flatMap((c: any) => c.classes?.id ? [c.classes.id] : []) || []
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const totalStudents = teacher.courses?.reduce((sum: number, course: any) => {
+        const studentCount = Array.isArray(course.classes?.students)
+          ? course.classes.students[0]?.count || 0
+          : 0
+        return sum + studentCount
       }, 0) || 0
 
       // Get class analytics for all teacher's classes
@@ -410,10 +415,10 @@ export class AnalyticsQueries {
 
       // Add achievement milestones for consistently high performance
       const recentHighScores = scores.slice(-3).filter(s => (s.score || 0) >= 90)
-      if (recentHighScores.length === 3) {
+      if (recentHighScores.length === 3 && recentHighScores[2]) {
         milestones.push({
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          date: (recentHighScores[2].exams as any).exam_date,
+          date: (recentHighScores[2].exams as any)?.exam_date || new Date().toISOString(),
           event: 'achievement' as const,
           description: 'Maintained excellent performance across recent assessments',
           impact: 'positive' as const
