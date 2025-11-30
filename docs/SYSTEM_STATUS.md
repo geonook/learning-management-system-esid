@@ -1,8 +1,8 @@
 # 系統狀態總覽 (System Status)
 
-> **最後更新**: 2025-11-28
-> **版本**: v1.5.0
-> **狀態**: 🟢 Phase 4.1 完成，One OS Interface 統一 (Phase 4.1 Complete, One OS Interface Unified)
+> **最後更新**: 2025-11-29
+> **版本**: v1.6.0
+> **狀態**: 🟡 Production 資料庫為空，待執行 Migration 022 和資料匯入 (Production DB Empty, Awaiting Migration 022 & Data Import)
 
 本文件提供 LMS-ESID 系統當前狀態的快速查閱。
 
@@ -20,38 +20,61 @@
 | **資料庫 Migrations** | 🟡 部分待執行 | 007-021 完成，022 待執行於 Production |
 | **SSO Integration** | 🟢 已完成 | Phase 1-4 + RLS Fix + Documentation ✅ |
 | **CSV Import Templates** | 🟢 已完成 | 英文欄位 + 完整文件 ✅ |
-| **真實資料結構** | 🟢 已部署 | 84 班級 + 252 課程架構就緒 |
+| **Production 資料庫** | 🔴 **空的** | classes=0, courses=0, users=0, assessment_codes=0 |
 | **教師資料** | 🟡 待匯入 | CSV 範本已準備 |
 | **Supabase Cloud** | 🟢 運行中 | Official cloud instance |
 | **Analytics Engine** | 🟢 可用 | 40+ TypeScript interfaces |
 | **測試框架** | 🟢 就緒 | 90-minute comprehensive workflow |
 
-### 🔢 資料統計 (2025-11-28)
+### 🔴 緊急問題：Production 資料庫為空
+
+**驗證結果 (2025-11-29)**:
+```
+curl 驗證結果:
+- classes: 0 筆 ❌ (預期 84 筆)
+- courses: 0 筆 ❌ (預期 252 筆)
+- users: 0 筆 ❌ (預期 ~70 筆)
+- assessment_codes: 0 筆 ❌ (預期 13 筆)
+```
+
+**需要執行的步驟**:
+1. 在 Production Supabase SQL Editor 執行 `db/migrations/022_fix_assessment_codes_schema.sql`
+2. 執行 classes 種子資料
+3. 執行 courses 種子資料
+4. 透過 SSO 或 seed scripts 建立用戶
+
+### 🔢 資料統計 (2025-11-29)
 
 ```
 學年度: 2025-2026
 校區: 林口 (Linkou)
 
-班級數: 84 classes ✅
-  - G1: 14 classes (Level: E1×5, E2×5, E3×4)
-  - G2: 14 classes (Level: E1×5, E2×5, E3×4)
-  - G3: 14 classes (Level: E1×4, E2×7, E3×3)
-  - G4: 14 classes (Level: E1×4, E2×7, E3×3)
-  - G5: 14 classes (Level: E1×3, E2×7, E3×4)
-  - G6: 14 classes (Level: E1×4, E2×7, E3×3)
+⚠️ 當前 Production 資料庫狀態：
 
-課程數: 252 courses ✅ (84 classes × 3 course types)
-  - LT 課程: 84 ✅
-  - IT 課程: 84 ✅
-  - KCFS 課程: 84 ✅
-  - 教師指派狀態: teacher_id = NULL（待指派）
+班級數: 0 classes ❌ (預期 84 classes)
+  - G1: 0/14 classes
+  - G2: 0/14 classes
+  - G3: 0/14 classes
+  - G4: 0/14 classes
+  - G5: 0/14 classes
+  - G6: 0/14 classes
 
-教師數: 待匯入 ⏳
-  - Admin: 待建立
-  - Head Teachers: 待建立 (18 位，每年級每課程類型 1 位)
-  - Teachers: 待建立 (~40+ 位)
+課程數: 0 courses ❌ (預期 252 courses)
+  - LT 課程: 0/84
+  - IT 課程: 0/84
+  - KCFS 課程: 0/84
 
-學生數: 待匯入 ⏳ (預期 ~1400)
+教師數: 0 users ❌
+  - Admin: 0
+  - Head Teachers: 0 (預期 18 位)
+  - Teachers: 0 (預期 ~40+ 位)
+
+Assessment Codes: 0 筆 ❌ (預期 13 筆)
+  - FA1-FA8: 未建立
+  - SA1-SA4: 未建立
+  - FINAL: 未建立
+
+學生數: 0 students ❌ (預期 ~1400)
 
 📋 CSV Templates: ✅ 已準備 (4 核心範本 + 完整文件)
 ```

@@ -1,9 +1,10 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 2.4
-> **Last Updated**: 2025-11-28
+> **Documentation Version**: 2.5
+> **Last Updated**: 2025-11-29
 > **Project**: learning-management-system-esid
-> **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Both Systems Complete)** > **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**
+> **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Both Systems Complete)**
+> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**
 
 > **Current Status**:
 >
@@ -11,9 +12,14 @@
 > - ✅ **Deployment Optimized** - Dockerfile standalone mode, multi-stage build
 > - ✅ **SSO Implementation** - Both LMS & Info Hub complete, alignment verified
 > - ✅ **Cache-Control Headers** - Auth pages no-cache to fix old page issue
-> - 📋 **Data Preparation Phase** - CSV templates ready, awaiting teacher data import
-> - ⏳ **Production Migration** - Migration 022 (assessment_codes) pending
-> - 🎯 **Next Step** - Execute Migration 022 on Production, then E2E testing
+> - 🔴 **Production Database Empty** - All data tables (classes, courses, users) are empty
+> - ⏳ **Migration 022 Pending** - assessment_codes seed data not deployed to Production
+> - 📋 **Data Preparation Phase** - CSV templates ready, awaiting data import
+> - 🎯 **Next Steps**:
+>   1. Execute Migration 022 on Production (assessment_codes)
+>   2. Import seed data for classes (84) and courses (252)
+>   3. Create user accounts via SSO or seed scripts
+>   4. E2E SSO integration testing
 
 This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
 

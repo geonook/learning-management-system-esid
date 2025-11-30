@@ -80,30 +80,43 @@ export default function Dashboard() {
   const [alerts, setAlerts] = useState<RecentAlert[]>([]);
 
   useEffect(() => {
-    if (!user?.id || !userRole) return;
+    console.log('[Dashboard] useEffect triggered', { userId: user?.id, userRole });
+
+    if (!user?.id || !userRole) {
+      console.log('[Dashboard] Missing user or role, skipping data load');
+      return;
+    }
 
     // 1. Load KPIs (Fastest)
     const loadKpis = async () => {
+      console.log('[Dashboard] Loading KPIs for role:', userRole);
       try {
         if (userRole === "teacher") {
+          console.log('[Dashboard] Fetching teacher KPIs...');
           const data = await getTeacherKpis(user.id);
+          console.log('[Dashboard] Teacher KPIs loaded:', data);
           setTeacherKpis(data);
         } else if (userRole === "admin" || userRole === "office_member") {
+          console.log('[Dashboard] Fetching admin KPIs...');
           const data = await getAdminKpis();
+          console.log('[Dashboard] Admin KPIs loaded:', data);
           setAdminKpis(data);
         } else if (
           userRole === "head" &&
           userPermissions?.grade &&
           userPermissions?.track
         ) {
+          console.log('[Dashboard] Fetching head teacher KPIs...');
           const [data] = await Promise.all([
             getHeadTeacherKpis(userPermissions.grade, userPermissions.track),
           ]);
+          console.log('[Dashboard] Head KPIs loaded:', data);
           setHeadKpis(data);
         }
       } catch (e) {
-        console.error("Failed to load KPIs", e);
+        console.error("[Dashboard] Failed to load KPIs", e);
       } finally {
+        console.log('[Dashboard] KPIs loading complete');
         setLoadingKpis(false);
       }
     };
