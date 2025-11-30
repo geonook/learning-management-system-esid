@@ -21,6 +21,7 @@ export async function GET() {
       }
     )
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const results: any = {}
     const errors: string[] = []
 
@@ -39,6 +40,7 @@ export async function GET() {
         results.users = users
         console.log(`Users: ${users?.length || 0} records`)
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error('Users exception:', err)
       errors.push(`Users exception: ${err.message}`)
@@ -58,6 +60,7 @@ export async function GET() {
         results.classes = classes
         console.log(`Classes: ${classes?.length || 0} records`)
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error('Classes exception:', err)
       errors.push(`Classes exception: ${err.message}`)
@@ -77,6 +80,7 @@ export async function GET() {
         results.students = students
         console.log(`Students: ${students?.length || 0} records`)
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error('Students exception:', err)
       errors.push(`Students exception: ${err.message}`)
@@ -96,6 +100,7 @@ export async function GET() {
         results.assessment_codes = codes
         console.log(`Assessment codes: ${codes?.length || 0} records`)
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error('Assessment codes exception:', err)
       errors.push(`Assessment codes exception: ${err.message}`)

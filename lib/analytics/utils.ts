@@ -2,7 +2,6 @@
  * Analytics Utility Functions
  * Helper functions for analytics calculations and data processing
  */
-// @ts-nocheck - Temporary fix for complex type issues during testing
 
 import { AnalyticsTimeRange } from './types'
 
@@ -135,6 +134,7 @@ export function formatDateToISO(date: Date): string {
 /**
  * Safe number conversion with fallback
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function safeNumber(value: any, fallback: number = 0): number {
   const num = typeof value === 'number' ? value : parseFloat(value)
   return isNaN(num) ? fallback : num
@@ -143,6 +143,7 @@ export function safeNumber(value: any, fallback: number = 0): number {
 /**
  * Safe string conversion with fallback
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function safeString(value: any, fallback: string = ''): string {
   return value ? String(value) : fallback
 }

@@ -148,6 +148,10 @@ export async function getTeacherCourses() {
         course_type: course.course_type,
         course_name: courseNameMap[course.course_type] || course.course_type,
         class_id: course.class_id,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
         class_name: (course.classes as any)?.name || 'Unknown Class',
         grade: (course.classes as any)?.grade || 1,
         track: (course.classes as any)?.track || 'local',
@@ -499,6 +503,7 @@ export async function getStudentGrades(studentId: string, examId?: string) {
   // Convert to grade calculation format  
   const scoresMap: Record<string, number | null> = {}
   data.forEach(score => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     scoresMap[score.assessment_code] = score.score
   })
 

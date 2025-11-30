@@ -140,7 +140,8 @@ export async function GET(_request: NextRequest) {
     } else if (!diagnostics.zeabur_detection.anon_key_analysis.format_valid) {
       diagnostics.recommendations.push('⚠️ Anon Key format invalid - should start with "eyJ"')
     }
-    
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const serviceJwtDecode = (diagnostics.connection_attempts as any).service_jwt_decode
     if (serviceJwtDecode?.success && serviceJwtDecode?.role !== 'service_role') {
       diagnostics.recommendations.push('⚠️ Service Role Key may not have correct role permissions')

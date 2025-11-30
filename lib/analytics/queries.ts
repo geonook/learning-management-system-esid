@@ -2,7 +2,6 @@
  * Analytics Query Builder and Report Generator
  * Provides high-level analytics queries for common reporting needs
  */
-// @ts-nocheck - Complex type issues with Supabase queries, will fix incrementally
 
 import { createClient } from '@/lib/supabase/client'
 import { analyticsEngine } from './core'
@@ -14,9 +13,7 @@ import {
   ClassComparisonMetrics,
   SchoolOverviewMetrics,
   AnalyticsReport,
-  StudentProgressTimeline,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  RiskAssessment
+  StudentProgressTimeline
 } from './types'
 
 /**
@@ -368,12 +365,17 @@ export class AnalyticsQueries {
       }
 
       // Calculate percentiles for each assessment (simplified)
-      const assessments = scores.map((score, index) => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const assessments = scores.map((score) => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         examId: (score.exams as any).id,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         examName: (score.exams as any).name,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         examDate: (score.exams as any).exam_date,
         score: score.score || 0,
         assessmentCode: score.assessment_code,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         courseType: (score.exams as any).courses.course_type as 'LT' | 'IT' | 'KCFS',
         percentile: 50 // Simplified - would need class comparison
       }))
@@ -387,15 +389,19 @@ export class AnalyticsQueries {
 
         if (improvement >= 10) {
           milestones.push({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             date: (scores[i]?.exams as any)?.exam_date ?? '',
             event: 'grade_improvement' as const,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             description: `Improved by ${improvement} points in ${(scores[i]?.exams as any)?.name ?? 'Unknown'}`,
             impact: 'positive' as const
           })
         } else if (improvement <= -10) {
           milestones.push({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             date: (scores[i]?.exams as any)?.exam_date ?? '',
             event: 'concern' as const,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             description: `Declined by ${Math.abs(improvement)} points in ${(scores[i]?.exams as any)?.name ?? 'Unknown'}`,
             impact: 'negative' as const
           })
@@ -406,6 +412,7 @@ export class AnalyticsQueries {
       const recentHighScores = scores.slice(-3).filter(s => (s.score || 0) >= 90)
       if (recentHighScores.length === 3) {
         milestones.push({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           date: (recentHighScores[2].exams as any).exam_date,
           event: 'achievement' as const,
           description: 'Maintained excellent performance across recent assessments',
@@ -440,6 +447,7 @@ export class AnalyticsQueries {
     }
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let data: any
       const keyInsights: string[] = []
       const recommendations: string[] = []

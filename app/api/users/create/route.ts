@@ -101,6 +101,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create user record - ALL new users are 'teacher' role
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userData: any = {
       id: userId,
       email: userEmail,

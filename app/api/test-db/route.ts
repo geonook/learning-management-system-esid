@@ -31,7 +31,7 @@ export async function GET(_request: NextRequest) {
   // Test 1: Regular client connection
   try {
     const supabase = createClient()
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('users')
       .select('count')
       .limit(1)
@@ -65,7 +65,7 @@ export async function GET(_request: NextRequest) {
       results.recommendations.push('Add SUPABASE_SERVICE_ROLE_KEY to .env.local')
     } else {
       const serviceSupabase = createServiceRoleClient()
-      const { data, error } = await serviceSupabase
+      const { error } = await serviceSupabase
         .from('users')
         .select('count')
         .limit(1)

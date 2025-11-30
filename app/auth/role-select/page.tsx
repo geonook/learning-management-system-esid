@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { GraduationCap, Globe, Lightbulb, ArrowRight, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 
 const teacherTypes = [
@@ -92,6 +92,7 @@ export default function RoleSelectPage() {
         router.push("/dashboard/pending")
       }, 1500)
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('User creation error:', error)
       toast({

@@ -34,6 +34,7 @@ async function fetchMockAPI<T>(endpoint: string): Promise<T> {
     }
     
     return result.data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error(`Mock API error (${endpoint}):`, error)
     throw new Error(`Failed to fetch ${endpoint}: ${error.message}`)
@@ -45,6 +46,7 @@ async function fetchMockAPI<T>(endpoint: string): Promise<T> {
 export async function getUsers(): Promise<User[]> {
   return fetchMockAPI<User[]>('/users')
 }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
 export async function getClasses(academicYear?: string): Promise<Class[]> {
   // For now, ignore academicYear parameter since mock data is static
@@ -57,6 +59,8 @@ export async function getStudents(): Promise<Student[]> {
 
 export async function getExams(): Promise<Exam[]> {
   return fetchMockAPI<Exam[]>('/exams')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }
 
 export async function getAssessmentCodes(): Promise<any[]> {

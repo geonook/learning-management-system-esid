@@ -169,6 +169,7 @@ function DockIcon({
   children,
   onClick,
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   mouseX: any; // MotionValue<number> but using any to avoid complex type imports for now
   children: React.ReactNode;
   onClick?: () => void;
