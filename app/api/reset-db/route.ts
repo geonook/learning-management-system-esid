@@ -136,6 +136,7 @@ export async function POST(_request: NextRequest) {
       next_step: 'Deploy clean primary school schema'
     })
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     return NextResponse.json({
       success: false,

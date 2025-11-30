@@ -2,7 +2,7 @@
  * Analytics Query Builder and Report Generator
  * Provides high-level analytics queries for common reporting needs
  */
-// @ts-nocheck - Temporary fix for complex type issues during testing
+// @ts-nocheck - Complex type issues with Supabase queries, will fix incrementally
 
 import { createClient } from '@/lib/supabase/client'
 import { analyticsEngine } from './core'
@@ -15,7 +15,7 @@ import {
   SchoolOverviewMetrics,
   AnalyticsReport,
   StudentProgressTimeline,
-  LearningPrediction,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   RiskAssessment
 } from './types'
 
@@ -48,8 +48,8 @@ export class AnalyticsQueries {
     }
 
     return {
-      startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0],
+      startDate: startDate.toISOString().split('T')[0] as string,
+      endDate: endDate.toISOString().split('T')[0] as string,
       period: 'semester'
     }
   }

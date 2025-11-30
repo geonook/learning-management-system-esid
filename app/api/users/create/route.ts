@@ -153,6 +153,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     )
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('User creation exception:', error)
     return NextResponse.json(

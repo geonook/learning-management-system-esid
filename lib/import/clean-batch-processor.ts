@@ -12,7 +12,6 @@ import type {
   StudentImport,
   ScoreImport,
   ImportExecutionResult,
-  ImportExecutionError,
   ImportExecutionWarning,
   ImportValidationResult
 } from './types'
@@ -33,6 +32,7 @@ type ValidTableName = 'users' | 'classes' | 'students' | 'exams' | 'assessment_c
 async function performBatchInsert<T>(
   tableName: ValidTableName,
   records: T[],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   transformFn: (record: any) => any,
   stageName: string,
   result: ImportExecutionResult

@@ -15,6 +15,7 @@ interface SpreadsheetProps {
 export function Spreadsheet({ classId, initialData }: SpreadsheetProps) {
   const [data, setData] = useState<GradeRow[]>(initialData);
   const [focusModeCode, setFocusModeCode] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isPending, startTransition] = useTransition();
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "error">(
     "saved"

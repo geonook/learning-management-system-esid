@@ -51,7 +51,7 @@ export function FinderItem({
           {React.isValidElement(Icon) ? (
             Icon
           ) : (
-            // @ts-ignore - We know it's a component type if it's not an element
+            // @ts-expect-error - We know it's a component type if it's not an element
             <Icon size={64} strokeWidth={1} />
           )}
         </div>
@@ -88,7 +88,7 @@ export function FinderItem({
           {React.isValidElement(Icon) ? (
             Icon
           ) : (
-            // @ts-ignore
+            // @ts-expect-error
             <Icon size={16} />
           )}
         </div>

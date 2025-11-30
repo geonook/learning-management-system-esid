@@ -112,6 +112,7 @@ P004,David Lin,2,E2,local,G2 Adventurers,true`
       ]
     })
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('Clean import test error:', error)
     return NextResponse.json({

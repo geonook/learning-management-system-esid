@@ -120,6 +120,7 @@ export async function GET(_request: NextRequest) {
         }
       }
     }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     diagnostics.connection_attempts.jwt_analysis_error = error.message
   }

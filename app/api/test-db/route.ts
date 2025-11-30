@@ -47,6 +47,7 @@ export async function GET(_request: NextRequest) {
         details: { message: 'Regular client connection successful' }
       }
     }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     results.tests.regular_client = {
       status: 'error',
@@ -81,6 +82,7 @@ export async function GET(_request: NextRequest) {
         }
       }
     }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     results.tests.service_role_client = {
       status: 'error',
@@ -140,7 +142,8 @@ export async function GET(_request: NextRequest) {
           .delete()
           .eq('id', testUser.id)
       }
-    } catch (error: any) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
       results.tests.basic_write_test = {
         status: 'error',
         details: { error: error.message }

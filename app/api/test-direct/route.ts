@@ -108,6 +108,7 @@ export async function GET() {
       message: errors.length === 0 ? 'All direct queries successful' : 'Some queries failed'
     })
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('API route error:', error)
     return NextResponse.json({

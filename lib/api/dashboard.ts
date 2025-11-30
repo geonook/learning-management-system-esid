@@ -5,7 +5,6 @@
  */
 
 import { createClient } from "@/lib/supabase/client";
-import { createServiceRoleClient } from "@/lib/supabase/server";
 import { Database } from "@/types/database";
 import {
   calculateGrades,
