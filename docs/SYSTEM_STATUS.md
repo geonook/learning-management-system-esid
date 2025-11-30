@@ -1,7 +1,7 @@
 # 系統狀態總覽 (System Status)
 
-> **最後更新**: 2025-11-29
-> **版本**: v1.6.0
+> **最後更新**: 2025-11-30
+> **版本**: v1.7.0
 > **狀態**: 🟡 Production 資料庫為空，待執行 Migration 022 和資料匯入 (Production DB Empty, Awaiting Migration 022 & Data Import)
 
 本文件提供 LMS-ESID 系統當前狀態的快速查閱。
@@ -20,6 +20,7 @@
 | **資料庫 Migrations** | 🟡 部分待執行 | 007-021 完成，022 待執行於 Production |
 | **SSO Integration** | 🟢 已完成 | Phase 1-4 + RLS Fix + Documentation ✅ |
 | **CSV Import Templates** | 🟢 已完成 | 英文欄位 + 完整文件 ✅ |
+| **Technical Debt Cleanup** | 🟢 已完成 | ESLint 0 errors, legacy pages deleted ✅ |
 | **Production 資料庫** | 🔴 **空的** | classes=0, courses=0, users=0, assessment_codes=0 |
 | **教師資料** | 🟡 待匯入 | CSV 範本已準備 |
 | **Supabase Cloud** | 🟢 運行中 | Official cloud instance |
@@ -400,6 +401,9 @@ Deployment:
 **文件維護者**: System Administrator
 **更新頻率**: 每次重大變更後更新
 **版本歷史**:
+- v1.7.0 (2025-11-30) - Technical Debt Cleanup 完成（ESLint 0 errors, legacy pages deleted）
+- v1.6.0 (2025-11-29) - Production Database Status Update
+- v1.5.0 (2025-11-26~28) - Phase 4.1 Complete + Dockerfile Optimization
 - v1.4.0 (2025-11-19) - SSO Integration 完成 + Documentation Cleanup + Migration 019e
 - v1.3.0 (2025-10-29) - CSV Import Templates 完成 + 狀態報告更新
 - v1.2.0 (2025-10-17) - Migration 007-011 完成後的狀態

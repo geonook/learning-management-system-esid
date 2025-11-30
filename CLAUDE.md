@@ -120,27 +120,28 @@ This file provides essential guidance to Claude Code (claude.ai/code) when worki
 **目前狀態**:
 
 - ✅ ESLint 配置完成
-- ⚠️ 274 個 ESLint 錯誤（暫時在建置時禁用）
-- 📋 錯誤類型分佈：
-  - 未使用的 imports
-  - `any` 類型使用
-  - 未跳脫的特殊字元
-  - React hooks 依賴警告
+- ✅ 0 個 ESLint 錯誤（2025-11-30 已全部修復）
+- ✅ Build 通過，無警告
+- ✅ TypeScript 錯誤已修復（lib/analytics/ 中的 4 個錯誤）
 
-**建置時禁用**:
+**建置配置**:
 
-`next.config.js` 中設定 `eslint.ignoreDuringBuilds: true` 以允許部署繼續：
+`next.config.js` 中的 `eslint.ignoreDuringBuilds: true` 設定可選擇性移除（ESLint 已無錯誤）：
 
 ```javascript
 const nextConfig = {
   eslint: {
-    ignoreDuringBuilds: true, // 暫時禁用，待錯誤修復後移除
+    ignoreDuringBuilds: true, // 可選擇性移除，ESLint 已無錯誤
   },
   // ...
 };
 ```
 
-**待完成**: 逐步修復 274 個 ESLint 錯誤（建立 GitHub Issues 追蹤）
+**Technical Debt Cleanup (2025-11-30)**:
+- ✅ 所有 ESLint 錯誤已修復（274 → 0）
+- ✅ 刪除 11 個過時頁面（~2,866 行代碼移除）
+- ✅ 移除過時種子文件（001_sample_data.sql 等）
+- ✅ Build 通過，代碼品質顯著提升
 
 ### 建置配置優化
 
