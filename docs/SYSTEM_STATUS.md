@@ -1,8 +1,8 @@
 # 系統狀態總覽 (System Status)
 
-> **最後更新**: 2025-11-19
-> **版本**: v1.4.0
-> **狀態**: 📋 SSO 整合完成，資料準備階段 (SSO Integration Complete, Data Preparation Phase)
+> **最後更新**: 2025-11-30
+> **版本**: v1.7.0
+> **狀態**: 🟡 Production 資料庫為空，待執行 Migration 022 和資料匯入 (Production DB Empty, Awaiting Migration 022 & Data Import)
 
 本文件提供 LMS-ESID 系統當前狀態的快速查閱。
 
@@ -14,23 +14,45 @@
 
 | 項目 | 狀態 | 說明 |
 |------|------|------|
-| **資料庫 Migrations** | 🟢 完全部署 | 007-015 + 019e + RLS 003 全部完成 |
+| **Phase 4.1 UI** | 🟢 完成 | One OS Interface 與 Info Hub 統一 |
+| **Dockerfile 優化** | 🟢 完成 | Multi-stage build, standalone mode |
+| **Dashboard 性能** | 🟢 完成 | Incremental loading + Skeleton UI |
+| **資料庫 Migrations** | 🟡 部分待執行 | 007-021 完成，022 待執行於 Production |
 | **SSO Integration** | 🟢 已完成 | Phase 1-4 + RLS Fix + Documentation ✅ |
 | **CSV Import Templates** | 🟢 已完成 | 英文欄位 + 完整文件 ✅ |
-| **真實資料** | 🟡 待匯入 | 架構就緒，等待資料填寫 |
-| **驗證測試** | 🟢 全部通過 | Migration 驗證 ✅ |
+| **Technical Debt Cleanup** | 🟢 已完成 | ESLint 0 errors, legacy pages deleted ✅ |
+| **Production 資料庫** | 🔴 **空的** | classes=0, courses=0, users=0, assessment_codes=0 |
+| **教師資料** | 🟡 待匯入 | CSV 範本已準備 |
 | **Supabase Cloud** | 🟢 運行中 | Official cloud instance |
 | **Analytics Engine** | 🟢 可用 | 40+ TypeScript interfaces |
 | **測試框架** | 🟢 就緒 | 90-minute comprehensive workflow |
-| **Documentation** | 🟢 整理完成 | 10 刪除, 33 歸檔 ✅ |
 
-### 🔢 資料統計 (2025-10-29)
+### 🔴 緊急問題：Production 資料庫為空
+
+**驗證結果 (2025-11-29)**:
+```
+curl 驗證結果:
+- classes: 0 筆 ❌ (預期 84 筆)
+- courses: 0 筆 ❌ (預期 252 筆)
+- users: 0 筆 ❌ (預期 ~70 筆)
+- assessment_codes: 0 筆 ❌ (預期 13 筆)
+```
+
+**需要執行的步驟**:
+1. 在 Production Supabase SQL Editor 執行 `db/migrations/022_fix_assessment_codes_schema.sql`
+2. 執行 classes 種子資料
+3. 執行 courses 種子資料
+4. 透過 SSO 或 seed scripts 建立用戶
+
+### 🔢 資料統計 (2025-11-29)
 
 ```
 學年度: 2025-2026
 校區: 林口 (Linkou)
 
-班級數: 0 classes ⚠️ (預期 84 - 待匯入)
+⚠️ 當前 Production 資料庫狀態：
+
+班級數: 0 classes ❌ (預期 84 classes)
   - G1: 0/14 classes
   - G2: 0/14 classes
   - G3: 0/14 classes
@@ -38,19 +60,24 @@
   - G5: 0/14 classes
   - G6: 0/14 classes
 
-課程數: 0 courses ⚠️ (預期 252 - 待建立)
+課程數: 0 courses ❌ (預期 252 courses)
   - LT 課程: 0/84
   - IT 課程: 0/84
   - KCFS 課程: 0/84
 
-教師數: 0 users ⚠️ (預期 ~60 - 待建立)
-  - Admin: 0/3
-  - Head Teachers: 0/18
-  - Teachers: 0/40+
+教師數: 0 users ❌
+  - Admin: 0
+  - Head Teachers: 0 (預期 18 位)
+  - Teachers: 0 (預期 ~40+ 位)
 
-學生數: 0 students ⚠️ (預期 ~1400 - 待匯入)
+Assessment Codes: 0 筆 ❌ (預期 13 筆)
+  - FA1-FA8: 未建立
+  - SA1-SA4: 未建立
+  - FINAL: 未建立
 
-📋 CSV Templates: ✅ 已準備 (8 files)
+學生數: 0 students ❌ (預期 ~1400)
+
+📋 CSV Templates: ✅ 已準備 (4 核心範本 + 完整文件)
 ```
 
 ---
@@ -66,10 +93,26 @@
 | **009** | ✅ | 2025-10-17 | Level format upgrade to G[1-6]E[1-3] |
 | **010** | ✅ | 2025-10-17 | Remove track NOT NULL constraint |
 | **011** | ✅ | 2025-10-17 | Remove teacher_id NOT NULL constraint |
+| **012-013** | ✅ | 2025-10-17 | Student courses + RLS security |
 | **RLS 003** | ✅ | 2025-10-17 | Courses RLS policies + HT fix |
 | **014** | ✅ | 2025-10-27 | Track column type fix + Analytics views rebuild |
 | **015** | ✅ | 2025-10-28 | RLS performance optimization (49 policies) |
-| **019e** | ✅ | 2025-11-19 | Emergency RLS fix - remove heads_view_jurisdiction |
+| **018-019e** | ✅ | 2025-11-18 | RLS recursion fix series |
+| **020** | ✅ | 2025-11-21 | Disable auto user sync trigger |
+| **021** | ✅ | 2025-11-21 | Fix courses RLS with SECURITY DEFINER |
+| **022** | ⏳ | 待執行 | Fix assessment_codes schema (Production only) |
+
+### Supabase 環境對照
+
+| 環境 | Project ID | 用途 | Migration 022 |
+|------|-----------|------|---------------|
+| **Staging** | `kqvpcoolgyhjqleekmee` | 測試環境 | ✅ 已有資料 |
+| **Production** | `piwbooidofbaqklhijup` | 正式環境 | ⏳ 待執行 |
+
+**Production 部署前步驟**:
+1. 在 Supabase Dashboard (Production) 進入 SQL Editor
+2. 執行 `db/migrations/022_fix_assessment_codes_schema.sql`
+3. 驗證 `assessment_codes` 表有 13 筆資料
 
 ### 資料庫架構要點
 
@@ -358,6 +401,9 @@ Deployment:
 **文件維護者**: System Administrator
 **更新頻率**: 每次重大變更後更新
 **版本歷史**:
+- v1.7.0 (2025-11-30) - Technical Debt Cleanup 完成（ESLint 0 errors, legacy pages deleted）
+- v1.6.0 (2025-11-29) - Production Database Status Update
+- v1.5.0 (2025-11-26~28) - Phase 4.1 Complete + Dockerfile Optimization
 - v1.4.0 (2025-11-19) - SSO Integration 完成 + Documentation Cleanup + Migration 019e
 - v1.3.0 (2025-10-29) - CSV Import Templates 完成 + 狀態報告更新
 - v1.2.0 (2025-10-17) - Migration 007-011 完成後的狀態

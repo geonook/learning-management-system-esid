@@ -122,3 +122,19 @@ test-*.html
 # Environment files for specific deployments
 .env.production
 .env.staging
+
+# Large files (network captures, videos, etc.)
+*.har
+*.mov
+*.mp4
+*.avi
+*.mkv
+*.webm
+
+# macOS duplicate files
+* 2.ts
+* 2.tsx
+* 2.js
+* 2.jsx
+* 2.json
+* 2.md

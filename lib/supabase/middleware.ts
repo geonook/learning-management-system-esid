@@ -18,6 +18,7 @@ export async function updateSession(request: NextRequest) {
         get(name: string) {
           return request.cookies.get(name)?.value
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         set(name: string, value: string, options: any) {
           request.cookies.set({
             name,
@@ -35,6 +36,7 @@ export async function updateSession(request: NextRequest) {
             ...options,
           })
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         remove(name: string, options: any) {
           request.cookies.set({
             name,

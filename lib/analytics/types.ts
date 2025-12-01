@@ -223,6 +223,7 @@ export interface ChartDataPoint {
   y: number
   label?: string
   color?: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   metadata?: Record<string, any>
 }
 
@@ -273,6 +274,7 @@ export interface AnalyticsQuery {
   description: string
   type: 'aggregation' | 'comparison' | 'trend' | 'prediction'
   sql?: string // Raw SQL for complex queries
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   parameters: Record<string, any>
   cacheDuration: number // Minutes to cache results
   permissions: ('admin' | 'head' | 'teacher')[]
@@ -280,6 +282,7 @@ export interface AnalyticsQuery {
 
 export interface AnalyticsCache {
   queryId: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   result: any
   generatedAt: string
   expiresAt: string

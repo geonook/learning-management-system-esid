@@ -15,7 +15,7 @@ export default function NotFound() {
           </div>
           <CardTitle className="text-2xl">Page Not Found</CardTitle>
           <CardDescription>
-            The page you're looking for doesn't exist or has been moved.
+            The page you&apos;re looking for doesn&apos;t exist or has been moved.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -40,9 +40,8 @@ export default function NotFound() {
             <div className="mt-2 flex flex-wrap gap-2 justify-center">
               {[
                 { label: "Dashboard", href: "/dashboard" },
-                { label: "Scores", href: "/scores" },
-                { label: "Students", href: "/students" },
-                { label: "Attendance", href: "/attendance/today" }
+                { label: "Finder", href: "/finder" },
+                { label: "Settings", href: "/settings" }
               ].map((link) => (
                 <Link
                   key={link.href}

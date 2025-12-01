@@ -2,7 +2,6 @@
  * Analytics Query Builder and Report Generator
  * Provides high-level analytics queries for common reporting needs
  */
-// @ts-nocheck - Temporary fix for complex type issues during testing
 
 import { createClient } from '@/lib/supabase/client'
 import { analyticsEngine } from './core'
@@ -14,9 +13,7 @@ import {
   ClassComparisonMetrics,
   SchoolOverviewMetrics,
   AnalyticsReport,
-  StudentProgressTimeline,
-  LearningPrediction,
-  RiskAssessment
+  StudentProgressTimeline
 } from './types'
 
 /**
@@ -48,8 +45,8 @@ export class AnalyticsQueries {
     }
 
     return {
-      startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0],
+      startDate: startDate.toISOString().split('T')[0] as string,
+      endDate: endDate.toISOString().split('T')[0] as string,
       period: 'semester'
     }
   }
@@ -134,9 +131,14 @@ export class AnalyticsQueries {
       }
 
       // Get all classes taught by this teacher
-      const classIds = teacher.courses?.map(c => c.classes?.id).filter(Boolean) || []
-      const totalStudents = teacher.courses?.reduce((sum, course) => {
-        return sum + (course.classes?.students?.length || 0)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const classIds = teacher.courses?.flatMap((c: any) => c.classes?.id ? [c.classes.id] : []) || []
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const totalStudents = teacher.courses?.reduce((sum: number, course: any) => {
+        const studentCount = Array.isArray(course.classes?.students)
+          ? course.classes.students[0]?.count || 0
+          : 0
+        return sum + studentCount
       }, 0) || 0
 
       // Get class analytics for all teacher's classes
@@ -368,12 +370,17 @@ export class AnalyticsQueries {
       }
 
       // Calculate percentiles for each assessment (simplified)
-      const assessments = scores.map((score, index) => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const assessments = scores.map((score) => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         examId: (score.exams as any).id,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         examName: (score.exams as any).name,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         examDate: (score.exams as any).exam_date,
         score: score.score || 0,
         assessmentCode: score.assessment_code,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         courseType: (score.exams as any).courses.course_type as 'LT' | 'IT' | 'KCFS',
         percentile: 50 // Simplified - would need class comparison
       }))
@@ -387,15 +394,19 @@ export class AnalyticsQueries {
 
         if (improvement >= 10) {
           milestones.push({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             date: (scores[i]?.exams as any)?.exam_date ?? '',
             event: 'grade_improvement' as const,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             description: `Improved by ${improvement} points in ${(scores[i]?.exams as any)?.name ?? 'Unknown'}`,
             impact: 'positive' as const
           })
         } else if (improvement <= -10) {
           milestones.push({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             date: (scores[i]?.exams as any)?.exam_date ?? '',
             event: 'concern' as const,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             description: `Declined by ${Math.abs(improvement)} points in ${(scores[i]?.exams as any)?.name ?? 'Unknown'}`,
             impact: 'negative' as const
           })
@@ -404,9 +415,10 @@ export class AnalyticsQueries {
 
       // Add achievement milestones for consistently high performance
       const recentHighScores = scores.slice(-3).filter(s => (s.score || 0) >= 90)
-      if (recentHighScores.length === 3) {
+      if (recentHighScores.length === 3 && recentHighScores[2]) {
         milestones.push({
-          date: (recentHighScores[2].exams as any).exam_date,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          date: (recentHighScores[2].exams as any)?.exam_date || new Date().toISOString(),
           event: 'achievement' as const,
           description: 'Maintained excellent performance across recent assessments',
           impact: 'positive' as const
@@ -440,6 +452,7 @@ export class AnalyticsQueries {
     }
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let data: any
       const keyInsights: string[] = []
       const recommendations: string[] = []

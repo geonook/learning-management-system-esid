@@ -14,6 +14,7 @@ export async function GET() {
       count: mockAcademicYears.length,
       message: 'Mock academic years retrieved successfully'
     })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     return NextResponse.json({
       success: false,

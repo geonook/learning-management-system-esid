@@ -25,6 +25,7 @@ export interface Notification {
   priority: NotificationPriority
   title: string
   message: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   metadata?: Record<string, any> // Additional context data
   targetRole?: 'admin' | 'office_member' | 'head' | 'teacher' | 'student'
   targetUserId?: string

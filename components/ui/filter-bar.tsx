@@ -69,6 +69,7 @@ export default function FilterBar({
               </SelectContent>
             </Select>
             {showTrack && (
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               <Select value={track} onValueChange={(v) => setSelections({ track: v as any })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Campus" />

@@ -14,80 +14,89 @@
  * @date 2025-11-18
  */
 
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export default function SetSessionPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
-  const [errorMessage, setErrorMessage] = useState<string>('')
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [status, setStatus] = useState<"loading" | "success" | "error">(
+    "loading"
+  );
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
   useEffect(() => {
     const setupSession = async () => {
       try {
         // 1. Extract OTP parameters from URL
-        const tokenHash = searchParams?.get('token_hash')
-        const type = searchParams?.get('type')
-        const email = searchParams?.get('email')
+        const tokenHash = searchParams?.get("token_hash");
+        const type = searchParams?.get("type");
+        const email = searchParams?.get("email");
 
         if (!tokenHash || !type || !email) {
-          throw new Error('Missing authentication parameters')
+          throw new Error("Missing authentication parameters");
         }
 
-        console.log('[SetSession] Verifying OTP for:', email)
+        console.log("[SetSession] Verifying OTP for:", email);
 
         // 2. Create Supabase client
-        const supabase = createClient()
+        const supabase = createClient();
 
         // 3. Verify OTP in browser context (client-side)
         // This will automatically set session cookies in the browser
         const { data, error } = await supabase.auth.verifyOtp({
           token_hash: tokenHash,
-          type: type as 'magiclink',
-        })
+          type: type as "magiclink",
+        });
 
         if (error) {
-          throw error
+          throw error;
         }
 
         if (!data.session) {
-          throw new Error('Failed to create session')
+          throw new Error("Failed to create session");
         }
 
-        console.log('[SetSession] ✓ Session established successfully')
-        console.log('[SetSession] User:', data.session.user.email)
+        console.log("[SetSession] ✓ Session established successfully");
+        console.log("[SetSession] User:", data.session.user.email);
 
-        setStatus('success')
+        setStatus("success");
 
         // 4. Redirect to dashboard with session cookies set
         setTimeout(() => {
-          router.push('/dashboard')
-        }, 500)
-
+          router.push("/auth/boot");
+        }, 500);
       } catch (error) {
-        console.error('[SetSession] Error:', error)
-        setStatus('error')
-        setErrorMessage(error instanceof Error ? error.message : 'Unknown error occurred')
+        console.error("[SetSession] Error:", error);
+        setStatus("error");
+        setErrorMessage(
+          error instanceof Error ? error.message : "Unknown error occurred"
+        );
 
         // Redirect to login page with error after 3 seconds
         setTimeout(() => {
-          router.push(`/auth/login?error=${encodeURIComponent('session_setup_failed')}&description=${encodeURIComponent(errorMessage || 'Failed to set up session')}`)
-        }, 3000)
+          router.push(
+            `/auth/login?error=${encodeURIComponent(
+              "session_setup_failed"
+            )}&description=${encodeURIComponent(
+              errorMessage || "Failed to set up session"
+            )}`
+          );
+        }, 3000);
       }
-    }
+    };
 
-    setupSession()
-  }, [searchParams, router, errorMessage])
+    setupSession();
+  }, [searchParams, router, errorMessage]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-lg">
-        {status === 'loading' && (
+        {status === "loading" && (
           <div className="text-center">
             <LoadingSpinner size="lg" className="mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900">
@@ -99,7 +108,7 @@ export default function SetSessionPage() {
           </div>
         )}
 
-        {status === 'success' && (
+        {status === "success" && (
           <div className="text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
               <svg
@@ -125,7 +134,7 @@ export default function SetSessionPage() {
           </div>
         )}
 
-        {status === 'error' && (
+        {status === "error" && (
           <div className="text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
               <svg
@@ -146,7 +155,8 @@ export default function SetSessionPage() {
               Session setup failed
             </h2>
             <p className="mt-2 text-sm text-gray-600">
-              {errorMessage || 'An error occurred while setting up your session'}
+              {errorMessage ||
+                "An error occurred while setting up your session"}
             </p>
             <p className="mt-2 text-xs text-gray-500">
               Redirecting to login page...
@@ -155,5 +165,5 @@ export default function SetSessionPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

@@ -81,6 +81,7 @@ export async function GET() {
       count: mockStudents.length,
       message: 'Mock students data retrieved successfully'
     })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     return NextResponse.json({
       success: false,

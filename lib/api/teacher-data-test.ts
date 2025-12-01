@@ -104,6 +104,7 @@ export async function getAccessibleClassesTest(userType: 'admin' | 'teacher' | '
 
     console.log(`✅ Successfully fetched ${data?.length || 0} classes`)
     return data as unknown as TeacherClassView[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('❌ Exception in getAccessibleClassesTest:', error)
     throw error
@@ -155,6 +156,7 @@ export async function getAccessibleStudentsTest(userType: 'admin' | 'teacher' | 
 
     console.log(`✅ Successfully fetched ${data?.length || 0} students`)
     return data as unknown as TeacherStudentView[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('❌ Exception in getAccessibleStudentsTest:', error)
     throw error
@@ -207,6 +209,7 @@ export async function getAccessibleStudentPerformanceTest(userType: 'admin' | 't
 
     console.log(`✅ Successfully fetched ${data?.length || 0} performance records`)
     return data as unknown as StudentPerformanceView[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('❌ Exception in getAccessibleStudentPerformanceTest:', error)
     throw error
@@ -262,6 +265,7 @@ export async function getAccessibleClassScoresTest(userType: 'admin' | 'teacher'
 
     console.log(`✅ Successfully fetched ${data?.length || 0} score records`)
     return data as unknown as ClassScoreView[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('❌ Exception in getAccessibleClassScoresTest:', error)
     throw error
@@ -297,6 +301,7 @@ export async function testAllViews(): Promise<{
     if (error) throw error
     console.log('✅ teacher_classes_view OK:', data?.length || 0, 'records')
     results.teacher_classes_view = true
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('❌ teacher_classes_view failed:', error)
     results.errors.push(`teacher_classes_view: ${error.message}`)
@@ -313,6 +318,7 @@ export async function testAllViews(): Promise<{
     if (error) throw error
     console.log('✅ teacher_students_view OK:', data?.length || 0, 'records')
     results.teacher_students_view = true
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('❌ teacher_students_view failed:', error)
     results.errors.push(`teacher_students_view: ${error.message}`)
@@ -329,6 +335,7 @@ export async function testAllViews(): Promise<{
     if (error) throw error
     console.log('✅ class_scores_view OK:', data?.length || 0, 'records')
     results.class_scores_view = true
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('❌ class_scores_view failed:', error)
     results.errors.push(`class_scores_view: ${error.message}`)
@@ -345,6 +352,7 @@ export async function testAllViews(): Promise<{
     if (error) throw error
     console.log('✅ student_performance_view OK:', data?.length || 0, 'records')
     results.student_performance_view = true
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('❌ student_performance_view failed:', error)
     results.errors.push(`student_performance_view: ${error.message}`)

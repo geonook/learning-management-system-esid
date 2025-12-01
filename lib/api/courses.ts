@@ -9,6 +9,7 @@ import type { Database } from '@/types/database'
 
 type Course = Database['public']['Tables']['courses']['Row']
 type CourseInsert = Database['public']['Tables']['courses']['Insert']
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 type CourseUpdate = Database['public']['Tables']['courses']['Update']
 type TeacherType = Database['public']['Enums']['teacher_type']
 

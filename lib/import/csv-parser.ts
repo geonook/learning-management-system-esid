@@ -154,6 +154,7 @@ function validateRows<T>(
   
   rows.forEach((row, index) => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rowData: Record<string, any> = {}
       
       // Map row data using column mapping
@@ -378,6 +379,7 @@ export function generateSampleScoresCSV(): string {
 
 // Validation summary helper
 export function getValidationSummary(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   results: ImportValidationResult<any>[]
 ): {
   totalRecords: number

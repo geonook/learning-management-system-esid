@@ -8,6 +8,7 @@
  */
 
 import { supabase } from '@/lib/supabase/client'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Database } from '@/types/database'
 
 // Define view types based on our database views

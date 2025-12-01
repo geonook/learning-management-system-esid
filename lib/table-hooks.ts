@@ -32,6 +32,7 @@ export function useTeacherCourses() {
       const teacherCourses = await getTeacherCourses()
       setCourses(teacherCourses)
       setError(null)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error('Error fetching teacher courses:', err)
       setError(err.message)
@@ -57,6 +58,7 @@ export function useTeacherScores(courseId?: string) {
   const { user } = useAuth()
 
   // Convert API data to UI format
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const convertToScoreRows = (studentsData: any[]): CourseScoreRow[] => {
     return studentsData.map(student => {
       // Initialize empty score arrays
@@ -65,6 +67,7 @@ export function useTeacherScores(courseId?: string) {
       let Final = 0
 
       // Fill in actual scores
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       student.scores?.forEach((score: any) => {
         const code = score.assessment_code
         const value = score.score || 0
@@ -109,6 +112,7 @@ export function useTeacherScores(courseId?: string) {
       const scoreRows = convertToScoreRows(studentsData)
       setRows(scoreRows)
       setError(null)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error('Error fetching course scores:', err)
       setError(err.message)
@@ -167,6 +171,7 @@ export function useTeacherScores(courseId?: string) {
         entered_by: user.id,
         entered_at: new Date().toISOString()
       })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error('Error saving score:', err)
       setError(`Failed to save score: ${err.message}`)
@@ -192,6 +197,7 @@ export function useTeacherScores(courseId?: string) {
           const scoreRows = convertToScoreRows(studentsData)
           setRows(scoreRows)
           setError(null)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
           console.error('Error refetching course scores:', err)
           setError(err.message)

@@ -3,7 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function GET(_request: NextRequest) {
   try {
     // 1. Check for required environment variables
     if (
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
     // 3. Execute SQL to fix the schema
     // We drop the 'track' column (which has wrong type 'course_type')
     // and re-add it with correct type 'track_type'
-    const { data, error } = await supabase.rpc("exec_sql", {
+    const { error } = await supabase.rpc("exec_sql", {
       sql: `
         DO $$
         BEGIN
@@ -76,6 +77,7 @@ END$$;
       message:
         "Schema fixed successfully: users.track column recreated with track_type",
     });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error("Schema fix failed:", error);
     return NextResponse.json(

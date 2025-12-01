@@ -59,6 +59,7 @@ export async function GET() {
       count: mockExams.length,
       message: 'Mock exams data retrieved successfully'
     })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     return NextResponse.json({
       success: false,

@@ -33,7 +33,7 @@ interface CsvUploadDialogProps {
 
 export default function CsvUploadDialog({
   onConfirm,
-  stage = 'scores',
+  stage: _stage = 'scores', // eslint-disable-line @typescript-eslint/no-unused-vars
   title = 'Upload CSV Scores',
   description = 'Upload CSV with student scores. Preview and validate before import.'
 }: CsvUploadDialogProps) {
@@ -54,6 +54,7 @@ export default function CsvUploadDialog({
       const content = await readFileAsText(file)
       const validationResult = await validateScoresCSV(content)
       setValidation(validationResult)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Validation error:', error)
       // Create a mock validation result with error

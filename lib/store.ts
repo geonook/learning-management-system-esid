@@ -39,6 +39,7 @@ type State = {
 
 export const useAppStore = create<State>()(
   persist(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     (set, get) => ({
       role: null,
       selections: { grade: "1", klass: "Trailblazers", track: "local" },

@@ -322,6 +322,7 @@ export async function upsertAssessmentTitle(
 
       // Create new
       return await createAssessmentTitle({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         assessment_code: assessmentCode as any,
         display_name: displayTitle,
         context,

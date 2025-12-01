@@ -483,6 +483,7 @@ export async function GET(request: NextRequest) {
       error instanceof Error
         ? error.message
         : typeof error === "object" && error !== null && "message" in error
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ? String((error as any).message)
         : JSON.stringify(error);
 

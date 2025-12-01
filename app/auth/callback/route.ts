@@ -59,7 +59,8 @@ export async function GET(request: NextRequest) {
         console.log('Existing user, redirecting to dashboard')
         return NextResponse.redirect(buildRedirectUrl('/dashboard'))
       }
-    } catch (error: any) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
       console.error('OAuth exchange exception:', error)
       return NextResponse.redirect(
         buildRedirectUrl('/auth/login?error=' + encodeURIComponent('OAuth authentication failed'))

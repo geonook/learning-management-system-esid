@@ -1,0 +1,11 @@
+.git
+.next
+node_modules
+.env.local
+.env.production
+.env.staging
+build-output.txt
+build-output2.txt
+playwright-report
+test-results
+.DS_Store

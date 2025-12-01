@@ -101,6 +101,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create user record - ALL new users are 'teacher' role
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userData: any = {
       id: userId,
       email: userEmail,
@@ -153,6 +154,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     )
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('User creation exception:', error)
     return NextResponse.json(

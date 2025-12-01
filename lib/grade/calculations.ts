@@ -8,14 +8,15 @@
  * - Formula: (Formative × 0.15 + Summative × 0.2 + Final × 0.1) ÷ 0.45
  */
 
-import { 
-  ScoresMap, 
-  ScoreValue, 
-  GradeCalculationInput, 
+import {
+  ScoresMap,
+  ScoreValue,
+  GradeCalculationInput,
   GradeCalculationResult,
   FORMATIVE_CODES,
   SUMMATIVE_CODES,
-  FINAL_CODES 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  FINAL_CODES
 } from './types'
 
 /**

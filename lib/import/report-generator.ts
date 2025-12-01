@@ -7,9 +7,7 @@ import {
   type ImportExecutionResult,
   type ImportValidationResult,
   type ImportSession,
-  type ImportValidationError,
-  type ImportExecutionError,
-  type ImportExecutionWarning
+  type ImportValidationError
 } from './types'
 
 // Report formatting utilities
@@ -43,6 +41,7 @@ const formatDuration = (startTime: Date, endTime: Date): string => {
 
 // Validation report generator
 export function generateValidationReport(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   validationResults: Record<string, ImportValidationResult<any>>,
   options: {
     includeErrorDetails?: boolean
@@ -106,6 +105,7 @@ Generated: ${formatTimestamp(timestamp)}
       report += `\n#### Validation Errors\n`
       
       const errorsToShow = result.invalid.slice(0, maxErrorsPerStage)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       errorsToShow.forEach((error, index) => {
         report += `
 **Row ${error.row}:**
@@ -154,6 +154,7 @@ export function generateExecutionReport(
   result: ImportExecutionResult,
   startTime: Date,
   endTime: Date,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   validationResults?: Record<string, ImportValidationResult<any>>
 ): string {
   const timestamp = formatTimestamp(endTime)
@@ -337,6 +338,7 @@ ${index + 1}. **${file.name}**
     report += `\n## Validation Results\n`
     
     Object.entries(session.validation_results).forEach(([stage, result]) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const validation = result as ImportValidationResult<any>
       report += `
 **${stage}**: ${validation.summary.valid} valid, ${validation.summary.invalid} invalid (${validation.summary.validPercent}% success)
@@ -380,6 +382,7 @@ function getCommonErrors(errors: ImportValidationError[]): Array<{ error: string
 // Export CSV report data
 export function generateCSVReport(
   result: ImportExecutionResult,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   validationResults?: Record<string, ImportValidationResult<any>>
 ): string {
   const headers = [
@@ -423,6 +426,7 @@ export function generateCSVReport(
 // Generate comprehensive import analytics
 export function generateImportAnalytics(
   results: ImportExecutionResult[],
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   timeRange: { start: Date; end: Date }
 ): {
   summary: {

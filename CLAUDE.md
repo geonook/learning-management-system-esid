@@ -1,16 +1,25 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 2.3
-> **Last Updated**: 2025-11-25
+> **Documentation Version**: 2.5
+> **Last Updated**: 2025-11-29
 > **Project**: learning-management-system-esid
-> **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Both Systems Complete)** > **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**
+> **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Both Systems Complete)**
+> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**
 
 > **Current Status**:
 >
-> - 📋 **Data Preparation Phase** - CSV templates ready, awaiting teacher data import
-> - ✅ **SSO Implementation** - Both LMS & Info Hub complete, alignment verified, E2E testing ready
-> - ✅ **Build Optimization** - ESLint configured, standalone output enabled, dynamic rendering
-> - 🎯 **Next Step** - Production deployment after E2E testing completion
+> - ✅ **Phase 4.1 Complete** - One OS Interface Unification with Info Hub
+> - ✅ **Deployment Optimized** - Dockerfile standalone mode, multi-stage build
+> - ✅ **SSO Implementation** - Both LMS & Info Hub complete, alignment verified
+> - ✅ **Cache-Control Headers** - Auth pages no-cache to fix old page issue
+> - 🔴 **Production Database Empty** - All data tables (classes, courses, users) are empty
+> - ⏳ **Migration 022 Pending** - assessment_codes seed data not deployed to Production
+> - 📋 **Data Preparation Phase** - CSV templates ready, awaiting data import
+> - 🎯 **Next Steps**:
+>   1. Execute Migration 022 on Production (assessment_codes)
+>   2. Import seed data for classes (84) and courses (252)
+>   3. Create user accounts via SSO or seed scripts
+>   4. E2E SSO integration testing
 
 This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -111,27 +120,28 @@ This file provides essential guidance to Claude Code (claude.ai/code) when worki
 **目前狀態**:
 
 - ✅ ESLint 配置完成
-- ⚠️ 274 個 ESLint 錯誤（暫時在建置時禁用）
-- 📋 錯誤類型分佈：
-  - 未使用的 imports
-  - `any` 類型使用
-  - 未跳脫的特殊字元
-  - React hooks 依賴警告
+- ✅ 0 個 ESLint 錯誤（2025-11-30 已全部修復）
+- ✅ Build 通過，無警告
+- ✅ TypeScript 錯誤已修復（lib/analytics/ 中的 4 個錯誤）
 
-**建置時禁用**:
+**建置配置**:
 
-`next.config.js` 中設定 `eslint.ignoreDuringBuilds: true` 以允許部署繼續：
+`next.config.js` 中的 `eslint.ignoreDuringBuilds: true` 設定可選擇性移除（ESLint 已無錯誤）：
 
 ```javascript
 const nextConfig = {
   eslint: {
-    ignoreDuringBuilds: true, // 暫時禁用，待錯誤修復後移除
+    ignoreDuringBuilds: true, // 可選擇性移除，ESLint 已無錯誤
   },
   // ...
 };
 ```
 
-**待完成**: 逐步修復 274 個 ESLint 錯誤（建立 GitHub Issues 追蹤）
+**Technical Debt Cleanup (2025-11-30)**:
+- ✅ 所有 ESLint 錯誤已修復（274 → 0）
+- ✅ 刪除 11 個過時頁面（~2,866 行代碼移除）
+- ✅ 移除過時種子文件（001_sample_data.sql 等）
+- ✅ Build 通過，代碼品質顯著提升
 
 ### 建置配置優化
 
@@ -385,6 +395,19 @@ npm run import:cli
   - ✅ courses 表查詢正常運作
   - ✅ Dashboard 400 錯誤已解決
 - **相關檔案**: `db/migrations/021_fix_courses_rls_recursion.sql`
+
+#### Migration 022: Fix Assessment Codes Schema (2025-11-28) ⏳ **待執行於 Production**
+
+- **目的**: 修復 `assessment_codes` 表缺少 `sequence_order` 欄位和種子資料的問題
+- **變更內容**:
+  - 添加 `sequence_order` 欄位（如不存在）
+  - 添加 `is_active` 欄位（如不存在）
+  - 插入 13 個 assessment codes（FA1-FA8, SA1-SA4, FINAL）
+- **部署狀態**:
+  - ✅ **Staging** (`kqvpcoolgyhjqleekmee`): 已有資料，不需執行
+  - ⏳ **Production** (`piwbooidofbaqklhijup`): 待執行（表為空）
+- **執行方式**: 在 Supabase Dashboard SQL Editor 執行
+- **相關檔案**: `db/migrations/022_fix_assessment_codes_schema.sql`
 
 ### 📊 真實資料部署狀態
 
@@ -780,6 +803,66 @@ LMS (Token Exchange) → Supabase User Sync → Session Creation → Dashboard
 - [ ] SSO flow < 5 seconds
 - [ ] Webhook sync < 2 seconds
 - [ ] Session creation < 1 second
+
+---
+
+## 🎨 Phase 4: One OS Interface Unification (2025-11-26~28) ✅ **完成**
+
+### Phase 4.1: TeacherOS Desktop UI
+
+**目標**：與 Info Hub 建立統一的 macOS 風格使用者體驗
+
+**已完成功能**：
+
+- **macOS 風格界面**：
+  - Desktop 桌面環境 + 動態壁紙
+  - Dock 底部工具列（應用程式啟動器）
+  - MenuBar 頂部選單列（系統狀態、時間）
+  - Window 視窗系統（Traffic lights 控制按鈕）
+
+- **壁紙一致化**：
+  - 與 Info Hub 使用相同的漸層背景設計
+  - 支援深色/淺色模式切換
+
+- **Dashboard 性能優化**：
+  - Incremental Loading 漸進式載入
+  - Skeleton UI 載入骨架畫面
+  - 減少首次渲染時間
+
+- **統一體驗**：
+  - 兩個系統（LMS + Info Hub）視覺風格完全對齊
+  - 無縫切換體驗（Dock 直接啟動）
+
+### 部署配置優化 (2025-11-27~28)
+
+**Dockerfile 優化**：
+
+```dockerfile
+# 多階段建置
+FROM node:18-alpine AS builder
+# ... build stage ...
+
+FROM node:18-alpine AS runner
+# standalone 模式運行
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+```
+
+**關鍵配置**：
+- **output: standalone** - Serverless 部署優化
+- **多階段建置** - 減少最終映像大小
+- **Static Assets** - 正確的資產複製路徑
+- **.dockerignore** - 防止複製本地 artifacts（node_modules, .next）
+
+**相關 Commits**（7 個）：
+- `fix: sync Dockerfile with successful Zeabur deployment config`
+- `fix: simplify Dockerfile to use standard npm start`
+- `fix: switch to multi-stage Dockerfile for robust standalone build`
+- `chore: optimize Dockerfile with combined RUN commands`
+- `fix: refine Dockerfile static asset copy paths`
+- `fix: add Dockerfile with static asset copy for standalone mode`
+- `chore: add .dockerignore to prevent copying local artifacts`
 
 ---
 

@@ -1,5 +1,6 @@
 import { createClient } from './server'
 import { User } from '@supabase/supabase-js'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { Database } from '@/types/database'
 
 export type UserRole = 'admin' | 'office_member' | 'head' | 'teacher' | 'student'

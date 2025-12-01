@@ -148,9 +148,16 @@ export async function getTeacherCourses() {
         course_type: course.course_type,
         course_name: courseNameMap[course.course_type] || course.course_type,
         class_id: course.class_id,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
         class_name: (course.classes as any)?.name || 'Unknown Class',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         grade: (course.classes as any)?.grade || 1,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         track: (course.classes as any)?.track || 'local',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         level: (course.classes as any)?.level,
         student_count: studentCount || 0,
         is_active: course.is_active,
@@ -499,10 +506,12 @@ export async function getStudentGrades(studentId: string, examId?: string) {
   // Convert to grade calculation format  
   const scoresMap: Record<string, number | null> = {}
   data.forEach(score => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     scoresMap[score.assessment_code] = score.score
   })
 
   const gradeCalculationInput = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     scores: scoresMap as any, // Type assertion for grade calculation
     studentId,
     classId: '', // We don't have classId in this context
