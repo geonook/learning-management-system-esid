@@ -13,14 +13,15 @@
 > - ✅ **Deployment Optimized** - Dockerfile standalone mode, multi-stage build
 > - ✅ **SSO Implementation** - Both LMS & Info Hub complete, alignment verified
 > - ✅ **Cache-Control Headers** - Auth pages no-cache to fix old page issue
-> - 🔴 **Production Database Empty** - All data tables (classes, courses, users) are empty
-> - ⏳ **Migration 022 Pending** - assessment_codes seed data not deployed to Production
-> - 📋 **Data Preparation Phase** - CSV templates ready, awaiting data import
+> - ✅ **Migration 022 Complete** - assessment_codes (13) deployed to Production (2025-12-02)
+> - ✅ **Production Data Seeded** - classes (84), courses (252) imported (2025-12-02)
+> - ✅ **Staging Data Synced** - Schema fixed, data synchronized with Production (2025-12-02)
 > - ✅ **E2E SSO Integration Testing** - Complete and verified (2025-12-02)
+> - ✅ **Office Member Role** - Added to support dual role (office staff + teacher)
 > - 🎯 **Next Steps**:
->   1. Execute Migration 022 on Production (assessment_codes)
->   2. Import seed data for classes (84) and courses (252)
->   3. Create user accounts via SSO or seed scripts
+>   1. Import teacher data via CSV (待教師資料提供)
+>   2. Assign teachers to courses via course_assignments.csv
+>   3. Import student data via CSV (待學生資料提供)
 
 This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -91,13 +92,17 @@ This file provides essential guidance to Claude Code (claude.ai/code) when worki
 
 ### 安全與權限（RLS 核心）
 
-- **角色定義**：admin、head（HT）、teacher（LT/IT/KCFS）
+- **角色定義**：admin、head（HT）、teacher（LT/IT/KCFS）、office_member
 - **Teacher（教師）**：僅能存取自己任課班級的考試與成績
 - **Head Teacher（年段主任）**：
   - 權限範圍：Grade（年級）+ Course Type（課程類型）
   - 範例：G4 LT Head Teacher 可管理所有 G4 年級的 LT 課程（14 個班級的 LT 課程）
   - 檢視權限：可查看該年級所有班級
   - 管理權限：僅能管理自己 course_type 的課程
+- **Office Member（行政人員）**：
+  - 查看權限：可查看所有班級、學生、成績（唯讀）
+  - 編輯權限：若同時為授課教師，僅能編輯自己任課班級的成績
+  - 使用情境：同時是行政人員 + 授課教師的雙重身份
 - **Admin（系統管理員）**：全域存取權限
 
 ### 測試要求
