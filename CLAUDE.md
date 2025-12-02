@@ -14,16 +14,18 @@
 > - ✅ **SSO Implementation** - Both LMS & Info Hub complete, alignment verified
 > - ✅ **Cache-Control Headers** - Auth pages no-cache to fix old page issue
 > - ✅ **Migration 022 Complete** - assessment_codes (13) deployed to Production (2025-12-02)
-> - ✅ **Production Data Seeded** - classes (84), courses (252) imported (2025-12-02)
-> - ✅ **Staging Data Synced** - Schema fixed, data synchronized with Production (2025-12-02)
-> - ✅ **E2E SSO Integration Testing** - Complete and verified (2025-12-02)
+> - ✅ **Production Data Seeded** - classes (84), courses (252), students (1,511) imported (2025-12-02)
+> - ✅ **Staging Data Synced** - classes (84), courses (252), students (1,511), users (4) (2025-12-02)
+> - ✅ **E2E SSO Integration Testing** - Complete and verified on Staging (2025-12-02)
+> - ✅ **SSO User ID Mismatch Fix** - Resolved Auth user ID vs public.users ID mismatch (2025-12-02)
 > - ✅ **Office Member Role** - Added to support dual role (office staff + teacher)
 > - ✅ **Info Hub Teacher Import** - 72 teachers imported to Info Hub (ready for SSO sync)
 > - ✅ **Grade Band Support** - Multi-grade Head Teacher ("3-4", "5-6", "1-2", "1-6") aligned with Info Hub
+> - ⚠️ **Browse Pages Placeholder** - Classes/Students/Teachers browse pages need data fetching implementation
 > - 🎯 **Next Steps**:
->   1. Test SSO sync flow (Info Hub teachers → LMS users via webhook)
+>   1. Implement real data fetching for Browse Classes/Students/Teachers pages
 >   2. Assign teachers to courses via course_assignments.csv
->   3. Import student data via CSV (待學生資料提供)
+>   3. Test teacher SSO login and verify correct role assignment
 
 This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
