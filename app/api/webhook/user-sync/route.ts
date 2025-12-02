@@ -122,6 +122,7 @@ function mapRole(infohubRole: string): UserRole {
  */
 async function syncUserToSupabase(
   user: InfoHubUser,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _eventType: WebhookEventType // Prefixed with _ to indicate intentionally unused
 ): Promise<string> {
   const supabase = createServiceRoleClient();
