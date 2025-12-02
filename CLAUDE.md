@@ -1,13 +1,14 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 2.5
-> **Last Updated**: 2025-11-29
+> **Documentation Version**: 2.6
+> **Last Updated**: 2025-12-02
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Both Systems Complete)**
-> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**
+> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**
 
 > **Current Status**:
 >
+> - ✅ **v1.41.0 TeacherOS UI Refinements** - Dark mode optimization, Calendar redesign, macOS style enhancements
 > - ✅ **Phase 4.1 Complete** - One OS Interface Unification with Info Hub
 > - ✅ **Deployment Optimized** - Dockerfile standalone mode, multi-stage build
 > - ✅ **SSO Implementation** - Both LMS & Info Hub complete, alignment verified
@@ -832,6 +833,52 @@ LMS (Token Exchange) → Supabase User Sync → Session Creation → Dashboard
 - **統一體驗**：
   - 兩個系統（LMS + Info Hub）視覺風格完全對齊
   - 無縫切換體驗（Dock 直接啟動）
+
+### Phase 4.2: TeacherOS UI Refinements v1.41.0 (2025-12-02) ✅ **NEW**
+
+**目標**：深色模式優化、日曆重設計、整體視覺一致性提升
+
+**已完成功能**：
+
+- **深色模式優化**：
+  - Widget 背景顏色從純黑 (`bg-black`) 恢復為 slate 色系 (`bg-slate-900/80`, `bg-slate-800/80`)
+  - 改善視覺柔和度與閱讀舒適性
+  - 與 Info Hub 深色模式風格對齊
+
+- **CalendarModal 完全重設計**：
+  - 新增月曆網格視圖（Grid View）
+  - 事件類型色彩編碼（Holiday: 紅、Assessment: 藍、Activity: 綠等）
+  - 選擇日期詳情面板（右側側邊欄）
+  - 事件標籤顯示（每日最多 3 個 + 更多計數）
+  - 今日標記（紅色圓形背景）
+
+- **Message Board 顯示優化**：
+  - iframe 自動滾動問題修復
+  - 內容截斷問題解決
+  - 深色模式下背景一致性
+
+- **Dock 增強**：
+  - macOS 風格圖示改進
+  - 應用程式名稱標籤
+  - 懸停動畫效果優化
+
+- **PersonalTodoWidget 改進**：
+  - 深色模式色彩優化
+  - 任務列表顯示改善
+  - 完成狀態視覺反饋
+
+- **RemindersWidget 改進**：
+  - 提醒卡片樣式統一
+  - 優先級視覺區分
+  - 深色模式相容性
+
+**修改的檔案**（主要）：
+- `app/teachers/components/dashboard/widgets/MessageBoardWidget.tsx` - 深色模式修復
+- `app/teachers/components/dashboard/widgets/PersonalTodoWidget.tsx` - 色彩優化
+- `app/teachers/components/dashboard/widgets/RemindersWidget.tsx` - 樣式統一
+- `app/teachers/components/dashboard/modals/CalendarModal.tsx` - 完全重設計
+- `app/teachers/components/dock/Dock.tsx` - macOS 風格圖示
+- `app/teachers/page.tsx` - 整體佈局調整
 
 ### 部署配置優化 (2025-11-27~28)
 

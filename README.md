@@ -1,16 +1,17 @@
 # Learning Management System - ESID
 
-> **Version**: 1.12.0
-> **Status**: Production Ready (Phase 4.1 Complete, One OS Interface Unified)
+> **Version**: 1.41.0
+> **Status**: Production Ready (Phase 4.2 Complete, TeacherOS UI Refinements)
 > **Tech Stack**: Next.js 14 + TypeScript + Supabase Cloud + Tailwind CSS
-> **Last Updated**: 2025-11-28
+> **Last Updated**: 2025-12-02
 
-A comprehensive **Primary School (G1-G6)** Learning Management System featuring English Language Arts (ELA) and KCFS courses with advanced **Analytics Engine**, **Database Analytics Views**, and **Google SSO Integration** (via Info Hub). Features **One Class, Three Teachers (一班三師)** architecture where each class has dedicated LT, IT, and KCFS instructors, plus real-time performance analytics, intelligent insights, and comprehensive testing framework. Now with **macOS-style TeacherOS Desktop UI** unified with Info Hub.
+A comprehensive **Primary School (G1-G6)** Learning Management System featuring English Language Arts (ELA) and KCFS courses with advanced **Analytics Engine**, **Database Analytics Views**, and **Google SSO Integration** (via Info Hub). Features **One Class, Three Teachers (一班三師)** architecture where each class has dedicated LT, IT, and KCFS instructors, plus real-time performance analytics, intelligent insights, and comprehensive testing framework. Now with **macOS-style TeacherOS Desktop UI** unified with Info Hub, featuring **Dark Mode Optimization** and **Calendar Redesign**.
 
-## 🎯 Current Status (Updated 2025-11-28)
+## 🎯 Current Status (Updated 2025-12-02)
 
 ### ✅ Completed Features
 
+- **Phase 4.2 TeacherOS UI Refinements** (v1.41.0): ✅ Dark mode optimization, Calendar redesign, Widget improvements
 - **Phase 4.1 One OS Interface**: ✅ macOS-style Desktop, Dock, MenuBar, Windows unified with Info Hub
 - **Dockerfile Optimization**: ✅ Multi-stage build, standalone mode, optimized for Zeabur deployment
 - **Dashboard Performance**: ✅ Incremental loading + Skeleton UI for faster perceived load times
@@ -23,13 +24,13 @@ A comprehensive **Primary School (G1-G6)** Learning Management System featuring 
 - **RLS Optimization**: ✅ 49 policies optimized (auth_rls_initplan: 0 warnings)
 - **Testing Framework**: ✅ 90-minute comprehensive testing workflow
 - **SSO Integration**: ✅ **Complete** - Full OAuth 2.0 + PKCE flow with Info Hub, Role Mapping, and Webhook Sync
-- **ESLint Configuration**: ✅ Configured with next/core-web-vitals and next/typescript
+- **ESLint Configuration**: ✅ Configured with next/core-web-vitals and next/typescript (0 errors)
 - **Build Optimization**: ✅ Standalone output, dynamic rendering, security headers
+- **Technical Debt Cleanup**: ✅ 11 deprecated pages removed (~2,866 lines), all ESLint errors fixed
 
 ### ⏳ In Progress
 
 - **Application-Layer Permissions**: ⏳ Head teacher cross-user visibility (Phase 2)
-- **ESLint Error Resolution**: ⏳ 274 errors to be fixed (tracked via GitHub Issues)
 - **Data Import**: ⏳ Teacher and student data import (CSV templates ready)
 
 ### 📋 Upcoming
