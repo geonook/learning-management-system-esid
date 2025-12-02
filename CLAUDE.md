@@ -1,6 +1,6 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 2.6
+> **Documentation Version**: 2.7
 > **Last Updated**: 2025-12-02
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Both Systems Complete)**
@@ -18,8 +18,10 @@
 > - ✅ **Staging Data Synced** - Schema fixed, data synchronized with Production (2025-12-02)
 > - ✅ **E2E SSO Integration Testing** - Complete and verified (2025-12-02)
 > - ✅ **Office Member Role** - Added to support dual role (office staff + teacher)
+> - ✅ **Info Hub Teacher Import** - 72 teachers imported to Info Hub (ready for SSO sync)
+> - ✅ **Grade Band Support** - Multi-grade Head Teacher ("3-4", "5-6", "1-2", "1-6") aligned with Info Hub
 > - 🎯 **Next Steps**:
->   1. Import teacher data via CSV (待教師資料提供)
+>   1. Test SSO sync flow (Info Hub teachers → LMS users via webhook)
 >   2. Assign teachers to courses via course_assignments.csv
 >   3. Import student data via CSV (待學生資料提供)
 
@@ -590,12 +592,17 @@ student_id,full_name,grade,level,class_name
 - 完整文件撰寫
 - 驗證規則定義
 - 範例資料提供
+- **72 位教師資料已匯入 Info Hub** (2025-12-02)
+  - 8 Head Teachers (with grade_band)
+  - 46 Teachers (LT/IT/KCFS)
+  - 17 Office Members
+  - 1 Admin
 
 **待完成項目** ⏳:
 
-- 教師真實資料填寫（需使用者提供）
-- 資料驗證與匯入
-- 資料庫資料重建
+- **SSO 同步測試** - 教師透過 SSO 登入 LMS 時自動同步
+- **課程指派** - 透過 course_assignments.csv 指派教師到課程
+- **學生資料匯入** - 待學生資料提供後匯入
 
 ---
 
@@ -713,17 +720,29 @@ LMS (Token Exchange) → Supabase User Sync → Session Creation → Dashboard
 - ✅ Both systems aligned and ready
 - ✅ E2E integration testing verified
 - ✅ Production deployment complete
+- ✅ Info Hub grade_band support added (v1.39.2)
+- ✅ 72 teachers imported to Info Hub database
+- ✅ Multi-grade Head Teacher assignments aligned ("1", "2", "3-4", "5-6", "1-2", "1-6")
 
-### 🔗 Role Mapping
+### 🔗 Role Mapping (v1.39.2 - Grade Band Support)
 
-| Info Hub Role  | LMS Role  | Teacher Type | Grade | Track         |
-| -------------- | --------- | ------------ | ----- | ------------- |
-| admin          | admin     | null         | null  | null          |
-| office_member  | head      | null         | null  | null          |
-| teacher (IT)   | teacher   | IT           | null  | international |
-| teacher (LT)   | teacher   | LT           | null  | local         |
-| teacher (KCFS) | teacher   | KCFS         | null  | null          |
-| viewer         | ❌ Denied | -            | -     | -             |
+| Info Hub Role  | LMS Role  | Teacher Type | Grade Band | Track         |
+| -------------- | --------- | ------------ | ---------- | ------------- |
+| admin          | admin     | null         | null       | null          |
+| office_member  | office_member | null     | grade_band | null          |
+| head (LT)      | head      | null         | "1"/"2"/"3-4"/"5-6" | LT    |
+| head (IT)      | head      | null         | "1-2"/"3-4"/"5-6" | IT      |
+| head (KCFS)    | head      | null         | "1-6"      | KCFS          |
+| teacher (IT)   | teacher   | IT           | null       | international |
+| teacher (LT)   | teacher   | LT           | null       | local         |
+| teacher (KCFS) | teacher   | KCFS         | null       | null          |
+| viewer         | ❌ Denied | -            | -          | -             |
+
+**Info Hub Teacher Data (72 users imported)**:
+- 8 Head Teachers (with grade_band values)
+- 46 Teachers (LT/IT/KCFS)
+- 17 Office Members
+- 1 Admin
 
 ### 📊 Timeline
 
