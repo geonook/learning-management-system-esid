@@ -173,13 +173,17 @@ async function syncUserToSupabase(
     }
 
     // Create user in public.users table
+    // Note: grade_band is preferred over grade for head teachers (Migration 023)
+    const gradeBand = user.grade_band || (user.grade ? String(user.grade) : null);
+
     const { error: userError } = await supabase.from("users").insert({
       id: authData.user.id,
       email: user.email,
       full_name: user.full_name,
       role: lmsRole,
-      track: courseType, // For head teachers, stores their course type responsibility
-      grade: user.grade,
+      teacher_type: courseType, // Teacher type (LT/IT/KCFS)
+      grade_band: gradeBand, // Grade band for head teachers (e.g., "3-4", "1-6")
+      grade: user.grade, // Legacy field, kept for backward compatibility
       created_at: new Date().toISOString(),
     });
 
@@ -192,12 +196,16 @@ async function syncUserToSupabase(
     return authData.user.id;
   } else {
     // Update existing user
+    // Note: grade_band is preferred over grade for head teachers (Migration 023)
+    const gradeBandUpdate = user.grade_band || (user.grade ? String(user.grade) : null);
+
     const { error: updateError } = await supabase
       .from("users")
       .update({
         full_name: user.full_name,
         role: lmsRole,
-        track: courseType,
+        teacher_type: courseType,
+        grade_band: gradeBandUpdate,
         grade: user.grade,
       })
       .eq("id", existingUser.id);
