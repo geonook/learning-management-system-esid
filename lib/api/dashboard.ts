@@ -342,8 +342,8 @@ export async function getAdminKpis(): Promise<AdminKpis> {
 export async function getClassDistribution(
   userRole: "admin" | "office_member" | "head" | "teacher" | "student",
   userId?: string,
-  grade?: number,
-  track?: "local" | "international"
+  gradeBand?: string,
+  courseType?: "LT" | "IT" | "KCFS"
 ): Promise<ClassDistribution[]> {
   const supabase = createClient();
 
@@ -374,10 +374,21 @@ export async function getClassDistribution(
       .lte("score", 100);
 
     // Apply role-based filtering
-    if (userRole === "head" && grade && track) {
-      query = query
-        .eq("exams.classes.grade", grade)
-        .eq("exams.classes.track", track);
+    if (userRole === "head" && gradeBand) {
+      // Parse grade band to get grades
+      let grades: number[] = [];
+      if (gradeBand.includes("-")) {
+        const parts = gradeBand.split("-").map(Number);
+        const start = parts[0] ?? 1;
+        const end = parts[1] ?? start;
+        for (let i = start; i <= end; i++) {
+          grades.push(i);
+        }
+      } else {
+        grades = [Number(gradeBand)];
+      }
+      query = query.in("exams.classes.grade", grades);
+      // Note: course type filtering would need to be done at the course level, not class level
     } else if (userRole === "teacher" && userId) {
       // Get teacher's class IDs through courses
       const { data: teacherCourses } = await supabase
@@ -445,8 +456,8 @@ export async function getClassDistribution(
 export async function getUpcomingDeadlines(
   userRole: "admin" | "office_member" | "head" | "teacher" | "student",
   userId?: string,
-  grade?: number,
-  track?: "local" | "international"
+  gradeBand?: string,
+  courseType?: "LT" | "IT" | "KCFS"
 ): Promise<UpcomingDeadline[]> {
   const supabase = createClient();
 
@@ -476,8 +487,20 @@ export async function getUpcomingDeadlines(
       .limit(5);
 
     // Apply role-based filtering
-    if (userRole === "head" && grade && track) {
-      query = query.eq("classes.grade", grade).eq("classes.track", track);
+    if (userRole === "head" && gradeBand) {
+      // Parse grade band to get grades
+      let grades: number[] = [];
+      if (gradeBand.includes("-")) {
+        const parts = gradeBand.split("-").map(Number);
+        const start = parts[0] ?? 1;
+        const end = parts[1] ?? start;
+        for (let i = start; i <= end; i++) {
+          grades.push(i);
+        }
+      } else {
+        grades = [Number(gradeBand)];
+      }
+      query = query.in("classes.grade", grades);
     } else if (userRole === "teacher" && userId) {
       const { data: teacherCourses } = await supabase
         .from("courses")
@@ -944,21 +967,35 @@ export interface GradeClassSummary {
 }
 
 /**
- * Get Head Teacher KPIs for their specific grade and track
+ * Get Head Teacher KPIs for their specific grade band and course type
+ * @param gradeBand - Grade band string: "1", "2", "3-4", "5-6", "1-2", "1-6"
+ * @param courseType - Course type: "LT", "IT", "KCFS"
  */
 export async function getHeadTeacherKpis(
-  grade: number,
-  track: "local" | "international"
+  gradeBand: string,
+  courseType: "LT" | "IT" | "KCFS"
 ): Promise<HeadTeacherKpis> {
   const supabase = createClient();
 
   try {
-    // Get classes in this grade and track
+    // Parse grade band to get grade numbers
+    let grades: number[] = [];
+    if (gradeBand.includes("-")) {
+      const parts = gradeBand.split("-").map(Number);
+      const start = parts[0] ?? 1;
+      const end = parts[1] ?? start;
+      for (let i = start; i <= end; i++) {
+        grades.push(i);
+      }
+    } else {
+      grades = [Number(gradeBand)];
+    }
+
+    // Get classes in these grades (classes don't have track, course type is in courses table)
     const { data: classes, error: classesError } = await supabase
       .from("classes")
       .select("id, name")
-      .eq("grade", grade)
-      .eq("track", track)
+      .in("grade", grades)
       .eq("is_active", true);
 
     if (classesError) {

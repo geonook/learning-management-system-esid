@@ -86,8 +86,8 @@ export type StudentPerformanceView = {
 export type UserPermissions = {
   userId: string
   role: 'admin' | 'office_member' | 'head' | 'teacher' | 'student'
-  grade: number | null
-  track: 'local' | 'international' | null
+  grade: string | null  // grade_band: "1", "2", "3-4", "5-6", "1-2", "1-6"
+  track: 'LT' | 'IT' | 'KCFS' | null  // course_type ENUM (aligned with Migration 014)
   teacher_type: 'LT' | 'IT' | 'KCFS' | null
   full_name: string
 }
@@ -105,7 +105,7 @@ export async function getCurrentUserPermissions(): Promise<UserPermissions | nul
 
   const { data, error } = await supabase
     .from('users')
-    .select('id, role, grade, track, teacher_type, full_name')
+    .select('id, role, grade_band, track, teacher_type, full_name')
     .eq('id', user.id)
     .single()
 
@@ -117,9 +117,9 @@ export async function getCurrentUserPermissions(): Promise<UserPermissions | nul
   return {
     userId: data.id,
     role: data.role,
-    grade: data.grade,
-    track: data.track,
-    teacher_type: data.teacher_type,
+    grade: data.grade_band,  // Map grade_band to grade for compatibility
+    track: data.track as 'LT' | 'IT' | 'KCFS' | null,
+    teacher_type: data.teacher_type as 'LT' | 'IT' | 'KCFS' | null,
     full_name: data.full_name
   }
 }

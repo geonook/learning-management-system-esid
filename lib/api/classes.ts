@@ -65,25 +65,87 @@ export async function getClassesByGradeTrack(
   return data as Class[]
 }
 
-// Get classes by teacher ID (simplified)
+// Get classes by teacher ID (via courses table - "one class, three teachers" architecture)
 export async function getClassesByTeacher(
   teacherId: string,
   academicYear?: string
 ) {
-  const currentYear = academicYear || new Date().getFullYear().toString()
-  
+  const currentYear = academicYear || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`
+
+  // Query classes through courses table (teacher_id is in courses, not classes)
+  const { data, error } = await supabase
+    .from('courses')
+    .select(`
+      class_id,
+      classes!inner (
+        id,
+        name,
+        grade,
+        level,
+        track,
+        academic_year,
+        is_active,
+        created_at,
+        updated_at
+      )
+    `)
+    .eq('teacher_id', teacherId)
+    .eq('classes.academic_year', currentYear)
+    .eq('classes.is_active', true)
+    .order('classes(grade)')
+    .order('classes(name)')
+
+  if (error) {
+    console.error('Error fetching teacher classes:', error)
+    throw new Error(`Failed to fetch teacher classes: ${error.message}`)
+  }
+
+  // Extract unique classes from the result
+  const classMap = new Map<string, Class>()
+  for (const course of data || []) {
+    const cls = course.classes as unknown as Class
+    if (cls && !classMap.has(cls.id)) {
+      classMap.set(cls.id, cls)
+    }
+  }
+
+  return Array.from(classMap.values())
+}
+
+// Get classes by grade band (for Head Teachers)
+// grade_band can be: "1", "2", "3-4", "5-6", "1-2", "1-6"
+export async function getClassesByGradeBand(
+  gradeBand: string,
+  academicYear?: string
+) {
+  const currentYear = academicYear || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`
+
+  // Parse grade band to get grade numbers
+  // "1" -> [1], "3-4" -> [3,4], "1-6" -> [1,2,3,4,5,6]
+  let grades: number[] = []
+  if (gradeBand.includes('-')) {
+    const parts = gradeBand.split('-').map(Number)
+    const start = parts[0] ?? 1
+    const end = parts[1] ?? start
+    for (let i = start; i <= end; i++) {
+      grades.push(i)
+    }
+  } else {
+    grades = [Number(gradeBand)]
+  }
+
   const { data, error } = await supabase
     .from('classes')
     .select('*')
-    .eq('teacher_id', teacherId)
+    .in('grade', grades)
     .eq('academic_year', currentYear)
     .eq('is_active', true)
     .order('grade')
     .order('name')
 
   if (error) {
-    console.error('Error fetching teacher classes:', error)
-    throw new Error(`Failed to fetch teacher classes: ${error.message}`)
+    console.error('Error fetching classes by grade band:', error)
+    throw new Error(`Failed to fetch classes by grade band: ${error.message}`)
   }
 
   return data as Class[]

@@ -42,8 +42,8 @@ const TEST_USER_PERMISSIONS: Record<string, UserPermissions> = {
   head: {
     userId: '550e8400-e29b-41d4-a716-446655440012',
     role: 'head',
-    grade: 10,
-    track: 'local',
+    grade: '3-4',  // grade_band format
+    track: 'LT',   // course_type ENUM
     teacher_type: null,
     full_name: 'Test Head Teacher'
   }

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/supabase/auth-context";
-import { getClassesByTeacher, Class } from "@/lib/api/classes";
+import { getClassesByTeacher, getClassesByGradeBand, Class } from "@/lib/api/classes";
 import {
   LayoutDashboard,
   Calendar,
@@ -37,9 +37,19 @@ export function Sidebar() {
     async function fetchClasses() {
       if (!user) return;
       try {
-        // Assuming user.id is the teacher_id for now.
-        // If not, we might need a profile lookup.
-        const data = await getClassesByTeacher(user.id);
+        let data: Class[] = [];
+
+        // Head Teacher: Get all classes in their grade band
+        if (isHead && userPermissions?.grade) {
+          data = await getClassesByGradeBand(userPermissions.grade);
+        }
+        // Regular Teacher: Get classes they teach (via courses table)
+        else if (isTeacher) {
+          data = await getClassesByTeacher(user.id);
+        }
+        // Admin/Office: Could show all classes or none
+        // For now, show none (they can use Browse pages)
+
         setClasses(data);
       } catch (error) {
         console.error("Failed to fetch classes", error);
@@ -49,7 +59,7 @@ export function Sidebar() {
     }
 
     fetchClasses();
-  }, [user]);
+  }, [user, isHead, isTeacher, userPermissions?.grade]);
 
   return (
     <aside className="fixed left-0 top-8 bottom-0 w-64 bg-white/50 dark:bg-black/50 backdrop-blur-xl border-r border-white/20 dark:border-white/10 z-40 flex flex-col">
