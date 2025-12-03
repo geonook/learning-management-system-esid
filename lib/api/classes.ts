@@ -290,16 +290,41 @@ export async function getClassesWithDetails(options?: {
     return []
   }
 
-  // Get student counts for all classes
+  // Get student counts and courses in PARALLEL for better performance
   const classIds = classes.map(c => c.id)
-  const { data: studentCounts, error: studentError } = await supabase
-    .from('students')
-    .select('class_id')
-    .in('class_id', classIds)
-    .eq('is_active', true)
+
+  const [studentCountsResult, coursesResult] = await Promise.all([
+    // Query 1: Student counts
+    supabase
+      .from('students')
+      .select('class_id')
+      .in('class_id', classIds)
+      .eq('is_active', true),
+    // Query 2: Courses with teachers
+    supabase
+      .from('courses')
+      .select(`
+        id,
+        class_id,
+        course_type,
+        users:teacher_id (
+          id,
+          full_name
+        )
+      `)
+      .in('class_id', classIds)
+      .eq('is_active', true)
+  ])
+
+  const { data: studentCounts, error: studentError } = studentCountsResult
+  const { data: courses, error: courseError } = coursesResult
 
   if (studentError) {
     console.error('Error fetching student counts:', studentError)
+  }
+
+  if (courseError) {
+    console.error('Error fetching courses:', courseError)
   }
 
   // Create student count map
@@ -307,25 +332,6 @@ export async function getClassesWithDetails(options?: {
   studentCounts?.forEach(s => {
     countMap[s.class_id] = (countMap[s.class_id] || 0) + 1
   })
-
-  // Get courses with teachers for all classes
-  const { data: courses, error: courseError } = await supabase
-    .from('courses')
-    .select(`
-      id,
-      class_id,
-      course_type,
-      users:teacher_id (
-        id,
-        full_name
-      )
-    `)
-    .in('class_id', classIds)
-    .eq('is_active', true)
-
-  if (courseError) {
-    console.error('Error fetching courses:', courseError)
-  }
 
   // Create course map by class_id
   const courseMap: Record<string, ClassWithDetails['courses']> = {}
