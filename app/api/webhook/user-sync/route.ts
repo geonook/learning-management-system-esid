@@ -150,15 +150,62 @@ async function syncUserToSupabase(
   // First, get or create Auth user to get the canonical ID
   let authUserId = "";
 
-  // Check if auth user already exists by listing users and filtering by email
-  const { data: usersData } = await supabase.auth.admin.listUsers();
-  const existingAuthUser = usersData?.users.find(
-    (u) => u.email?.toLowerCase() === user.email.toLowerCase()
-  );
+  // Check if auth user already exists by listing users with pagination
+  // (default listUsers has a limit, so we need to paginate to find all users)
+  let existingAuthUser: { id: string; email?: string } | null | undefined = null;
+  let page = 1;
+  const perPage = 1000;
+
+  while (!existingAuthUser) {
+    const { data: usersData, error: listError } = await supabase.auth.admin.listUsers({
+      page,
+      perPage,
+    });
+
+    if (listError) {
+      console.error("[Webhook] Error listing users:", listError);
+      break;
+    }
+
+    existingAuthUser = usersData?.users.find(
+      (u) => u.email?.toLowerCase() === user.email.toLowerCase()
+    );
+
+    // If found, or if we've exhausted all users, break
+    if (existingAuthUser || !usersData?.users || usersData.users.length < perPage) {
+      break;
+    }
+
+    page++;
+    // Safety limit to prevent infinite loop
+    if (page > 10) {
+      console.warn("[Webhook] Reached page limit while searching for user");
+      break;
+    }
+  }
 
   if (existingAuthUser) {
     authUserId = existingAuthUser.id;
     console.log(`[Webhook] Found existing Auth user: ${authUserId}`);
+
+    // Update auth user metadata (including full_name from Google/Info Hub)
+    const { error: updateAuthError } = await supabase.auth.admin.updateUserById(
+      authUserId,
+      {
+        user_metadata: {
+          full_name: user.full_name,
+          avatar_url: user.avatar_url,
+          infohub_user_id: user.infohub_user_id,
+        },
+      }
+    );
+
+    if (updateAuthError) {
+      console.warn("[Webhook] Failed to update auth user metadata:", updateAuthError);
+      // Non-fatal - continue with the sync
+    } else {
+      console.log(`[Webhook] Updated auth user metadata for: ${user.email}`);
+    }
   } else {
     // Create new auth user
     const { data: newAuthUser, error: authError } = await supabase.auth.admin.createUser({
@@ -172,16 +219,33 @@ async function syncUserToSupabase(
     });
 
     if (authError) {
-      console.error("[Webhook] Failed to create auth user:", authError);
-      throw authError;
-    }
-
-    if (!newAuthUser.user) {
+      // Handle race condition: another process may have created the user
+      if (authError.code === 'email_exists') {
+        console.log("[Webhook] Race condition detected, retrying user lookup...");
+        // Retry lookup
+        const { data: retryData } = await supabase.auth.admin.listUsers({
+          page: 1,
+          perPage: 1000,
+        });
+        const retryUser = retryData?.users.find(
+          (u) => u.email?.toLowerCase() === user.email.toLowerCase()
+        );
+        if (retryUser) {
+          authUserId = retryUser.id;
+          console.log(`[Webhook] Found user on retry: ${authUserId}`);
+        } else {
+          throw new Error(`User exists but cannot be found: ${user.email}`);
+        }
+      } else {
+        console.error("[Webhook] Failed to create auth user:", authError);
+        throw authError;
+      }
+    } else if (newAuthUser?.user) {
+      authUserId = newAuthUser.user.id;
+      console.log(`[Webhook] Created new Auth user: ${authUserId}`);
+    } else {
       throw new Error("Failed to create auth user: no user returned");
     }
-
-    authUserId = newAuthUser.user.id;
-    console.log(`[Webhook] Created new Auth user: ${authUserId}`);
   }
 
   // Check if user exists in public.users table
