@@ -32,17 +32,21 @@ export default function BrowseClassesPage() {
     }
   }, [selectedGrade, searchQuery]);
 
+  // Fetch on mount and when grade filter changes
   useEffect(() => {
     fetchClasses();
-  }, [fetchClasses]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedGrade]);
 
   // Debounced search
   useEffect(() => {
+    if (searchQuery === "") return; // Skip on mount
     const timer = setTimeout(() => {
       fetchClasses();
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery, fetchClasses]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
 
   // Helper to get teacher name by course type
   const getTeacherName = (courses: ClassWithDetails["courses"], type: "LT" | "IT" | "KCFS") => {
