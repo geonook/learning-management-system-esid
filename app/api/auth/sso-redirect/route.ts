@@ -153,12 +153,7 @@ export async function GET(request: NextRequest) {
       maxAge: 900, // 15 minutes
     })
 
-    console.log('[SSO Redirect] Cookies set:')
-    console.log('[SSO Redirect]   - sso_state:', state.substring(0, 10) + '...')
-    console.log('[SSO Redirect]   - pkce_verifier:', codeVerifier.substring(0, 10) + '...')
-    console.log('[SSO Redirect]   - secure:', process.env.NODE_ENV === 'production')
-    console.log('[SSO Redirect]   - sameSite: lax')
-    console.log('[SSO Redirect] Full OAuth URL:', fullAuthUrl)
+    console.log('[SSO Redirect] Redirecting to Info Hub OAuth')
 
     return response
   } catch (error) {

@@ -403,32 +403,9 @@ export async function GET(request: NextRequest) {
     // 1. Retrieve and validate state from cookie (Server-side validation)
     const cookies = request.cookies;
     const cookieState = cookies.get("sso_state")?.value;
-    const pkceVerifier = cookies.get("pkce_verifier")?.value;
-
-    // Debug: Log all cookies for troubleshooting
-    console.log("[OAuth] === COOKIE DEBUG ===");
-    console.log("[OAuth] All cookies:", Array.from(cookies.getAll()).map(c => c.name));
-    console.log("[OAuth] sso_state cookie:", cookieState ? `${cookieState.substring(0, 10)}...` : "MISSING");
-    console.log("[OAuth] pkce_verifier cookie:", pkceVerifier ? `${pkceVerifier.substring(0, 10)}...` : "MISSING");
-    console.log("[OAuth] Expected state (from URL):", callbackParams.state ? `${callbackParams.state.substring(0, 10)}...` : "MISSING");
-    console.log("[OAuth] Request URL:", request.url);
-    console.log("[OAuth] Request headers origin:", request.headers.get("origin"));
-    console.log("[OAuth] Request headers referer:", request.headers.get("referer"));
 
     if (!cookieState || cookieState !== callbackParams.state) {
-      console.error("[OAuth] ❌ State validation failed");
-      console.error(
-        "[OAuth] Cookie state:",
-        cookieState ? `Present (${cookieState.substring(0, 10)}...)` : "MISSING"
-      );
-      console.error("[OAuth] Param state:", callbackParams.state ? `${callbackParams.state.substring(0, 10)}...` : "MISSING");
-      console.error("[OAuth] Match:", cookieState === callbackParams.state);
-
-      // Additional debug: Check if cookies are blocked
-      if (!cookieState && !pkceVerifier) {
-        console.error("[OAuth] Both cookies missing - likely SameSite/Secure issue or browser blocking");
-      }
-
+      console.error("[OAuth] State validation failed - cookie missing or mismatch");
       return NextResponse.redirect(
         buildRedirectUrl("/auth/login?error=invalid_state")
       );
