@@ -125,17 +125,18 @@ async function createOrUpdateUser(
   // First, get or create Auth user to get the canonical ID
   let authUserId = "";
 
-  // Check if auth user already exists by listing users and filtering by email
-  const { data: usersData } = await supabase.auth.admin.listUsers();
-  const existingAuthUser = usersData?.users.find(
-    (u) => u.email?.toLowerCase() === params.email.toLowerCase()
+  // Try to get user by email using getUserByEmail (more reliable than listUsers)
+  const { data: existingAuthData, error: getUserError } = await supabase.auth.admin.getUserByEmail(
+    params.email
   );
 
-  if (existingAuthUser) {
-    authUserId = existingAuthUser.id;
+  if (existingAuthData?.user) {
+    // User already exists in Auth
+    authUserId = existingAuthData.user.id;
     console.log(`[OAuth] Found existing Auth user: ${authUserId}`);
-  } else {
-    // Create new auth user
+  } else if (getUserError?.status === 404 || !existingAuthData?.user) {
+    // User doesn't exist, create new one
+    console.log(`[OAuth] Auth user not found, creating new one for: ${params.email}`);
     const { data: newAuthUser, error: authError } = await supabase.auth.admin.createUser({
       email: params.email,
       email_confirm: true,
@@ -147,16 +148,31 @@ async function createOrUpdateUser(
     });
 
     if (authError) {
-      console.error("[OAuth] Failed to create auth user:", authError);
-      throw authError;
-    }
-
-    if (!newAuthUser.user) {
+      // Check if it's "already exists" error - handle race condition
+      if (authError.code === 'email_exists') {
+        console.log(`[OAuth] Race condition: user was created between check and create, retrying lookup...`);
+        const { data: retryData } = await supabase.auth.admin.getUserByEmail(params.email);
+        if (retryData?.user) {
+          authUserId = retryData.user.id;
+          console.log(`[OAuth] Found Auth user on retry: ${authUserId}`);
+        } else {
+          console.error("[OAuth] Still cannot find user after retry");
+          throw authError;
+        }
+      } else {
+        console.error("[OAuth] Failed to create auth user:", authError);
+        throw authError;
+      }
+    } else if (newAuthUser?.user) {
+      authUserId = newAuthUser.user.id;
+      console.log(`[OAuth] Created new Auth user: ${authUserId}`);
+    } else {
       throw new Error("No user returned from auth.createUser");
     }
-
-    authUserId = newAuthUser.user.id;
-    console.log(`[OAuth] Created new Auth user: ${authUserId}`);
+  } else {
+    // Unexpected error
+    console.error("[OAuth] Error getting user by email:", getUserError);
+    throw getUserError;
   }
 
   // Check if user exists in public.users table
