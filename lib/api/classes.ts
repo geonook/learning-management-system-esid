@@ -176,6 +176,125 @@ export async function getAcademicYears() {
   return uniqueYears
 }
 
+// Extended class type with student count and course teachers
+export type ClassWithDetails = Class & {
+  level?: string | null  // Level field from actual database
+  student_count: number
+  courses: Array<{
+    id: string
+    course_type: 'LT' | 'IT' | 'KCFS'
+    teacher: {
+      id: string
+      full_name: string
+    } | null
+  }>
+}
+
+// Get all classes with student counts and course teachers for Browse page
+export async function getClassesWithDetails(options?: {
+  academicYear?: string
+  grade?: number
+  search?: string
+}): Promise<ClassWithDetails[]> {
+  const academicYear = options?.academicYear || '2025-2026'
+
+  // Build query for classes
+  let query = supabase
+    .from('classes')
+    .select('*')
+    .eq('academic_year', academicYear)
+    .eq('is_active', true)
+    .order('grade')
+    .order('name')
+
+  // Apply grade filter if provided
+  if (options?.grade) {
+    query = query.eq('grade', options.grade)
+  }
+
+  // Apply search filter if provided
+  if (options?.search) {
+    query = query.ilike('name', `%${options.search}%`)
+  }
+
+  const { data: classes, error: classError } = await query
+
+  if (classError) {
+    console.error('Error fetching classes:', classError)
+    throw new Error(`Failed to fetch classes: ${classError.message}`)
+  }
+
+  if (!classes || classes.length === 0) {
+    return []
+  }
+
+  // Get student counts for all classes
+  const classIds = classes.map(c => c.id)
+  const { data: studentCounts, error: studentError } = await supabase
+    .from('students')
+    .select('class_id')
+    .in('class_id', classIds)
+    .eq('is_active', true)
+
+  if (studentError) {
+    console.error('Error fetching student counts:', studentError)
+  }
+
+  // Create student count map
+  const countMap: Record<string, number> = {}
+  studentCounts?.forEach(s => {
+    countMap[s.class_id] = (countMap[s.class_id] || 0) + 1
+  })
+
+  // Get courses with teachers for all classes
+  const { data: courses, error: courseError } = await supabase
+    .from('courses')
+    .select(`
+      id,
+      class_id,
+      course_type,
+      users:teacher_id (
+        id,
+        full_name
+      )
+    `)
+    .in('class_id', classIds)
+    .eq('is_active', true)
+
+  if (courseError) {
+    console.error('Error fetching courses:', courseError)
+  }
+
+  // Create course map by class_id
+  const courseMap: Record<string, ClassWithDetails['courses']> = {}
+  if (courses) {
+    for (const course of courses) {
+      const classId = course.class_id
+      if (!courseMap[classId]) {
+        courseMap[classId] = []
+      }
+      // Handle users which could be an object or null
+      const teacher = course.users && typeof course.users === 'object' && !Array.isArray(course.users)
+        ? { id: (course.users as { id: string }).id, full_name: (course.users as { full_name: string }).full_name }
+        : null
+      courseMap[classId]!.push({
+        id: course.id,
+        course_type: course.course_type as 'LT' | 'IT' | 'KCFS',
+        teacher
+      })
+    }
+  }
+
+  // Combine all data
+  const result: ClassWithDetails[] = classes.map(cls => ({
+    ...cls,
+    student_count: countMap[cls.id] || 0,
+    courses: courseMap[cls.id] || []
+  }))
+
+  return result
+}
+
 // Get class statistics
 export async function getClassStatistics(academicYear?: string) {
   const currentYear = academicYear || new Date().getFullYear().toString()
