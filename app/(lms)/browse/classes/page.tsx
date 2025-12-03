@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { useAuth } from "@/lib/supabase/auth-context";
 import { School, Search, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { getClassesWithDetails, type ClassWithDetails } from "@/lib/api/classes";
@@ -9,11 +10,13 @@ import { getClassesWithDetails, type ClassWithDetails } from "@/lib/api/classes"
 type GradeFilter = "All" | 1 | 2 | 3 | 4 | 5 | 6;
 
 export default function BrowseClassesPage() {
+  const { user, loading: authLoading } = useAuth();
   const [classes, setClasses] = useState<ClassWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<GradeFilter>("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [hasFetched, setHasFetched] = useState(false);
 
   const fetchClasses = useCallback(async () => {
     setLoading(true);
@@ -24,6 +27,7 @@ export default function BrowseClassesPage() {
         search: searchQuery || undefined,
       });
       setClasses(data);
+      setHasFetched(true);
     } catch (err) {
       console.error("Failed to fetch classes:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch classes");
@@ -32,15 +36,17 @@ export default function BrowseClassesPage() {
     }
   }, [selectedGrade, searchQuery]);
 
-  // Fetch on mount and when grade filter changes
+  // Wait for auth to be ready before fetching
   useEffect(() => {
-    fetchClasses();
+    if (!authLoading && user) {
+      fetchClasses();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedGrade]);
+  }, [authLoading, user, selectedGrade]);
 
-  // Debounced search
+  // Debounced search - only when user is authenticated
   useEffect(() => {
-    if (searchQuery === "") return; // Skip on mount
+    if (!user || searchQuery === "" || !hasFetched) return;
     const timer = setTimeout(() => {
       fetchClasses();
     }, 300);
