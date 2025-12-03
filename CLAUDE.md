@@ -1,31 +1,29 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 2.7
-> **Last Updated**: 2025-12-02
+> **Documentation Version**: 2.8
+> **Last Updated**: 2025-12-03
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Both Systems Complete)**
-> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**
+> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**, **Teacher Course Assignment (v1.42.0 ✅)**
 
 > **Current Status**:
 >
+> - ✅ **v1.42.0 Teacher Course Assignment** - 252 courses assigned to 80 teachers (2025-12-03)
+> - ✅ **Production Teacher Import** - 81 users imported (admin:1, head:8, teacher:54, office_member:17)
+> - ✅ **Staging Teacher Import** - 80 users synced with correct course assignments
+> - ✅ **Browse Classes Race Condition Fix** - Auth state checked before API calls (2025-12-03)
+> - ✅ **SSO full_name Fix** - Google profile displayName synced for existing users
 > - ✅ **v1.41.0 TeacherOS UI Refinements** - Dark mode optimization, Calendar redesign, macOS style enhancements
 > - ✅ **Phase 4.1 Complete** - One OS Interface Unification with Info Hub
 > - ✅ **Deployment Optimized** - Dockerfile standalone mode, multi-stage build
 > - ✅ **SSO Implementation** - Both LMS & Info Hub complete, alignment verified
-> - ✅ **Cache-Control Headers** - Auth pages no-cache to fix old page issue
 > - ✅ **Migration 022 Complete** - assessment_codes (13) deployed to Production (2025-12-02)
-> - ✅ **Production Data Seeded** - classes (84), courses (252), students (1,511) imported (2025-12-02)
-> - ✅ **Staging Data Synced** - classes (84), courses (252), students (1,511), users (4) (2025-12-02)
-> - ✅ **E2E SSO Integration Testing** - Complete and verified on Staging (2025-12-02)
-> - ✅ **SSO User ID Mismatch Fix** - Resolved Auth user ID vs public.users ID mismatch (2025-12-02)
-> - ✅ **Office Member Role** - Added to support dual role (office staff + teacher)
-> - ✅ **Info Hub Teacher Import** - 72 teachers imported to Info Hub (ready for SSO sync)
-> - ✅ **Grade Band Support** - Multi-grade Head Teacher ("3-4", "5-6", "1-2", "1-6") aligned with Info Hub
-> - ⚠️ **Browse Pages Placeholder** - Classes/Students/Teachers browse pages need data fetching implementation
+> - ✅ **Production Data Seeded** - classes (84), courses (252), students (1,511) imported
+> - ✅ **E2E SSO Integration Testing** - Complete and verified on Staging
 > - 🎯 **Next Steps**:
->   1. Implement real data fetching for Browse Classes/Students/Teachers pages
->   2. Assign teachers to courses via course_assignments.csv
->   3. Test teacher SSO login and verify correct role assignment
+>   1. Test teacher SSO login and verify correct course access
+>   2. Implement Browse Students/Teachers pages with same auth pattern
+>   3. Verify Head Teacher grade band permissions working correctly
 
 This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
