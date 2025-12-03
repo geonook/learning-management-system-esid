@@ -273,6 +273,125 @@ export async function deleteStudent(id: string) {
   return true
 }
 
+// Extended student type with class name for browse page
+// Note: 'level' field exists in actual database but missing from types/database.ts
+export type StudentWithClassName = Student & {
+  level?: string | null  // e.g., "G1E1", "G4E2", "G6E3"
+  class_name?: string | null
+}
+
+// Pagination result type
+export interface PaginatedStudents {
+  students: StudentWithClassName[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
+// Get students with pagination and filters for Browse page
+export async function getStudentsWithPagination(options?: {
+  page?: number
+  pageSize?: number
+  grade?: number
+  level?: string  // e.g., "E1", "E2", "E3" (extracted from level field like "G1E1")
+  search?: string
+}): Promise<PaginatedStudents> {
+  const supabase = createClient()
+  const page = options?.page || 1
+  const pageSize = options?.pageSize || 50
+  const offset = (page - 1) * pageSize
+
+  // Build query for students with class name
+  let query = supabase
+    .from('students')
+    .select(`
+      *,
+      classes:class_id (
+        name
+      )
+    `, { count: 'exact' })
+    .eq('is_active', true)
+    .order('grade')
+    .order('full_name')
+    .range(offset, offset + pageSize - 1)
+
+  // Apply grade filter
+  if (options?.grade) {
+    query = query.eq('grade', options.grade)
+  }
+
+  // Apply level filter (search in level field for E1, E2, E3)
+  if (options?.level) {
+    query = query.ilike('level', `%${options.level}`)
+  }
+
+  // Apply search filter (name or student_id)
+  if (options?.search) {
+    query = query.or(`full_name.ilike.%${options.search}%,student_id.ilike.%${options.search}%`)
+  }
+
+  const { data, error, count } = await query
+
+  if (error) {
+    console.error('Error fetching students with pagination:', error)
+    throw new Error(`Failed to fetch students: ${error.message}`)
+  }
+
+  // Map class name from nested object
+  const students: StudentWithClassName[] = (data || []).map((student) => ({
+    ...student,
+    class_name: (student.classes as { name: string } | null)?.name || null,
+    classes: undefined  // Remove nested object
+  }))
+
+  const total = count || 0
+  const totalPages = Math.ceil(total / pageSize)
+
+  return {
+    students,
+    total,
+    page,
+    pageSize,
+    totalPages
+  }
+}
+
+// Get level statistics for stats display
+export async function getLevelStatistics(): Promise<{
+  total: number
+  e1: number
+  e2: number
+  e3: number
+}> {
+  const supabase = createClient()
+
+  const { data, error } = await supabase
+    .from('students')
+    .select('level')
+    .eq('is_active', true)
+
+  if (error) {
+    console.error('Error fetching level statistics:', error)
+    throw new Error(`Failed to fetch level statistics: ${error.message}`)
+  }
+
+  const stats = {
+    total: data.length,
+    e1: 0,
+    e2: 0,
+    e3: 0
+  }
+
+  data.forEach(student => {
+    if (student.level?.includes('E1')) stats.e1++
+    else if (student.level?.includes('E2')) stats.e2++
+    else if (student.level?.includes('E3')) stats.e3++
+  })
+
+  return stats
+}
+
 // Get student statistics
 export async function getStudentStatistics() {
   const supabase = createClient()
