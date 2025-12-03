@@ -1,6 +1,7 @@
 "use client";
 
 import { Home, Search, ChevronDown, LogOut, User } from "lucide-react";
+import Image from "next/image";
 import { DateTimeDisplay } from "./DateTimeDisplay";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -52,10 +53,19 @@ export function MenuBar({ onOpenEvents }: MenuBarProps) {
         {/* Divider */}
         <div className="h-4 w-px bg-slate-300 dark:bg-slate-600" />
 
-        {/* App Name */}
-        <span className="text-[13px] font-bold text-slate-800 dark:text-white">
-          LMS
-        </span>
+        {/* School Logo + App Name */}
+        <div className="flex items-center gap-1.5">
+          <Image
+            src="/images/kcislk-logo.png"
+            alt="KCISLK"
+            width={18}
+            height={18}
+            className="object-contain"
+          />
+          <span className="text-[13px] font-bold text-slate-800 dark:text-white">
+            LMS
+          </span>
+        </div>
       </div>
 
       {/* Right Side: Search, User Menu & Clock */}
