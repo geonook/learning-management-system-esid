@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Apple } from "lucide-react";
+import Image from "next/image";
 
 export default function BootPage() {
   const router = useRouter();
@@ -46,8 +46,15 @@ export default function BootPage() {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="flex flex-col items-center"
         >
-          <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-3xl bg-white/10 backdrop-blur-md shadow-2xl border border-white/20">
-            <Apple className="h-12 w-12 text-white fill-current" />
+          <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-3xl bg-white/10 backdrop-blur-md shadow-2xl border border-white/20 overflow-hidden">
+            <Image
+              src="/images/kcislk-logo.png"
+              alt="KCISLK Logo"
+              width={64}
+              height={64}
+              className="object-contain"
+              priority
+            />
           </div>
           <h1 className="text-2xl font-semibold tracking-wide text-white/90">
             LMS
