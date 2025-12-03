@@ -2,6 +2,7 @@
 
 import { Home, Search, ChevronDown, LogOut, User } from "lucide-react";
 import { DateTimeDisplay } from "./DateTimeDisplay";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -59,6 +60,9 @@ export function MenuBar({ onOpenEvents }: MenuBarProps) {
 
       {/* Right Side: Search, User Menu & Clock */}
       <div className="flex items-center gap-3 pr-2">
+        {/* Theme Toggle */}
+        <ThemeToggle />
+
         {/* Search Icon */}
         <Button
           variant="ghost"
