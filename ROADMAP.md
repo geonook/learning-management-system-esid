@@ -1,41 +1,34 @@
 # LMS Roadmap
 
-> **Last Updated**: 2025-12-02
+> **Last Updated**: 2025-12-03
 
 ## Active Development
 
-### Phase 4.2: Browse Pages Data Integration
+### Phase 4.3: Teacher Course Assignment
 **Priority**: High
 **Status**: In Progress
 **Target**: 2025-12-09
 
 #### Background
-Browse Classes, Students, and Teachers pages currently display static placeholder data instead of fetching real data from the database. With Staging data confirmed (84 classes, 1,511 students, 252 courses), these pages need to be connected to actual data.
-
-#### Tasks
-| Task | Status | Description |
-|------|--------|-------------|
-| Browse Classes Data Fetching | 🔄 Pending | Replace placeholder with real class data from Supabase |
-| Browse Students Data Fetching | 🔄 Pending | Replace placeholder with real student data, add pagination |
-| Browse Teachers Data Fetching | 🔄 Pending | Fetch teacher data, show assigned courses |
-| Search & Filter Implementation | 🔄 Pending | Implement actual search and filter functionality |
-| Pagination | 🔄 Pending | Handle large datasets (1,500+ students) |
-
-### Phase 4.3: Teacher Course Assignment
-**Priority**: High
-**Status**: Pending
-**Target**: 2025-12-15
-
-#### Background
 72 teachers have been imported to Info Hub and are ready for SSO sync. Courses exist (252) but all have `teacher_id = NULL`. Need to assign teachers to their courses.
 
+**Important**: Teachers must SSO login first to create their `auth.users` record before course assignment. LMS uses `users.id` foreign key to `auth.users.id`.
+
 #### Tasks
 | Task | Status | Description |
 |------|--------|-------------|
-| Process course_assignments.csv | 🔄 Pending | Match teachers to courses by email and course_type |
-| Update courses table | 🔄 Pending | Set teacher_id for each course |
-| Test teacher SSO login | 🔄 Pending | Verify teachers can login and see only their classes |
+| Create assignment scripts | ✅ Complete | `scripts/import-teachers.ts` and `scripts/assign-teachers-to-courses.ts` |
+| Teachers SSO login | 🔄 Pending | Teachers must login via SSO to sync from Info Hub |
+| Run course assignments | 🔄 Pending | Execute assignment script after teachers exist in LMS |
 | Validate RLS permissions | 🔄 Pending | Ensure teachers only access their own courses |
+
+#### Workflow
+```
+1. Teachers login via Info Hub SSO
+2. Webhook syncs user to LMS public.users table
+3. Run: npx tsx scripts/assign-teachers-to-courses.ts
+4. Verify teacher can see only their assigned classes
+```
 
 ---
 
@@ -103,6 +96,7 @@ _Archive of completed features_
 
 | Feature | Completed Date |
 |---------|----------------|
+| Phase 4.2: Browse Pages Data Integration | 2025-12-03 |
 | E2E SSO Integration Testing | 2025-12-02 |
 | SSO User ID Mismatch Fix | 2025-12-02 |
 | Production & Staging Data Seeding (84 classes, 1,511 students, 252 courses) | 2025-12-02 |
