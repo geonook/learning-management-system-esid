@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { data, error } = await supabase
         .from('users')
-        .select('id, role, grade, track, teacher_type, full_name')
+        .select('id, role, grade_band, track, teacher_type, full_name')
         .eq('id', userId)
         .single()
 
@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return {
         userId: data.id,
         role: data.role,
-        grade: data.grade,
+        grade: data.grade_band,
         track: data.track,
         teacher_type: data.teacher_type,
         full_name: data.full_name
