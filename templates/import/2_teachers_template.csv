@@ -71,3 +71,11 @@ full_name,email,teacher_type,grade_band,role
 ,avamelocotones@kcislk.ntpc.edu.tw,KCFS,,teacher
 ,marisachapman@kcislk.ntpc.edu.tw,KCFS,,teacher
 ,caseylynjavier@kcislk.ntpc.edu.tw,KCFS,,teacher
+Test G1 LT,kcislkg1lt@kcislk.ntpc.edu.tw,LT,1,teacher
+Test G2 LT,kcislkg2lt@kcislk.ntpc.edu.tw,LT,2,teacher
+Test G12 IT,kcislkg12it@kcislk.ntpc.edu.tw,IT,1-2,teacher
+Test G34 LT,kcislkg34lt@kcislk.ntpc.edu.tw,LT,3-4,teacher
+Test G34 IT,kcislkg34it@kcislk.ntpc.edu.tw,IT,3-4,teacher
+Test G56 LT,kcislkg56lt@kcislk.ntpc.edu.tw,LT,5-6,teacher
+Test G56 IT,kcislkg56it@kcislk.ntpc.edu.tw,IT,5-6,teacher
+Test KCFS,kcislkkcfs@kcislk.ntpc.edu.tw,KCFS,1-6,teacher
