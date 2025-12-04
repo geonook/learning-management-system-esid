@@ -289,7 +289,7 @@ export default function UserManagementPage() {
                   Teacher Type
                 </th>
                 <th className="text-left p-4 text-sm font-medium text-white/60">
-                  Grade
+                  Grade Band
                 </th>
                 <th className="text-right p-4 text-sm font-medium text-white/60">
                   Actions
@@ -398,40 +398,61 @@ export default function UserManagementPage() {
                       {editingUser === user.id ? (
                         <select
                           className="bg-white/10 border border-white/20 rounded px-2 py-1 text-white text-sm"
-                          value={editForm?.grade_band || ""}
-                          onChange={(e) =>
-                            setEditForm((prev) =>
-                              prev
-                                ? {
-                                    ...prev,
-                                    grade_band: e.target.value || null,
-                                    // Also update grade for backwards compatibility
-                                    grade: e.target.value && !e.target.value.includes("-")
-                                      ? parseInt(e.target.value)
-                                      : null
-                                  }
-                                : null
-                            )
+                          value={
+                            editForm?.grade_band && editForm?.track
+                              ? `${editForm.grade_band}|${editForm.track}`
+                              : ""
                           }
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (!value) {
+                              setEditForm((prev) =>
+                                prev ? { ...prev, grade_band: null, track: null, grade: null } : null
+                              );
+                            } else {
+                              const parts = value.split("|");
+                              const gradeBand = parts[0] || null;
+                              const track = parts[1] || null;
+                              setEditForm((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      grade_band: gradeBand,
+                                      track: track,
+                                      // Set grade for backwards compatibility
+                                      grade: gradeBand && !gradeBand.includes("-")
+                                        ? parseInt(gradeBand)
+                                        : null
+                                    }
+                                  : null
+                              );
+                            }
+                          }}
                         >
                           <option value="">None</option>
-                          <optgroup label="Single Grade">
-                            {[1, 2, 3, 4, 5, 6].map((g) => (
-                              <option key={g} value={g.toString()}>
-                                G{g}
-                              </option>
-                            ))}
+                          <optgroup label="LT Head Teachers">
+                            <option value="1|LT">G1 LT</option>
+                            <option value="2|LT">G2 LT</option>
+                            <option value="3-4|LT">G3-4 LT</option>
+                            <option value="5-6|LT">G5-6 LT</option>
                           </optgroup>
-                          <optgroup label="Grade Band">
-                            <option value="1-2">G1-2</option>
-                            <option value="3-4">G3-4</option>
-                            <option value="5-6">G5-6</option>
-                            <option value="1-6">G1-6 (All)</option>
+                          <optgroup label="IT Head Teachers">
+                            <option value="1-2|IT">G1-2 IT</option>
+                            <option value="3-4|IT">G3-4 IT</option>
+                            <option value="5-6|IT">G5-6 IT</option>
+                          </optgroup>
+                          <optgroup label="KCFS Head Teacher">
+                            <option value="1-6|KCFS">G1-6 KCFS (All)</option>
                           </optgroup>
                         </select>
                       ) : (user as { grade_band?: string | null }).grade_band ? (
                         <span className="text-white/60">
                           G{(user as { grade_band?: string | null }).grade_band}
+                          {(user as { track?: string | null }).track && (
+                            <span className="ml-1 text-white/40">
+                              {(user as { track?: string | null }).track}
+                            </span>
+                          )}
                         </span>
                       ) : user.grade ? (
                         <span className="text-white/60">G{user.grade}</span>
