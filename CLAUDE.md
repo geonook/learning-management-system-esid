@@ -1,29 +1,30 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 2.8
-> **Last Updated**: 2025-12-03
+> **Documentation Version**: 2.9
+> **Last Updated**: 2025-12-04
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Both Systems Complete)**
-> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**, **Teacher Course Assignment (v1.42.0 ✅)**
+> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**, **Teacher Course Assignment (v1.42.0 ✅)**, **Data Pages Sprint 1-2 (v1.43.0 ✅)**
 
 > **Current Status**:
 >
+> - ✅ **v1.43.0 Data Pages Complete** - Sprint 1 & 2 功能完善計畫完成 (2025-12-04)
+>   - Sprint 1: Dashboard mock 數據修復、Browse Stats 連接真實數據、Head Overview 連接真實數據
+>   - Sprint 2: Admin Classes 重寫、Head Teachers 重寫、Browse Gradebook 重寫
+> - ✅ **Dashboard KPIs 真實化** - attendanceRate/activeAlerts 改為 N/A（待系統實作），avgScore/passRate 真實數據
+> - ✅ **6 個頁面完整重寫** - 使用真實 Supabase 數據取代 placeholder
 > - ✅ **v1.42.0 Teacher Course Assignment** - 252 courses assigned to 80 teachers (2025-12-03)
 > - ✅ **Production Teacher Import** - 81 users imported (admin:1, head:8, teacher:54, office_member:17)
-> - ✅ **Staging Teacher Import** - 80 users synced with correct course assignments
 > - ✅ **Browse Classes Race Condition Fix** - Auth state checked before API calls (2025-12-03)
-> - ✅ **SSO full_name Fix** - Google profile displayName synced for existing users
 > - ✅ **v1.41.0 TeacherOS UI Refinements** - Dark mode optimization, Calendar redesign, macOS style enhancements
 > - ✅ **Phase 4.1 Complete** - One OS Interface Unification with Info Hub
-> - ✅ **Deployment Optimized** - Dockerfile standalone mode, multi-stage build
 > - ✅ **SSO Implementation** - Both LMS & Info Hub complete, alignment verified
 > - ✅ **Migration 022 Complete** - assessment_codes (13) deployed to Production (2025-12-02)
 > - ✅ **Production Data Seeded** - classes (84), courses (252), students (1,511) imported
-> - ✅ **E2E SSO Integration Testing** - Complete and verified on Staging
 > - 🎯 **Next Steps**:
->   1. Test teacher SSO login and verify correct course access
->   2. Implement Browse Students/Teachers pages with same auth pattern
->   3. Verify Head Teacher grade band permissions working correctly
+>   1. Sprint 3: 班級學生名冊、課程指派系統、我的課表
+>   2. Phase 5: Gradebook 色彩優化（Term Grade/Avg 欄位色彩編碼）
+>   3. Phase 6: 非侵入式 Skeleton 系統
 
 This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -934,6 +935,80 @@ COPY --from=builder /app/public ./public
 - `fix: refine Dockerfile static asset copy paths`
 - `fix: add Dockerfile with static asset copy for standalone mode`
 - `chore: add .dockerignore to prevent copying local artifacts`
+
+---
+
+## 🚀 LMS 功能完善計畫 (2025-12-04) ✅ **Sprint 1-2 完成**
+
+### 📊 數據真實性審計結果
+
+經過全面審計，以下頁面已從 placeholder/mock 數據升級為真實 Supabase 數據：
+
+| 頁面 | 之前狀態 | 現在狀態 | Commit |
+|------|----------|----------|--------|
+| Dashboard KPIs | 70% 真實（attendance/alerts mock） | 100%（N/A 取代 mock） | `2821cfd` |
+| Browse Stats | 0%（純 placeholder） | 100%（真實 Supabase） | `43756d9` |
+| Head Overview | 0%（硬編碼數字） | 100%（真實 Supabase） | `8244da7` |
+| Admin Classes | 0%（硬編碼 84/252） | 100%（真實 Supabase） | `43b2520` |
+| Head Teachers | 0%（mock teachers） | 100%（真實 Supabase） | `43b2520` |
+| Browse Gradebook | 0%（純 placeholder） | 100%（真實 Supabase） | `43b2520` |
+
+### ✅ Sprint 1：修復假數據（2025-12-04 完成）
+
+**1.1 Dashboard Mock 數據修復**
+- `lib/api/dashboard.ts`: `attendanceRate` 和 `activeAlerts` 改為 `null`
+- `app/(lms)/dashboard/page.tsx`: 顯示 "N/A" + "Coming soon"
+- 原因：無出席系統和警告系統，不應顯示隨機數字
+
+**1.2 Browse Stats 連接真實數據**
+- 使用 `getClassDistribution("admin")` 獲取圖表數據
+- 計算真實的 school-wide 平均分和完成率
+- 按年級統計學生數和平均分
+
+**1.3 Head Overview 連接真實數據**
+- 新增 `getHeadTeacherKpis(gradeBand, courseType)` 函數
+- 根據 Head Teacher 的 `grade_band` 過濾班級和學生
+- 計算年段內的真實統計數據
+
+### ✅ Sprint 2：功能完善（2025-12-04 完成）
+
+**2.1 Admin Classes 班級管理頁面**
+- 檔案：`app/(lms)/admin/classes/page.tsx`
+- 使用 `getClassesWithDetails()` API
+- 功能：搜尋、年級篩選、LT/IT/KCFS 教師指派狀態
+- 統計：真實班級數、課程數、學生數
+
+**2.2 Head Teachers 教師進度頁面**
+- 檔案：`app/(lms)/head/teachers/page.tsx`
+- 使用 `getTeachersWithCourses()` + grade_band 過濾
+- 功能：按課程類型分組（LT/IT/KCFS）
+- 顯示：教師列表、課程數、進度（placeholder）
+
+**2.3 Browse Gradebook 跨班成績頁面**
+- 檔案：`app/(lms)/browse/gradebook/page.tsx`
+- 直接 Supabase 查詢 exams + classes + courses
+- 功能：搜尋、年級篩選、課程類型篩選、評量類型篩選
+- 統計：考試數、完成率、逾期數
+
+### 📁 修改檔案清單（Sprint 1-2）
+
+| 檔案 | 變更類型 | 變更量 |
+|------|----------|--------|
+| `lib/api/dashboard.ts` | 修改 | mock → null |
+| `app/(lms)/dashboard/page.tsx` | 修改 | 處理 null 顯示 |
+| `app/(lms)/browse/stats/page.tsx` | 重寫 | +350 行 |
+| `app/(lms)/head/overview/page.tsx` | 重寫 | +388 行 |
+| `app/(lms)/admin/classes/page.tsx` | 重寫 | +275 行 |
+| `app/(lms)/head/teachers/page.tsx` | 重寫 | +431 行 |
+| `app/(lms)/browse/gradebook/page.tsx` | 重寫 | +527 行 |
+
+### 🎯 待辦：Sprint 3（功能擴展）
+
+| 任務 | 路由 | 優先級 |
+|------|------|--------|
+| 班級學生名冊 | `/(lms)/class/[classId]/students` | 🟢 |
+| 課程指派系統 | 多個檔案 | 🟢 |
+| 我的課表 | `/(lms)/schedule` | 🟢 |
 
 ---
 
