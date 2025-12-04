@@ -150,26 +150,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email)
-        
+        console.log('[AuthContext] Auth state changed:', event, session?.user?.email)
+
         const useMockAuth = process.env.NEXT_PUBLIC_USE_MOCK_AUTH === 'true'
-        
+
         // If mock auth is active, ignore real auth state changes
         if (useMockAuth && process.env.NODE_ENV === 'development' && isDevelopmentMockActive) {
-          console.log('Development mode: Ignoring auth state change - mock admin user is active')
+          console.log('[AuthContext] Development mode: Ignoring auth state change')
           return
         }
-        
+
+        // Skip if this is just a token refresh and user hasn't changed
+        if (event === 'TOKEN_REFRESHED' && user?.id === session?.user?.id) {
+          console.log('[AuthContext] Token refresh for same user, skipping permission fetch')
+          return
+        }
+
         if (session?.user) {
+          // Set loading to true while fetching permissions to prevent race condition
+          setLoading(true)
           setUser(session.user)
           const permissions = await fetchUserPermissions(session.user.id)
           setUserPermissions(permissions)
+          setLoading(false)
         } else {
           setUser(null)
           setUserPermissions(null)
+          setLoading(false)
         }
-        
-        setLoading(false)
       }
     )
 
