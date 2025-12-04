@@ -53,6 +53,8 @@ export default function UserManagementPage() {
     role: string;
     teacher_type: TeacherType | null;
     grade: number | null;
+    grade_band: string | null;
+    track: string | null;
   } | null>(null);
   const [saving, setSaving] = useState(false);
   const [stats, setStats] = useState<{
@@ -108,7 +110,9 @@ export default function UserManagementPage() {
     setEditForm({
       role: user.role,
       teacher_type: user.teacher_type,
-      grade: user.grade
+      grade: user.grade,
+      grade_band: (user as { grade_band?: string | null }).grade_band || null,
+      track: (user as { track?: string | null }).track || null
     });
   };
 
@@ -125,7 +129,9 @@ export default function UserManagementPage() {
       await updateUser(userId, {
         role: editForm.role as UserRole,
         teacher_type: editForm.teacher_type,
-        grade: editForm.grade
+        grade: editForm.grade,
+        grade_band: editForm.grade_band,
+        track: editForm.track as "LT" | "IT" | "KCFS" | null
       });
       await fetchData();
       setEditingUser(null);
@@ -392,25 +398,41 @@ export default function UserManagementPage() {
                       {editingUser === user.id ? (
                         <select
                           className="bg-white/10 border border-white/20 rounded px-2 py-1 text-white text-sm"
-                          value={editForm?.grade || ""}
+                          value={editForm?.grade_band || ""}
                           onChange={(e) =>
                             setEditForm((prev) =>
                               prev
                                 ? {
                                     ...prev,
-                                    grade: e.target.value ? parseInt(e.target.value) : null
+                                    grade_band: e.target.value || null,
+                                    // Also update grade for backwards compatibility
+                                    grade: e.target.value && !e.target.value.includes("-")
+                                      ? parseInt(e.target.value)
+                                      : null
                                   }
                                 : null
                             )
                           }
                         >
                           <option value="">None</option>
-                          {[1, 2, 3, 4, 5, 6].map((g) => (
-                            <option key={g} value={g}>
-                              G{g}
-                            </option>
-                          ))}
+                          <optgroup label="Single Grade">
+                            {[1, 2, 3, 4, 5, 6].map((g) => (
+                              <option key={g} value={g.toString()}>
+                                G{g}
+                              </option>
+                            ))}
+                          </optgroup>
+                          <optgroup label="Grade Band">
+                            <option value="1-2">G1-2</option>
+                            <option value="3-4">G3-4</option>
+                            <option value="5-6">G5-6</option>
+                            <option value="1-6">G1-6 (All)</option>
+                          </optgroup>
                         </select>
+                      ) : (user as { grade_band?: string | null }).grade_band ? (
+                        <span className="text-white/60">
+                          G{(user as { grade_band?: string | null }).grade_band}
+                        </span>
                       ) : user.grade ? (
                         <span className="text-white/60">G{user.grade}</span>
                       ) : (

@@ -14,10 +14,11 @@ export type Database = {
           id: string
           email: string
           full_name: string
-          role: 'admin' | 'head' | 'teacher' | 'student'
+          role: 'admin' | 'head' | 'teacher' | 'student' | 'office_member'
           teacher_type: 'LT' | 'IT' | 'KCFS' | null
           grade: number | null
-          track: 'local' | 'international' | null
+          grade_band: string | null // For head teachers: "1", "2", "3-4", "5-6", "1-2", "1-6"
+          track: 'LT' | 'IT' | 'KCFS' | null // Course type for head teachers
           is_active: boolean
           created_at: string
           updated_at: string
@@ -26,10 +27,11 @@ export type Database = {
           id: string
           email: string
           full_name: string
-          role?: 'admin' | 'head' | 'teacher' | 'student'
+          role?: 'admin' | 'head' | 'teacher' | 'student' | 'office_member'
           teacher_type?: 'LT' | 'IT' | 'KCFS' | null
           grade?: number | null
-          track?: 'local' | 'international' | null
+          grade_band?: string | null
+          track?: 'LT' | 'IT' | 'KCFS' | null
           is_active?: boolean
           created_at?: string
           updated_at?: string
@@ -38,10 +40,11 @@ export type Database = {
           id?: string
           email?: string
           full_name?: string
-          role?: 'admin' | 'head' | 'teacher' | 'student'
+          role?: 'admin' | 'head' | 'teacher' | 'student' | 'office_member'
           teacher_type?: 'LT' | 'IT' | 'KCFS' | null
           grade?: number | null
-          track?: 'local' | 'international' | null
+          grade_band?: string | null
+          track?: 'LT' | 'IT' | 'KCFS' | null
           is_active?: boolean
           created_at?: string
           updated_at?: string
