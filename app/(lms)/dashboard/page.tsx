@@ -41,7 +41,7 @@ import {
 } from "recharts";
 import { MissionControl } from "@/components/os/MissionControl";
 import { Widget } from "@/components/os/Widget";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonKPI, SkeletonList, SkeletonChart } from "@/components/ui/skeleton";
 
 export default function Dashboard() {
   const { user, userPermissions } = useAuth();
@@ -212,10 +212,7 @@ export default function Dashboard() {
               delay={1}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
                   <div className="text-3xl font-bold text-slate-900 dark:text-white">
@@ -234,10 +231,7 @@ export default function Dashboard() {
               delay={2}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
                   <div className="text-3xl font-bold text-slate-900 dark:text-white">
@@ -256,10 +250,7 @@ export default function Dashboard() {
               delay={3}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
                   <div className="text-3xl font-bold text-slate-900 dark:text-white">
@@ -278,10 +269,7 @@ export default function Dashboard() {
               delay={4}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
                   <div className="text-3xl font-bold text-slate-900 dark:text-white">
@@ -306,10 +294,7 @@ export default function Dashboard() {
               delay={1}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
                   <div className="text-3xl font-bold text-slate-900 dark:text-white">
@@ -326,10 +311,7 @@ export default function Dashboard() {
               delay={2}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
                   <div className="text-3xl font-bold text-slate-900 dark:text-white">
@@ -346,10 +328,7 @@ export default function Dashboard() {
               delay={3}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
                   <div className="text-3xl font-bold text-slate-900 dark:text-white">
@@ -368,10 +347,7 @@ export default function Dashboard() {
               delay={4}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
                   <div className="text-3xl font-bold text-red-600 dark:text-red-400">
@@ -394,10 +370,7 @@ export default function Dashboard() {
               delay={1}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
                   <div className="text-3xl font-bold text-slate-900 dark:text-white">
@@ -414,10 +387,7 @@ export default function Dashboard() {
               delay={2}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
                   <div className="text-3xl font-bold text-slate-900 dark:text-white">
@@ -434,10 +404,7 @@ export default function Dashboard() {
               delay={3}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
                   <div className="text-3xl font-bold text-slate-900 dark:text-white">
@@ -456,10 +423,7 @@ export default function Dashboard() {
               delay={4}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
                   <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
@@ -581,11 +545,7 @@ export default function Dashboard() {
           delay={7}
         >
           {loadingLists ? (
-            <div className="space-y-3">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </div>
+            <SkeletonList rows={3} />
           ) : (
             <div className="space-y-3">
               {deadlines.length > 0 ? (
@@ -616,11 +576,7 @@ export default function Dashboard() {
           delay={8}
         >
           {loadingLists ? (
-            <div className="space-y-3">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </div>
+            <SkeletonList rows={3} />
           ) : (
             <div className="space-y-3">
               {alerts.length > 0 ? (

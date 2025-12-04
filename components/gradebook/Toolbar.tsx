@@ -25,15 +25,16 @@ function ToolbarButton({ Icon, label, onClick, active }: ToolbarButtonProps) {
     <button
       onClick={onClick}
       className={cn(
-        "flex flex-col items-center justify-center space-y-1 px-3 py-1 rounded-md transition-colors",
-        "hover:bg-black/5 active:bg-black/10",
-        active && "bg-black/10"
+        "flex flex-col items-center justify-center space-y-1 px-3 py-1 rounded-md transition-all duration-150",
+        "hover:bg-slate-100 dark:hover:bg-slate-700 hover:scale-105",
+        "active:scale-95",
+        active && "bg-slate-100 dark:bg-slate-700"
       )}
     >
-      <div className="text-gray-700">
+      <div className="text-gray-700 dark:text-gray-300">
         <Icon size={20} />
       </div>
-      <span className="text-[10px] font-medium text-gray-600">{label}</span>
+      <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400">{label}</span>
     </button>
   );
 }

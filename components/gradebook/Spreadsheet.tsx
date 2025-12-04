@@ -3,6 +3,14 @@
 import React, { useState, useTransition } from "react";
 import { FormulaEngine, GradeRow } from "@/lib/gradebook/FormulaEngine";
 import { cn } from "@/lib/utils";
+
+// Score color coding helper
+function getScoreColor(score: number | null | undefined): string {
+  if (score === null || score === undefined) return "";
+  if (score >= 80) return "text-emerald-600 dark:text-emerald-400";
+  if (score >= 60) return "text-amber-600 dark:text-amber-500";
+  return "text-red-600 dark:text-red-400";
+}
 import { FocusGradeInput } from "./FocusGradeInput";
 import { updateScore } from "@/lib/actions/gradebook";
 import { Loader2, AlertCircle } from "lucide-react";
@@ -153,7 +161,7 @@ export function Spreadsheet({ classId, initialData }: SpreadsheetProps) {
             return (
               <div
                 key={row.id}
-                className="flex border-b border-gray-200 hover:bg-blue-50/30 group"
+                className="flex border-b border-gray-200 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors duration-150 group"
               >
                 {/* Fixed Columns */}
                 <div className="sticky left-0 z-20 flex shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
@@ -190,11 +198,12 @@ export function Spreadsheet({ classId, initialData }: SpreadsheetProps) {
                       <input
                         type="number"
                         className={cn(
-                          "w-full h-full px-2 py-1 text-center text-sm outline-none bg-transparent transition-all",
-                          "focus:bg-blue-100 focus:ring-2 focus:ring-inset focus:ring-blue-500",
+                          "w-full h-full px-2 py-1 text-center text-sm outline-none bg-transparent transition-all duration-200",
+                          "focus:bg-blue-100 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500",
                           row.scores[col.code] !== undefined &&
                             row.scores[col.code] !== null &&
-                            "font-medium"
+                            "font-medium",
+                          getScoreColor(row.scores[col.code])
                         )}
                         placeholder="-"
                         value={row.scores[col.code] ?? ""}

@@ -97,7 +97,7 @@ export function FocusGradeInput({
                       inputRefs.current[index] = el;
                     }}
                     type="number"
-                    className="w-full px-4 py-2 text-right text-lg font-bold border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                    className="w-full px-4 py-2 text-right text-lg font-bold border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:shadow-lg outline-none transition-all duration-200"
                     placeholder="-"
                     value={student.scores[assessmentCode] ?? ""}
                     onChange={(e) => {
