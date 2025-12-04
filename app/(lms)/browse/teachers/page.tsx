@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { Users, Search, Loader2 } from "lucide-react";
+import { Users, Search, Loader2, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   getTeachersWithCourses,
@@ -159,43 +160,53 @@ export default function BrowseTeachersPage() {
                   <th className="text-left p-4 text-sm font-medium text-white/60">Grade</th>
                   <th className="text-left p-4 text-sm font-medium text-white/60">Classes</th>
                   <th className="text-left p-4 text-sm font-medium text-white/60">Email</th>
+                  <th className="text-right p-4 text-sm font-medium text-white/60 w-16"></th>
                 </tr>
               </thead>
               <tbody>
                 {teachers.map((teacher) => (
-                  <tr key={teacher.id} className="border-b border-white/5 hover:bg-white/5">
-                    <td className="p-4 text-white font-medium">{teacher.full_name}</td>
-                    <td className="p-4">
-                      <span className={`px-2 py-1 text-xs rounded-full ${getTypeBadgeColor(teacher.teacher_type, teacher.role)}`}>
-                        {teacher.role === "head" ? "Head" : teacher.teacher_type || "-"}
-                      </span>
-                    </td>
-                    <td className="p-4 text-white/60">
-                      {teacher.grade ? `G${teacher.grade}` : "-"}
-                    </td>
-                    <td className="p-4">
-                      {teacher.assigned_classes.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {teacher.assigned_classes.slice(0, 3).map((cls) => (
-                            <span
-                              key={cls}
-                              className="px-2 py-0.5 bg-white/10 text-white/60 text-xs rounded"
-                            >
-                              {cls}
-                            </span>
-                          ))}
-                          {teacher.assigned_classes.length > 3 && (
-                            <span className="px-2 py-0.5 bg-white/5 text-white/40 text-xs rounded">
-                              +{teacher.assigned_classes.length - 3} more
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-white/40 text-sm">No assignments</span>
-                      )}
-                    </td>
-                    <td className="p-4 text-white/40 text-sm">{teacher.email}</td>
-                  </tr>
+                  <Link
+                    key={teacher.id}
+                    href={`/teacher/${teacher.id}`}
+                    className="contents group"
+                  >
+                    <tr className="border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors">
+                      <td className="p-4 text-white font-medium group-hover:text-emerald-400 transition-colors">{teacher.full_name}</td>
+                      <td className="p-4">
+                        <span className={`px-2 py-1 text-xs rounded-full ${getTypeBadgeColor(teacher.teacher_type, teacher.role)}`}>
+                          {teacher.role === "head" ? "Head" : teacher.teacher_type || "-"}
+                        </span>
+                      </td>
+                      <td className="p-4 text-white/60">
+                        {teacher.grade ? `G${teacher.grade}` : "-"}
+                      </td>
+                      <td className="p-4">
+                        {teacher.assigned_classes.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {teacher.assigned_classes.slice(0, 3).map((cls) => (
+                              <span
+                                key={cls}
+                                className="px-2 py-0.5 bg-white/10 text-white/60 text-xs rounded"
+                              >
+                                {cls}
+                              </span>
+                            ))}
+                            {teacher.assigned_classes.length > 3 && (
+                              <span className="px-2 py-0.5 bg-white/5 text-white/40 text-xs rounded">
+                                +{teacher.assigned_classes.length - 3} more
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-white/40 text-sm">No assignments</span>
+                        )}
+                      </td>
+                      <td className="p-4 text-white/40 text-sm">{teacher.email}</td>
+                      <td className="p-4 text-right">
+                        <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors inline-block" />
+                      </td>
+                    </tr>
+                  </Link>
                 ))}
               </tbody>
             </table>

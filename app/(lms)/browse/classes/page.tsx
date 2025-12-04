@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { useAuth } from "@/lib/supabase/auth-context";
-import { School, Search, Loader2 } from "lucide-react";
+import { School, Search, Loader2, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { getClassesWithDetails, type ClassWithDetails } from "@/lib/api/classes";
 
@@ -134,55 +135,61 @@ export default function BrowseClassesPage() {
         {!loading && !error && classes.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {classes.map((cls) => (
-              <div
+              <Link
                 key={cls.id}
-                className="bg-white/5 rounded-xl border border-white/10 p-6 hover:bg-white/[0.07] transition-colors"
+                href={`/class/${cls.id}`}
+                className="group block"
               >
-                <div className="flex items-center justify-between mb-4">
-                  <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">
-                    G{cls.grade}
-                  </span>
-                  <span className="text-xs text-white/40">
-                    {cls.student_count} student{cls.student_count !== 1 ? "s" : ""}
-                  </span>
+                <div className="relative bg-white/5 rounded-xl border border-white/10 p-6 hover:bg-white/[0.07] hover:border-white/20 transition-all duration-200">
+                  {/* Hover indicator */}
+                  <div className="absolute right-4 top-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ChevronRight className="w-5 h-5 text-white/40" />
+                  </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">
+                      G{cls.grade}
+                    </span>
+                    <span className="text-xs text-white/40 mr-6">
+                      {cls.student_count} student{cls.student_count !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-medium text-white mb-1 group-hover:text-blue-400 transition-colors">{cls.name}</h3>
+                  <p className="text-sm text-white/50 mb-4">
+                    Level: {cls.level || "N/A"}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-white/40">
+                    <span className="flex items-center gap-1">
+                      <span className="text-green-400">LT:</span>
+                      <span className="text-white/60 truncate max-w-[80px]">
+                        {getTeacherName(cls.courses, "LT")}
+                      </span>
+                    </span>
+                    <span>•</span>
+                    <span className="flex items-center gap-1">
+                      <span className="text-blue-400">IT:</span>
+                      <span className="text-white/60 truncate max-w-[80px]">
+                        {getTeacherName(cls.courses, "IT")}
+                      </span>
+                    </span>
+                    <span>•</span>
+                    <span className="flex items-center gap-1">
+                      <span className="text-purple-400">KCFS:</span>
+                      <span className="text-white/60 truncate max-w-[80px]">
+                        {getTeacherName(cls.courses, "KCFS")}
+                      </span>
+                    </span>
+                  </div>
                 </div>
-                <h3 className="text-lg font-medium text-white mb-1">{cls.name}</h3>
-                <p className="text-sm text-white/50 mb-4">
-                  Level: {cls.level || "N/A"}
-                </p>
-                <div className="flex flex-wrap items-center gap-2 text-xs text-white/40">
-                  <span className="flex items-center gap-1">
-                    <span className="text-green-400">LT:</span>
-                    <span className="text-white/60 truncate max-w-[80px]">
-                      {getTeacherName(cls.courses, "LT")}
-                    </span>
-                  </span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1">
-                    <span className="text-blue-400">IT:</span>
-                    <span className="text-white/60 truncate max-w-[80px]">
-                      {getTeacherName(cls.courses, "IT")}
-                    </span>
-                  </span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1">
-                    <span className="text-purple-400">KCFS:</span>
-                    <span className="text-white/60 truncate max-w-[80px]">
-                      {getTeacherName(cls.courses, "KCFS")}
-                    </span>
-                  </span>
-                </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
 
         {/* Info */}
         <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
-          <h3 className="text-blue-400 font-medium mb-2">Read-Only Access</h3>
+          <h3 className="text-blue-400 font-medium mb-2">Browse Mode</h3>
           <p className="text-white/60 text-sm">
-            You have view-only access to class information. Contact an administrator
-            if you need to make changes.
+            Click on any class to view its details, gradebook, and student roster.
           </p>
         </div>
       </div>

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { GraduationCap, Search, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { GraduationCap, Search, Loader2, ChevronLeft, ChevronRight as ChevronRightIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   getStudentsWithPagination,
@@ -181,33 +182,43 @@ export default function BrowseStudentsPage() {
                   <th className="text-left p-4 text-sm font-medium text-white/60">Grade</th>
                   <th className="text-left p-4 text-sm font-medium text-white/60">Level</th>
                   <th className="text-left p-4 text-sm font-medium text-white/60">Class</th>
+                  <th className="text-right p-4 text-sm font-medium text-white/60 w-16"></th>
                 </tr>
               </thead>
               <tbody>
                 {data.students.map((student) => (
-                  <tr key={student.id} className="border-b border-white/5 hover:bg-white/5">
-                    <td className="p-4 text-white font-mono text-sm">{student.student_id}</td>
-                    <td className="p-4 text-white">{student.full_name}</td>
-                    <td className="p-4">
-                      <span className="px-2 py-1 bg-purple-500/20 text-purple-400 text-xs rounded-full">
-                        G{student.grade}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        student.level?.includes("E1")
-                          ? "bg-green-500/20 text-green-400"
-                          : student.level?.includes("E2")
-                          ? "bg-amber-500/20 text-amber-400"
-                          : student.level?.includes("E3")
-                          ? "bg-red-500/20 text-red-400"
-                          : "bg-white/10 text-white/40"
-                      }`}>
-                        {getLevelDisplay(student.level)}
-                      </span>
-                    </td>
-                    <td className="p-4 text-white/60">{student.class_name || "-"}</td>
-                  </tr>
+                  <Link
+                    key={student.id}
+                    href={`/student/${student.id}`}
+                    className="contents group"
+                  >
+                    <tr className="border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors">
+                      <td className="p-4 text-white font-mono text-sm">{student.student_id}</td>
+                      <td className="p-4 text-white group-hover:text-purple-400 transition-colors">{student.full_name}</td>
+                      <td className="p-4">
+                        <span className="px-2 py-1 bg-purple-500/20 text-purple-400 text-xs rounded-full">
+                          G{student.grade}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          student.level?.includes("E1")
+                            ? "bg-green-500/20 text-green-400"
+                            : student.level?.includes("E2")
+                            ? "bg-amber-500/20 text-amber-400"
+                            : student.level?.includes("E3")
+                            ? "bg-red-500/20 text-red-400"
+                            : "bg-white/10 text-white/40"
+                        }`}>
+                          {getLevelDisplay(student.level)}
+                        </span>
+                      </td>
+                      <td className="p-4 text-white/60">{student.class_name || "-"}</td>
+                      <td className="p-4 text-right">
+                        <ChevronRightIcon className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors inline-block" />
+                      </td>
+                    </tr>
+                  </Link>
                 ))}
               </tbody>
             </table>
@@ -233,7 +244,7 @@ export default function BrowseStudentsPage() {
                   disabled={page === data.totalPages}
                   className="p-2 rounded-lg bg-white/5 text-white/60 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRightIcon className="w-4 h-4" />
                 </button>
               </div>
             </div>
