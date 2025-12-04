@@ -10,8 +10,20 @@ import {
   Share,
   Settings,
   ChevronDown,
+  Download,
+  Filter,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Notion-style toolbar colors
+const TOOLBAR_STYLES = {
+  bg: "bg-white dark:bg-slate-900",
+  border: "border-gray-100 dark:border-slate-800",
+  text: "text-gray-600 dark:text-gray-300",
+  textMuted: "text-gray-500 dark:text-gray-400",
+  hover: "hover:bg-gray-50 dark:hover:bg-slate-800",
+  active: "bg-gray-100 dark:bg-slate-800",
+};
 
 interface ToolbarButtonProps {
   Icon: React.ElementType;
@@ -25,35 +37,50 @@ function ToolbarButton({ Icon, label, onClick, active }: ToolbarButtonProps) {
     <button
       onClick={onClick}
       className={cn(
-        "flex flex-col items-center justify-center space-y-1 px-3 py-1 rounded-md transition-all duration-150",
-        "hover:bg-slate-100 dark:hover:bg-slate-700 hover:scale-105",
-        "active:scale-95",
-        active && "bg-slate-100 dark:bg-slate-700"
+        "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md transition-all duration-100",
+        TOOLBAR_STYLES.text,
+        TOOLBAR_STYLES.hover,
+        "active:scale-[0.98]",
+        active && TOOLBAR_STYLES.active
       )}
     >
-      <div className="text-gray-700 dark:text-gray-300">
-        <Icon size={20} />
-      </div>
-      <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400">{label}</span>
+      <Icon size={16} />
+      <span className="text-xs font-medium">{label}</span>
     </button>
   );
 }
 
 export function Toolbar() {
   return (
-    <div className="flex items-center justify-between px-4 py-2 bg-[#f3f3f3] border-b border-[#d1d1d1] shadow-sm">
-      <div className="flex items-center space-x-2">
-        {/* View Controls */}
-        <div className="flex items-center space-x-1 mr-4">
-          <button className="flex items-center space-x-1 px-2 py-1 rounded hover:bg-black/5 text-xs font-medium text-gray-700">
-            <span className="text-blue-500">View</span>
-            <ChevronDown size={12} className="text-blue-500" />
+    <div className={cn(
+      "flex items-center justify-between px-4 py-2",
+      TOOLBAR_STYLES.bg,
+      "border-b",
+      TOOLBAR_STYLES.border
+    )}>
+      <div className="flex items-center gap-1">
+        {/* View Controls - Notion Style */}
+        <div className="flex items-center gap-0.5 mr-2">
+          <button className={cn(
+            "flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors duration-100",
+            "text-blue-600 dark:text-blue-400",
+            "hover:bg-blue-50 dark:hover:bg-blue-900/20"
+          )}>
+            <span>View</span>
+            <ChevronDown size={12} />
           </button>
-          <button className="flex items-center space-x-1 px-2 py-1 rounded hover:bg-black/5 text-xs font-medium text-gray-700">
-            <span className="text-blue-500">Zoom</span>
-            <ChevronDown size={12} className="text-blue-500" />
+          <button className={cn(
+            "flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors duration-100",
+            TOOLBAR_STYLES.textMuted,
+            TOOLBAR_STYLES.hover
+          )}>
+            <Filter size={14} />
+            <span>Filter</span>
           </button>
         </div>
+
+        {/* Separator */}
+        <div className="h-5 w-px bg-gray-200 dark:bg-slate-700 mx-2" />
 
         {/* Insert Objects */}
         <ToolbarButton Icon={Table} label="Table" />
@@ -63,14 +90,34 @@ export function Toolbar() {
         <ToolbarButton Icon={ImageIcon} label="Media" />
       </div>
 
-      <div className="flex items-center space-x-4">
-        <div className="h-8 w-[1px] bg-gray-300" />
-        <button className="flex items-center space-x-1 text-gray-700 hover:text-black">
-          <Share size={18} />
-          <span className="text-xs font-medium">Share</span>
+      <div className="flex items-center gap-2">
+        {/* Separator */}
+        <div className="h-5 w-px bg-gray-200 dark:bg-slate-700" />
+
+        <button className={cn(
+          "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors duration-100",
+          TOOLBAR_STYLES.textMuted,
+          TOOLBAR_STYLES.hover
+        )}>
+          <Download size={14} />
+          <span>Export</span>
         </button>
-        <button className="flex items-center space-x-1 text-gray-700 hover:text-black">
-          <Settings size={18} />
+
+        <button className={cn(
+          "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-100",
+          "bg-blue-600 text-white",
+          "hover:bg-blue-700 dark:hover:bg-blue-500"
+        )}>
+          <Share size={14} />
+          <span>Share</span>
+        </button>
+
+        <button className={cn(
+          "p-1.5 rounded-md transition-colors duration-100",
+          TOOLBAR_STYLES.textMuted,
+          TOOLBAR_STYLES.hover
+        )}>
+          <Settings size={16} />
         </button>
       </div>
     </div>
