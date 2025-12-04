@@ -43,6 +43,7 @@ const TEST_ACCOUNTS: Account[] = [
   { email: 'carolegodfrey@kcislk.ntpc.edu.tw', label: 'Carole Godfrey', type: 'KCFS', grade: '1-6', role: 'head', category: 'kcfs' },
 ]
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const CATEGORY_LABELS: Record<AccountCategory, string> = {
   test: 'Test',
   admin: 'Admin',

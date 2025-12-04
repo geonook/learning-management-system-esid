@@ -64,6 +64,7 @@ export default function TeacherProgressPage() {
           .in("grade", grades)
           .eq("is_active", true);
 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const classIds = (classesInBand || []).map(c => c.id);
         const classNames = new Set((classesInBand || []).map(c => c.name));
 

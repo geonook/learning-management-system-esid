@@ -343,6 +343,7 @@ export async function getClassDistribution(
   userRole: "admin" | "office_member" | "head" | "teacher" | "student",
   userId?: string,
   gradeBand?: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   courseType?: "LT" | "IT" | "KCFS"
 ): Promise<ClassDistribution[]> {
   const supabase = createClient();
@@ -457,6 +458,7 @@ export async function getUpcomingDeadlines(
   userRole: "admin" | "office_member" | "head" | "teacher" | "student",
   userId?: string,
   gradeBand?: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   courseType?: "LT" | "IT" | "KCFS"
 ): Promise<UpcomingDeadline[]> {
   const supabase = createClient();
@@ -973,6 +975,7 @@ export interface GradeClassSummary {
  */
 export async function getHeadTeacherKpis(
   gradeBand: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   courseType: "LT" | "IT" | "KCFS"
 ): Promise<HeadTeacherKpis> {
   const supabase = createClient();
