@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/supabase/auth-context'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
@@ -18,60 +18,45 @@ export function AuthGuard({
 }: AuthGuardProps) {
   const { user, userPermissions, loading } = useAuth()
   const router = useRouter()
-  const [isRedirecting, setIsRedirecting] = useState(false)
+  const [authState, setAuthState] = useState<'loading' | 'authorized' | 'unauthorized' | 'unauthenticated'>('loading')
+  const redirectAttempted = useRef(false)
 
   useEffect(() => {
-    // Don't do anything while loading or already redirecting
-    if (loading || isRedirecting) {
+    // Still loading auth state
+    if (loading) {
+      setAuthState('loading')
       return
     }
 
+    // No user or permissions - unauthenticated
     if (!user || !userPermissions) {
-      // No authenticated user, redirect to login
       console.log('[AuthGuard] No user/permissions, redirecting to login')
-      setIsRedirecting(true)
-      router.push(redirectTo)
+      setAuthState('unauthenticated')
+      if (!redirectAttempted.current) {
+        redirectAttempted.current = true
+        router.replace(redirectTo)
+      }
       return
     }
 
+    // Check role permissions
     if (requiredRoles.length > 0 && !requiredRoles.includes(userPermissions.role)) {
-      // User doesn't have required role, redirect to unauthorized page
-      console.log('[AuthGuard] User role not authorized:', userPermissions.role)
-      setIsRedirecting(true)
-      router.push('/unauthorized')
+      console.log('[AuthGuard] User role not authorized:', userPermissions.role, 'required:', requiredRoles)
+      setAuthState('unauthorized')
+      if (!redirectAttempted.current) {
+        redirectAttempted.current = true
+        router.replace('/unauthorized')
+      }
       return
     }
-  }, [user, userPermissions, loading, router, requiredRoles, redirectTo, isRedirecting])
 
-  // Show loading while auth state is being determined
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    )
-  }
+    // User is authenticated and authorized
+    console.log('[AuthGuard] User authorized:', userPermissions.role)
+    setAuthState('authorized')
+  }, [user, userPermissions, loading, router, requiredRoles, redirectTo])
 
-  // If redirecting, show loading
-  if (isRedirecting) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    )
-  }
-
-  // If no user or permissions after loading is done, show loading while redirect happens
-  if (!user || !userPermissions) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    )
-  }
-
-  // Check role permissions - if user doesn't have required role, show loading while redirect happens
-  if (requiredRoles.length > 0 && !requiredRoles.includes(userPermissions.role)) {
+  // Show loading spinner for any non-authorized state
+  if (authState !== 'authorized') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner />
