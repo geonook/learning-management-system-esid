@@ -41,7 +41,7 @@ import {
 } from "recharts";
 import { MissionControl } from "@/components/os/MissionControl";
 import { Widget } from "@/components/os/Widget";
-import { Skeleton, SkeletonKPI, SkeletonList, SkeletonChart } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonKPI, SkeletonList } from "@/components/ui/skeleton";
 
 export default function Dashboard() {
   const { user, userPermissions } = useAuth();
