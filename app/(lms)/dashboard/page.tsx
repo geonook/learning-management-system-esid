@@ -79,45 +79,42 @@ export default function Dashboard() {
   const [deadlines, setDeadlines] = useState<UpcomingDeadline[]>([]);
   const [alerts, setAlerts] = useState<RecentAlert[]>([]);
 
-  useEffect(() => {
-    console.log('[Dashboard] useEffect triggered', { userId: user?.id, userRole });
+  // Extract primitive values to prevent re-renders from object reference changes
+  const userId = user?.id;
+  const userGrade = userPermissions?.grade;
+  const userTrack = userPermissions?.track;
 
-    if (!user?.id || !userRole) {
-      console.log('[Dashboard] Missing user or role, skipping data load');
+  useEffect(() => {
+    // Skip if user data is not ready yet
+    if (!userId || !userRole) {
       return;
     }
 
+    // For head teachers, wait until grade and track are loaded
+    if (userRole === "head" && (!userGrade || !userTrack)) {
+      return;
+    }
+
+    // Track if component is still mounted to prevent state updates after unmount
+    let isCancelled = false;
+
     // 1. Load KPIs (Fastest)
     const loadKpis = async () => {
-      console.log('[Dashboard] Loading KPIs for role:', userRole);
       try {
         if (userRole === "teacher") {
-          console.log('[Dashboard] Fetching teacher KPIs...');
-          const data = await getTeacherKpis(user.id);
-          console.log('[Dashboard] Teacher KPIs loaded:', data);
-          setTeacherKpis(data);
+          const data = await getTeacherKpis(userId);
+          if (!isCancelled) setTeacherKpis(data);
         } else if (userRole === "admin" || userRole === "office_member") {
-          console.log('[Dashboard] Fetching admin KPIs...');
           const data = await getAdminKpis();
-          console.log('[Dashboard] Admin KPIs loaded:', data);
-          setAdminKpis(data);
-        } else if (
-          userRole === "head" &&
-          userPermissions?.grade &&
-          userPermissions?.track
-        ) {
-          console.log('[Dashboard] Fetching head teacher KPIs...');
-          const [data] = await Promise.all([
-            getHeadTeacherKpis(userPermissions.grade, userPermissions.track),
-          ]);
-          console.log('[Dashboard] Head KPIs loaded:', data);
-          setHeadKpis(data);
+          if (!isCancelled) setAdminKpis(data);
+        } else if (userRole === "head" && userGrade && userTrack) {
+          const data = await getHeadTeacherKpis(userGrade, userTrack);
+          if (!isCancelled) setHeadKpis(data);
         }
       } catch (e) {
-        console.error("[Dashboard] Failed to load KPIs", e);
+        if (!isCancelled) console.error("[Dashboard] Failed to load KPIs", e);
       } finally {
-        console.log('[Dashboard] KPIs loading complete');
-        setLoadingKpis(false);
+        if (!isCancelled) setLoadingKpis(false);
       }
     };
 
@@ -127,18 +124,20 @@ export default function Dashboard() {
         const [distData, scatterPoints] = await Promise.all([
           getClassDistribution(
             userRole,
-            user.id,
-            userPermissions?.grade || undefined,
-            userPermissions?.track || undefined
+            userId,
+            userGrade || undefined,
+            userTrack || undefined
           ),
-          getScatterData(userRole, user.id),
+          getScatterData(userRole, userId),
         ]);
-        setDistribution(distData);
-        setScatterData(scatterPoints);
+        if (!isCancelled) {
+          setDistribution(distData);
+          setScatterData(scatterPoints);
+        }
       } catch (e) {
-        console.error("Failed to load charts", e);
+        if (!isCancelled) console.error("Failed to load charts", e);
       } finally {
-        setLoadingCharts(false);
+        if (!isCancelled) setLoadingCharts(false);
       }
     };
 
@@ -148,18 +147,20 @@ export default function Dashboard() {
         const [upcomingDeadlines, recentAlerts] = await Promise.all([
           getUpcomingDeadlines(
             userRole,
-            user.id,
-            userPermissions?.grade || undefined,
-            userPermissions?.track || undefined
+            userId,
+            userGrade || undefined,
+            userTrack || undefined
           ),
-          getRecentAlerts(userRole, user.id),
+          getRecentAlerts(userRole, userId),
         ]);
-        setDeadlines(upcomingDeadlines);
-        setAlerts(recentAlerts);
+        if (!isCancelled) {
+          setDeadlines(upcomingDeadlines);
+          setAlerts(recentAlerts);
+        }
       } catch (e) {
-        console.error("Failed to load lists", e);
+        if (!isCancelled) console.error("Failed to load lists", e);
       } finally {
-        setLoadingLists(false);
+        if (!isCancelled) setLoadingLists(false);
       }
     };
 
@@ -167,7 +168,12 @@ export default function Dashboard() {
     loadKpis();
     loadCharts();
     loadLists();
-  }, [user?.id, userRole, userPermissions?.grade, userPermissions?.track]);
+
+    // Cleanup function to prevent state updates after unmount
+    return () => {
+      isCancelled = true;
+    };
+  }, [userId, userRole, userGrade, userTrack]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
