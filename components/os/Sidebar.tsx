@@ -62,7 +62,9 @@ export function Sidebar() {
   }, [user, isHead, isTeacher, userPermissions?.grade]);
 
   return (
-    <aside className="fixed left-0 top-8 bottom-0 w-64 bg-white/50 dark:bg-black/50 backdrop-blur-xl border-r border-white/20 dark:border-white/10 z-40 flex flex-col">
+    <aside className="fixed left-0 top-8 bottom-0 w-64 bg-white/50 dark:bg-black/50 backdrop-blur-xl border-r border-white/20 dark:border-white/10 z-40 flex flex-col overflow-hidden">
+      {/* Scrollable content area */}
+      <div className="flex-1 overflow-y-auto">
       {/* Section: Overview */}
       <div className="p-4">
         <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 px-2">
@@ -224,7 +226,7 @@ export function Sidebar() {
       )}
 
       {/* Section: My Classes */}
-      <div className="flex-1 overflow-y-auto p-4 pt-0">
+      <div className="p-4 pt-0 pb-8">
         <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 px-2 mt-4">
           My Classes
         </h3>
@@ -250,6 +252,7 @@ export function Sidebar() {
           )}
         </nav>
       </div>
+      </div>{/* End scrollable content area */}
     </aside>
   );
 }
