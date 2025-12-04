@@ -138,7 +138,7 @@ export default function TeacherProgressPage() {
 
   // Group teachers by type
   const teachersByType = useMemo(() => {
-    const groups: Record<string, TeacherWithProgress[]> = {
+    const groups: { LT: TeacherWithProgress[]; IT: TeacherWithProgress[]; KCFS: TeacherWithProgress[]; other: TeacherWithProgress[] } = {
       LT: [],
       IT: [],
       KCFS: [],
@@ -146,9 +146,13 @@ export default function TeacherProgressPage() {
     };
 
     filteredTeachers.forEach(teacher => {
-      const type = teacher.teacher_type || "other";
-      if (groups[type]) {
-        groups[type].push(teacher);
+      const type = teacher.teacher_type;
+      if (type === "LT") {
+        groups.LT.push(teacher);
+      } else if (type === "IT") {
+        groups.IT.push(teacher);
+      } else if (type === "KCFS") {
+        groups.KCFS.push(teacher);
       } else {
         groups.other.push(teacher);
       }
