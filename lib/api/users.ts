@@ -67,7 +67,8 @@ export async function getTeachersByType(teacherType: TeacherType) {
   return data
 }
 
-// Get heads by grade and track
+// Get heads by grade band and course type
+// @deprecated Use getHeadByGradeBand instead for grade band support
 export async function getHeadsByGradeTrack(grade: number, track: TrackType) {
   const { data, error } = await supabase
     .from('users')
@@ -81,6 +82,28 @@ export async function getHeadsByGradeTrack(grade: number, track: TrackType) {
   if (error) {
     console.error('Error fetching heads by grade/track:', error)
     throw new Error(`Failed to fetch heads: ${error.message}`)
+  }
+
+  return data
+}
+
+// Get head teacher by grade band and course type (new grade band system)
+export async function getHeadByGradeBand(gradeBand: string, courseType: TeacherType) {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('role', 'head')
+    .eq('grade_band', gradeBand)
+    .eq('track', courseType)
+    .eq('is_active', true)
+    .single()
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return null // Head not found
+    }
+    console.error('Error fetching head by grade band:', error)
+    throw new Error(`Failed to fetch head: ${error.message}`)
   }
 
   return data
@@ -219,18 +242,19 @@ export async function getUserStatistics() {
 }
 
 // Check if user has permission for specific grade/track
+// @deprecated Use checkUserPermissionByGradeBand for grade band support
 export async function checkUserPermission(
   userId: string,
   requiredGrade?: number,
   requiredTrack?: TrackType
 ): Promise<boolean> {
   const user = await getUser(userId)
-  
+
   // Admin has all permissions
   if (user.role === 'admin') {
     return true
   }
-  
+
   // Head teachers can only access their assigned grade and track
   if (user.role === 'head') {
     if (requiredGrade && user.grade !== requiredGrade) {
@@ -241,14 +265,68 @@ export async function checkUserPermission(
     }
     return true
   }
-  
+
   // Teachers have limited permissions (to be refined based on class assignments)
   if (user.role === 'teacher') {
     // For now, allow teachers to access based on their teacher_type
     // This should be refined to check actual class assignments
     return true
   }
-  
+
+  return false
+}
+
+// Helper function to check if a grade falls within a grade band
+function gradeInBand(grade: number, gradeBand: string): boolean {
+  if (gradeBand.includes('-')) {
+    const parts = gradeBand.split('-').map(Number)
+    const start = parts[0] ?? 1
+    const end = parts[1] ?? start
+    return grade >= start && grade <= end
+  }
+  return grade === parseInt(gradeBand)
+}
+
+// Check if user has permission for specific grade and course type (new grade band system)
+export async function checkUserPermissionByGradeBand(
+  userId: string,
+  requiredGrade?: number,
+  requiredCourseType?: TeacherType
+): Promise<boolean> {
+  const user = await getUser(userId) as User & { grade_band?: string | null }
+
+  // Admin has all permissions
+  if (user.role === 'admin') {
+    return true
+  }
+
+  // Office member has read-only access to all
+  if (user.role === 'office_member') {
+    return true
+  }
+
+  // Head teachers can only access their assigned grade band and course type
+  if (user.role === 'head') {
+    if (requiredGrade && user.grade_band) {
+      if (!gradeInBand(requiredGrade, user.grade_band)) {
+        return false
+      }
+    }
+    if (requiredCourseType && user.track !== requiredCourseType) {
+      return false
+    }
+    return true
+  }
+
+  // Teachers have limited permissions (to be refined based on class assignments)
+  if (user.role === 'teacher') {
+    // For now, allow teachers to access based on their teacher_type
+    if (requiredCourseType && user.teacher_type !== requiredCourseType) {
+      return false
+    }
+    return true
+  }
+
   return false
 }
 
