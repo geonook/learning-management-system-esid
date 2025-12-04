@@ -54,23 +54,23 @@ export default function Dashboard() {
 
   // Data states
   const [teacherKpis, setTeacherKpis] = useState<TeacherKpis>({
-    attendanceRate: 0,
+    attendanceRate: null,
     averageScore: 0,
     passRate: 0,
-    activeAlerts: 0,
+    activeAlerts: null,
   });
   const [adminKpis, setAdminKpis] = useState<AdminKpis>({
     totalExams: 0,
     notDue: 0,
     overdue: 0,
     coverage: 0,
-    onTime: 0,
+    onTime: null,
   });
   const [headKpis, setHeadKpis] = useState<HeadTeacherKpis>({
     totalClasses: 0,
     averageScore: 0,
     coverageRate: 0,
-    activeIssues: 0,
+    activeIssues: null,
     studentsCount: 0,
     teachersCount: 0,
   });
@@ -216,10 +216,10 @@ export default function Dashboard() {
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
                   <div className="text-3xl font-bold text-slate-900 dark:text-white">
-                    {teacherKpis.attendanceRate}%
+                    {teacherKpis.attendanceRate !== null ? `${teacherKpis.attendanceRate}%` : "N/A"}
                   </div>
                   <div className="text-xs text-slate-500 dark:text-white/50 mt-1">
-                    This semester
+                    {teacherKpis.attendanceRate !== null ? "This semester" : "Coming soon"}
                   </div>
                 </div>
               )}
@@ -273,10 +273,10 @@ export default function Dashboard() {
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
                   <div className="text-3xl font-bold text-slate-900 dark:text-white">
-                    {teacherKpis.activeAlerts}
+                    {teacherKpis.activeAlerts !== null ? teacherKpis.activeAlerts : "N/A"}
                   </div>
                   <div className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-                    Requires attention
+                    {teacherKpis.activeAlerts !== null ? "Requires attention" : "Coming soon"}
                   </div>
                 </div>
               )}
@@ -332,10 +332,10 @@ export default function Dashboard() {
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
                   <div className="text-3xl font-bold text-slate-900 dark:text-white">
-                    {adminKpis.onTime}%
+                    {adminKpis.onTime !== null ? `${adminKpis.onTime}%` : "N/A"}
                   </div>
                   <div className="text-xs text-slate-500 dark:text-white/50 mt-1">
-                    Submission rate
+                    {adminKpis.onTime !== null ? "Submission rate" : "Coming soon"}
                   </div>
                 </div>
               )}
@@ -427,10 +427,10 @@ export default function Dashboard() {
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
                   <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
-                    {headKpis.activeIssues}
+                    {headKpis.activeIssues !== null ? headKpis.activeIssues : "N/A"}
                   </div>
                   <div className="text-xs text-yellow-600 dark:text-yellow-300 mt-1">
-                    Active issues
+                    {headKpis.activeIssues !== null ? "Active issues" : "Coming soon"}
                   </div>
                 </div>
               )}
