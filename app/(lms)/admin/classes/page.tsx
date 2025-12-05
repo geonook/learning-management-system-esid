@@ -18,14 +18,17 @@ export default function ClassManagementPage() {
 
   useEffect(() => {
     async function fetchClasses() {
+      console.log('[AdminClasses] Starting to fetch classes...');
       try {
         const data = await getClassesWithDetails({
           academicYear: "2025-2026",
         });
+        console.log('[AdminClasses] Fetched classes:', data?.length ?? 0);
         setClasses(data);
       } catch (error) {
-        console.error("Failed to fetch classes:", error);
+        console.error("[AdminClasses] Failed to fetch classes:", error);
       } finally {
+        console.log('[AdminClasses] Setting loading to false');
         setLoading(false);
       }
     }
