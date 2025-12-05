@@ -39,7 +39,8 @@ export default function BrowseGradebookPage() {
       try {
         const supabase = createClient();
 
-        // Get all exams with class and course info
+        // Get all exams with class info
+        // Note: exams.course_id may not have FK to courses table, so we fetch courses separately
         const { data: examsData, error: examsError } = await supabase
           .from("exams")
           .select(`
@@ -53,12 +54,26 @@ export default function BrowseGradebookPage() {
             classes!inner (
               name,
               grade
-            ),
-            courses (
-              course_type
             )
           `)
           .order("exam_date", { ascending: false });
+
+        // Fetch course types separately if course_ids exist
+        const courseIds = (examsData || [])
+          .map(e => e.course_id)
+          .filter((id): id is string => id !== null);
+
+        let courseTypeMap: Record<string, string> = {};
+        if (courseIds.length > 0) {
+          const { data: coursesData } = await supabase
+            .from("courses")
+            .select("id, course_type")
+            .in("id", courseIds);
+
+          coursesData?.forEach(c => {
+            courseTypeMap[c.id] = c.course_type;
+          });
+        }
 
         if (examsError) {
           console.error("Error fetching exams:", examsError);
@@ -94,7 +109,6 @@ export default function BrowseGradebookPage() {
         // Transform data
         const examsWithDetails: ExamWithDetails[] = (examsData || []).map((exam) => {
           const classData = exam.classes as unknown as { name: string; grade: number };
-          const courseData = exam.courses as unknown as { course_type: string } | null;
           const totalStudents = classStudentCounts[exam.class_id] || 0;
           const scoresEntered = examScoreCounts[exam.id] || 0;
           const completionRate = totalStudents > 0 ? Math.round((scoresEntered / totalStudents) * 100) : 0;
@@ -109,7 +123,7 @@ export default function BrowseGradebookPage() {
             created_at: exam.created_at,
             class_name: classData?.name || "Unknown",
             class_grade: classData?.grade || 0,
-            course_type: courseData?.course_type || null,
+            course_type: exam.course_id ? courseTypeMap[exam.course_id] || null : null,
             scores_entered: scoresEntered,
             total_students: totalStudents,
             completion_rate: completionRate,

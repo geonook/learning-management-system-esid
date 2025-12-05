@@ -344,6 +344,7 @@ export class AnalyticsQueries {
 
     try {
       // Get all scores for the student in chronological order
+      // Note: exams.course_id doesn't have FK to courses, so we fetch course info separately
       const { data: scores, error } = await this.supabase
         .from('scores')
         .select(`
@@ -353,9 +354,7 @@ export class AnalyticsQueries {
             id,
             name,
             exam_date,
-            courses!inner(
-              course_type
-            )
+            course_id
           )
         `)
         .eq('student_id', studentId)
@@ -369,21 +368,41 @@ export class AnalyticsQueries {
         return null
       }
 
+      // Fetch course types separately
+      const courseIds = [...new Set(scores
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .map(s => (s.exams as any).course_id)
+        .filter((id: string | null): id is string => id !== null))]
+
+      let courseTypeMap: Record<string, string> = {}
+      if (courseIds.length > 0) {
+        const { data: coursesData } = await this.supabase
+          .from('courses')
+          .select('id, course_type')
+          .in('id', courseIds)
+
+        coursesData?.forEach(c => {
+          courseTypeMap[c.id] = c.course_type
+        })
+      }
+
       // Calculate percentiles for each assessment (simplified)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const assessments = scores.map((score) => ({
+      const assessments = scores.map((score) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        examId: (score.exams as any).id,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        examName: (score.exams as any).name,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        examDate: (score.exams as any).exam_date,
-        score: score.score || 0,
-        assessmentCode: score.assessment_code,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        courseType: (score.exams as any).courses.course_type as 'LT' | 'IT' | 'KCFS',
-        percentile: 50 // Simplified - would need class comparison
-      }))
+        const exam = score.exams as any
+        const courseType = exam.course_id ? courseTypeMap[exam.course_id] : null
+
+        return {
+          examId: exam.id,
+          examName: exam.name,
+          examDate: exam.exam_date,
+          score: score.score || 0,
+          assessmentCode: score.assessment_code,
+          courseType: (courseType || 'LT') as 'LT' | 'IT' | 'KCFS',
+          percentile: 50 // Simplified - would need class comparison
+        }
+      })
 
       // Generate milestones based on score patterns
       const milestones = []
