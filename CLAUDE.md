@@ -1,30 +1,27 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 2.9
-> **Last Updated**: 2025-12-04
+> **Documentation Version**: 3.0
+> **Last Updated**: 2025-12-05
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Both Systems Complete)**
-> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**, **Teacher Course Assignment (v1.42.0 ✅)**, **Data Pages Sprint 1-2 (v1.43.0 ✅)**
+> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**, **Teacher Course Assignment (v1.42.0 ✅)**, **Data Pages Sprint 1-2 (v1.43.0 ✅)**, **Browse Pages Loading Fix (v1.44.0 ✅)**
 
 > **Current Status**:
 >
+> - ✅ **v1.44.0 Browse Pages Loading Fix** - 修復 Browse 頁面無限載入問題 (2025-12-05)
+>   - 統一 useEffect 模式：單一 useEffect + isInitialMount ref + isCancelled flag
+>   - 修復 6 個 Browse 頁面：classes, teachers, students, gradebook, comms, stats
+>   - 移除 exams.course_id 依賴（該欄位在 Staging 環境不存在）
+> - ⏳ **待測試項目**：Browse 頁面載入、Dashboard 載入、頁面切換、Office Member 雙重身份
 > - ✅ **v1.43.0 Data Pages Complete** - Sprint 1 & 2 功能完善計畫完成 (2025-12-04)
->   - Sprint 1: Dashboard mock 數據修復、Browse Stats 連接真實數據、Head Overview 連接真實數據
->   - Sprint 2: Admin Classes 重寫、Head Teachers 重寫、Browse Gradebook 重寫
-> - ✅ **Dashboard KPIs 真實化** - attendanceRate/activeAlerts 改為 N/A（待系統實作），avgScore/passRate 真實數據
-> - ✅ **6 個頁面完整重寫** - 使用真實 Supabase 數據取代 placeholder
 > - ✅ **v1.42.0 Teacher Course Assignment** - 252 courses assigned to 80 teachers (2025-12-03)
 > - ✅ **Production Teacher Import** - 81 users imported (admin:1, head:8, teacher:54, office_member:17)
-> - ✅ **Browse Classes Race Condition Fix** - Auth state checked before API calls (2025-12-03)
-> - ✅ **v1.41.0 TeacherOS UI Refinements** - Dark mode optimization, Calendar redesign, macOS style enhancements
 > - ✅ **Phase 4.1 Complete** - One OS Interface Unification with Info Hub
 > - ✅ **SSO Implementation** - Both LMS & Info Hub complete, alignment verified
-> - ✅ **Migration 022 Complete** - assessment_codes (13) deployed to Production (2025-12-02)
-> - ✅ **Production Data Seeded** - classes (84), courses (252), students (1,511) imported
 > - 🎯 **Next Steps**:
->   1. Sprint 3: 班級學生名冊、課程指派系統、我的課表
->   2. Phase 5: Gradebook 色彩優化（Term Grade/Avg 欄位色彩編碼）
->   3. Phase 6: 非侵入式 Skeleton 系統
+>   1. 測試驗證：Browse 頁面載入、Dashboard 載入、頁面切換功能
+>   2. Sprint 3: 班級學生名冊、課程指派系統、我的課表
+>   3. Phase D2: 淺色模式配色統一、Notion 風格設計系統
 
 This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -1009,6 +1006,79 @@ COPY --from=builder /app/public ./public
 | 班級學生名冊 | `/(lms)/class/[classId]/students` | 🟢 |
 | 課程指派系統 | 多個檔案 | 🟢 |
 | 我的課表 | `/(lms)/schedule` | 🟢 |
+
+---
+
+## 🔧 Phase F: Browse 頁面無限載入修復 (2025-12-05) ✅ **完成**
+
+### 📋 問題描述
+
+Browse 頁面出現無限載入問題，載入 spinner 永遠不會消失。
+
+### 🔍 根本原因
+
+**問題模式**：`useCallback` + 多個 `useEffect` 組合導致：
+1. `useCallback` 依賴陣列變化時建立新函式參照
+2. 新參照觸發 `useEffect` 重新執行
+3. 多個 `useEffect` 互相干擾，形成無限迴圈
+4. 某些情況下 `loading` 狀態無法正確設為 `false`
+
+### ✅ 修復方案
+
+**統一模式**：單一 `useEffect` + `isInitialMount` ref + `isCancelled` flag
+
+```typescript
+const isInitialMount = useRef(true);
+
+useEffect(() => {
+  if (authLoading || !user) return;
+  let isCancelled = false;
+
+  async function fetchData() {
+    if (!isCancelled) { setLoading(true); setError(null); }
+    try {
+      const data = await apiCall({ filter1, filter2 });
+      if (!isCancelled) { setData(data); setLoading(false); }
+    } catch (err) {
+      if (!isCancelled) { setError(err.message); setLoading(false); }
+    }
+  }
+
+  if (isInitialMount.current) {
+    isInitialMount.current = false;
+    fetchData();
+    return;
+  }
+
+  const timer = setTimeout(fetchData, 300);
+  return () => { isCancelled = true; clearTimeout(timer); };
+}, [authLoading, user, filter1, filter2, searchQuery]);
+```
+
+### 📁 已修復的檔案
+
+| 檔案 | 狀態 | Commit |
+|------|------|--------|
+| `app/(lms)/browse/classes/page.tsx` | ✅ 已修復 | `06d0077` |
+| `app/(lms)/browse/comms/page.tsx` | ✅ 已修復 | `06d0077` |
+| `app/(lms)/browse/teachers/page.tsx` | ✅ 已修復 | `19349a6` |
+| `app/(lms)/browse/students/page.tsx` | ✅ 已修復 | `19349a6` |
+| `app/(lms)/browse/gradebook/page.tsx` | ✅ 已修復 | `3a85bbf` |
+| `app/(lms)/browse/stats/page.tsx` | ✅ 原本正確 | - |
+
+### 📋 待測試項目
+
+| 測試項目 | 狀態 |
+|----------|------|
+| Browse Classes 頁面載入 | ⏳ 待測試 |
+| Browse Teachers 頁面載入 | ⏳ 待測試 |
+| Browse Students 頁面載入 | ⏳ 待測試 |
+| Browse Gradebook 頁面載入 | ⏳ 待測試 |
+| Browse Comms 頁面載入 | ⏳ 待測試 |
+| 篩選條件變更後重新載入 | ⏳ 待測試 |
+| 搜尋功能 debounce (300ms) | ⏳ 待測試 |
+| 分頁切換 | ⏳ 待測試 |
+| 離開再返回頁面 | ⏳ 待測試 |
 
 ---
 
