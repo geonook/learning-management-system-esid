@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { useAuth } from "@/lib/supabase/auth-context";
@@ -18,43 +18,54 @@ export default function BrowseClassesPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<GradeFilter>("All");
   const [searchQuery, setSearchQuery] = useState("");
-  const [hasFetched, setHasFetched] = useState(false);
+  const isInitialMount = useRef(true);
 
-  const fetchClasses = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getClassesWithDetails({
-        grade: selectedGrade === "All" ? undefined : selectedGrade,
-        search: searchQuery || undefined,
-      });
-      setClasses(data);
-      setHasFetched(true);
-    } catch (err) {
-      console.error("Failed to fetch classes:", err);
-      setError(err instanceof Error ? err.message : "Failed to fetch classes");
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedGrade, searchQuery]);
-
-  // Wait for auth to be ready before fetching
+  // Fetch classes - single useEffect with proper debounce
   useEffect(() => {
-    if (!authLoading && user) {
-      fetchClasses();
+    // Wait for auth to be ready
+    if (authLoading || !user) {
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLoading, user, selectedGrade]);
 
-  // Debounced search - only when user is authenticated
-  useEffect(() => {
-    if (!user || searchQuery === "" || !hasFetched) return;
-    const timer = setTimeout(() => {
-      fetchClasses();
-    }, 300);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery]);
+    let isCancelled = false;
+
+    async function fetchData() {
+      if (!isCancelled) {
+        setLoading(true);
+        setError(null);
+      }
+      try {
+        const data = await getClassesWithDetails({
+          grade: selectedGrade === "All" ? undefined : selectedGrade,
+          search: searchQuery || undefined,
+        });
+        if (!isCancelled) {
+          setClasses(data);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("Failed to fetch classes:", err);
+        if (!isCancelled) {
+          setError(err instanceof Error ? err.message : "Failed to fetch classes");
+          setLoading(false);
+        }
+      }
+    }
+
+    // On initial mount, fetch immediately
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      fetchData();
+      return;
+    }
+
+    // On subsequent changes, debounce
+    const timer = setTimeout(fetchData, 300);
+    return () => {
+      isCancelled = true;
+      clearTimeout(timer);
+    };
+  }, [authLoading, user, selectedGrade, searchQuery]);
 
   // Helper to get teacher name by course type
   const getTeacherName = (courses: ClassWithDetails["courses"], type: "LT" | "IT" | "KCFS") => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import {
@@ -27,7 +27,6 @@ import {
   getCommunicationStats,
 } from "@/lib/api/communications";
 import type {
-  CommunicationWithDetails,
   PaginatedCommunications,
   CommunicationStats,
   CommunicationType,
@@ -56,40 +55,66 @@ export default function BrowseCommsPage() {
   const [courseType, setCourseType] = useState<CourseTypeFilter>("All");
   const [page, setPage] = useState(1);
   const pageSize = 50;
+  const isInitialMount = useRef(true);
+  const previousPage = useRef(page);
 
   const semesterOptions = getSemesterOptions();
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [commsData, statsData] = await Promise.all([
-        getAllCommunications({
-          academic_year: academicYear,
-          semester: semester,
-          course_type: courseType === "All" ? undefined : courseType,
-          page,
-          pageSize,
-        }),
-        getCommunicationStats(academicYear, semester),
-      ]);
-      setData(commsData);
-      setStats(statsData);
-    } catch (err) {
-      console.error("Failed to fetch communications:", err);
-      setError(err instanceof Error ? err.message : "Failed to fetch communications");
-    } finally {
-      setLoading(false);
-    }
-  }, [academicYear, semester, courseType, page]);
-
+  // Fetch data - single useEffect with proper debounce
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    let isCancelled = false;
+
+    async function fetchData() {
+      if (!isCancelled) {
+        setLoading(true);
+        setError(null);
+      }
+      try {
+        const [commsData, statsData] = await Promise.all([
+          getAllCommunications({
+            academic_year: academicYear,
+            semester: semester,
+            course_type: courseType === "All" ? undefined : courseType,
+            page,
+            pageSize,
+          }),
+          getCommunicationStats(academicYear, semester),
+        ]);
+        if (!isCancelled) {
+          setData(commsData);
+          setStats(statsData);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("Failed to fetch communications:", err);
+        if (!isCancelled) {
+          setError(err instanceof Error ? err.message : "Failed to fetch communications");
+          setLoading(false);
+        }
+      }
+    }
+
+    // On initial mount or page change, fetch immediately
+    if (isInitialMount.current || previousPage.current !== page) {
+      isInitialMount.current = false;
+      previousPage.current = page;
+      fetchData();
+      return;
+    }
+
+    // On filter changes, debounce
+    const timer = setTimeout(fetchData, 300);
+    return () => {
+      isCancelled = true;
+      clearTimeout(timer);
+    };
+  }, [academicYear, semester, courseType, page]);
 
   // Reset page when filters change
   useEffect(() => {
-    setPage(1);
+    if (!isInitialMount.current) {
+      setPage(1);
+    }
   }, [academicYear, semester, courseType, searchQuery]);
 
   // Get communication type icon
