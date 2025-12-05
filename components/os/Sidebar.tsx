@@ -233,13 +233,13 @@ export function Sidebar() {
               href="/browse/teachers"
               icon={<Users className="w-4 h-4" />}
               label="All Teachers"
-              active={pathname === "/browse/teachers"}
+              active={pathname === "/browse/teachers" || pathname?.startsWith("/teacher/")}
             />
             <SidebarItem
               href="/browse/students"
               icon={<GraduationCap className="w-4 h-4" />}
               label="All Students"
-              active={pathname === "/browse/students"}
+              active={pathname === "/browse/students" || pathname?.startsWith("/student/")}
             />
           </SidebarSection>
         )}

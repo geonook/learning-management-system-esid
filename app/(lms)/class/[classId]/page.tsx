@@ -1,10 +1,56 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { supabase } from "@/lib/supabase/client";
+import { PageHeader } from "@/components/layout/PageHeader";
+
+interface ClassInfo {
+  id: string;
+  name: string;
+  grade: number;
+}
 
 export default function ClassOverviewPage() {
+  const params = useParams();
+  const classId = params?.classId as string;
+  const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
+
+  useEffect(() => {
+    async function fetchClassInfo() {
+      if (!classId) return;
+      const { data } = await supabase
+        .from("classes")
+        .select("id, name, grade")
+        .eq("id", classId)
+        .single();
+      if (data) setClassInfo(data);
+    }
+    fetchClassInfo();
+  }, [classId]);
+
+  const breadcrumbs = classInfo
+    ? [
+        { label: "My Classes", href: "/dashboard" },
+        { label: classInfo.name },
+      ]
+    : [
+        { label: "My Classes", href: "/dashboard" },
+        { label: "Loading..." },
+      ];
+
   return (
     <AuthGuard requiredRoles={["admin", "head", "teacher", "office_member"]}>
+      <div className="space-y-6">
+        <PageHeader
+          title={classInfo?.name || "Class Overview"}
+          subtitle={classInfo ? `Grade ${classInfo.grade}` : undefined}
+          breadcrumbs={breadcrumbs}
+          backHref="/dashboard"
+          backLabel="Back to Dashboard"
+        />
+
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Memos Widget */}
       <div className="bg-white/50 dark:bg-black/20 backdrop-blur-md rounded-xl p-6 border border-white/10 shadow-sm">
@@ -33,6 +79,7 @@ export default function ClassOverviewPage() {
         </div>
       </div>
     </div>
+      </div>
     </AuthGuard>
   );
 }

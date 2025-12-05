@@ -1,20 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { supabase } from "@/lib/supabase/client";
 import {
   Users,
-  ArrowLeft,
   Loader2,
   Mail,
   BookOpen,
   GraduationCap,
   School,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 interface TeacherDetails {
   id: string;
@@ -36,7 +35,6 @@ interface TeacherDetails {
 
 export default function TeacherDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const teacherId = params?.id as string;
 
   const [teacher, setTeacher] = useState<TeacherDetails | null>(null);
@@ -143,18 +141,30 @@ export default function TeacherDetailPage() {
   const totalStudents = teacher?.courses.reduce((sum, c) => sum + c.student_count, 0) || 0;
   const uniqueGrades = [...new Set(teacher?.courses.map(c => c.class_grade))].sort();
 
+  // Build breadcrumbs based on loaded teacher
+  const breadcrumbs = teacher
+    ? [
+        { label: "Browse Data", href: "/dashboard" },
+        { label: "All Teachers", href: "/browse/teachers" },
+        { label: teacher.full_name },
+      ]
+    : [
+        { label: "Browse Data", href: "/dashboard" },
+        { label: "All Teachers", href: "/browse/teachers" },
+        { label: "Loading..." },
+      ];
+
   return (
     <AuthGuard requiredRoles={["admin", "head", "office_member"]}>
       <div className="space-y-6">
-        {/* Back Button */}
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          className="text-white/60 hover:text-white hover:bg-white/10"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
+        {/* Page Header with Breadcrumbs */}
+        <PageHeader
+          title={teacher?.full_name || "Teacher Details"}
+          subtitle={teacher ? `${teacher.role === "head" ? "Head Teacher" : teacher.teacher_type || "Teacher"} • ${teacher.email}` : undefined}
+          breadcrumbs={breadcrumbs}
+          backHref="/browse/teachers"
+          backLabel="Back to Teachers"
+        />
 
         {/* Loading State */}
         {loading && (

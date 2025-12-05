@@ -1,20 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { supabase } from "@/lib/supabase/client";
 import {
   GraduationCap,
-  ArrowLeft,
   Loader2,
   School,
   BookOpen,
   BarChart3,
   Users,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 interface StudentDetails {
   id: string;
@@ -37,7 +36,6 @@ interface StudentDetails {
 
 export default function StudentDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const studentId = params?.id as string;
 
   const [student, setStudent] = useState<StudentDetails | null>(null);
@@ -184,18 +182,30 @@ export default function StudentDetailPage() {
     return "text-red-400";
   };
 
+  // Build breadcrumbs based on loaded student
+  const breadcrumbs = student
+    ? [
+        { label: "Browse Data", href: "/dashboard" },
+        { label: "All Students", href: "/browse/students" },
+        { label: student.full_name },
+      ]
+    : [
+        { label: "Browse Data", href: "/dashboard" },
+        { label: "All Students", href: "/browse/students" },
+        { label: "Loading..." },
+      ];
+
   return (
     <AuthGuard requiredRoles={["admin", "head", "office_member"]}>
       <div className="space-y-6">
-        {/* Back Button */}
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          className="text-white/60 hover:text-white hover:bg-white/10"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
+        {/* Page Header with Breadcrumbs */}
+        <PageHeader
+          title={student?.full_name || "Student Details"}
+          subtitle={student ? `ID: ${student.student_id} • Grade ${student.grade}${student.class_name ? ` • ${student.class_name}` : ""}` : undefined}
+          breadcrumbs={breadcrumbs}
+          backHref="/browse/students"
+          backLabel="Back to Students"
+        />
 
         {/* Loading State */}
         {loading && (
