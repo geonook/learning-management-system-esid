@@ -31,27 +31,27 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        "bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800 px-6 py-4",
+        "bg-surface-primary/80 dark:bg-slate-900/60 backdrop-blur-sm border-b border-[rgb(var(--border-default))] px-6 py-4",
         className
       )}
     >
       {/* Breadcrumbs */}
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <nav className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 mb-2">
+        <nav className="flex items-center gap-1 text-sm text-text-secondary mb-2">
           {breadcrumbs.map((crumb, index) => (
             <span key={index} className="flex items-center">
               {index > 0 && (
-                <ChevronRight className="w-3.5 h-3.5 mx-1 text-slate-300 dark:text-slate-600" />
+                <ChevronRight className="w-3.5 h-3.5 mx-1 text-text-tertiary" />
               )}
               {crumb.href ? (
                 <Link
                   href={crumb.href}
-                  className="hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  className="hover:text-text-primary transition-colors duration-normal ease-apple"
                 >
                   {crumb.label}
                 </Link>
               ) : (
-                <span className="text-slate-700 dark:text-slate-200 font-medium">
+                <span className="text-text-primary font-medium">
                   {crumb.label}
                 </span>
               )}
@@ -66,7 +66,7 @@ export function PageHeader({
           {backHref && (
             <Link
               href={backHref}
-              className="inline-flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors mb-1"
+              className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary transition-colors duration-normal ease-apple mb-1"
             >
               <ChevronLeft className="w-4 h-4" />
               {backLabel}
@@ -74,13 +74,13 @@ export function PageHeader({
           )}
 
           {/* Title */}
-          <h1 className="text-xl font-semibold text-slate-800 dark:text-white truncate">
+          <h1 className="text-xl font-semibold text-text-primary truncate">
             {title}
           </h1>
 
           {/* Subtitle */}
           {subtitle && (
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-sm text-text-secondary mt-0.5">
               {subtitle}
             </p>
           )}

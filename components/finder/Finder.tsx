@@ -207,35 +207,35 @@ export function Finder({ role = "office" }: FinderProps) {
     }
   };
 
-  if (!rootNode) return <div className="text-white">Loading...</div>;
+  if (!rootNode) return <div className="text-text-secondary">Loading...</div>;
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#1e1e1e]/80 backdrop-blur-xl rounded-xl border border-white/10 shadow-2xl overflow-hidden text-white">
+    <div className="flex flex-col h-full w-full bg-surface-elevated/90 dark:bg-[#1e1e1e]/80 backdrop-blur-xl rounded-xl border border-[rgb(var(--border-default))] shadow-xl overflow-hidden text-text-primary">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white/5 border-b border-white/10">
+      <div className="flex items-center justify-between px-4 py-3 bg-surface-secondary dark:bg-white/5 border-b border-[rgb(var(--border-default))]">
         <div className="flex items-center space-x-4">
           {/* Navigation Controls */}
           <div className="flex items-center space-x-1">
             <button
               onClick={handleBack}
               disabled={historyIndex === 0}
-              className="p-1 rounded hover:bg-white/10 disabled:opacity-30"
+              className="p-1 rounded hover:bg-[rgb(var(--surface-hover))] disabled:opacity-30 transition-colors duration-normal ease-apple"
             >
               <ChevronLeft size={20} />
             </button>
             <button
               onClick={handleForward}
               disabled={historyIndex === history.length - 1}
-              className="p-1 rounded hover:bg-white/10 disabled:opacity-30"
+              className="p-1 rounded hover:bg-[rgb(var(--surface-hover))] disabled:opacity-30 transition-colors duration-normal ease-apple"
             >
               <ChevronRight size={20} />
             </button>
           </div>
 
           {/* Path / Breadcrumbs */}
-          <div className="flex items-center space-x-2 px-2 py-1 rounded bg-black/20 border border-white/5 text-sm min-w-[200px]">
-            <Home size={14} className="text-gray-400" />
-            <span className="text-gray-400">/</span>
+          <div className="flex items-center space-x-2 px-2 py-1 rounded bg-surface-tertiary dark:bg-black/20 border border-[rgb(var(--border-subtle))] text-sm min-w-[200px]">
+            <Home size={14} className="text-text-secondary" />
+            <span className="text-text-secondary">/</span>
             <span className="truncate">
               {currentPath === "/"
                 ? "Root"
@@ -246,14 +246,14 @@ export function Finder({ role = "office" }: FinderProps) {
 
         <div className="flex items-center space-x-4">
           {/* View Toggle */}
-          <div className="flex bg-black/20 rounded-lg p-0.5 border border-white/10">
+          <div className="flex bg-surface-tertiary dark:bg-black/20 rounded-lg p-0.5 border border-[rgb(var(--border-default))]">
             <button
               onClick={() => setViewMode("icon")}
               className={cn(
-                "p-1.5 rounded-md transition-all",
+                "p-1.5 rounded-md transition-all duration-normal ease-apple",
                 viewMode === "icon"
-                  ? "bg-white/20 shadow-sm"
-                  : "hover:bg-white/5"
+                  ? "bg-[rgb(var(--surface-active))] shadow-sm"
+                  : "hover:bg-[rgb(var(--surface-hover))]"
               )}
             >
               <LayoutGrid size={16} />
@@ -261,10 +261,10 @@ export function Finder({ role = "office" }: FinderProps) {
             <button
               onClick={() => setViewMode("column")}
               className={cn(
-                "p-1.5 rounded-md transition-all",
+                "p-1.5 rounded-md transition-all duration-normal ease-apple",
                 viewMode === "column"
-                  ? "bg-white/20 shadow-sm"
-                  : "hover:bg-white/5"
+                  ? "bg-[rgb(var(--surface-active))] shadow-sm"
+                  : "hover:bg-[rgb(var(--surface-hover))]"
               )}
             >
               <Columns size={16} />
@@ -275,10 +275,10 @@ export function Finder({ role = "office" }: FinderProps) {
           <div className="relative">
             <Search
               size={14}
-              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-secondary"
             />
             <Input
-              className="h-8 w-48 pl-8 bg-black/20 border-white/10 text-xs focus-visible:ring-white/20"
+              className="h-8 w-48 pl-8 bg-surface-tertiary dark:bg-black/20 border-[rgb(var(--border-default))] text-xs text-text-primary placeholder:text-text-tertiary focus-visible:ring-accent-blue/30"
               placeholder="Search"
             />
           </div>
@@ -335,7 +335,7 @@ export function Finder({ role = "office" }: FinderProps) {
       </div>
 
       {/* Footer / Status Bar */}
-      <div className="h-6 bg-white/5 border-t border-white/10 flex items-center px-4 text-[10px] text-gray-400">
+      <div className="h-6 bg-surface-secondary dark:bg-white/5 border-t border-[rgb(var(--border-default))] flex items-center px-4 text-[10px] text-text-tertiary">
         {currentNode?.children?.length || 0} items
       </div>
     </div>

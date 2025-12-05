@@ -15,14 +15,14 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Notion-style toolbar colors
+// Notion + Apple unified design tokens
 const TOOLBAR_STYLES = {
-  bg: "bg-white dark:bg-slate-900",
-  border: "border-gray-100 dark:border-slate-800",
-  text: "text-gray-600 dark:text-gray-300",
-  textMuted: "text-gray-500 dark:text-gray-400",
-  hover: "hover:bg-gray-50 dark:hover:bg-slate-800",
-  active: "bg-gray-100 dark:bg-slate-800",
+  bg: "bg-surface-elevated",
+  border: "border-[rgb(var(--border-default))]",
+  text: "text-text-primary",
+  textMuted: "text-text-secondary",
+  hover: "hover:bg-[rgb(var(--surface-hover))]",
+  active: "bg-[rgb(var(--surface-active))]",
 };
 
 interface ToolbarButtonProps {
@@ -37,7 +37,7 @@ function ToolbarButton({ Icon, label, onClick, active }: ToolbarButtonProps) {
     <button
       onClick={onClick}
       className={cn(
-        "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md transition-all duration-100",
+        "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md transition-all duration-normal ease-apple",
         TOOLBAR_STYLES.text,
         TOOLBAR_STYLES.hover,
         "active:scale-[0.98]",
@@ -62,15 +62,15 @@ export function Toolbar() {
         {/* View Controls - Notion Style */}
         <div className="flex items-center gap-0.5 mr-2">
           <button className={cn(
-            "flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors duration-100",
-            "text-blue-600 dark:text-blue-400",
-            "hover:bg-blue-50 dark:hover:bg-blue-900/20"
+            "flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors duration-normal ease-apple",
+            "text-accent-blue",
+            "hover:bg-accent-blue/10"
           )}>
             <span>View</span>
             <ChevronDown size={12} />
           </button>
           <button className={cn(
-            "flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors duration-100",
+            "flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors duration-normal ease-apple",
             TOOLBAR_STYLES.textMuted,
             TOOLBAR_STYLES.hover
           )}>
@@ -80,7 +80,7 @@ export function Toolbar() {
         </div>
 
         {/* Separator */}
-        <div className="h-5 w-px bg-gray-200 dark:bg-slate-700 mx-2" />
+        <div className="h-5 w-px bg-[rgb(var(--border-default))] mx-2" />
 
         {/* Insert Objects */}
         <ToolbarButton Icon={Table} label="Table" />
@@ -92,10 +92,10 @@ export function Toolbar() {
 
       <div className="flex items-center gap-2">
         {/* Separator */}
-        <div className="h-5 w-px bg-gray-200 dark:bg-slate-700" />
+        <div className="h-5 w-px bg-[rgb(var(--border-default))]" />
 
         <button className={cn(
-          "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors duration-100",
+          "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors duration-normal ease-apple",
           TOOLBAR_STYLES.textMuted,
           TOOLBAR_STYLES.hover
         )}>
@@ -104,16 +104,16 @@ export function Toolbar() {
         </button>
 
         <button className={cn(
-          "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-100",
-          "bg-blue-600 text-white",
-          "hover:bg-blue-700 dark:hover:bg-blue-500"
+          "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-normal ease-apple",
+          "bg-accent-blue text-white",
+          "hover:bg-accent-blue/90"
         )}>
           <Share size={14} />
           <span>Share</span>
         </button>
 
         <button className={cn(
-          "p-1.5 rounded-md transition-colors duration-100",
+          "p-1.5 rounded-md transition-colors duration-normal ease-apple",
           TOOLBAR_STYLES.textMuted,
           TOOLBAR_STYLES.hover
         )}>

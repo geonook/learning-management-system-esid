@@ -102,12 +102,12 @@ export default function BrowseStudentsPage() {
         {/* Search */}
         <div className="flex gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
             <Input
               placeholder="Search by name or student ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-white/5 border-white/10 text-white"
+              className="pl-10 bg-surface-tertiary border-[rgb(var(--border-default))] text-text-primary placeholder:text-text-tertiary"
             />
           </div>
         </div>
@@ -115,15 +115,15 @@ export default function BrowseStudentsPage() {
         {/* Grade and Level Filters */}
         <div className="flex flex-wrap gap-6">
           <div className="flex gap-2 items-center">
-            <span className="text-sm text-white/40">Grade:</span>
+            <span className="text-sm text-text-tertiary">Grade:</span>
             {(["All", 1, 2, 3, 4, 5, 6] as GradeFilter[]).map((grade) => (
               <button
                 key={grade}
                 onClick={() => setSelectedGrade(grade)}
-                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-normal ease-apple ${
                   selectedGrade === grade
-                    ? "bg-purple-500 text-white"
-                    : "bg-white/5 text-white/60 hover:bg-white/10"
+                    ? "bg-purple-600 dark:bg-purple-500 text-white"
+                    : "bg-surface-tertiary text-text-secondary hover:bg-[rgb(var(--surface-hover))]"
                 }`}
               >
                 {grade === "All" ? "All" : `G${grade}`}
@@ -131,15 +131,15 @@ export default function BrowseStudentsPage() {
             ))}
           </div>
           <div className="flex gap-2 items-center">
-            <span className="text-sm text-white/40">Level:</span>
+            <span className="text-sm text-text-tertiary">Level:</span>
             {(["All", "E1", "E2", "E3"] as LevelFilter[]).map((level) => (
               <button
                 key={level}
                 onClick={() => setSelectedLevel(level)}
-                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-normal ease-apple ${
                   selectedLevel === level
-                    ? "bg-purple-500 text-white"
-                    : "bg-white/5 text-white/60 hover:bg-white/10"
+                    ? "bg-purple-600 dark:bg-purple-500 text-white"
+                    : "bg-surface-tertiary text-text-secondary hover:bg-[rgb(var(--surface-hover))]"
                 }`}
               >
                 {level}
@@ -151,37 +151,37 @@ export default function BrowseStudentsPage() {
         {/* Loading State */}
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+            <Loader2 className="w-8 h-8 text-purple-600 dark:text-purple-400 animate-spin" />
           </div>
         )}
 
         {/* Error State */}
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
-            <p className="text-red-400">{error}</p>
+            <p className="text-red-600 dark:text-red-400">{error}</p>
           </div>
         )}
 
         {/* Empty State */}
         {!loading && !error && data?.students.length === 0 && (
           <div className="text-center py-12">
-            <GraduationCap className="w-12 h-12 text-white/20 mx-auto mb-4" />
-            <p className="text-white/60">No students found</p>
+            <GraduationCap className="w-12 h-12 text-text-tertiary mx-auto mb-4" />
+            <p className="text-text-secondary">No students found</p>
           </div>
         )}
 
         {/* Students Table */}
         {!loading && !error && data && data.students.length > 0 && (
-          <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+          <div className="bg-surface-elevated rounded-xl border border-[rgb(var(--border-default))] overflow-hidden shadow-sm">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left p-4 text-sm font-medium text-white/60">Student ID</th>
-                  <th className="text-left p-4 text-sm font-medium text-white/60">Name</th>
-                  <th className="text-left p-4 text-sm font-medium text-white/60">Grade</th>
-                  <th className="text-left p-4 text-sm font-medium text-white/60">Level</th>
-                  <th className="text-left p-4 text-sm font-medium text-white/60">Class</th>
-                  <th className="text-right p-4 text-sm font-medium text-white/60 w-16"></th>
+                <tr className="border-b border-[rgb(var(--border-default))]">
+                  <th className="text-left p-4 text-sm font-medium text-text-secondary">Student ID</th>
+                  <th className="text-left p-4 text-sm font-medium text-text-secondary">Name</th>
+                  <th className="text-left p-4 text-sm font-medium text-text-secondary">Grade</th>
+                  <th className="text-left p-4 text-sm font-medium text-text-secondary">Level</th>
+                  <th className="text-left p-4 text-sm font-medium text-text-secondary">Class</th>
+                  <th className="text-right p-4 text-sm font-medium text-text-secondary w-16"></th>
                 </tr>
               </thead>
               <tbody>
@@ -191,30 +191,30 @@ export default function BrowseStudentsPage() {
                     href={`/student/${student.id}`}
                     className="contents group"
                   >
-                    <tr className="border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors">
-                      <td className="p-4 text-white font-mono text-sm">{student.student_id}</td>
-                      <td className="p-4 text-white group-hover:text-purple-400 transition-colors">{student.full_name}</td>
+                    <tr className="border-b border-[rgb(var(--border-subtle))] hover:bg-[rgb(var(--surface-hover))] cursor-pointer transition-colors duration-normal ease-apple">
+                      <td className="p-4 text-text-primary font-mono text-sm">{student.student_id}</td>
+                      <td className="p-4 text-text-primary group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{student.full_name}</td>
                       <td className="p-4">
-                        <span className="px-2 py-1 bg-purple-500/20 text-purple-400 text-xs rounded-full">
+                        <span className="px-2 py-1 bg-purple-500/20 text-purple-600 dark:text-purple-400 text-xs rounded-full">
                           G{student.grade}
                         </span>
                       </td>
                       <td className="p-4">
                         <span className={`px-2 py-1 text-xs rounded-full ${
                           student.level?.includes("E1")
-                            ? "bg-green-500/20 text-green-400"
+                            ? "bg-green-500/20 text-green-600 dark:text-green-400"
                             : student.level?.includes("E2")
-                            ? "bg-amber-500/20 text-amber-400"
+                            ? "bg-amber-500/20 text-amber-600 dark:text-amber-400"
                             : student.level?.includes("E3")
-                            ? "bg-red-500/20 text-red-400"
-                            : "bg-white/10 text-white/40"
+                            ? "bg-red-500/20 text-red-600 dark:text-red-400"
+                            : "bg-surface-tertiary text-text-tertiary"
                         }`}>
                           {getLevelDisplay(student.level)}
                         </span>
                       </td>
-                      <td className="p-4 text-white/60">{student.class_name || "-"}</td>
+                      <td className="p-4 text-text-secondary">{student.class_name || "-"}</td>
                       <td className="p-4 text-right">
-                        <ChevronRightIcon className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors inline-block" />
+                        <ChevronRightIcon className="w-4 h-4 text-text-tertiary group-hover:text-text-secondary transition-colors inline-block" />
                       </td>
                     </tr>
                   </Link>
@@ -223,25 +223,25 @@ export default function BrowseStudentsPage() {
             </table>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between p-4 border-t border-white/10">
-              <div className="text-sm text-white/40">
+            <div className="flex items-center justify-between p-4 border-t border-[rgb(var(--border-default))]">
+              <div className="text-sm text-text-tertiary">
                 Showing {((page - 1) * pageSize) + 1} - {Math.min(page * pageSize, data.total)} of {data.total}
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="p-2 rounded-lg bg-white/5 text-white/60 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="p-2 rounded-lg bg-surface-tertiary text-text-secondary hover:bg-[rgb(var(--surface-hover))] disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-normal ease-apple"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
-                <span className="text-sm text-white/60">
+                <span className="text-sm text-text-secondary">
                   Page {page} of {data.totalPages}
                 </span>
                 <button
                   onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
                   disabled={page === data.totalPages}
-                  className="p-2 rounded-lg bg-white/5 text-white/60 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="p-2 rounded-lg bg-surface-tertiary text-text-secondary hover:bg-[rgb(var(--surface-hover))] disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-normal ease-apple"
                 >
                   <ChevronRightIcon className="w-4 h-4" />
                 </button>
@@ -252,21 +252,21 @@ export default function BrowseStudentsPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-4 gap-4">
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-            <div className="text-2xl font-bold text-white">{stats?.total || 0}</div>
-            <div className="text-xs text-white/40">Total Students</div>
+          <div className="bg-surface-elevated rounded-xl border border-[rgb(var(--border-default))] p-4 shadow-sm">
+            <div className="text-2xl font-bold text-text-primary">{stats?.total || 0}</div>
+            <div className="text-xs text-text-tertiary">Total Students</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-            <div className="text-2xl font-bold text-green-400">{stats?.e1 || 0}</div>
-            <div className="text-xs text-white/40">Level E1</div>
+          <div className="bg-surface-elevated rounded-xl border border-[rgb(var(--border-default))] p-4 shadow-sm">
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats?.e1 || 0}</div>
+            <div className="text-xs text-text-tertiary">Level E1</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-            <div className="text-2xl font-bold text-amber-400">{stats?.e2 || 0}</div>
-            <div className="text-xs text-white/40">Level E2</div>
+          <div className="bg-surface-elevated rounded-xl border border-[rgb(var(--border-default))] p-4 shadow-sm">
+            <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats?.e2 || 0}</div>
+            <div className="text-xs text-text-tertiary">Level E2</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-            <div className="text-2xl font-bold text-red-400">{stats?.e3 || 0}</div>
-            <div className="text-xs text-white/40">Level E3</div>
+          <div className="bg-surface-elevated rounded-xl border border-[rgb(var(--border-default))] p-4 shadow-sm">
+            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats?.e3 || 0}</div>
+            <div className="text-xs text-text-tertiary">Level E3</div>
           </div>
         </div>
       </div>

@@ -124,7 +124,7 @@ export function Sidebar() {
   const isExpanded = (sectionId: SectionId) => isHydrated ? expandedSections[sectionId] : DEFAULT_EXPANDED[sectionId];
 
   return (
-    <aside className="fixed left-0 top-8 bottom-0 w-64 bg-white/50 dark:bg-black/50 backdrop-blur-xl border-r border-white/20 dark:border-white/10 z-40 flex flex-col overflow-hidden">
+    <aside className="fixed left-0 top-8 bottom-0 w-64 bg-surface-primary/80 dark:bg-black/60 backdrop-blur-xl border-r border-[rgb(var(--border-default))] z-40 flex flex-col overflow-hidden">
       {/* Scrollable content area */}
       <div className="flex-1 overflow-y-auto py-2">
         {/* Section: Overview */}
@@ -307,7 +307,7 @@ export function Sidebar() {
                 <Skeleton className="h-9 w-full rounded-lg" />
               </div>
             ) : classes.length === 0 ? (
-              <div className="text-sm text-slate-400 py-1">No classes assigned</div>
+              <div className="text-sm text-text-tertiary py-1">No classes assigned</div>
             ) : (
               classes.map((cls) => (
                 <SidebarItem
@@ -349,10 +349,10 @@ function SidebarSection({
         className={cn(
           "w-full flex items-center justify-between px-2 py-1.5 rounded-lg",
           "text-xs font-semibold uppercase tracking-wider",
-          "text-slate-500 dark:text-slate-400",
-          "hover:bg-white/30 dark:hover:bg-white/5",
-          "transition-colors duration-150",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
+          "text-text-secondary",
+          "hover:bg-[rgb(var(--surface-hover))]",
+          "transition-colors duration-normal ease-apple",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
         )}
         aria-expanded={isExpanded}
         aria-controls={`sidebar-section-${sectionId}`}
@@ -360,14 +360,14 @@ function SidebarSection({
         <span className="flex items-center gap-2">
           {title}
           {!isExpanded && itemCount !== undefined && itemCount > 0 && (
-            <span className="text-[10px] font-normal normal-case text-slate-400 dark:text-slate-500">
+            <span className="text-[10px] font-normal normal-case text-text-tertiary">
               ({itemCount})
             </span>
           )}
         </span>
         <ChevronDown
           className={cn(
-            "w-3.5 h-3.5 transition-transform duration-200",
+            "w-3.5 h-3.5 transition-transform duration-normal ease-apple",
             isExpanded ? "rotate-0" : "-rotate-90"
           )}
         />
@@ -375,7 +375,7 @@ function SidebarSection({
       <div
         id={`sidebar-section-${sectionId}`}
         className={cn(
-          "overflow-hidden transition-all duration-200 ease-out",
+          "overflow-hidden transition-all duration-normal ease-apple",
           isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
         )}
       >
@@ -402,10 +402,10 @@ function SidebarItem({
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150",
+        "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-normal ease-apple",
         active
-          ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-          : "text-slate-700 dark:text-slate-200 hover:bg-white/20 dark:hover:bg-white/10 hover:translate-x-1"
+          ? "bg-accent-blue/10 text-accent-blue"
+          : "text-text-primary hover:bg-[rgb(var(--surface-hover))] hover:translate-x-1"
       )}
     >
       {icon}

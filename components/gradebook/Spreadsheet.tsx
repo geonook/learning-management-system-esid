@@ -7,27 +7,27 @@ import { FocusGradeInput } from "./FocusGradeInput";
 import { updateScore } from "@/lib/actions/gradebook";
 import { Loader2, AlertCircle, Check } from "lucide-react";
 
-// Notion-style color system
+// Notion + Apple unified design tokens
 const NOTION_STYLES = {
   // Backgrounds
-  bg: "bg-white dark:bg-slate-950",
-  bgCard: "bg-white dark:bg-slate-900",
-  bgMuted: "bg-gray-50/50 dark:bg-slate-800/50",
-  bgHeader: "bg-gray-50/80 dark:bg-slate-800/80",
-  bgHover: "hover:bg-gray-50 dark:hover:bg-slate-800/30",
-  bgRowHover: "hover:bg-slate-50 dark:hover:bg-slate-800/40",
+  bg: "bg-surface-primary",
+  bgCard: "bg-surface-elevated",
+  bgMuted: "bg-surface-secondary",
+  bgHeader: "bg-surface-secondary",
+  bgHover: "hover:bg-[rgb(var(--surface-hover))]",
+  bgRowHover: "hover:bg-[rgb(var(--surface-hover))]",
   // Borders
-  border: "border-gray-100 dark:border-slate-800",
-  borderMuted: "border-gray-50 dark:border-slate-800/50",
+  border: "border-[rgb(var(--border-default))]",
+  borderMuted: "border-[rgb(var(--border-subtle))]",
   // Text
-  text: "text-gray-900 dark:text-gray-100",
-  textMuted: "text-gray-500 dark:text-gray-400",
-  textLight: "text-gray-400 dark:text-gray-500",
+  text: "text-text-primary",
+  textMuted: "text-text-secondary",
+  textLight: "text-text-tertiary",
 };
 
 // Score color coding helper - improved with null state
 function getScoreColor(score: number | null | undefined): string {
-  if (score === null || score === undefined) return "text-gray-400 dark:text-gray-500";
+  if (score === null || score === undefined) return "text-text-tertiary";
   if (score >= 80) return "text-emerald-600 dark:text-emerald-400";
   if (score >= 60) return "text-amber-600 dark:text-amber-500";
   return "text-red-600 dark:text-red-400";

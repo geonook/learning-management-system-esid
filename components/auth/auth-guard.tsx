@@ -20,9 +20,18 @@ export function AuthGuard({
   const router = useRouter()
   const [authState, setAuthState] = useState<'loading' | 'authorized' | 'unauthorized' | 'unauthenticated'>('loading')
   const redirectAttempted = useRef(false)
+  // Track if user was previously authorized to prevent loading flash on page return
+  const wasAuthorizedRef = useRef(false)
 
   useEffect(() => {
-    // Still loading auth state
+    // If loading but user was previously authorized, keep showing content
+    // This prevents loading flash when returning to a page
+    if (loading && wasAuthorizedRef.current) {
+      // Don't change authState - keep showing authorized content
+      return
+    }
+
+    // Still loading auth state (first load only)
     if (loading) {
       setAuthState('loading')
       return
@@ -32,6 +41,7 @@ export function AuthGuard({
     if (!user || !userPermissions) {
       console.log('[AuthGuard] No user/permissions, redirecting to login')
       setAuthState('unauthenticated')
+      wasAuthorizedRef.current = false
       if (!redirectAttempted.current) {
         redirectAttempted.current = true
         router.replace(redirectTo)
@@ -43,6 +53,7 @@ export function AuthGuard({
     if (requiredRoles.length > 0 && !requiredRoles.includes(userPermissions.role)) {
       console.log('[AuthGuard] User role not authorized:', userPermissions.role, 'required:', requiredRoles)
       setAuthState('unauthorized')
+      wasAuthorizedRef.current = false
       if (!redirectAttempted.current) {
         redirectAttempted.current = true
         router.replace('/unauthorized')
@@ -53,10 +64,11 @@ export function AuthGuard({
     // User is authenticated and authorized
     console.log('[AuthGuard] User authorized:', userPermissions.role)
     setAuthState('authorized')
+    wasAuthorizedRef.current = true
   }, [user, userPermissions, loading, router, requiredRoles, redirectTo])
 
-  // Show loading spinner for any non-authorized state
-  if (authState !== 'authorized') {
+  // Show loading spinner only on initial load (not when returning to page)
+  if (authState !== 'authorized' && !wasAuthorizedRef.current) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner />
@@ -64,7 +76,7 @@ export function AuthGuard({
     )
   }
 
-  // User is authenticated and authorized
+  // User is authenticated and authorized (or was previously authorized during loading)
   return <>{children}</>
 }
 

@@ -155,31 +155,31 @@ export default function StudentDetailPage() {
   }, [studentId]);
 
   const getLevelBadgeColor = (level: string | null) => {
-    if (!level) return "bg-white/10 text-white/40";
-    if (level.includes("E1")) return "bg-green-500/20 text-green-400";
-    if (level.includes("E2")) return "bg-amber-500/20 text-amber-400";
-    if (level.includes("E3")) return "bg-red-500/20 text-red-400";
-    return "bg-white/10 text-white/40";
+    if (!level) return "bg-surface-tertiary text-text-tertiary";
+    if (level.includes("E1")) return "bg-green-500/20 text-green-600 dark:text-green-400";
+    if (level.includes("E2")) return "bg-amber-500/20 text-amber-600 dark:text-amber-400";
+    if (level.includes("E3")) return "bg-red-500/20 text-red-600 dark:text-red-400";
+    return "bg-surface-tertiary text-text-tertiary";
   };
 
   const getCourseTypeColor = (type: string) => {
     switch (type) {
       case "LT":
-        return "bg-green-500/20 text-green-400";
+        return "bg-green-500/20 text-green-600 dark:text-green-400";
       case "IT":
-        return "bg-blue-500/20 text-blue-400";
+        return "bg-blue-500/20 text-blue-600 dark:text-blue-400";
       case "KCFS":
-        return "bg-purple-500/20 text-purple-400";
+        return "bg-purple-500/20 text-purple-600 dark:text-purple-400";
       default:
-        return "bg-white/10 text-white/40";
+        return "bg-surface-tertiary text-text-tertiary";
     }
   };
 
   const getScoreColor = (score: number | null) => {
-    if (score === null) return "text-white/40";
-    if (score >= 80) return "text-green-400";
-    if (score >= 60) return "text-amber-400";
-    return "text-red-400";
+    if (score === null) return "text-text-tertiary";
+    if (score >= 80) return "text-green-600 dark:text-green-400";
+    if (score >= 60) return "text-amber-600 dark:text-amber-400";
+    return "text-red-600 dark:text-red-400";
   };
 
   // Build breadcrumbs based on loaded student
@@ -210,14 +210,14 @@ export default function StudentDetailPage() {
         {/* Loading State */}
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+            <Loader2 className="w-8 h-8 text-purple-600 dark:text-purple-400 animate-spin" />
           </div>
         )}
 
         {/* Error State */}
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
-            <p className="text-red-400">{error}</p>
+            <p className="text-red-600 dark:text-red-400">{error}</p>
           </div>
         )}
 
@@ -225,19 +225,19 @@ export default function StudentDetailPage() {
         {!loading && !error && student && (
           <>
             {/* Header */}
-            <div className="bg-white/5 rounded-xl border border-white/10 p-6">
+            <div className="bg-surface-elevated rounded-xl border border-[rgb(var(--border-default))] p-6 shadow-sm">
               <div className="flex items-start gap-4">
                 <div className="p-3 bg-purple-500/20 rounded-xl">
-                  <GraduationCap className="w-8 h-8 text-purple-400" />
+                  <GraduationCap className="w-8 h-8 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h1 className="text-2xl font-bold text-white">{student.full_name}</h1>
+                    <h1 className="text-2xl font-bold text-text-primary">{student.full_name}</h1>
                     <span className={`px-3 py-1 text-sm rounded-full ${getLevelBadgeColor(student.level)}`}>
                       {student.level || "No Level"}
                     </span>
                   </div>
-                  <div className="flex items-center gap-4 text-white/60">
+                  <div className="flex items-center gap-4 text-text-secondary">
                     <span className="flex items-center gap-2 font-mono">
                       ID: {student.student_id}
                     </span>
@@ -248,7 +248,7 @@ export default function StudentDetailPage() {
                     {student.class_name && (
                       <Link
                         href={`/class/${student.class_id}`}
-                        className="flex items-center gap-2 hover:text-purple-400 transition-colors"
+                        className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-normal ease-apple"
                       >
                         <Users className="w-4 h-4" />
                         {student.class_name}
@@ -262,12 +262,12 @@ export default function StudentDetailPage() {
             {/* Stats Grid */}
             <div className="grid grid-cols-3 gap-4">
               {student.grade_averages.map((ga) => (
-                <div key={ga.course_type} className="bg-white/5 rounded-xl border border-white/10 p-6">
+                <div key={ga.course_type} className="bg-surface-elevated rounded-xl border border-[rgb(var(--border-default))] p-6 shadow-sm">
                   <div className="flex items-center gap-3 mb-2">
                     <span className={`px-2 py-1 text-xs rounded-full ${getCourseTypeColor(ga.course_type)}`}>
                       {ga.course_type}
                     </span>
-                    <span className="text-white/60 text-sm">Average</span>
+                    <span className="text-text-secondary text-sm">Average</span>
                   </div>
                   <div className={`text-3xl font-bold ${getScoreColor(ga.average)}`}>
                     {ga.average !== null ? ga.average : "N/A"}
@@ -275,41 +275,41 @@ export default function StudentDetailPage() {
                 </div>
               ))}
               {student.grade_averages.length === 0 && (
-                <div className="col-span-3 bg-white/5 rounded-xl border border-white/10 p-6 text-center">
-                  <BarChart3 className="w-8 h-8 text-white/20 mx-auto mb-2" />
-                  <p className="text-white/40">No grades available</p>
+                <div className="col-span-3 bg-surface-elevated rounded-xl border border-[rgb(var(--border-default))] p-6 text-center shadow-sm">
+                  <BarChart3 className="w-8 h-8 text-text-tertiary mx-auto mb-2" />
+                  <p className="text-text-tertiary">No grades available</p>
                 </div>
               )}
             </div>
 
             {/* Enrolled Courses */}
-            <div className="bg-white/5 rounded-xl border border-white/10">
-              <div className="p-4 border-b border-white/10">
-                <h2 className="text-lg font-semibold text-white">Enrolled Courses</h2>
+            <div className="bg-surface-elevated rounded-xl border border-[rgb(var(--border-default))] shadow-sm">
+              <div className="p-4 border-b border-[rgb(var(--border-default))]">
+                <h2 className="text-lg font-semibold text-text-primary">Enrolled Courses</h2>
               </div>
               {student.courses.length === 0 ? (
                 <div className="p-8 text-center">
-                  <BookOpen className="w-12 h-12 text-white/20 mx-auto mb-4" />
-                  <p className="text-white/60">Not enrolled in any courses</p>
+                  <BookOpen className="w-12 h-12 text-text-tertiary mx-auto mb-4" />
+                  <p className="text-text-secondary">Not enrolled in any courses</p>
                 </div>
               ) : (
-                <div className="divide-y divide-white/5">
+                <div className="divide-y divide-[rgb(var(--border-subtle))]">
                   {student.courses.map((course) => (
                     <div
                       key={course.id}
-                      className="flex items-center justify-between p-4"
+                      className="flex items-center justify-between p-4 hover:bg-[rgb(var(--surface-hover))] transition-colors duration-normal ease-apple"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="p-2 bg-white/5 rounded-lg">
-                          <BookOpen className="w-5 h-5 text-white/60" />
+                        <div className="p-2 bg-surface-tertiary rounded-lg">
+                          <BookOpen className="w-5 h-5 text-text-secondary" />
                         </div>
                         <div>
-                          <div className="text-white font-medium">
+                          <div className="text-text-primary font-medium">
                             {course.course_type === "LT" && "Local Teacher ELA"}
                             {course.course_type === "IT" && "International Teacher ELA"}
                             {course.course_type === "KCFS" && "Kang Chiao Future Skill"}
                           </div>
-                          <div className="text-sm text-white/40">
+                          <div className="text-sm text-text-tertiary">
                             Teacher: {course.teacher_name || "Not assigned"}
                           </div>
                         </div>
@@ -328,14 +328,14 @@ export default function StudentDetailPage() {
               <div className="flex gap-4">
                 <Link
                   href={`/class/${student.class_id}/gradebook`}
-                  className="flex-1 flex items-center justify-center gap-2 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors text-white"
+                  className="flex-1 flex items-center justify-center gap-2 p-4 bg-surface-elevated rounded-xl border border-[rgb(var(--border-default))] hover:bg-[rgb(var(--surface-hover))] transition-colors duration-normal ease-apple text-text-primary shadow-sm"
                 >
                   <BarChart3 className="w-5 h-5" />
                   View Class Gradebook
                 </Link>
                 <Link
                   href={`/class/${student.class_id}`}
-                  className="flex-1 flex items-center justify-center gap-2 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors text-white"
+                  className="flex-1 flex items-center justify-center gap-2 p-4 bg-surface-elevated rounded-xl border border-[rgb(var(--border-default))] hover:bg-[rgb(var(--surface-hover))] transition-colors duration-normal ease-apple text-text-primary shadow-sm"
                 >
                   <Users className="w-5 h-5" />
                   View Class Details

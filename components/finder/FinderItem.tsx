@@ -34,18 +34,18 @@ export function FinderItem({
     return (
       <div
         className={cn(
-          "group flex flex-col items-center justify-center p-4 rounded-xl cursor-pointer transition-all duration-200",
-          "hover:bg-white/10",
-          selected && "bg-blue-500/20 ring-1 ring-blue-500/50"
+          "group flex flex-col items-center justify-center p-4 rounded-xl cursor-pointer transition-all duration-normal ease-apple",
+          "hover:bg-[rgb(var(--surface-hover))]",
+          selected && "bg-accent-blue/20 ring-1 ring-accent-blue/50"
         )}
         onClick={() => onSelect(node)}
         onDoubleClick={() => onNavigate(node)}
       >
         <div
           className={cn(
-            "w-16 h-16 flex items-center justify-center text-blue-400 mb-2 transition-transform duration-200",
+            "w-16 h-16 flex items-center justify-center text-accent-blue mb-2 transition-transform duration-normal ease-apple",
             "group-hover:scale-110",
-            node.type === "file" && "text-gray-400"
+            node.type === "file" && "text-text-secondary"
           )}
         >
           {React.isValidElement(Icon) ? (
@@ -55,7 +55,7 @@ export function FinderItem({
             <Icon size={64} strokeWidth={1} />
           )}
         </div>
-        <span className="text-sm text-center font-medium text-white/90 truncate w-full px-2 select-none">
+        <span className="text-sm text-center font-medium text-text-primary truncate w-full px-2 select-none">
           {node.name}
         </span>
       </div>
@@ -66,9 +66,9 @@ export function FinderItem({
   return (
     <div
       className={cn(
-        "flex items-center justify-between px-3 py-2 cursor-pointer text-sm select-none",
-        "hover:bg-white/5",
-        selected && "bg-blue-600 text-white hover:bg-blue-600"
+        "flex items-center justify-between px-3 py-2 cursor-pointer text-sm select-none transition-colors duration-fast ease-apple",
+        "hover:bg-[rgb(var(--surface-hover))]",
+        selected && "bg-accent-blue text-white hover:bg-accent-blue"
       )}
       onClick={() => {
         onSelect(node);
@@ -80,9 +80,9 @@ export function FinderItem({
       <div className="flex items-center gap-2">
         <div
           className={cn(
-            "text-blue-400",
+            "text-accent-blue",
             selected && "text-white",
-            node.type === "file" && "text-gray-400"
+            node.type === "file" && "text-text-secondary"
           )}
         >
           {React.isValidElement(Icon) ? (

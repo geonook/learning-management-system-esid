@@ -36,7 +36,7 @@ export function MenuBar({ onOpenEvents }: MenuBarProps) {
   };
 
   return (
-    <div className="absolute top-0 left-0 right-0 h-8 bg-white/40 dark:bg-black/40 backdrop-blur-2xl border-b border-white/10 dark:border-white/5 flex items-center justify-between px-2 z-50 select-none">
+    <div className="absolute top-0 left-0 right-0 h-8 bg-surface-primary/70 dark:bg-black/50 backdrop-blur-2xl border-b border-[rgb(var(--border-default))] flex items-center justify-between px-2 z-50 select-none">
       {/* Left Side: Back to TeacherOS & App Name */}
       <div className="flex items-center gap-3">
         {/* Back to TeacherOS Button */}
@@ -44,14 +44,14 @@ export function MenuBar({ onOpenEvents }: MenuBarProps) {
           variant="ghost"
           size="sm"
           onClick={handleBackToTeacherOS}
-          className="h-6 px-2 hover:bg-white/20 dark:hover:bg-white/10 rounded text-[13px] font-medium text-slate-700 dark:text-slate-200 gap-1"
+          className="h-6 px-2 hover:bg-[rgb(var(--surface-hover))] rounded text-[13px] font-medium text-text-primary gap-1 transition-colors duration-normal ease-apple"
         >
           <Home className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">TeacherOS</span>
         </Button>
 
         {/* Divider */}
-        <div className="h-4 w-px bg-slate-300 dark:bg-slate-600" />
+        <div className="h-4 w-px bg-[rgb(var(--border-default))]" />
 
         {/* School Logo + App Name */}
         <div className="flex items-center gap-1.5">
@@ -62,7 +62,7 @@ export function MenuBar({ onOpenEvents }: MenuBarProps) {
             height={18}
             className="object-contain"
           />
-          <span className="text-[13px] font-bold text-slate-800 dark:text-white">
+          <span className="text-[13px] font-bold text-text-primary">
             LMS
           </span>
         </div>
@@ -77,7 +77,7 @@ export function MenuBar({ onOpenEvents }: MenuBarProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 hover:bg-white/20 dark:hover:bg-white/10 rounded text-slate-700 dark:text-slate-200"
+          className="h-6 w-6 hover:bg-[rgb(var(--surface-hover))] rounded text-text-primary transition-colors duration-normal ease-apple"
           title="Search (Cmd+K)"
         >
           <Search className="w-4 h-4" />
@@ -89,7 +89,7 @@ export function MenuBar({ onOpenEvents }: MenuBarProps) {
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 px-2 hover:bg-white/20 dark:hover:bg-white/10 rounded text-[13px] font-medium text-slate-700 dark:text-slate-200 gap-1"
+              className="h-6 px-2 hover:bg-[rgb(var(--surface-hover))] rounded text-[13px] font-medium text-text-primary gap-1 transition-colors duration-normal ease-apple"
               title={user?.user_metadata?.full_name || user?.email || "User"}
             >
               <User className="w-3.5 h-3.5" />
@@ -100,7 +100,7 @@ export function MenuBar({ onOpenEvents }: MenuBarProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <div className="px-2 py-1.5 text-sm text-slate-500 dark:text-slate-400">
+            <div className="px-2 py-1.5 text-sm text-text-secondary">
               {user?.email || "No email"}
             </div>
             <DropdownMenuSeparator />
