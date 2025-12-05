@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { supabase } from "@/lib/supabase/client";
+import { useAuth } from "@/lib/supabase/auth-context";
 import { PageHeader } from "@/components/layout/PageHeader";
 
 interface ClassInfo {
@@ -14,31 +15,58 @@ interface ClassInfo {
 
 export default function ClassOverviewPage() {
   const params = useParams();
+  const { user } = useAuth();
   const classId = params?.classId as string;
   const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
+  const [isMyClass, setIsMyClass] = useState<boolean | null>(null);
 
   useEffect(() => {
-    async function fetchClassInfo() {
+    async function fetchData() {
       if (!classId) return;
-      const { data } = await supabase
+
+      // Fetch class info
+      const { data: classData } = await supabase
         .from("classes")
         .select("id, name, grade")
         .eq("id", classId)
         .single();
-      if (data) setClassInfo(data);
-    }
-    fetchClassInfo();
-  }, [classId]);
+      if (classData) setClassInfo(classData);
 
+      // Check if this is user's class (via courses table)
+      if (user?.id) {
+        const { data: courseData } = await supabase
+          .from("courses")
+          .select("id")
+          .eq("class_id", classId)
+          .eq("teacher_id", user.id)
+          .limit(1);
+        setIsMyClass(courseData && courseData.length > 0);
+      } else {
+        setIsMyClass(false);
+      }
+    }
+    fetchData();
+  }, [classId, user?.id]);
+
+  // Determine breadcrumb path based on whether this is user's class
   const breadcrumbs = classInfo
-    ? [
-        { label: "My Classes", href: "/dashboard" },
-        { label: classInfo.name },
-      ]
+    ? isMyClass
+      ? [
+          { label: "My Classes", href: "/dashboard" },
+          { label: classInfo.name },
+        ]
+      : [
+          { label: "Browse Data", href: "/dashboard" },
+          { label: "All Classes", href: "/browse/classes" },
+          { label: classInfo.name },
+        ]
     : [
-        { label: "My Classes", href: "/dashboard" },
-        { label: "Loading..." },
+        { label: "Loading...", href: "/dashboard" },
       ];
+
+  // Determine back navigation
+  const backHref = isMyClass ? "/dashboard" : "/browse/classes";
+  const backLabel = isMyClass ? "Back to Dashboard" : "Back to Classes";
 
   return (
     <AuthGuard requiredRoles={["admin", "head", "teacher", "office_member"]}>
@@ -47,8 +75,8 @@ export default function ClassOverviewPage() {
           title={classInfo?.name || "Class Overview"}
           subtitle={classInfo ? `Grade ${classInfo.grade}` : undefined}
           breadcrumbs={breadcrumbs}
-          backHref="/dashboard"
-          backLabel="Back to Dashboard"
+          backHref={backHref}
+          backLabel={backLabel}
         />
 
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
