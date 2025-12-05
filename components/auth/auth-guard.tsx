@@ -25,39 +25,31 @@ export function AuthGuard({
   const wasAuthorizedRef = useRef(false)
 
   useEffect(() => {
-    console.log('[AuthGuard] State check:', {
-      loading,
-      hasUser: !!user,
-      hasPermissions: !!userPermissions,
-      userRole: userPermissions?.role,
-      wasAuthorized: wasAuthorizedRef.current,
-      authState
-    })
-
     // 1. If loading but we already have valid user data, keep showing content
     // This prevents loading flash when onAuthStateChange triggers during page navigation
     if (loading && user && userPermissions) {
-      console.log('[AuthGuard] Loading but has valid data, keeping content')
       return
     }
 
     // 2. If loading but user was previously authorized (for edge cases), keep showing content
     if (loading && wasAuthorizedRef.current) {
-      console.log('[AuthGuard] Loading but was authorized, keeping content')
       return
     }
 
     // 3. Still loading auth state (first load only)
     if (loading) {
-      setAuthState('loading')
+      if (authState !== 'loading') {
+        setAuthState('loading')
+      }
       return
     }
 
-    // 3. No user session - redirect to login
+    // 4. No user session - redirect to login
     if (!user) {
-      console.log('[AuthGuard] No user session, redirecting to login')
-      setAuthState('unauthenticated')
       wasAuthorizedRef.current = false
+      if (authState !== 'unauthenticated') {
+        setAuthState('unauthenticated')
+      }
       if (!redirectAttempted.current) {
         redirectAttempted.current = true
         router.replace(redirectTo)
@@ -65,22 +57,25 @@ export function AuthGuard({
       return
     }
 
-    // 4. User exists but permissions not loaded - this is an error state
+    // 5. User exists but permissions not loaded - this is an error state
     // (could be RLS issue or user not in database)
     if (!userPermissions) {
-      console.error('[AuthGuard] User session exists but permissions not loaded - possible RLS issue or user not in database')
+      console.error('[AuthGuard] User session exists but permissions not loaded - possible RLS issue')
       console.error('[AuthGuard] User ID:', user.id, 'Email:', user.email)
-      setAuthState('error')
-      setError('無法載入用戶權限。您的帳號可能尚未設定完成，請聯繫管理員。')
       wasAuthorizedRef.current = false
+      if (authState !== 'error') {
+        setAuthState('error')
+        setError('無法載入用戶權限。您的帳號可能尚未設定完成，請聯繫管理員。')
+      }
       return
     }
 
-    // 5. Check role permissions
+    // 6. Check role permissions
     if (requiredRoles.length > 0 && !requiredRoles.includes(userPermissions.role)) {
-      console.log('[AuthGuard] User role not authorized:', userPermissions.role, 'required:', requiredRoles)
-      setAuthState('unauthorized')
       wasAuthorizedRef.current = false
+      if (authState !== 'unauthorized') {
+        setAuthState('unauthorized')
+      }
       if (!redirectAttempted.current) {
         redirectAttempted.current = true
         router.replace('/unauthorized')
@@ -88,10 +83,11 @@ export function AuthGuard({
       return
     }
 
-    // 6. User is authenticated and authorized
-    console.log('[AuthGuard] User authorized:', userPermissions.role)
-    setAuthState('authorized')
+    // 7. User is authenticated and authorized
     wasAuthorizedRef.current = true
+    if (authState !== 'authorized') {
+      setAuthState('authorized')
+    }
   }, [user, userPermissions, loading, router, requiredRoles, redirectTo, authState])
 
   // Error state - show friendly message instead of infinite loading
