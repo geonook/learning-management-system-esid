@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { GraduationCap, Search, Loader2, ChevronLeft, ChevronRight as ChevronRightIcon } from "lucide-react";
@@ -25,56 +25,74 @@ export default function BrowseStudentsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 50;
+  const isInitialMount = useRef(true);
+  const previousPage = useRef(page);
 
-  const fetchStudents = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await getStudentsWithPagination({
-        page,
-        pageSize,
-        grade: selectedGrade === "All" ? undefined : selectedGrade,
-        level: selectedLevel === "All" ? undefined : selectedLevel,
-        search: searchQuery || undefined,
-      });
-      setData(result);
-    } catch (err) {
-      console.error("Failed to fetch students:", err);
-      setError(err instanceof Error ? err.message : "Failed to fetch students");
-    } finally {
-      setLoading(false);
+  // Fetch students - single useEffect with proper debounce
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function fetchData() {
+      if (!isCancelled) {
+        setLoading(true);
+        setError(null);
+      }
+      try {
+        const result = await getStudentsWithPagination({
+          page,
+          pageSize,
+          grade: selectedGrade === "All" ? undefined : selectedGrade,
+          level: selectedLevel === "All" ? undefined : selectedLevel,
+          search: searchQuery || undefined,
+        });
+        if (!isCancelled) {
+          setData(result);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("Failed to fetch students:", err);
+        if (!isCancelled) {
+          setError(err instanceof Error ? err.message : "Failed to fetch students");
+          setLoading(false);
+        }
+      }
     }
+
+    // On initial mount or page change, fetch immediately
+    if (isInitialMount.current || previousPage.current !== page) {
+      isInitialMount.current = false;
+      previousPage.current = page;
+      fetchData();
+      return;
+    }
+
+    // On filter/search changes, debounce
+    const timer = setTimeout(fetchData, 300);
+    return () => {
+      isCancelled = true;
+      clearTimeout(timer);
+    };
   }, [page, selectedGrade, selectedLevel, searchQuery]);
 
-  const fetchStats = useCallback(async () => {
-    try {
-      const result = await getLevelStatistics();
-      setStats(result);
-    } catch (err) {
-      console.error("Failed to fetch stats:", err);
+  // Fetch stats only once on mount
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const result = await getLevelStatistics();
+        setStats(result);
+      } catch (err) {
+        console.error("Failed to fetch stats:", err);
+      }
     }
-  }, []);
-
-  useEffect(() => {
-    fetchStudents();
-  }, [fetchStudents]);
-
-  useEffect(() => {
     fetchStats();
-  }, [fetchStats]);
+  }, []);
 
   // Reset page when filters change
   useEffect(() => {
-    setPage(1);
+    if (!isInitialMount.current) {
+      setPage(1);
+    }
   }, [selectedGrade, selectedLevel, searchQuery]);
-
-  // Debounced search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchStudents();
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery, fetchStudents]);
 
   // Extract level display (e.g., "G1E1" -> "E1")
   const getLevelDisplay = (level: string | null | undefined) => {

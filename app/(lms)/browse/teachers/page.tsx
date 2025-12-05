@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { Users, Search, Loader2, ChevronRight } from "lucide-react";
@@ -22,48 +22,62 @@ export default function BrowseTeachersPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<TypeFilter>("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const isInitialMount = useRef(true);
 
-  const fetchTeachers = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getTeachersWithCourses({
-        teacherType: selectedType === "All" ? undefined : selectedType as TeacherType,
-        search: searchQuery || undefined,
-      });
-      setTeachers(data);
-    } catch (err) {
-      console.error("Failed to fetch teachers:", err);
-      setError(err instanceof Error ? err.message : "Failed to fetch teachers");
-    } finally {
-      setLoading(false);
+  // Fetch teachers - single useEffect with proper debounce
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function fetchData() {
+      if (!isCancelled) {
+        setLoading(true);
+        setError(null);
+      }
+      try {
+        const data = await getTeachersWithCourses({
+          teacherType: selectedType === "All" ? undefined : selectedType as TeacherType,
+          search: searchQuery || undefined,
+        });
+        if (!isCancelled) {
+          setTeachers(data);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("Failed to fetch teachers:", err);
+        if (!isCancelled) {
+          setError(err instanceof Error ? err.message : "Failed to fetch teachers");
+          setLoading(false);
+        }
+      }
     }
+
+    // On initial mount, fetch immediately
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      fetchData();
+      return;
+    }
+
+    // On subsequent changes, debounce
+    const timer = setTimeout(fetchData, 300);
+    return () => {
+      isCancelled = true;
+      clearTimeout(timer);
+    };
   }, [selectedType, searchQuery]);
 
-  const fetchStats = useCallback(async () => {
-    try {
-      const result = await getTeacherTypeStatistics();
-      setStats(result);
-    } catch (err) {
-      console.error("Failed to fetch stats:", err);
+  // Fetch stats only once on mount
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const result = await getTeacherTypeStatistics();
+        setStats(result);
+      } catch (err) {
+        console.error("Failed to fetch stats:", err);
+      }
     }
-  }, []);
-
-  useEffect(() => {
-    fetchTeachers();
-  }, [fetchTeachers]);
-
-  useEffect(() => {
     fetchStats();
-  }, [fetchStats]);
-
-  // Debounced search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchTeachers();
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery, fetchTeachers]);
+  }, []);
 
   // Get type badge color
   const getTypeBadgeColor = (type: string | null, role: string) => {
