@@ -29,18 +29,25 @@ export function AuthGuard({
       loading,
       hasUser: !!user,
       hasPermissions: !!userPermissions,
+      userRole: userPermissions?.role,
       wasAuthorized: wasAuthorizedRef.current,
       authState
     })
 
-    // 1. If loading but user was previously authorized, keep showing content
-    // This prevents loading flash when returning to a page
+    // 1. If loading but we already have valid user data, keep showing content
+    // This prevents loading flash when onAuthStateChange triggers during page navigation
+    if (loading && user && userPermissions) {
+      console.log('[AuthGuard] Loading but has valid data, keeping content')
+      return
+    }
+
+    // 2. If loading but user was previously authorized (for edge cases), keep showing content
     if (loading && wasAuthorizedRef.current) {
       console.log('[AuthGuard] Loading but was authorized, keeping content')
       return
     }
 
-    // 2. Still loading auth state (first load only)
+    // 3. Still loading auth state (first load only)
     if (loading) {
       setAuthState('loading')
       return
@@ -116,6 +123,15 @@ export function AuthGuard({
         </div>
       </div>
     )
+  }
+
+  // If we have valid user data with correct role, show content regardless of loading/authState
+  // This is the key fix for Phase E2: prevents loading flash when data already exists
+  const hasValidAuth = user && userPermissions &&
+    (requiredRoles.length === 0 || requiredRoles.includes(userPermissions.role))
+
+  if (hasValidAuth) {
+    return <>{children}</>
   }
 
   // Show loading spinner only on initial load (not when returning to page)
