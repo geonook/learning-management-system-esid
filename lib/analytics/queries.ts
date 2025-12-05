@@ -344,7 +344,7 @@ export class AnalyticsQueries {
 
     try {
       // Get all scores for the student in chronological order
-      // Note: exams.course_id doesn't have FK to courses, so we fetch course info separately
+      // Note: exams table may not have course_id column, so we don't select it
       const { data: scores, error } = await this.supabase
         .from('scores')
         .select(`
@@ -354,7 +354,7 @@ export class AnalyticsQueries {
             id,
             name,
             exam_date,
-            course_id
+            class_id
           )
         `)
         .eq('student_id', studentId)
@@ -368,21 +368,27 @@ export class AnalyticsQueries {
         return null
       }
 
-      // Fetch course types separately
-      const courseIds = [...new Set(scores
+      // Fetch course types based on class_id since exams.course_id may not exist
+      const classIds = [...new Set(scores
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .map(s => (s.exams as any).course_id)
+        .map(s => (s.exams as any).class_id)
         .filter((id: string | null): id is string => id !== null))]
 
-      let courseTypeMap: Record<string, string> = {}
-      if (courseIds.length > 0) {
+      let classCoursesMap: Record<string, string[]> = {}
+      if (classIds.length > 0) {
         const { data: coursesData } = await this.supabase
           .from('courses')
-          .select('id, course_type')
-          .in('id', courseIds)
+          .select('class_id, course_type')
+          .in('class_id', classIds)
 
         coursesData?.forEach(c => {
-          courseTypeMap[c.id] = c.course_type
+          if (!classCoursesMap[c.class_id]) {
+            classCoursesMap[c.class_id] = []
+          }
+          const courses = classCoursesMap[c.class_id]
+          if (courses) {
+            courses.push(c.course_type)
+          }
         })
       }
 
@@ -391,7 +397,21 @@ export class AnalyticsQueries {
       const assessments = scores.map((score) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const exam = score.exams as any
-        const courseType = exam.course_id ? courseTypeMap[exam.course_id] : null
+        // Infer course type from exam name or use first course type from class
+        let courseType: string | null = null
+        const examNameUpper = exam.name?.toUpperCase() || ''
+        if (examNameUpper.startsWith('LT ') || examNameUpper.includes(' LT')) {
+          courseType = 'LT'
+        } else if (examNameUpper.startsWith('IT ') || examNameUpper.includes(' IT')) {
+          courseType = 'IT'
+        } else if (examNameUpper.startsWith('KCFS ') || examNameUpper.includes(' KCFS')) {
+          courseType = 'KCFS'
+        } else {
+          const classCourses = classCoursesMap[exam.class_id]
+          if (classCourses && classCourses.length === 1) {
+            courseType = classCourses[0] || null
+          }
+        }
 
         return {
           examId: exam.id,

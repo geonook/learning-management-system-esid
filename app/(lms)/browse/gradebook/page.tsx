@@ -40,7 +40,7 @@ export default function BrowseGradebookPage() {
         const supabase = createClient();
 
         // Get all exams with class info
-        // Note: exams.course_id may not have FK to courses table, so we fetch courses separately
+        // Note: exams table may not have course_id column in some environments
         const { data: examsData, error: examsError } = await supabase
           .from("exams")
           .select(`
@@ -48,7 +48,6 @@ export default function BrowseGradebookPage() {
             name,
             exam_date,
             class_id,
-            course_id,
             max_score,
             created_at,
             classes!inner (
@@ -58,26 +57,32 @@ export default function BrowseGradebookPage() {
           `)
           .order("exam_date", { ascending: false });
 
-        // Fetch course types separately if course_ids exist
-        const courseIds = (examsData || [])
-          .map(e => e.course_id)
-          .filter((id): id is string => id !== null);
-
-        let courseTypeMap: Record<string, string> = {};
-        if (courseIds.length > 0) {
-          const { data: coursesData } = await supabase
-            .from("courses")
-            .select("id, course_type")
-            .in("id", courseIds);
-
-          coursesData?.forEach(c => {
-            courseTypeMap[c.id] = c.course_type;
-          });
-        }
-
         if (examsError) {
           console.error("Error fetching exams:", examsError);
           return;
+        }
+
+        // Get courses for each class to determine course type
+        // This is a workaround since exams.course_id may not exist
+        const classIds = [...new Set((examsData || []).map(e => e.class_id))];
+        let classCoursesMap: Record<string, { id: string; course_type: string }[]> = {};
+
+        if (classIds.length > 0) {
+          const { data: coursesData } = await supabase
+            .from("courses")
+            .select("id, class_id, course_type")
+            .in("class_id", classIds);
+
+          coursesData?.forEach(c => {
+            if (!classCoursesMap[c.class_id]) {
+              classCoursesMap[c.class_id] = [];
+            }
+            // Safe access since we check classCoursesMap[c.class_id] above
+            const courses = classCoursesMap[c.class_id];
+            if (courses) {
+              courses.push({ id: c.id, course_type: c.course_type });
+            }
+          });
         }
 
         // Get student counts per class
@@ -113,17 +118,35 @@ export default function BrowseGradebookPage() {
           const scoresEntered = examScoreCounts[exam.id] || 0;
           const completionRate = totalStudents > 0 ? Math.round((scoresEntered / totalStudents) * 100) : 0;
 
+          // Try to infer course_type from exam name (e.g., "LT FA1", "IT SA2", "KCFS Final")
+          // or use the first course from the class if available
+          let courseType: string | null = null;
+          const examNameUpper = exam.name.toUpperCase();
+          if (examNameUpper.startsWith("LT ") || examNameUpper.includes(" LT")) {
+            courseType = "LT";
+          } else if (examNameUpper.startsWith("IT ") || examNameUpper.includes(" IT")) {
+            courseType = "IT";
+          } else if (examNameUpper.startsWith("KCFS ") || examNameUpper.includes(" KCFS")) {
+            courseType = "KCFS";
+          } else {
+            // If class only has one course, use that
+            const classCourses = classCoursesMap[exam.class_id];
+            if (classCourses && classCourses.length === 1 && classCourses[0]) {
+              courseType = classCourses[0].course_type;
+            }
+          }
+
           return {
             id: exam.id,
             name: exam.name,
             exam_date: exam.exam_date,
             class_id: exam.class_id,
-            course_id: exam.course_id,
+            course_id: null, // course_id may not exist in exams table
             max_score: exam.max_score,
             created_at: exam.created_at,
             class_name: classData?.name || "Unknown",
             class_grade: classData?.grade || 0,
-            course_type: exam.course_id ? courseTypeMap[exam.course_id] || null : null,
+            course_type: courseType,
             scores_entered: scoresEntered,
             total_students: totalStudents,
             completion_rate: completionRate,

@@ -96,35 +96,62 @@ export default function StudentDetailPage() {
         }
 
         // Calculate grade averages per course type
-        // This is a simplified version - in production you'd want a more sophisticated query
+        // Since exams.course_id may not exist, we get all scores for the student's class
+        // and then infer course type from exam name
         const gradeAverages: StudentDetails["grade_averages"] = [];
-        for (const course of courses) {
-          const { data: scoresData } = await supabase
-            .from("scores")
-            .select(`
-              score,
-              exams!inner (
-                course_id
-              )
-            `)
-            .eq("student_id", studentId)
-            .eq("exams.course_id", course.id);
 
-          if (scoresData && scoresData.length > 0) {
-            const validScores = scoresData.filter(s => s.score != null && s.score > 0);
-            const avg = validScores.length > 0
-              ? validScores.reduce((sum, s) => sum + (s.score || 0), 0) / validScores.length
-              : null;
-            gradeAverages.push({
-              course_type: course.course_type,
-              average: avg ? Math.round(avg * 10) / 10 : null,
-            });
-          } else {
-            gradeAverages.push({
-              course_type: course.course_type,
-              average: null,
-            });
+        // First, get all scores for this student with exam info
+        const { data: allScoresData } = await supabase
+          .from("scores")
+          .select(`
+            score,
+            exams!inner (
+              name,
+              class_id
+            )
+          `)
+          .eq("student_id", studentId)
+          .eq("exams.class_id", studentData.class_id);
+
+        // Group scores by inferred course type
+        const scoresByCourseType: Record<string, number[]> = { LT: [], IT: [], KCFS: [] };
+
+        if (allScoresData) {
+          for (const scoreData of allScoresData) {
+            if (scoreData.score == null || scoreData.score <= 0) continue;
+            // Handle both array and single object cases from Supabase
+            const examData = scoreData.exams as unknown as { name: string; class_id: string } | Array<{ name: string; class_id: string }>;
+            const exam = Array.isArray(examData) ? examData[0] : examData;
+            const examName = (exam?.name || "").toUpperCase();
+
+            let courseType: string | null = null;
+            if (examName.startsWith("LT ") || examName.includes(" LT")) {
+              courseType = "LT";
+            } else if (examName.startsWith("IT ") || examName.includes(" IT")) {
+              courseType = "IT";
+            } else if (examName.startsWith("KCFS ") || examName.includes(" KCFS")) {
+              courseType = "KCFS";
+            }
+
+            if (courseType) {
+              const scores = scoresByCourseType[courseType];
+              if (scores) {
+                scores.push(scoreData.score);
+              }
+            }
           }
+        }
+
+        // Calculate averages for each course type
+        for (const course of courses) {
+          const scoresForType = scoresByCourseType[course.course_type] || [];
+          const avg = scoresForType.length > 0
+            ? scoresForType.reduce((sum, s) => sum + s, 0) / scoresForType.length
+            : null;
+          gradeAverages.push({
+            course_type: course.course_type,
+            average: avg ? Math.round(avg * 10) / 10 : null,
+          });
         }
 
         // Handle the case where classes could be an array or single object

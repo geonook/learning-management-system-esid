@@ -195,10 +195,10 @@ export class AnalyticsEngine {
 
   /**
    * Get student scores with grade calculations
-   * Note: exams.course_id doesn't have FK to courses, so we fetch course info separately
+   * Note: exams table may not have course_id column, so we infer course_type from exam name or class
    */
   private async getStudentScores(studentId: string, filters: AnalyticsFilters) {
-    // First, get scores with exam info (without course join)
+    // First, get scores with exam info (without course_id since it may not exist)
     const { data: rawScores, error } = await this.supabase
       .from('scores')
       .select(`
@@ -208,7 +208,6 @@ export class AnalyticsEngine {
           id,
           name,
           exam_date,
-          course_id,
           class_id
         )
       `)
@@ -223,25 +222,24 @@ export class AnalyticsEngine {
       return []
     }
 
-    // Get unique course_ids and class_ids from exams
-    const courseIds = [...new Set(rawScores
-      .map(s => (s.exams as { course_id: string | null }).course_id)
-      .filter((id): id is string => id !== null))]
-
+    // Get unique class_ids from exams
     const classIds = [...new Set(rawScores
       .map(s => (s.exams as { class_id: string }).class_id)
       .filter((id): id is string => !!id))]
 
-    // Fetch course types separately
-    let courseTypeMap: Record<string, string> = {}
-    if (courseIds.length > 0) {
+    // Fetch course types based on class_id
+    let classCoursesMap: Record<string, string[]> = {}
+    if (classIds.length > 0) {
       const { data: coursesData } = await this.supabase
         .from('courses')
-        .select('id, course_type')
-        .in('id', courseIds)
+        .select('class_id, course_type')
+        .in('class_id', classIds)
 
       coursesData?.forEach(c => {
-        courseTypeMap[c.id] = c.course_type
+        if (!classCoursesMap[c.class_id]) {
+          classCoursesMap[c.class_id] = []
+        }
+        classCoursesMap[c.class_id].push(c.course_type)
       })
     }
 
@@ -262,8 +260,21 @@ export class AnalyticsEngine {
     return rawScores
       .filter(score => score.score !== null)
       .map(score => {
-        const exam = score.exams as { id: string; name: string; exam_date: string; course_id: string | null; class_id: string }
-        const courseType = exam.course_id ? courseTypeMap[exam.course_id] : null
+        const exam = score.exams as { id: string; name: string; exam_date: string; class_id: string }
+
+        // Infer course type from exam name or use first course type from class
+        let courseType: string | null = null
+        const examNameUpper = exam.name?.toUpperCase() || ''
+        if (examNameUpper.startsWith('LT ') || examNameUpper.includes(' LT')) {
+          courseType = 'LT'
+        } else if (examNameUpper.startsWith('IT ') || examNameUpper.includes(' IT')) {
+          courseType = 'IT'
+        } else if (examNameUpper.startsWith('KCFS ') || examNameUpper.includes(' KCFS')) {
+          courseType = 'KCFS'
+        } else if (classCoursesMap[exam.class_id]?.length === 1) {
+          courseType = classCoursesMap[exam.class_id][0]
+        }
+
         const classInfo = classInfoMap[exam.class_id] || { grade: 0, track: null }
 
         return {
