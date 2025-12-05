@@ -137,11 +137,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session.user)
         const permissions = await fetchUserPermissions(session.user.id)
         console.log('[AuthContext] Permissions result:', permissions)
+        if (!permissions) {
+          console.error('[AuthContext] WARNING: User has session but no permissions - user may not exist in database')
+          console.error('[AuthContext] User ID:', session.user.id, 'Email:', session.user.email)
+        }
         setUserPermissions(permissions)
       } else {
         console.log('[AuthContext] No session found, user will be redirected to login')
       }
 
+      console.log('[AuthContext] Initial load complete, setting loading=false')
       setLoading(false)
     }
 
@@ -168,12 +173,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (session?.user) {
           // Set loading to true while fetching permissions to prevent race condition
+          console.log('[AuthContext] Auth state changed with user, fetching permissions...')
           setLoading(true)
           setUser(session.user)
           const permissions = await fetchUserPermissions(session.user.id)
+          if (!permissions) {
+            console.error('[AuthContext] WARNING: Auth state changed but no permissions - user may not exist in database')
+            console.error('[AuthContext] User ID:', session.user.id, 'Email:', session.user.email)
+          }
           setUserPermissions(permissions)
+          console.log('[AuthContext] Auth state change complete, setting loading=false')
           setLoading(false)
         } else {
+          console.log('[AuthContext] Auth state changed: no session, clearing user')
           setUser(null)
           setUserPermissions(null)
           setLoading(false)
