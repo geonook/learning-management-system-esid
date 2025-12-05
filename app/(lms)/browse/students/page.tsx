@@ -10,6 +10,7 @@ import {
   getLevelStatistics,
   type PaginatedStudents,
 } from "@/lib/api/students";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 type GradeFilter = "All" | 1 | 2 | 3 | 4 | 5 | 6;
 type LevelFilter = "All" | "E1" | "E2" | "E3";
@@ -86,19 +87,17 @@ export default function BrowseStudentsPage() {
     <AuthGuard requiredRoles={["admin", "head", "office_member"]}>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-500/20 rounded-lg">
-              <GraduationCap className="w-6 h-6 text-purple-400" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">Browse Students</h1>
-              <p className="text-sm text-white/60">
-                View all student records ({data?.total || 0} students)
-              </p>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          title="Browse Students"
+          subtitle={`View all student records (${data?.total || 0} students)`}
+          breadcrumbs={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Browse Data", href: "/browse/classes" },
+            { label: "All Students" },
+          ]}
+          backHref="/dashboard"
+          backLabel="Dashboard"
+        />
 
         {/* Search */}
         <div className="flex gap-4">

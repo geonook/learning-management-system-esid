@@ -1,7 +1,11 @@
+"use client";
+
 import { Users, UserPlus, FileSpreadsheet, Search } from "lucide-react";
+import { AuthGuard } from "@/components/auth/auth-guard";
 
 export default function ClassStudentsPage() {
   return (
+    <AuthGuard requiredRoles={["admin", "head", "teacher"]}>
     <div className="h-full flex flex-col bg-white dark:bg-black/20 rounded-lg border border-white/10 shadow-sm overflow-hidden">
       {/* Toolbar placeholder */}
       <div className="h-10 bg-[#f8f8f8] dark:bg-black/30 border-b border-[#e5e5e5] dark:border-white/10 flex items-center px-4">
@@ -59,5 +63,6 @@ export default function ClassStudentsPage() {
         <span>v2.0</span>
       </div>
     </div>
+    </AuthGuard>
   );
 }

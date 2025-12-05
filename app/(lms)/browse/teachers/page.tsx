@@ -11,6 +11,7 @@ import {
   type TeacherWithCourses,
   type TeacherType,
 } from "@/lib/api/users";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 type TypeFilter = "All" | "LT" | "IT" | "KCFS";
 
@@ -83,19 +84,17 @@ export default function BrowseTeachersPage() {
     <AuthGuard requiredRoles={["admin", "head", "office_member"]}>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-500/20 rounded-lg">
-              <Users className="w-6 h-6 text-emerald-400" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">Browse Teachers</h1>
-              <p className="text-sm text-white/60">
-                View all teachers and their assignments ({teachers.length} teachers)
-              </p>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          title="Browse Teachers"
+          subtitle={`View all teachers and their assignments (${teachers.length} teachers)`}
+          breadcrumbs={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Browse Data", href: "/browse/classes" },
+            { label: "All Teachers" },
+          ]}
+          backHref="/dashboard"
+          backLabel="Dashboard"
+        />
 
         {/* Search */}
         <div className="flex gap-4">

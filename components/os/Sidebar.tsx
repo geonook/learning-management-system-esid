@@ -46,11 +46,15 @@ export function Sidebar() {
   const [loading, setLoading] = useState(true);
   const [expandedSections, setExpandedSections] = useState<Record<SectionId, boolean>>(DEFAULT_EXPANDED);
   const [isHydrated, setIsHydrated] = useState(false);
+  // Track if office member has teaching assignments
+  const [hasTeachingAssignments, setHasTeachingAssignments] = useState(false);
 
   const isAdmin = userPermissions?.role === 'admin';
   const isHead = userPermissions?.role === 'head';
   const isTeacher = userPermissions?.role === 'teacher';
   const isOfficeMember = userPermissions?.role === 'office_member';
+  // Office member with courses should have teacher-like access to their classes
+  const hasTeacherAccess = isTeacher || (isOfficeMember && hasTeachingAssignments);
 
   // Load saved section states from localStorage
   useEffect(() => {
@@ -93,7 +97,16 @@ export function Sidebar() {
         else if (isTeacher) {
           data = await getClassesByTeacher(user.id);
         }
-        // Admin/Office: Could show all classes or none
+        // Office Member: Check if they have any teaching assignments
+        else if (isOfficeMember) {
+          // Office members might also be teachers (dual role)
+          // Check if they have any courses assigned to them
+          data = await getClassesByTeacher(user.id);
+          if (data.length > 0) {
+            setHasTeachingAssignments(true);
+          }
+        }
+        // Admin: Could show all classes or none
         // For now, show none (they can use Browse pages)
 
         setClasses(data);
@@ -105,7 +118,7 @@ export function Sidebar() {
     }
 
     fetchClasses();
-  }, [user, isHead, isTeacher, userPermissions?.grade]);
+  }, [user, isHead, isTeacher, isOfficeMember, userPermissions?.grade]);
 
   // Don't render content until hydrated to prevent flash
   const isExpanded = (sectionId: SectionId) => isHydrated ? expandedSections[sectionId] : DEFAULT_EXPANDED[sectionId];
@@ -261,8 +274,8 @@ export function Sidebar() {
           </SidebarSection>
         )}
 
-        {/* Section: Teacher Quick Actions (for teacher role) */}
-        {isTeacher && (
+        {/* Section: Teacher Quick Actions (for teacher role or office member with courses) */}
+        {hasTeacherAccess && (
           <SidebarSection
             title="Quick Actions"
             sectionId="quick"
@@ -278,34 +291,36 @@ export function Sidebar() {
           </SidebarSection>
         )}
 
-        {/* Section: My Classes */}
-        <SidebarSection
-          title="My Classes"
-          sectionId="classes"
-          isExpanded={isExpanded('classes')}
-          onToggle={() => toggleSection('classes')}
-          itemCount={loading ? undefined : classes.length}
-        >
-          {loading ? (
-            <div className="space-y-1">
-              <Skeleton className="h-9 w-full rounded-lg" />
-              <Skeleton className="h-9 w-full rounded-lg" />
-              <Skeleton className="h-9 w-full rounded-lg" />
-            </div>
-          ) : classes.length === 0 ? (
-            <div className="text-sm text-slate-400 py-1">No classes found</div>
-          ) : (
-            classes.map((cls) => (
-              <SidebarItem
-                key={cls.id}
-                href={`/class/${cls.id}`}
-                icon={<BookOpen className="w-4 h-4" />}
-                label={cls.name}
-                active={pathname?.startsWith(`/class/${cls.id}`) ?? false}
-              />
-            ))
-          )}
-        </SidebarSection>
+        {/* Section: My Classes (for teachers, heads, and office members with courses) */}
+        {(isHead || isTeacher || hasTeacherAccess || (loading && (isHead || isTeacher || isOfficeMember))) && (
+          <SidebarSection
+            title="My Classes"
+            sectionId="classes"
+            isExpanded={isExpanded('classes')}
+            onToggle={() => toggleSection('classes')}
+            itemCount={loading ? undefined : classes.length}
+          >
+            {loading ? (
+              <div className="space-y-1">
+                <Skeleton className="h-9 w-full rounded-lg" />
+                <Skeleton className="h-9 w-full rounded-lg" />
+                <Skeleton className="h-9 w-full rounded-lg" />
+              </div>
+            ) : classes.length === 0 ? (
+              <div className="text-sm text-slate-400 py-1">No classes assigned</div>
+            ) : (
+              classes.map((cls) => (
+                <SidebarItem
+                  key={cls.id}
+                  href={`/class/${cls.id}`}
+                  icon={<BookOpen className="w-4 h-4" />}
+                  label={cls.name}
+                  active={pathname?.startsWith(`/class/${cls.id}`) ?? false}
+                />
+              ))
+            )}
+          </SidebarSection>
+        )}
       </div>
     </aside>
   );

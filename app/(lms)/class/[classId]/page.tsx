@@ -1,5 +1,10 @@
+"use client";
+
+import { AuthGuard } from "@/components/auth/auth-guard";
+
 export default function ClassOverviewPage() {
   return (
+    <AuthGuard requiredRoles={["admin", "head", "teacher", "office_member"]}>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Memos Widget */}
       <div className="bg-white/50 dark:bg-black/20 backdrop-blur-md rounded-xl p-6 border border-white/10 shadow-sm">
@@ -28,5 +33,6 @@ export default function ClassOverviewPage() {
         </div>
       </div>
     </div>
+    </AuthGuard>
   );
 }

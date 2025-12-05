@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/supabase/auth-context";
 import { School, Search, Loader2, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { getClassesWithDetails, type ClassWithDetails } from "@/lib/api/classes";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 type GradeFilter = "All" | 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -65,19 +66,17 @@ export default function BrowseClassesPage() {
     <AuthGuard requiredRoles={["admin", "head", "office_member"]}>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-500/20 rounded-lg">
-              <School className="w-6 h-6 text-blue-400" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">Browse Classes</h1>
-              <p className="text-sm text-white/60">
-                View all classes across grades ({classes.length} classes)
-              </p>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          title="Browse Classes"
+          subtitle={`View all classes across grades (${classes.length} classes)`}
+          breadcrumbs={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Browse Data", href: "/browse/classes" },
+            { label: "All Classes" },
+          ]}
+          backHref="/dashboard"
+          backLabel="Dashboard"
+        />
 
         {/* Search */}
         <div className="flex gap-4">

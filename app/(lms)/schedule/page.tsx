@@ -1,9 +1,11 @@
 "use client";
 
 import { Calendar, Clock, Construction } from "lucide-react";
+import { AuthGuard } from "@/components/auth/auth-guard";
 
 export default function SchedulePage() {
   return (
+    <AuthGuard requiredRoles={["admin", "head", "teacher"]}>
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-8">
       <div className="relative mb-6">
         <Calendar className="w-16 h-16 text-slate-300 dark:text-slate-600" />
@@ -24,5 +26,6 @@ export default function SchedulePage() {
         <span>Feature in development</span>
       </div>
     </div>
+    </AuthGuard>
   );
 }

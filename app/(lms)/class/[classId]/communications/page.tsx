@@ -69,7 +69,7 @@ interface CourseInfo {
 
 export default function ClassCommunicationsPage() {
   const params = useParams();
-  const classId = params?.id as string;
+  const classId = params?.classId as string;
   const { userPermissions } = useAuth();
 
   const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);

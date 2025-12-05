@@ -78,7 +78,8 @@ export async function getGradebookData(
 
 /**
  * Update a single score
- * Permission: Class Teacher OR Head Teacher of same grade
+ * Permission: Course Teacher (via courses table) OR Head Teacher of same grade OR Admin
+ * Note: Office Members with teaching assignments can also edit their own courses
  */
 export async function updateScore(
   classId: string,
@@ -104,23 +105,32 @@ export async function updateScore(
 
   if (userError || !currentUser) throw new Error("User not found");
 
-  // Get class details (teacher_id, grade)
+  // Get class details (grade)
   const { data: classData, error: classError } = await supabase
     .from("classes")
-    .select("teacher_id, grade")
+    .select("grade")
     .eq("id", classId)
     .single();
 
   if (classError || !classData) throw new Error("Class not found");
 
-  const isClassTeacher = classData.teacher_id === user.id;
+  // Check if user is a teacher for this class via courses table
+  // This includes regular teachers AND office_members with teaching assignments
+  const { data: courseAssignment } = await supabase
+    .from("courses")
+    .select("id")
+    .eq("class_id", classId)
+    .eq("teacher_id", user.id)
+    .single();
+
+  const isCourseTeacher = !!courseAssignment;
   const isGradeHead =
-    currentUser.role === "head" && currentUser.grade === classData.grade;
+    currentUser.role === "head" && currentUser.grade === String(classData.grade);
   const isAdmin = currentUser.role === "admin";
 
-  if (!isClassTeacher && !isGradeHead && !isAdmin) {
+  if (!isCourseTeacher && !isGradeHead && !isAdmin) {
     throw new Error(
-      "Permission denied: Only Class Teacher or Grade Head can edit grades."
+      "Permission denied: Only Course Teacher or Grade Head can edit grades."
     );
   }
   // ------------------------

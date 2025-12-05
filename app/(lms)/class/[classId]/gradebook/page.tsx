@@ -3,6 +3,7 @@ import { Toolbar } from "@/components/gradebook/Toolbar";
 import { Spreadsheet } from "@/components/gradebook/Spreadsheet";
 import { getGradebookData } from "@/lib/actions/gradebook";
 import { GradeRow } from "@/lib/gradebook/FormulaEngine";
+import { AuthGuard } from "@/components/auth/auth-guard";
 
 interface PageProps {
   params: {
@@ -31,6 +32,7 @@ export default async function ClassGradebookPage({ params }: PageProps) {
   }
 
   return (
+    <AuthGuard requiredRoles={["admin", "head", "teacher", "office_member"]}>
     <div className="h-full flex flex-col bg-white dark:bg-slate-950 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
       <Toolbar />
       {error ? (
@@ -49,5 +51,6 @@ export default async function ClassGradebookPage({ params }: PageProps) {
         <span className="text-gray-400 dark:text-gray-500">Sum: 0</span>
       </div>
     </div>
+    </AuthGuard>
   );
 }
