@@ -167,8 +167,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Skip if this is the same user (no need to refetch permissions)
         // This covers TOKEN_REFRESHED, SIGNED_IN, and INITIAL_SESSION events
+        // Use userPermissions instead of user to check - user state may not be updated yet
         if (['TOKEN_REFRESHED', 'SIGNED_IN', 'INITIAL_SESSION'].includes(event)
-            && user?.id === session?.user?.id) {
+            && userPermissions?.userId === session?.user?.id) {
           console.log('[AuthContext] Same user auth event, skipping permission refetch:', event)
           return
         }

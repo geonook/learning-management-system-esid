@@ -35,7 +35,8 @@ interface TeacherDetails {
 }
 
 export default function TeacherDetailPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
+  const userId = user?.id;
   const params = useParams();
   const teacherId = params?.id as string;
 
@@ -44,8 +45,8 @@ export default function TeacherDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Wait for auth to be ready before fetching
-    if (authLoading || !user) {
+    // Wait for user to be available
+    if (!userId) {
       return;
     }
 
@@ -127,7 +128,7 @@ export default function TeacherDetailPage() {
     if (teacherId) {
       fetchTeacher();
     }
-  }, [authLoading, user, teacherId]);
+  }, [userId, teacherId]);
 
   const getTypeBadgeColor = (type: string | null, role: string) => {
     if (role === "head") return "bg-amber-500/20 text-amber-400";

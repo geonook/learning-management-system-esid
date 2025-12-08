@@ -36,7 +36,8 @@ interface StudentDetails {
 }
 
 export default function StudentDetailPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
+  const userId = user?.id;
   const params = useParams();
   const studentId = params?.id as string;
 
@@ -45,8 +46,8 @@ export default function StudentDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Wait for auth to be ready before fetching
-    if (authLoading || !user) {
+    // Wait for user to be available
+    if (!userId) {
       return;
     }
 
@@ -186,7 +187,7 @@ export default function StudentDetailPage() {
     if (studentId) {
       fetchStudent();
     }
-  }, [authLoading, user, studentId]);
+  }, [userId, studentId]);
 
   const getLevelBadgeColor = (level: string | null) => {
     if (!level) return "bg-surface-tertiary text-text-tertiary";

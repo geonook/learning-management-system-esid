@@ -43,7 +43,8 @@ const TEACHER_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 export default function UserManagementPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
+  const userId = user?.id;
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,12 +84,12 @@ export default function UserManagementPage() {
   }, []);
 
   useEffect(() => {
-    // Wait for auth to be ready before fetching
-    if (authLoading || !user) {
+    // Wait for user to be available
+    if (!userId) {
       return;
     }
     fetchData();
-  }, [authLoading, user, fetchData]);
+  }, [userId, fetchData]);
 
   useEffect(() => {
     let result = users;

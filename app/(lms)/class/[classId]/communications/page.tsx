@@ -70,7 +70,8 @@ interface CourseInfo {
 export default function ClassCommunicationsPage() {
   const params = useParams();
   const classId = params?.classId as string;
-  const { userPermissions, loading: authLoading, user } = useAuth();
+  const { userPermissions, user } = useAuth();
+  const userId = user?.id;
 
   const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
   const [courses, setCourses] = useState<CourseInfo[]>([]);
@@ -102,8 +103,8 @@ export default function ClassCommunicationsPage() {
 
   // Fetch class and courses info
   useEffect(() => {
-    // Wait for auth to be ready before fetching
-    if (authLoading || !user) {
+    // Wait for user to be available
+    if (!userId) {
       return;
     }
 
@@ -154,7 +155,7 @@ export default function ClassCommunicationsPage() {
     }
 
     fetchClassInfo();
-  }, [authLoading, user, classId, userPermissions?.teacher_type]);
+  }, [userId, classId, userPermissions?.teacher_type]);
 
   // Fetch communications when course or semester changes
   const fetchCommunications = useCallback(async () => {

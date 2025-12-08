@@ -15,7 +15,6 @@ interface ExamWithDetails {
   exam_date: string | null;
   class_id: string;
   course_id: string | null;
-  max_score: number;
   created_at: string;
   class_name: string;
   class_grade: number;
@@ -48,7 +47,7 @@ export default function BrowseGradebookPage() {
         const supabase = createClient();
 
         // Get all exams with class info
-        // Note: exams table may not have course_id column in some environments
+        // Note: exams table may not have max_score or course_id column in some environments
         const { data: examsData, error: examsError } = await supabase
           .from("exams")
           .select(`
@@ -56,7 +55,6 @@ export default function BrowseGradebookPage() {
             name,
             exam_date,
             class_id,
-            max_score,
             created_at,
             classes!inner (
               name,
@@ -150,7 +148,6 @@ export default function BrowseGradebookPage() {
             exam_date: exam.exam_date,
             class_id: exam.class_id,
             course_id: null, // course_id may not exist in exams table
-            max_score: exam.max_score,
             created_at: exam.created_at,
             class_name: classData?.name || "Unknown",
             class_grade: classData?.grade || 0,

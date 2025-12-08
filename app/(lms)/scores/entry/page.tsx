@@ -16,19 +16,20 @@ interface TeacherClass {
 }
 
 export default function QuickScoreEntryPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
+  const userId = user?.id;
   const [classes, setClasses] = useState<TeacherClass[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Wait for auth to be ready before fetching
-    if (authLoading || !user) {
+    // Wait for user to be available
+    if (!userId) {
       return;
     }
 
     async function fetchTeacherClasses() {
-      if (!user?.id) return;
+      if (!userId) return;
 
       try {
         setLoading(true);
@@ -49,7 +50,7 @@ export default function QuickScoreEntryPage() {
             )
           `
           )
-          .eq("teacher_id", user.id)
+          .eq("teacher_id", userId)
           .eq("is_active", true);
 
         if (courseError) throw courseError;
@@ -108,7 +109,7 @@ export default function QuickScoreEntryPage() {
     }
 
     fetchTeacherClasses();
-  }, [authLoading, user]);
+  }, [userId]);
 
   return (
     <AuthGuard requiredRoles={["admin", "head", "teacher", "office_member"]}>

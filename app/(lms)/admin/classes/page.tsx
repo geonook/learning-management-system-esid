@@ -11,7 +11,8 @@ import { getClassesWithDetails, type ClassWithDetails } from "@/lib/api/classes"
 import Link from "next/link";
 
 export default function ClassManagementPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
+  const userId = user?.id;
   const [loading, setLoading] = useState(true);
   const [classes, setClasses] = useState<ClassWithDetails[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -19,8 +20,8 @@ export default function ClassManagementPage() {
   const [showGradeDropdown, setShowGradeDropdown] = useState(false);
 
   useEffect(() => {
-    // Wait for auth to be ready before fetching
-    if (authLoading || !user) {
+    // Wait for user to be available
+    if (!userId) {
       return;
     }
 
@@ -40,7 +41,7 @@ export default function ClassManagementPage() {
       }
     }
     fetchClasses();
-  }, [authLoading, user]);
+  }, [userId]);
 
   // Filter classes based on search and grade
   const filteredClasses = useMemo(() => {
