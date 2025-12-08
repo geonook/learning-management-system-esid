@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { useAuth } from "@/lib/supabase/auth-context";
+import { useAuthReady } from "@/hooks/useAuthReady";
 import { supabase } from "@/lib/supabase/client";
 import { Zap, BookOpen, Users, ChevronRight, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -16,20 +16,20 @@ interface TeacherClass {
 }
 
 export default function QuickScoreEntryPage() {
-  const { user } = useAuth();
-  const userId = user?.id;
+  // ✅ 使用標準 useAuthReady hook（不要直接用 useAuth）
+  const { userId, isReady } = useAuthReady();
   const [classes, setClasses] = useState<TeacherClass[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Wait for user to be available
-    if (!userId) {
+    // 使用 isReady 判斷是否可以開始載入
+    if (!isReady) {
       return;
     }
 
     async function fetchTeacherClasses() {
-      if (!userId) return;
+      if (!userId) return; // TypeScript guard
 
       try {
         setLoading(true);
@@ -109,7 +109,7 @@ export default function QuickScoreEntryPage() {
     }
 
     fetchTeacherClasses();
-  }, [userId]);
+  }, [isReady, userId]);
 
   return (
     <AuthGuard requiredRoles={["admin", "head", "teacher", "office_member"]}>

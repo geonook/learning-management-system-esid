@@ -106,6 +106,43 @@ This file provides essential guidance to Claude Code (claude.ai/code) when worki
   - 使用情境：同時是行政人員 + 授課教師的雙重身份
 - **Admin（系統管理員）**：全域存取權限
 
+### 🔐 Auth 標準模式（MANDATORY）
+
+**永遠使用 `useAuthReady` hook，不要直接使用 `useAuth`**
+
+```typescript
+// ✅ 正確模式
+import { useAuthReady } from "@/hooks/useAuthReady";
+
+const { userId, isReady, role } = useAuthReady();
+
+useEffect(() => {
+  if (!isReady) return;
+  fetchData();
+}, [userId]);  // primitive 依賴，穩定
+
+// ❌ 錯誤模式（會導致無限迴圈或載入問題）
+const { user, loading } = useAuth();
+
+useEffect(() => {
+  if (loading || !user) return;
+  fetchData();
+}, [user]);  // 物件依賴，每次都是新參照
+```
+
+**為什麼這很重要？**
+1. `user` 是物件，React 比較參照而非值，每次 auth 事件都會觸發 useEffect
+2. Supabase 會觸發多個 auth 事件（INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED）
+3. `useAuthReady` 提取 `userId` 作為穩定的 primitive 值
+
+**Hook 提供的欄位：**
+- `userId`: string | null（穩定，用於 useEffect 依賴）
+- `role`: string | null（admin/head/teacher/office_member）
+- `isReady`: boolean（用戶已登入且權限已載入）
+- `isLoading`: boolean（載入中狀態）
+- `permissions`: UserPermissions | null（完整權限物件）
+- `grade`, `track`, `teacherType`, `fullName`：常用權限欄位
+
 ### 測試要求
 
 - lib/grade 單元測試：空值/全 0/部分 0/正常/混合 + snapshot
