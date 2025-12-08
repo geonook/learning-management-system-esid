@@ -30,7 +30,7 @@ interface ClassSummary {
 }
 
 export default function GradeOverviewPage() {
-  const { userPermissions } = useAuth();
+  const { userPermissions, loading: authLoading, user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [kpis, setKpis] = useState<HeadTeacherKpis>({
     totalClasses: 0,
@@ -55,6 +55,11 @@ export default function GradeOverviewPage() {
   };
 
   useEffect(() => {
+    // Wait for auth to be ready before fetching
+    if (authLoading || !user) {
+      return;
+    }
+
     async function fetchData() {
       if (!userPermissions?.grade) {
         setLoading(false);
@@ -148,7 +153,7 @@ export default function GradeOverviewPage() {
     }
 
     fetchData();
-  }, [gradeBand, courseType, userPermissions?.grade]);
+  }, [authLoading, user, gradeBand, courseType, userPermissions?.grade]);
 
   return (
     <AuthGuard requiredRoles={["admin", "head"]}>

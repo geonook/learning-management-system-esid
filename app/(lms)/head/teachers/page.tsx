@@ -15,7 +15,7 @@ interface TeacherWithProgress extends TeacherWithCourses {
 }
 
 export default function TeacherProgressPage() {
-  const { userPermissions } = useAuth();
+  const { userPermissions, loading: authLoading, user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [teachers, setTeachers] = useState<TeacherWithProgress[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -47,6 +47,11 @@ export default function TeacherProgressPage() {
   };
 
   useEffect(() => {
+    // Wait for auth to be ready before fetching
+    if (authLoading || !user) {
+      return;
+    }
+
     async function fetchTeachers() {
       try {
         const supabase = createClient();
@@ -115,7 +120,7 @@ export default function TeacherProgressPage() {
     }
 
     fetchTeachers();
-  }, [gradeBand, courseType]);
+  }, [authLoading, user, gradeBand, courseType]);
 
   // Filter teachers based on search
   const filteredTeachers = useMemo(() => {

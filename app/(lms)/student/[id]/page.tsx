@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { useAuth } from "@/lib/supabase/auth-context";
 import { supabase } from "@/lib/supabase/client";
 import {
   GraduationCap,
@@ -35,6 +36,7 @@ interface StudentDetails {
 }
 
 export default function StudentDetailPage() {
+  const { user, loading: authLoading } = useAuth();
   const params = useParams();
   const studentId = params?.id as string;
 
@@ -43,6 +45,11 @@ export default function StudentDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Wait for auth to be ready before fetching
+    if (authLoading || !user) {
+      return;
+    }
+
     async function fetchStudent() {
       setLoading(true);
       setError(null);
@@ -179,7 +186,7 @@ export default function StudentDetailPage() {
     if (studentId) {
       fetchStudent();
     }
-  }, [studentId]);
+  }, [authLoading, user, studentId]);
 
   const getLevelBadgeColor = (level: string | null) => {
     if (!level) return "bg-surface-tertiary text-text-tertiary";

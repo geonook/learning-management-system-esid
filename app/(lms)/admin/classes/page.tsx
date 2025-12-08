@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { useAuth } from "@/lib/supabase/auth-context";
 import { School, Search, Plus, Filter, Users, BookOpen, GraduationCap, ChevronDown, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { getClassesWithDetails, type ClassWithDetails } from "@/lib/api/classes"
 import Link from "next/link";
 
 export default function ClassManagementPage() {
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [classes, setClasses] = useState<ClassWithDetails[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -17,6 +19,11 @@ export default function ClassManagementPage() {
   const [showGradeDropdown, setShowGradeDropdown] = useState(false);
 
   useEffect(() => {
+    // Wait for auth to be ready before fetching
+    if (authLoading || !user) {
+      return;
+    }
+
     async function fetchClasses() {
       console.log('[AdminClasses] Starting to fetch classes...');
       try {
@@ -33,7 +40,7 @@ export default function ClassManagementPage() {
       }
     }
     fetchClasses();
-  }, []);
+  }, [authLoading, user]);
 
   // Filter classes based on search and grade
   const filteredClasses = useMemo(() => {

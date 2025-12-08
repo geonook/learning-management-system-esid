@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { useAuth } from "@/lib/supabase/auth-context";
 import { supabase } from "@/lib/supabase/client";
 import {
   Users,
@@ -34,6 +35,7 @@ interface TeacherDetails {
 }
 
 export default function TeacherDetailPage() {
+  const { user, loading: authLoading } = useAuth();
   const params = useParams();
   const teacherId = params?.id as string;
 
@@ -42,6 +44,11 @@ export default function TeacherDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Wait for auth to be ready before fetching
+    if (authLoading || !user) {
+      return;
+    }
+
     async function fetchTeacher() {
       setLoading(true);
       setError(null);
@@ -120,7 +127,7 @@ export default function TeacherDetailPage() {
     if (teacherId) {
       fetchTeacher();
     }
-  }, [teacherId]);
+  }, [authLoading, user, teacherId]);
 
   const getTypeBadgeColor = (type: string | null, role: string) => {
     if (role === "head") return "bg-amber-500/20 text-amber-400";

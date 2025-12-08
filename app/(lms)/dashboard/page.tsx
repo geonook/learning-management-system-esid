@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/lib/supabase/auth-context";
 import AuthGuard from "@/components/auth/auth-guard";
 import {
@@ -84,14 +84,26 @@ export default function Dashboard() {
   const userGrade = userPermissions?.grade;
   const userTrack = userPermissions?.track;
 
+  // Track if data has been loaded at least once
+  const hasLoadedOnce = useRef(false);
+
   useEffect(() => {
     // Skip if user data is not ready yet
     if (!userId || !userRole) {
+      // If we've loaded before and auth state changes, don't show loading again
+      if (hasLoadedOnce.current) {
+        return;
+      }
+      // Initial load - keep loading states as true
       return;
     }
 
     // For head teachers, wait until grade and track are loaded
     if (userRole === "head" && (!userGrade || !userTrack)) {
+      // If we've loaded before, don't show loading again
+      if (hasLoadedOnce.current) {
+        return;
+      }
       return;
     }
 
@@ -163,6 +175,9 @@ export default function Dashboard() {
         if (!isCancelled) setLoadingLists(false);
       }
     };
+
+    // Mark that we've started loading - prevents loading flash on auth state changes
+    hasLoadedOnce.current = true;
 
     // Trigger all fetches independently
     loadKpis();

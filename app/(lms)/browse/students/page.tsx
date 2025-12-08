@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { useAuth } from "@/lib/supabase/auth-context";
 import { GraduationCap, Search, Loader2, ChevronLeft, ChevronRight as ChevronRightIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -16,6 +17,7 @@ type GradeFilter = "All" | 1 | 2 | 3 | 4 | 5 | 6;
 type LevelFilter = "All" | "E1" | "E2" | "E3";
 
 export default function BrowseStudentsPage() {
+  const { user, loading: authLoading } = useAuth();
   const [data, setData] = useState<PaginatedStudents | null>(null);
   const [stats, setStats] = useState<{ total: number; e1: number; e2: number; e3: number } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,6 +32,11 @@ export default function BrowseStudentsPage() {
 
   // Fetch students - single useEffect with proper debounce
   useEffect(() => {
+    // Wait for auth to be ready before fetching
+    if (authLoading || !user) {
+      return;
+    }
+
     let isCancelled = false;
 
     async function fetchData() {
@@ -72,7 +79,7 @@ export default function BrowseStudentsPage() {
       isCancelled = true;
       clearTimeout(timer);
     };
-  }, [page, selectedGrade, selectedLevel, searchQuery]);
+  }, [authLoading, user, page, selectedGrade, selectedLevel, searchQuery]);
 
   // Fetch stats only once on mount
   useEffect(() => {

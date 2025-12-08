@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { useAuth } from "@/lib/supabase/auth-context";
 import {
   MessageSquare,
   Search,
@@ -43,6 +44,7 @@ import {
 type CourseTypeFilter = "All" | "LT" | "IT" | "KCFS";
 
 export default function BrowseCommsPage() {
+  const { user, loading: authLoading } = useAuth();
   const [data, setData] = useState<PaginatedCommunications | null>(null);
   const [stats, setStats] = useState<CommunicationStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,6 +64,11 @@ export default function BrowseCommsPage() {
 
   // Fetch data - single useEffect with proper debounce
   useEffect(() => {
+    // Wait for auth to be ready before fetching
+    if (authLoading || !user) {
+      return;
+    }
+
     let isCancelled = false;
 
     async function fetchData() {
@@ -108,7 +115,7 @@ export default function BrowseCommsPage() {
       isCancelled = true;
       clearTimeout(timer);
     };
-  }, [academicYear, semester, courseType, page]);
+  }, [authLoading, user, academicYear, semester, courseType, page]);
 
   // Reset page when filters change
   useEffect(() => {

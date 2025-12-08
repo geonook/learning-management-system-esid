@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { useAuth } from "@/lib/supabase/auth-context";
 import {
   Users,
   Search,
@@ -42,6 +43,7 @@ const TEACHER_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 export default function UserManagementPage() {
+  const { user, loading: authLoading } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,8 +83,12 @@ export default function UserManagementPage() {
   }, []);
 
   useEffect(() => {
+    // Wait for auth to be ready before fetching
+    if (authLoading || !user) {
+      return;
+    }
     fetchData();
-  }, [fetchData]);
+  }, [authLoading, user, fetchData]);
 
   useEffect(() => {
     let result = users;

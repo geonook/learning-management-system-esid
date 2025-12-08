@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { useAuth } from "@/lib/supabase/auth-context";
 import { Users, Search, Loader2, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -16,6 +17,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 type TypeFilter = "All" | "LT" | "IT" | "KCFS";
 
 export default function BrowseTeachersPage() {
+  const { user, loading: authLoading } = useAuth();
   const [teachers, setTeachers] = useState<TeacherWithCourses[]>([]);
   const [stats, setStats] = useState<{ total: number; lt: number; it: number; kcfs: number; head: number } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,6 +28,11 @@ export default function BrowseTeachersPage() {
 
   // Fetch teachers - single useEffect with proper debounce
   useEffect(() => {
+    // Wait for auth to be ready before fetching
+    if (authLoading || !user) {
+      return;
+    }
+
     let isCancelled = false;
 
     async function fetchData() {
@@ -64,7 +71,7 @@ export default function BrowseTeachersPage() {
       isCancelled = true;
       clearTimeout(timer);
     };
-  }, [selectedType, searchQuery]);
+  }, [authLoading, user, selectedType, searchQuery]);
 
   // Fetch stats only once on mount
   useEffect(() => {

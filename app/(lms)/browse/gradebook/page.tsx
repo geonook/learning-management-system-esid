@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { useAuth } from "@/lib/supabase/auth-context";
 import { BookOpen, Search, Download, FileSpreadsheet, Calendar, CheckCircle, Clock, AlertTriangle, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,6 +26,7 @@ interface ExamWithDetails {
 }
 
 export default function BrowseGradebookPage() {
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [exams, setExams] = useState<ExamWithDetails[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -35,6 +37,11 @@ export default function BrowseGradebookPage() {
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
 
   useEffect(() => {
+    // Wait for auth to be ready before fetching
+    if (authLoading || !user) {
+      return;
+    }
+
     async function fetchExams() {
       try {
         const supabase = createClient();
@@ -162,7 +169,7 @@ export default function BrowseGradebookPage() {
     }
 
     fetchExams();
-  }, []);
+  }, [authLoading, user]);
 
   // Filter exams
   const filteredExams = useMemo(() => {
