@@ -18,7 +18,7 @@ export function ColumnView({
   selectedId,
 }: ColumnViewProps) {
   return (
-    <ScrollArea className="h-full border-r border-white/10 min-w-[240px] max-w-[300px] bg-black/20 backdrop-blur-sm">
+    <ScrollArea className="h-full border-r border-[rgb(var(--border-default))] min-w-[240px] max-w-[300px] bg-surface-tertiary dark:bg-black/20 backdrop-blur-sm">
       <div className="py-2">
         {items.map((node) => (
           <FinderItem

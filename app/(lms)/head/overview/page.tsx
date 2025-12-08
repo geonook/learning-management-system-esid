@@ -162,11 +162,11 @@ export default function GradeOverviewPage() {
         {/* Header */}
         <div className="flex items-center gap-3">
           <div className="p-2 bg-emerald-500/20 rounded-lg">
-            <LayoutDashboard className="w-6 h-6 text-emerald-400" />
+            <LayoutDashboard className="w-6 h-6 text-emerald-500 dark:text-emerald-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Grade Overview</h1>
-            <p className="text-sm text-white/60">
+            <h1 className="text-2xl font-bold text-text-primary">Grade Overview</h1>
+            <p className="text-sm text-text-secondary">
               {getGradeDisplay(gradeBand)} • {courseType} • Performance metrics
             </p>
           </div>
@@ -174,65 +174,65 @@ export default function GradeOverviewPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-4 gap-4">
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/60 text-sm">Classes</span>
-              <GraduationCap className="w-4 h-4 text-emerald-400" />
+              <span className="text-text-secondary text-sm">Classes</span>
+              <GraduationCap className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
-              <div className="text-2xl font-bold text-white">{kpis.totalClasses}</div>
+              <div className="text-2xl font-bold text-text-primary">{kpis.totalClasses}</div>
             )}
-            <div className="text-xs text-white/40">in {getGradeDisplay(gradeBand)}</div>
+            <div className="text-xs text-text-tertiary">in {getGradeDisplay(gradeBand)}</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/60 text-sm">Students</span>
-              <Users className="w-4 h-4 text-blue-400" />
+              <span className="text-text-secondary text-sm">Students</span>
+              <Users className="w-4 h-4 text-blue-500 dark:text-blue-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-16" />
             ) : (
-              <div className="text-2xl font-bold text-white">{kpis.studentsCount.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-text-primary">{kpis.studentsCount.toLocaleString()}</div>
             )}
-            <div className="text-xs text-white/40">total enrolled</div>
+            <div className="text-xs text-text-tertiary">total enrolled</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/60 text-sm">Avg Score</span>
-              <TrendingUp className="w-4 h-4 text-green-400" />
+              <span className="text-text-secondary text-sm">Avg Score</span>
+              <TrendingUp className="w-4 h-4 text-green-500 dark:text-green-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
-              <div className="text-2xl font-bold text-white">
+              <div className="text-2xl font-bold text-text-primary">
                 {kpis.averageScore > 0 ? kpis.averageScore : "N/A"}
               </div>
             )}
-            <div className="text-xs text-white/40">grade average</div>
+            <div className="text-xs text-text-tertiary">grade average</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/60 text-sm">Coverage</span>
-              <AlertTriangle className="w-4 h-4 text-amber-400" />
+              <span className="text-text-secondary text-sm">Coverage</span>
+              <AlertTriangle className="w-4 h-4 text-amber-500 dark:text-amber-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
-              <div className="text-2xl font-bold text-white">
+              <div className="text-2xl font-bold text-text-primary">
                 {kpis.coverageRate > 0 ? `${kpis.coverageRate}%` : "N/A"}
               </div>
             )}
-            <div className="text-xs text-white/40">students scored</div>
+            <div className="text-xs text-text-tertiary">students scored</div>
           </div>
         </div>
 
         {/* Charts Row */}
         <div className="grid grid-cols-2 gap-6">
           {/* Score Distribution */}
-          <div className="bg-white/5 rounded-xl border border-white/10 p-6">
-            <h3 className="text-lg font-medium text-white mb-4">Score Distribution</h3>
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-6">
+            <h3 className="text-lg font-medium text-text-primary mb-4">Score Distribution</h3>
             {loading ? (
               <div className="h-48 flex items-end justify-between gap-2 px-4 pb-4">
                 <Skeleton className="h-1/3 w-full" />
@@ -245,43 +245,45 @@ export default function GradeOverviewPage() {
               <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={distribution}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.1)" className="dark:stroke-white/10" />
                     <XAxis
                       dataKey="bucket"
-                      stroke="rgba(255,255,255,0.5)"
+                      stroke="rgb(148,163,184)"
+                      className="dark:stroke-white/50"
                       fontSize={9}
                       tickLine={false}
                       axisLine={false}
                     />
                     <YAxis
-                      stroke="rgba(255,255,255,0.5)"
+                      stroke="rgb(148,163,184)"
+                      className="dark:stroke-white/50"
                       fontSize={10}
                       tickLine={false}
                       axisLine={false}
                     />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: "rgba(0,0,0,0.8)",
-                        border: "none",
+                        backgroundColor: "rgba(15,23,42,0.95)",
+                        border: "1px solid rgba(148,163,184,0.2)",
                         borderRadius: "8px",
                         color: "#fff",
                       }}
-                      cursor={{ fill: "rgba(255,255,255,0.1)" }}
+                      cursor={{ fill: "rgba(148,163,184,0.1)" }}
                     />
                     <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="h-48 flex items-center justify-center text-white/40">
+              <div className="h-48 flex items-center justify-center text-text-tertiary">
                 <p>No score data available yet</p>
               </div>
             )}
           </div>
 
           {/* Students by Class */}
-          <div className="bg-white/5 rounded-xl border border-white/10 p-6">
-            <h3 className="text-lg font-medium text-white mb-4">Students by Class</h3>
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-6">
+            <h3 className="text-lg font-medium text-text-primary mb-4">Students by Class</h3>
             {loading ? (
               <div className="h-48 flex items-end justify-between gap-1 px-2 pb-4">
                 {Array.from({ length: 8 }).map((_, i) => (
@@ -292,10 +294,11 @@ export default function GradeOverviewPage() {
               <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={classes.slice(0, 14).map(c => ({ name: c.name.replace(/^G\d\s/, ''), students: c.studentCount }))}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.1)" className="dark:stroke-white/10" />
                     <XAxis
                       dataKey="name"
-                      stroke="rgba(255,255,255,0.5)"
+                      stroke="rgb(148,163,184)"
+                      className="dark:stroke-white/50"
                       fontSize={8}
                       tickLine={false}
                       axisLine={false}
@@ -304,26 +307,27 @@ export default function GradeOverviewPage() {
                       height={40}
                     />
                     <YAxis
-                      stroke="rgba(255,255,255,0.5)"
+                      stroke="rgb(148,163,184)"
+                      className="dark:stroke-white/50"
                       fontSize={10}
                       tickLine={false}
                       axisLine={false}
                     />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: "rgba(0,0,0,0.8)",
-                        border: "none",
+                        backgroundColor: "rgba(15,23,42,0.95)",
+                        border: "1px solid rgba(148,163,184,0.2)",
                         borderRadius: "8px",
                         color: "#fff",
                       }}
-                      cursor={{ fill: "rgba(255,255,255,0.1)" }}
+                      cursor={{ fill: "rgba(148,163,184,0.1)" }}
                     />
                     <Bar dataKey="students" fill="#6366f1" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="h-48 flex items-center justify-center text-white/40">
+              <div className="h-48 flex items-center justify-center text-text-tertiary">
                 <p>No class data available</p>
               </div>
             )}
@@ -331,23 +335,23 @@ export default function GradeOverviewPage() {
         </div>
 
         {/* Class Performance Table */}
-        <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
-          <div className="p-4 border-b border-white/10">
-            <h3 className="text-lg font-medium text-white">Class Performance</h3>
+        <div className="bg-surface-secondary rounded-xl border border-border-default overflow-hidden">
+          <div className="p-4 border-b border-border-default">
+            <h3 className="text-lg font-medium text-text-primary">Class Performance</h3>
           </div>
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/10">
-                <th className="text-left p-4 text-sm font-medium text-white/60">Class</th>
-                <th className="text-left p-4 text-sm font-medium text-white/60">Students</th>
-                <th className="text-left p-4 text-sm font-medium text-white/60">Avg Score</th>
-                <th className="text-left p-4 text-sm font-medium text-white/60">Status</th>
+              <tr className="border-b border-border-default">
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Class</th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Students</th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Avg Score</th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Status</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="border-b border-white/5">
+                  <tr key={i} className="border-b border-border-subtle">
                     <td className="p-4"><Skeleton className="h-4 w-24" /></td>
                     <td className="p-4"><Skeleton className="h-4 w-10" /></td>
                     <td className="p-4"><Skeleton className="h-4 w-10" /></td>
@@ -356,18 +360,18 @@ export default function GradeOverviewPage() {
                 ))
               ) : classes.length > 0 ? (
                 classes.map((cls) => (
-                  <tr key={cls.id} className="border-b border-white/5 hover:bg-white/5">
-                    <td className="p-4 text-white font-medium">{cls.name}</td>
-                    <td className="p-4 text-white/80">{cls.studentCount}</td>
+                  <tr key={cls.id} className="border-b border-border-subtle hover:bg-surface-hover">
+                    <td className="p-4 text-text-primary font-medium">{cls.name}</td>
+                    <td className="p-4 text-text-secondary">{cls.studentCount}</td>
                     <td className="p-4">
                       <span className={
                         cls.avgScore !== null
                           ? cls.avgScore >= 80
-                            ? "text-green-400"
+                            ? "text-green-600 dark:text-green-400"
                             : cls.avgScore >= 60
-                            ? "text-amber-400"
-                            : "text-red-400"
-                          : "text-white/40"
+                            ? "text-amber-600 dark:text-amber-400"
+                            : "text-red-600 dark:text-red-400"
+                          : "text-text-tertiary"
                       }>
                         {cls.avgScore !== null ? cls.avgScore : "-"}
                       </span>
@@ -375,16 +379,16 @@ export default function GradeOverviewPage() {
                     <td className="p-4">
                       {cls.avgScore !== null ? (
                         cls.avgScore >= 70 ? (
-                          <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">
+                          <span className="px-2 py-1 bg-green-500/20 text-green-600 dark:text-green-400 text-xs rounded-full">
                             On Track
                           </span>
                         ) : (
-                          <span className="px-2 py-1 bg-amber-500/20 text-amber-400 text-xs rounded-full">
+                          <span className="px-2 py-1 bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs rounded-full">
                             Needs Attention
                           </span>
                         )
                       ) : (
-                        <span className="px-2 py-1 bg-white/10 text-white/40 text-xs rounded-full">
+                        <span className="px-2 py-1 bg-surface-elevated text-text-tertiary text-xs rounded-full">
                           No Data
                         </span>
                       )}
@@ -393,7 +397,7 @@ export default function GradeOverviewPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-white/40">
+                  <td colSpan={4} className="p-8 text-center text-text-tertiary">
                     No classes found for {getGradeDisplay(gradeBand)}
                   </td>
                 </tr>
@@ -404,8 +408,8 @@ export default function GradeOverviewPage() {
 
         {/* Info */}
         <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4">
-          <h3 className="text-emerald-400 font-medium mb-2">Head Teacher Dashboard</h3>
-          <p className="text-white/60 text-sm">
+          <h3 className="text-emerald-600 dark:text-emerald-400 font-medium mb-2">Head Teacher Dashboard</h3>
+          <p className="text-text-secondary text-sm">
             This dashboard shows metrics for {getGradeDisplay(gradeBand)} classes in the {courseType} track.
             Data is refreshed in real-time as teachers enter scores. Click on a class to view detailed student performance.
           </p>

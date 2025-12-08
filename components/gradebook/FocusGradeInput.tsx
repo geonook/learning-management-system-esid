@@ -3,6 +3,20 @@
 import React, { useRef } from "react";
 import { GradeRow } from "@/lib/gradebook/FormulaEngine";
 import { X, Save } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+// Notion + Apple unified design tokens
+const FOCUS_STYLES = {
+  bg: "bg-surface-primary",
+  bgCard: "bg-surface-elevated",
+  bgSecondary: "bg-surface-secondary",
+  bgHover: "hover:bg-surface-hover",
+  border: "border-border-default",
+  borderSubtle: "border-border-subtle",
+  text: "text-text-primary",
+  textMuted: "text-text-secondary",
+  textLight: "text-text-tertiary",
+};
 
 interface FocusGradeInputProps {
   assessmentCode: string;
@@ -47,25 +61,37 @@ export function FocusGradeInput({
   const min = scores.length > 0 ? Math.min(...scores) : "-";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-4xl h-[80vh] bg-white rounded-xl shadow-2xl flex overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/70 backdrop-blur-sm">
+      <div className={cn(
+        "w-full max-w-4xl h-[80vh] rounded-xl shadow-2xl flex overflow-hidden",
+        "animate-in fade-in zoom-in-95 duration-200",
+        FOCUS_STYLES.bgCard
+      )}>
         {/* Left: Input List */}
-        <div className="flex-1 flex flex-col border-r border-gray-200">
+        <div className={cn("flex-1 flex flex-col border-r", FOCUS_STYLES.border)}>
           {/* Header */}
-          <div className="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+          <div className={cn(
+            "p-6 border-b flex justify-between items-center",
+            FOCUS_STYLES.border,
+            FOCUS_STYLES.bgSecondary
+          )}>
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">Focus Mode</h2>
-              <p className="text-sm text-gray-500 mt-1">
+              <h2 className={cn("text-2xl font-bold", FOCUS_STYLES.text)}>Focus Mode</h2>
+              <p className={cn("text-sm mt-1", FOCUS_STYLES.textMuted)}>
                 Entering grades for{" "}
-                <span className="font-bold text-blue-600">
+                <span className="font-bold text-blue-600 dark:text-blue-400">
                   {assessmentCode}
                 </span>
               </p>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="text-xs text-gray-400">
+              <div className={cn("text-xs", FOCUS_STYLES.textLight)}>
                 Press{" "}
-                <kbd className="px-2 py-1 bg-gray-200 rounded text-gray-600 font-mono">
+                <kbd className={cn(
+                  "px-2 py-1 rounded font-mono",
+                  "bg-surface-secondary",
+                  FOCUS_STYLES.textMuted
+                )}>
                   Enter
                 </kbd>{" "}
                 to save & next
@@ -78,16 +104,19 @@ export function FocusGradeInput({
             {students.map((student, index) => (
               <div
                 key={student.id}
-                className="flex items-center p-3 rounded-lg hover:bg-blue-50 transition-colors group"
+                className={cn(
+                  "flex items-center p-3 rounded-lg transition-colors group",
+                  "hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                )}
               >
-                <div className="w-12 text-center font-mono text-gray-400 text-sm">
+                <div className={cn("w-12 text-center font-mono text-sm", FOCUS_STYLES.textLight)}>
                   {index + 1}
                 </div>
                 <div className="flex-1">
-                  <div className="font-medium text-gray-900">
+                  <div className={cn("font-medium", FOCUS_STYLES.text)}>
                     {student.studentName}
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className={cn("text-xs", FOCUS_STYLES.textMuted)}>
                     {student.studentId}
                   </div>
                 </div>
@@ -97,7 +126,16 @@ export function FocusGradeInput({
                       inputRefs.current[index] = el;
                     }}
                     type="number"
-                    className="w-full px-4 py-2 text-right text-lg font-bold border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:shadow-lg outline-none transition-all duration-200"
+                    className={cn(
+                      "w-full px-4 py-2 text-right text-lg font-bold rounded-md outline-none transition-all duration-200",
+                      "border",
+                      FOCUS_STYLES.border,
+                      FOCUS_STYLES.bg,
+                      FOCUS_STYLES.text,
+                      "focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-400/50",
+                      "focus:border-blue-500 dark:focus:border-blue-400",
+                      "focus:shadow-lg"
+                    )}
                     placeholder="-"
                     value={student.scores[assessmentCode] ?? ""}
                     onChange={(e) => {

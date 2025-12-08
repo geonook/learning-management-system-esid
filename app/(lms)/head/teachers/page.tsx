@@ -171,13 +171,13 @@ export default function TeacherProgressPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
-        return "bg-green-500/20 text-green-400";
+        return "bg-green-500/20 text-green-600 dark:text-green-400";
       case "in_progress":
-        return "bg-amber-500/20 text-amber-400";
+        return "bg-amber-500/20 text-amber-600 dark:text-amber-400";
       case "needs_attention":
-        return "bg-red-500/20 text-red-400";
+        return "bg-red-500/20 text-red-600 dark:text-red-400";
       default:
-        return "bg-white/10 text-white/40";
+        return "bg-surface-secondary text-text-tertiary";
     }
   };
 
@@ -193,11 +193,11 @@ export default function TeacherProgressPage() {
         {/* Header */}
         <div className="flex items-center gap-3">
           <div className="p-2 bg-blue-500/20 rounded-lg">
-            <Users className="w-6 h-6 text-blue-400" />
+            <Users className="w-6 h-6 text-blue-500 dark:text-blue-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Teacher Progress</h1>
-            <p className="text-sm text-white/60">
+            <h1 className="text-2xl font-bold text-text-primary">Teacher Progress</h1>
+            <p className="text-sm text-text-secondary">
               {getGradeDisplay(gradeBand)} Teachers
               {courseType ? ` • ${courseType} Track` : ""}
             </p>
@@ -206,64 +206,64 @@ export default function TeacherProgressPage() {
 
         {/* Search */}
         <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
           <Input
             placeholder="Search teachers..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+            className="pl-10 bg-surface-secondary border-border-default text-text-primary placeholder:text-text-tertiary"
           />
         </div>
 
         {/* Progress Summary */}
         <div className="grid grid-cols-4 gap-4">
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/60 text-sm">Teachers</span>
-              <Users className="w-4 h-4 text-blue-400" />
+              <span className="text-text-secondary text-sm">Teachers</span>
+              <Users className="w-4 h-4 text-blue-500 dark:text-blue-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
-              <div className="text-2xl font-bold text-white">{teachers.length}</div>
+              <div className="text-2xl font-bold text-text-primary">{teachers.length}</div>
             )}
-            <div className="text-xs text-white/40">in grade band</div>
+            <div className="text-xs text-text-tertiary">in grade band</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/60 text-sm">Completed</span>
-              <CheckCircle className="w-4 h-4 text-green-400" />
+              <span className="text-text-secondary text-sm">Completed</span>
+              <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
-              <div className="text-2xl font-bold text-green-400">{stats.completed}</div>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.completed}</div>
             )}
-            <div className="text-xs text-white/40">on track</div>
+            <div className="text-xs text-text-tertiary">on track</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/60 text-sm">In Progress</span>
-              <Clock className="w-4 h-4 text-amber-400" />
+              <span className="text-text-secondary text-sm">In Progress</span>
+              <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
-              <div className="text-2xl font-bold text-amber-400">{stats.inProgress}</div>
+              <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.inProgress}</div>
             )}
-            <div className="text-xs text-white/40">working</div>
+            <div className="text-xs text-text-tertiary">working</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/60 text-sm">Attention</span>
-              <AlertCircle className="w-4 h-4 text-red-400" />
+              <span className="text-text-secondary text-sm">Attention</span>
+              <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
-              <div className="text-2xl font-bold text-red-400">{stats.needsAttention}</div>
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.needsAttention}</div>
             )}
-            <div className="text-xs text-white/40">behind</div>
+            <div className="text-xs text-text-tertiary">behind</div>
           </div>
         </div>
 
@@ -271,7 +271,7 @@ export default function TeacherProgressPage() {
         {loading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white/5 rounded-xl border border-white/10 p-6">
+              <div key={i} className="bg-surface-secondary rounded-xl border border-border-default p-6">
                 <Skeleton className="h-6 w-32 mb-4" />
                 <div className="space-y-3">
                   {[1, 2].map((j) => (
@@ -292,13 +292,13 @@ export default function TeacherProgressPage() {
           <div className="space-y-4">
             {/* LT Teachers */}
             {teachersByType.LT.length > 0 && (
-              <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
-                <div className="p-4 border-b border-white/10 flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-blue-400" />
-                  <h3 className="text-lg font-medium text-white">
+              <div className="bg-surface-secondary rounded-xl border border-border-default overflow-hidden">
+                <div className="p-4 border-b border-border-default flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+                  <h3 className="text-lg font-medium text-text-primary">
                     LT Teachers ({teachersByType.LT.length})
                   </h3>
-                  <span className="text-white/40 text-sm">Local Teachers - ELA</span>
+                  <span className="text-text-tertiary text-sm">Local Teachers - ELA</span>
                 </div>
                 <TeacherTable teachers={teachersByType.LT} getStatusColor={getStatusColor} getProgressBarColor={getProgressBarColor} />
               </div>
@@ -306,13 +306,13 @@ export default function TeacherProgressPage() {
 
             {/* IT Teachers */}
             {teachersByType.IT.length > 0 && (
-              <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
-                <div className="p-4 border-b border-white/10 flex items-center gap-2">
-                  <GraduationCap className="w-5 h-5 text-green-400" />
-                  <h3 className="text-lg font-medium text-white">
+              <div className="bg-surface-secondary rounded-xl border border-border-default overflow-hidden">
+                <div className="p-4 border-b border-border-default flex items-center gap-2">
+                  <GraduationCap className="w-5 h-5 text-green-600 dark:text-green-400" />
+                  <h3 className="text-lg font-medium text-text-primary">
                     IT Teachers ({teachersByType.IT.length})
                   </h3>
-                  <span className="text-white/40 text-sm">International Teachers - ELA</span>
+                  <span className="text-text-tertiary text-sm">International Teachers - ELA</span>
                 </div>
                 <TeacherTable teachers={teachersByType.IT} getStatusColor={getStatusColor} getProgressBarColor={getProgressBarColor} />
               </div>
@@ -320,13 +320,13 @@ export default function TeacherProgressPage() {
 
             {/* KCFS Teachers */}
             {teachersByType.KCFS.length > 0 && (
-              <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
-                <div className="p-4 border-b border-white/10 flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-purple-400" />
-                  <h3 className="text-lg font-medium text-white">
+              <div className="bg-surface-secondary rounded-xl border border-border-default overflow-hidden">
+                <div className="p-4 border-b border-border-default flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  <h3 className="text-lg font-medium text-text-primary">
                     KCFS Teachers ({teachersByType.KCFS.length})
                   </h3>
-                  <span className="text-white/40 text-sm">Kang Chiao Future Skills</span>
+                  <span className="text-text-tertiary text-sm">Kang Chiao Future Skills</span>
                 </div>
                 <TeacherTable teachers={teachersByType.KCFS} getStatusColor={getStatusColor} getProgressBarColor={getProgressBarColor} />
               </div>
@@ -334,10 +334,10 @@ export default function TeacherProgressPage() {
 
             {/* No teachers found */}
             {filteredTeachers.length === 0 && (
-              <div className="bg-white/5 rounded-xl border border-white/10 p-8 text-center">
-                <Users className="w-12 h-12 text-white/20 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-white mb-2">No Teachers Found</h3>
-                <p className="text-white/40 max-w-md mx-auto">
+              <div className="bg-surface-secondary rounded-xl border border-border-default p-8 text-center">
+                <Users className="w-12 h-12 text-text-tertiary opacity-50 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-text-primary mb-2">No Teachers Found</h3>
+                <p className="text-text-tertiary max-w-md mx-auto">
                   {searchQuery
                     ? "No teachers match your search criteria."
                     : "No teachers are currently assigned to classes in your grade band."}
@@ -349,8 +349,8 @@ export default function TeacherProgressPage() {
 
         {/* Info */}
         <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
-          <h3 className="text-blue-400 font-medium mb-2">About Progress Tracking</h3>
-          <p className="text-white/60 text-sm">
+          <h3 className="text-blue-600 dark:text-blue-400 font-medium mb-2">About Progress Tracking</h3>
+          <p className="text-text-secondary text-sm">
             Progress is calculated based on score entries for the current assessment period.
             Teachers are grouped by their course type (LT, IT, KCFS) for easier management.
           </p>
@@ -373,24 +373,24 @@ function TeacherTable({
   return (
     <table className="w-full">
       <thead>
-        <tr className="border-b border-white/10">
-          <th className="text-left p-4 text-sm font-medium text-white/60">Teacher</th>
-          <th className="text-left p-4 text-sm font-medium text-white/60">Classes</th>
-          <th className="text-left p-4 text-sm font-medium text-white/60">Progress</th>
-          <th className="text-left p-4 text-sm font-medium text-white/60">Status</th>
+        <tr className="border-b border-border-default">
+          <th className="text-left p-4 text-sm font-medium text-text-secondary">Teacher</th>
+          <th className="text-left p-4 text-sm font-medium text-text-secondary">Classes</th>
+          <th className="text-left p-4 text-sm font-medium text-text-secondary">Progress</th>
+          <th className="text-left p-4 text-sm font-medium text-text-secondary">Status</th>
         </tr>
       </thead>
       <tbody>
         {teachers.map((teacher) => (
-          <tr key={teacher.id} className="border-b border-white/5 hover:bg-white/5">
+          <tr key={teacher.id} className="border-b border-border-subtle hover:bg-surface-hover">
             <td className="p-4">
-              <div className="text-white font-medium">{teacher.full_name}</div>
-              <div className="text-white/40 text-sm">{teacher.email}</div>
+              <div className="text-text-primary font-medium">{teacher.full_name}</div>
+              <div className="text-text-tertiary text-sm">{teacher.email}</div>
             </td>
             <td className="p-4">
-              <div className="text-white/80">{teacher.course_count} courses</div>
+              <div className="text-text-secondary">{teacher.course_count} courses</div>
               {teacher.assigned_classes.length > 0 && (
-                <div className="text-white/40 text-xs mt-1">
+                <div className="text-text-tertiary text-xs mt-1">
                   {teacher.assigned_classes.slice(0, 3).join(", ")}
                   {teacher.assigned_classes.length > 3 && ` +${teacher.assigned_classes.length - 3} more`}
                 </div>
@@ -398,13 +398,13 @@ function TeacherTable({
             </td>
             <td className="p-4">
               <div className="flex items-center gap-3">
-                <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden max-w-[120px]">
+                <div className="flex-1 h-2 bg-surface-secondary rounded-full overflow-hidden max-w-[120px]">
                   <div
                     className={`h-full rounded-full ${getProgressBarColor(teacher.completion_rate)}`}
                     style={{ width: `${teacher.completion_rate}%` }}
                   />
                 </div>
-                <span className="text-white/60 text-sm w-12">{teacher.completion_rate}%</span>
+                <span className="text-text-secondary text-sm w-12">{teacher.completion_rate}%</span>
               </div>
             </td>
             <td className="p-4">

@@ -8,12 +8,12 @@ import Link from "next/link"
 
 export default function PendingApprovalPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-primary/10 via-background to-secondary/10">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-surface-secondary via-background to-surface-secondary">
       <div className="w-full max-w-2xl space-y-6">
         {/* Status Card */}
         <Card className="border-2 border-yellow-200 dark:border-yellow-900">
           <CardHeader className="text-center space-y-4">
-            <div className="mx-auto h-16 w-16 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+            <div className="mx-auto h-16 w-16 rounded-full bg-yellow-100 dark:bg-yellow-950/50 flex items-center justify-center">
               <Clock className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
             </div>
             <div>
@@ -27,7 +27,7 @@ export default function PendingApprovalPage() {
           <CardContent className="space-y-6">
             {/* Status Badge */}
             <div className="flex justify-center">
-              <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800 px-4 py-2 text-sm">
+              <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950/30 dark:text-yellow-400 dark:border-yellow-800 px-4 py-2 text-sm">
                 <Clock className="h-3.5 w-3.5 mr-2" />
                 Waiting for Admin Approval
               </Badge>
@@ -41,7 +41,7 @@ export default function PendingApprovalPage() {
 
               <div className="space-y-3">
                 <div className="flex gap-3">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <div className="h-8 w-8 rounded-full bg-surface-secondary flex items-center justify-center flex-shrink-0">
                     <span className="text-sm font-semibold text-primary">1</span>
                   </div>
                   <div>
@@ -53,7 +53,7 @@ export default function PendingApprovalPage() {
                 </div>
 
                 <div className="flex gap-3">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <div className="h-8 w-8 rounded-full bg-surface-secondary flex items-center justify-center flex-shrink-0">
                     <span className="text-sm font-semibold text-primary">2</span>
                   </div>
                   <div>
@@ -65,7 +65,7 @@ export default function PendingApprovalPage() {
                 </div>
 
                 <div className="flex gap-3">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <div className="h-8 w-8 rounded-full bg-surface-secondary flex items-center justify-center flex-shrink-0">
                     <span className="text-sm font-semibold text-primary">3</span>
                   </div>
                   <div>
@@ -79,7 +79,7 @@ export default function PendingApprovalPage() {
             </div>
 
             {/* Contact Information */}
-            <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+            <div className="bg-surface-secondary rounded-lg p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-muted-foreground" />
                 <p className="text-sm font-medium">Need help?</p>

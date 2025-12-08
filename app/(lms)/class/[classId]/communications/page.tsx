@@ -279,10 +279,10 @@ export default function ClassCommunicationsPage() {
               <MessageSquare className="w-6 h-6 text-purple-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">
+              <h1 className="text-2xl font-bold text-text-primary">
                 Communications - {classInfo?.name || "Loading..."}
               </h1>
-              <p className="text-sm text-white/60">
+              <p className="text-sm text-text-secondary">
                 {isLTCourse
                   ? "Track parent phone calls and communications"
                   : "Student notes and memos"}
@@ -309,11 +309,11 @@ export default function ClassCommunicationsPage() {
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   selectedCourse?.id === course.id
                     ? course.course_type === "LT"
-                      ? "bg-green-500 text-white"
+                      ? "bg-green-500 text-white dark:text-white"
                       : course.course_type === "IT"
-                      ? "bg-blue-500 text-white"
-                      : "bg-purple-500 text-white"
-                    : "bg-white/5 text-white/60 hover:bg-white/10"
+                      ? "bg-blue-500 text-white dark:text-white"
+                      : "bg-purple-500 text-white dark:text-white"
+                    : "bg-surface-secondary text-text-secondary hover:bg-surface-hover"
                 }`}
               >
                 {course.course_type}
@@ -330,7 +330,7 @@ export default function ClassCommunicationsPage() {
               if (parts[1]) setSemester(parts[1] as Semester);
             }}
           >
-            <SelectTrigger className="w-[200px] bg-white/5 border-white/10 text-white">
+            <SelectTrigger className="w-[200px] bg-surface-secondary border-border-default text-text-primary">
               <SelectValue placeholder="Select semester" />
             </SelectTrigger>
             <SelectContent>
@@ -346,14 +346,14 @@ export default function ClassCommunicationsPage() {
         {/* Loading State */}
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+            <Loader2 className="w-8 h-8 text-purple-500 dark:text-purple-400 animate-spin" />
           </div>
         )}
 
         {/* Error State */}
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
-            <p className="text-red-400">{error}</p>
+            <p className="text-red-500 dark:text-red-400">{error}</p>
           </div>
         )}
 
@@ -362,64 +362,64 @@ export default function ClassCommunicationsPage() {
             {/* LT Progress Cards (only for LT courses) */}
             {isLTCourse && (
               <div className="grid grid-cols-5 gap-4">
-                <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-                  <div className="text-2xl font-bold text-white">{ltStats.total}</div>
-                  <div className="text-xs text-white/40">Total Students</div>
+                <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
+                  <div className="text-2xl font-bold text-text-primary">{ltStats.total}</div>
+                  <div className="text-xs text-text-tertiary">Total Students</div>
                 </div>
-                <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-                  <div className="text-2xl font-bold text-green-400">
+                <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
+                  <div className="text-2xl font-bold text-green-500 dark:text-green-400">
                     {ltStats.semesterStart}/{ltStats.total}
                   </div>
-                  <div className="text-xs text-white/40">Semester Start</div>
+                  <div className="text-xs text-text-tertiary">Semester Start</div>
                 </div>
-                <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-                  <div className="text-2xl font-bold text-amber-400">
+                <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
+                  <div className="text-2xl font-bold text-amber-500 dark:text-amber-400">
                     {ltStats.midterm}/{ltStats.total}
                   </div>
-                  <div className="text-xs text-white/40">Midterm</div>
+                  <div className="text-xs text-text-tertiary">Midterm</div>
                 </div>
-                <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-                  <div className="text-2xl font-bold text-blue-400">
+                <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
+                  <div className="text-2xl font-bold text-blue-500 dark:text-blue-400">
                     {ltStats.final}/{ltStats.total}
                   </div>
-                  <div className="text-xs text-white/40">Final</div>
+                  <div className="text-xs text-text-tertiary">Final</div>
                 </div>
-                <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-                  <div className="text-2xl font-bold text-purple-400">
+                <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
+                  <div className="text-2xl font-bold text-purple-500 dark:text-purple-400">
                     {Math.round((ltStats.complete / ltStats.total) * 100 || 0)}%
                   </div>
-                  <div className="text-xs text-white/40">Complete (3/3)</div>
+                  <div className="text-xs text-text-tertiary">Complete (3/3)</div>
                 </div>
               </div>
             )}
 
             {/* LT Contact Status Table */}
             {isLTCourse && ltStatus.length > 0 && (
-              <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
-                <div className="p-4 border-b border-white/10">
-                  <h2 className="text-lg font-semibold text-white">
+              <div className="bg-surface-secondary rounded-xl border border-border-default overflow-hidden">
+                <div className="p-4 border-b border-border-default">
+                  <h2 className="text-lg font-semibold text-text-primary">
                     Phone Call Progress
                   </h2>
                 </div>
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-white/10">
-                      <th className="text-left p-4 text-sm font-medium text-white/60">
+                    <tr className="border-b border-border-default">
+                      <th className="text-left p-4 text-sm font-medium text-text-secondary">
                         Student
                       </th>
-                      <th className="text-center p-4 text-sm font-medium text-white/60">
+                      <th className="text-center p-4 text-sm font-medium text-text-secondary">
                         Semester Start
                       </th>
-                      <th className="text-center p-4 text-sm font-medium text-white/60">
+                      <th className="text-center p-4 text-sm font-medium text-text-secondary">
                         Midterm
                       </th>
-                      <th className="text-center p-4 text-sm font-medium text-white/60">
+                      <th className="text-center p-4 text-sm font-medium text-text-secondary">
                         Final
                       </th>
-                      <th className="text-left p-4 text-sm font-medium text-white/60">
+                      <th className="text-left p-4 text-sm font-medium text-text-secondary">
                         Latest Contact
                       </th>
-                      <th className="text-right p-4 text-sm font-medium text-white/60">
+                      <th className="text-right p-4 text-sm font-medium text-text-secondary">
                         Actions
                       </th>
                     </tr>
@@ -428,59 +428,59 @@ export default function ClassCommunicationsPage() {
                     {ltStatus.map((status) => (
                       <tr
                         key={status.student_id}
-                        className="border-b border-white/5 hover:bg-white/5"
+                        className="border-b border-border-subtle hover:bg-surface-hover"
                       >
                         <td className="p-4">
-                          <div className="text-white font-medium">
+                          <div className="text-text-primary font-medium">
                             {status.student_name}
                           </div>
-                          <div className="text-xs text-white/40">
+                          <div className="text-xs text-text-tertiary">
                             {status.student_number}
                           </div>
                         </td>
                         <td className="p-4 text-center">
                           {status.semester_start ? (
-                            <Check className="w-5 h-5 text-green-400 mx-auto" />
+                            <Check className="w-5 h-5 text-green-500 dark:text-green-400 mx-auto" />
                           ) : (
                             <button
                               onClick={() =>
                                 openNewDialog(status.student_id, "semester_start")
                               }
-                              className="p-1 rounded hover:bg-white/10"
+                              className="p-1 rounded hover:bg-surface-hover"
                             >
-                              <X className="w-5 h-5 text-white/20 hover:text-red-400" />
+                              <X className="w-5 h-5 text-text-tertiary hover:text-red-500 dark:hover:text-red-400" />
                             </button>
                           )}
                         </td>
                         <td className="p-4 text-center">
                           {status.midterm ? (
-                            <Check className="w-5 h-5 text-green-400 mx-auto" />
+                            <Check className="w-5 h-5 text-green-500 dark:text-green-400 mx-auto" />
                           ) : (
                             <button
                               onClick={() =>
                                 openNewDialog(status.student_id, "midterm")
                               }
-                              className="p-1 rounded hover:bg-white/10"
+                              className="p-1 rounded hover:bg-surface-hover"
                             >
-                              <X className="w-5 h-5 text-white/20 hover:text-red-400" />
+                              <X className="w-5 h-5 text-text-tertiary hover:text-red-500 dark:hover:text-red-400" />
                             </button>
                           )}
                         </td>
                         <td className="p-4 text-center">
                           {status.final ? (
-                            <Check className="w-5 h-5 text-green-400 mx-auto" />
+                            <Check className="w-5 h-5 text-green-500 dark:text-green-400 mx-auto" />
                           ) : (
                             <button
                               onClick={() =>
                                 openNewDialog(status.student_id, "final")
                               }
-                              className="p-1 rounded hover:bg-white/10"
+                              className="p-1 rounded hover:bg-surface-hover"
                             >
-                              <X className="w-5 h-5 text-white/20 hover:text-red-400" />
+                              <X className="w-5 h-5 text-text-tertiary hover:text-red-500 dark:hover:text-red-400" />
                             </button>
                           )}
                         </td>
-                        <td className="p-4 text-white/40 text-sm">
+                        <td className="p-4 text-text-tertiary text-sm">
                           {status.latest_contact_date
                             ? new Date(status.latest_contact_date).toLocaleDateString()
                             : "-"}
@@ -490,7 +490,7 @@ export default function ClassCommunicationsPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => openNewDialog(status.student_id)}
-                            className="text-purple-400 hover:text-purple-300"
+                            className="text-purple-500 dark:text-purple-400 hover:text-purple-600 dark:hover:text-purple-300"
                           >
                             <Plus className="w-4 h-4 mr-1" />
                             Add
@@ -505,17 +505,17 @@ export default function ClassCommunicationsPage() {
 
             {/* IT/KCFS Simple Notes List */}
             {!isLTCourse && (
-              <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
-                <div className="p-4 border-b border-white/10">
-                  <h2 className="text-lg font-semibold text-white">Student Notes</h2>
+              <div className="bg-surface-secondary rounded-xl border border-border-default overflow-hidden">
+                <div className="p-4 border-b border-border-default">
+                  <h2 className="text-lg font-semibold text-text-primary">Student Notes</h2>
                 </div>
                 {students.length === 0 ? (
                   <div className="p-8 text-center">
-                    <Users className="w-12 h-12 text-white/20 mx-auto mb-4" />
-                    <p className="text-white/60">No students in this class</p>
+                    <Users className="w-12 h-12 text-text-tertiary mx-auto mb-4" />
+                    <p className="text-text-secondary">No students in this class</p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-white/5">
+                  <div className="divide-y divide-border-subtle">
                     {students.map((student) => {
                       const studentComms = communications.filter(
                         (c) => c.student_id === student.id
@@ -523,13 +523,13 @@ export default function ClassCommunicationsPage() {
                       return (
                         <div
                           key={student.id}
-                          className="flex items-center justify-between p-4 hover:bg-white/5"
+                          className="flex items-center justify-between p-4 hover:bg-surface-hover"
                         >
                           <div>
-                            <div className="text-white font-medium">
+                            <div className="text-text-primary font-medium">
                               {student.full_name}
                             </div>
-                            <div className="text-xs text-white/40">
+                            <div className="text-xs text-text-tertiary">
                               {studentComms.length} note
                               {studentComms.length !== 1 ? "s" : ""}
                             </div>
@@ -538,7 +538,7 @@ export default function ClassCommunicationsPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => openNewDialog(student.id)}
-                            className="text-purple-400 hover:text-purple-300"
+                            className="text-purple-500 dark:text-purple-400 hover:text-purple-600 dark:hover:text-purple-300"
                           >
                             <Plus className="w-4 h-4 mr-1" />
                             Add Note
@@ -552,19 +552,19 @@ export default function ClassCommunicationsPage() {
             )}
 
             {/* Recent Communications */}
-            <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
-              <div className="p-4 border-b border-white/10">
-                <h2 className="text-lg font-semibold text-white">
+            <div className="bg-surface-secondary rounded-xl border border-border-default overflow-hidden">
+              <div className="p-4 border-b border-border-default">
+                <h2 className="text-lg font-semibold text-text-primary">
                   Recent Communications ({communications.length})
                 </h2>
               </div>
               {communications.length === 0 ? (
                 <div className="p-8 text-center">
-                  <MessageSquare className="w-12 h-12 text-white/20 mx-auto mb-4" />
-                  <p className="text-white/60">No communications recorded yet</p>
+                  <MessageSquare className="w-12 h-12 text-text-tertiary mx-auto mb-4" />
+                  <p className="text-text-secondary">No communications recorded yet</p>
                 </div>
               ) : (
-                <div className="divide-y divide-white/5">
+                <div className="divide-y divide-border-subtle">
                   {communications.slice(0, 20).map((comm) => (
                     <div key={comm.id} className="p-4">
                       <div className="flex items-start justify-between mb-2">
@@ -572,19 +572,19 @@ export default function ClassCommunicationsPage() {
                           <div
                             className={`p-2 rounded-lg ${
                               comm.communication_type === "phone_call"
-                                ? "bg-green-500/20 text-green-400"
+                                ? "bg-green-500/20 text-green-500 dark:text-green-400"
                                 : comm.communication_type === "email"
-                                ? "bg-blue-500/20 text-blue-400"
-                                : "bg-purple-500/20 text-purple-400"
+                                ? "bg-blue-500/20 text-blue-500 dark:text-blue-400"
+                                : "bg-purple-500/20 text-purple-500 dark:text-purple-400"
                             }`}
                           >
                             {getTypeIcon(comm.communication_type)}
                           </div>
                           <div>
-                            <div className="text-white font-medium">
+                            <div className="text-text-primary font-medium">
                               {comm.student.full_name}
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-white/40">
+                            <div className="flex items-center gap-2 text-xs text-text-tertiary">
                               <span>{formatCommunicationType(comm.communication_type)}</span>
                               {comm.contact_period && (
                                 <>
@@ -595,17 +595,17 @@ export default function ClassCommunicationsPage() {
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-white/40">
+                        <div className="flex items-center gap-2 text-xs text-text-tertiary">
                           <Calendar className="w-3 h-3" />
                           {new Date(comm.communication_date).toLocaleDateString()}
                         </div>
                       </div>
                       {comm.subject && (
-                        <div className="text-sm text-white/80 font-medium mb-1">
+                        <div className="text-sm text-text-primary font-medium mb-1">
                           {comm.subject}
                         </div>
                       )}
-                      <p className="text-sm text-white/60 line-clamp-2">{comm.content}</p>
+                      <p className="text-sm text-text-secondary line-clamp-2">{comm.content}</p>
                     </div>
                   ))}
                 </div>
@@ -616,9 +616,9 @@ export default function ClassCommunicationsPage() {
 
         {/* New Communication Dialog */}
         <Dialog open={showNewDialog} onOpenChange={setShowNewDialog}>
-          <DialogContent className="bg-slate-900 border-white/10">
+          <DialogContent className="bg-surface-elevated border-border-default">
             <DialogHeader>
-              <DialogTitle className="text-white">
+              <DialogTitle className="text-text-primary">
                 {isLTCourse ? "Record Phone Call" : "Add Student Note"}
               </DialogTitle>
             </DialogHeader>
@@ -626,12 +626,12 @@ export default function ClassCommunicationsPage() {
             <div className="space-y-4 py-4">
               {/* Student Selector */}
               <div>
-                <label className="text-sm text-white/60 mb-2 block">Student</label>
+                <label className="text-sm text-text-secondary mb-2 block">Student</label>
                 <Select
                   value={selectedStudent || ""}
                   onValueChange={setSelectedStudent}
                 >
-                  <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectTrigger className="bg-surface-secondary border-border-default text-text-primary">
                     <SelectValue placeholder="Select student" />
                   </SelectTrigger>
                   <SelectContent>
@@ -646,14 +646,14 @@ export default function ClassCommunicationsPage() {
 
               {/* Communication Type */}
               <div>
-                <label className="text-sm text-white/60 mb-2 block">Type</label>
+                <label className="text-sm text-text-secondary mb-2 block">Type</label>
                 <Select
                   value={newComm.communication_type}
                   onValueChange={(value) =>
                     setNewComm({ ...newComm, communication_type: value as CommunicationType })
                   }
                 >
-                  <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectTrigger className="bg-surface-secondary border-border-default text-text-primary">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -669,7 +669,7 @@ export default function ClassCommunicationsPage() {
               {/* Contact Period (LT only) */}
               {isLTCourse && (
                 <div>
-                  <label className="text-sm text-white/60 mb-2 block">
+                  <label className="text-sm text-text-secondary mb-2 block">
                     Contact Period
                   </label>
                   <Select
@@ -678,7 +678,7 @@ export default function ClassCommunicationsPage() {
                       setNewComm({ ...newComm, contact_period: value as ContactPeriod })
                     }
                   >
-                    <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                    <SelectTrigger className="bg-surface-secondary border-border-default text-text-primary">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -693,20 +693,20 @@ export default function ClassCommunicationsPage() {
 
               {/* Subject (Optional) */}
               <div>
-                <label className="text-sm text-white/60 mb-2 block">
+                <label className="text-sm text-text-secondary mb-2 block">
                   Subject (Optional)
                 </label>
                 <Input
                   value={newComm.subject || ""}
                   onChange={(e) => setNewComm({ ...newComm, subject: e.target.value })}
                   placeholder="Brief subject or title"
-                  className="bg-white/5 border-white/10 text-white"
+                  className="bg-surface-secondary border-border-default text-text-primary placeholder:text-text-tertiary"
                 />
               </div>
 
               {/* Content */}
               <div>
-                <label className="text-sm text-white/60 mb-2 block">
+                <label className="text-sm text-text-secondary mb-2 block">
                   {isLTCourse ? "Call Notes" : "Notes"} *
                 </label>
                 <Textarea
@@ -717,7 +717,7 @@ export default function ClassCommunicationsPage() {
                       ? "Summary of phone call with parent..."
                       : "Notes about the student..."
                   }
-                  className="bg-white/5 border-white/10 text-white min-h-[120px]"
+                  className="bg-surface-secondary border-border-default text-text-primary placeholder:text-text-tertiary min-h-[120px]"
                 />
               </div>
             </div>
@@ -726,7 +726,7 @@ export default function ClassCommunicationsPage() {
               <Button
                 variant="ghost"
                 onClick={() => setShowNewDialog(false)}
-                className="text-white/60"
+                className="text-text-secondary"
               >
                 Cancel
               </Button>

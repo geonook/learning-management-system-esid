@@ -207,16 +207,16 @@ export default function Dashboard() {
           delay={0}
         >
           <div className="flex h-full flex-col justify-center p-4">
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+            <h1 className="text-3xl font-bold text-text-primary mb-2">
               {getGreeting()},{" "}
               {user?.user_metadata?.full_name?.split(" ")[0] || "Teacher"}
             </h1>
-            <p className="text-slate-600 dark:text-white/70 text-lg">
+            <p className="text-text-secondary text-lg">
               Here&apos;s what&apos;s happening in your classes today.
             </p>
             <div className="mt-6 flex items-center space-x-2">
-              <Clock className="h-4 w-4 text-slate-500 dark:text-white/60" />
-              <span className="text-sm text-slate-700 dark:text-white/80">
+              <Clock className="h-4 w-4 text-text-secondary" />
+              <span className="text-sm text-text-primary">
                 {new Date().toLocaleDateString()}
               </span>
             </div>
@@ -236,10 +236,10 @@ export default function Dashboard() {
                 <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-slate-900 dark:text-white">
+                  <div className="text-3xl font-bold text-text-primary">
                     {teacherKpis.attendanceRate !== null ? `${teacherKpis.attendanceRate}%` : "N/A"}
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-white/50 mt-1">
+                  <div className="text-xs text-text-tertiary mt-1">
                     {teacherKpis.attendanceRate !== null ? "This semester" : "Coming soon"}
                   </div>
                 </div>
@@ -255,10 +255,10 @@ export default function Dashboard() {
                 <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-slate-900 dark:text-white">
+                  <div className="text-3xl font-bold text-text-primary">
                     {teacherKpis.averageScore}
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-white/50 mt-1">
+                  <div className="text-xs text-text-tertiary mt-1">
                     Class average
                   </div>
                 </div>
@@ -274,10 +274,10 @@ export default function Dashboard() {
                 <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-slate-900 dark:text-white">
+                  <div className="text-3xl font-bold text-text-primary">
                     {teacherKpis.passRate}%
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-white/50 mt-1">
+                  <div className="text-xs text-text-tertiary mt-1">
                     Above 60 points
                   </div>
                 </div>
@@ -293,7 +293,7 @@ export default function Dashboard() {
                 <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-slate-900 dark:text-white">
+                  <div className="text-3xl font-bold text-text-primary">
                     {teacherKpis.activeAlerts !== null ? teacherKpis.activeAlerts : "N/A"}
                   </div>
                   <div className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
@@ -318,10 +318,10 @@ export default function Dashboard() {
                 <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-slate-900 dark:text-white">
+                  <div className="text-3xl font-bold text-text-primary">
                     {adminKpis.totalExams}
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-white/50 mt-1">This semester</div>
+                  <div className="text-xs text-text-tertiary mt-1">This semester</div>
                 </div>
               )}
             </Widget>
@@ -335,10 +335,10 @@ export default function Dashboard() {
                 <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-slate-900 dark:text-white">
+                  <div className="text-3xl font-bold text-text-primary">
                     {adminKpis.coverage}%
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-white/50 mt-1">Score coverage</div>
+                  <div className="text-xs text-text-tertiary mt-1">Score coverage</div>
                 </div>
               )}
             </Widget>
@@ -352,10 +352,10 @@ export default function Dashboard() {
                 <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-slate-900 dark:text-white">
+                  <div className="text-3xl font-bold text-text-primary">
                     {adminKpis.onTime !== null ? `${adminKpis.onTime}%` : "N/A"}
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-white/50 mt-1">
+                  <div className="text-xs text-text-tertiary mt-1">
                     {adminKpis.onTime !== null ? "Submission rate" : "Coming soon"}
                   </div>
                 </div>
@@ -394,10 +394,10 @@ export default function Dashboard() {
                 <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-slate-900 dark:text-white">
+                  <div className="text-3xl font-bold text-text-primary">
                     {headKpis.totalClasses}
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-white/60">Total Classes</div>
+                  <div className="text-xs text-text-secondary">Total Classes</div>
                 </div>
               )}
             </Widget>
@@ -411,10 +411,10 @@ export default function Dashboard() {
                 <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-slate-900 dark:text-white">
+                  <div className="text-3xl font-bold text-text-primary">
                     {headKpis.studentsCount}
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-white/60">Total Students</div>
+                  <div className="text-xs text-text-secondary">Total Students</div>
                 </div>
               )}
             </Widget>
@@ -428,10 +428,10 @@ export default function Dashboard() {
                 <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-slate-900 dark:text-white">
+                  <div className="text-3xl font-bold text-text-primary">
                     {headKpis.averageScore}
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-white/50 mt-1">
+                  <div className="text-xs text-text-tertiary mt-1">
                     Grade average
                   </div>
                 </div>

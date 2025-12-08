@@ -4,26 +4,26 @@
 
 @layer base {
   :root {
-    /* === NOTION + APPLE UNIFIED COLOR SYSTEM === */
+    /* === NOTION DESIGN SYSTEM === */
 
     /* Text Colors (RGB format for alpha support) */
-    --text-primary: 29 29 31;           /* #1d1d1f - Apple primary dark */
-    --text-secondary: 134 134 139;       /* #86868b - Secondary (same for both modes) */
-    --text-tertiary: 172 172 176;        /* #acacb0 - Muted text */
+    --text-primary: 55 53 47;            /* #37352f - Notion primary (warm brown-gray) */
+    --text-secondary: 107 107 107;       /* #6b6b6b - Secondary text */
+    --text-tertiary: 155 155 155;        /* #9b9b9b - Placeholder/muted text */
 
     /* Background Colors */
-    --bg-primary: 255 255 255;           /* #ffffff - Pure white */
-    --bg-secondary: 245 245 247;         /* #f5f5f7 - Apple light gray */
-    --bg-tertiary: 238 238 240;          /* #eeeef0 - Subtle gray */
-    --bg-elevated: 255 255 255;          /* Cards, modals */
+    --bg-primary: 250 250 250;           /* #fafafa - Notion warm gray (not pure white) */
+    --bg-secondary: 247 246 243;         /* #f7f6f3 - Notion secondary */
+    --bg-tertiary: 241 241 239;          /* #f1f1ef - Notion tertiary */
+    --bg-elevated: 255 255 255;          /* #ffffff - Cards, modals (pure white) */
 
     /* Surface Effects (for hover/active states) */
-    --surface-hover: 0 0 0 / 0.04;
-    --surface-active: 0 0 0 / 0.08;
+    --surface-hover: 235 235 234;        /* #ebebea - Notion hover */
+    --surface-active: 227 226 224;       /* #e3e2e0 - Notion active */
 
     /* Borders */
-    --border-default: 0 0 0 / 0.08;
-    --border-subtle: 0 0 0 / 0.04;
+    --border-default: 227 226 224;       /* #e3e2e0 - Notion border */
+    --border-subtle: 235 235 234;        /* #ebebea - Subtle border */
 
     /* Semantic Colors (Apple HIG) */
     --accent-blue: 0 122 255;            /* #007AFF - Apple Blue */
@@ -79,24 +79,24 @@
   }
 
   .dark {
-    /* Text Colors - Dark Mode */
-    --text-primary: 245 245 247;         /* #f5f5f7 */
-    --text-secondary: 134 134 139;       /* #86868b - Same for both modes */
-    --text-tertiary: 99 99 102;          /* #636366 */
+    /* Text Colors - Dark Mode (Notion Dark) */
+    --text-primary: 235 235 234;         /* #ebebea - Notion light text */
+    --text-secondary: 155 155 155;       /* #9b9b9b - Secondary text */
+    --text-tertiary: 107 107 107;        /* #6b6b6b - Muted text */
 
-    /* Background Colors - Dark Mode */
-    --bg-primary: 0 0 0;                 /* #000000 - True black */
-    --bg-secondary: 28 28 30;            /* #1c1c1e - Apple dark gray */
-    --bg-tertiary: 44 44 46;             /* #2c2c2e - Elevated dark */
-    --bg-elevated: 44 44 46;
+    /* Background Colors - Dark Mode (Notion Dark) */
+    --bg-primary: 25 25 25;              /* #191919 - Notion dark background */
+    --bg-secondary: 32 32 32;            /* #202020 - Secondary dark */
+    --bg-tertiary: 37 37 37;             /* #252525 - Tertiary dark */
+    --bg-elevated: 37 37 37;             /* #252525 - Elevated surfaces */
 
     /* Surface Effects - Dark Mode */
-    --surface-hover: 255 255 255 / 0.08;
-    --surface-active: 255 255 255 / 0.12;
+    --surface-hover: 47 47 47;           /* #2f2f2f - Notion hover */
+    --surface-active: 55 55 55;          /* #373737 - Notion active */
 
     /* Borders - Dark Mode */
-    --border-default: 255 255 255 / 0.12;
-    --border-subtle: 255 255 255 / 0.06;
+    --border-default: 55 55 55;          /* #373737 - Notion dark border */
+    --border-subtle: 47 47 47;           /* #2f2f2f - Subtle border */
 
     /* Shadows - Dark Mode (deeper) */
     --shadow-sm: 0 1px 2px rgba(0,0,0,0.2), 0 1px 4px rgba(0,0,0,0.2);

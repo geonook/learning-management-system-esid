@@ -113,18 +113,18 @@ export default function QuickScoreEntryPage() {
 
   return (
     <AuthGuard requiredRoles={["admin", "head", "teacher", "office_member"]}>
-      <div className="h-full flex flex-col bg-white dark:bg-slate-950 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
+      <div className="h-full flex flex-col bg-surface-base rounded-xl border border-border-default shadow-sm overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50">
+        <div className="px-6 py-4 border-b border-border-default bg-surface-secondary">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg">
               <Zap className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-slate-800 dark:text-white">
+              <h1 className="text-lg font-semibold text-text-primary">
                 Quick Score Entry
               </h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-text-secondary">
                 Select a class to enter scores quickly
               </p>
             </div>
@@ -135,19 +135,19 @@ export default function QuickScoreEntryPage() {
         <div className="flex-1 overflow-auto p-6">
           {loading ? (
             <div className="flex items-center justify-center h-64">
-              <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+              <Loader2 className="w-8 h-8 animate-spin text-text-tertiary" />
             </div>
           ) : error ? (
-            <div className="flex flex-col items-center justify-center h-64 text-red-500">
+            <div className="flex flex-col items-center justify-center h-64 text-red-600 dark:text-red-400">
               <p>{error}</p>
             </div>
           ) : classes.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64">
-              <BookOpen className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-4" />
-              <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
+              <BookOpen className="w-12 h-12 text-text-tertiary mb-4" />
+              <h3 className="text-lg font-medium text-text-secondary mb-2">
                 No Classes Assigned
               </h3>
-              <p className="text-sm text-slate-400 dark:text-slate-500 text-center max-w-md">
+              <p className="text-sm text-text-tertiary text-center max-w-md">
                 You don&apos;t have any classes assigned to you yet. Contact
                 your administrator if you believe this is an error.
               </p>
@@ -158,7 +158,7 @@ export default function QuickScoreEntryPage() {
                 <Link
                   key={`${cls.id}-${cls.courseType}`}
                   href={`/class/${cls.id}/gradebook`}
-                  className="group block p-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md transition-all"
+                  className="group block p-4 rounded-xl border border-border-default bg-surface-elevated hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md transition-all"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -174,19 +174,19 @@ export default function QuickScoreEntryPage() {
                         >
                           {cls.courseType}
                         </span>
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-text-tertiary">
                           G{cls.grade}
                         </span>
                       </div>
-                      <h3 className="font-medium text-slate-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                      <h3 className="font-medium text-text-primary group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                         {cls.name}
                       </h3>
-                      <div className="flex items-center gap-1 mt-2 text-sm text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center gap-1 mt-2 text-sm text-text-secondary">
                         <Users className="w-4 h-4" />
                         <span>{cls.studentCount} students</span>
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-slate-300 dark:text-slate-600 group-hover:text-blue-500 transition-colors" />
+                    <ChevronRight className="w-5 h-5 text-text-tertiary group-hover:text-blue-500 transition-colors" />
                   </div>
                 </Link>
               ))}
@@ -195,7 +195,7 @@ export default function QuickScoreEntryPage() {
         </div>
 
         {/* Status Bar */}
-        <div className="h-7 bg-gray-50/80 dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 flex items-center px-4 text-[11px] text-gray-500 dark:text-gray-400 justify-between">
+        <div className="h-7 bg-surface-secondary border-t border-border-default flex items-center px-4 text-[11px] text-text-tertiary justify-between">
           <span>
             {loading
               ? "Loading..."

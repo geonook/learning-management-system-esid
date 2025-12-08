@@ -95,16 +95,16 @@ export default function BrowseTeachersPage() {
 
   // Get type badge color
   const getTypeBadgeColor = (type: string | null, role: string) => {
-    if (role === "head") return "bg-amber-500/20 text-amber-400";
+    if (role === "head") return "bg-amber-500/20 text-amber-500 dark:text-amber-400";
     switch (type) {
       case "LT":
-        return "bg-green-500/20 text-green-400";
+        return "bg-green-500/20 text-green-600 dark:text-green-400";
       case "IT":
-        return "bg-blue-500/20 text-blue-400";
+        return "bg-blue-500/20 text-blue-600 dark:text-blue-400";
       case "KCFS":
-        return "bg-purple-500/20 text-purple-400";
+        return "bg-purple-500/20 text-purple-600 dark:text-purple-400";
       default:
-        return "bg-white/10 text-white/40";
+        return "bg-surface-secondary text-text-tertiary";
     }
   };
 
@@ -127,12 +127,12 @@ export default function BrowseTeachersPage() {
         {/* Search */}
         <div className="flex gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
             <Input
               placeholder="Search by name or email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-white/5 border-white/10 text-white"
+              className="pl-10 bg-surface-secondary border-border-default text-text-primary placeholder:text-text-tertiary"
             />
           </div>
         </div>
@@ -145,8 +145,8 @@ export default function BrowseTeachersPage() {
               onClick={() => setSelectedType(type)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 selectedType === type
-                  ? "bg-emerald-500 text-white"
-                  : "bg-white/5 text-white/60 hover:bg-white/10"
+                  ? "bg-emerald-500 text-white dark:text-white"
+                  : "bg-surface-secondary text-text-secondary hover:bg-surface-hover"
               }`}
             >
               {type}
@@ -157,37 +157,37 @@ export default function BrowseTeachersPage() {
         {/* Loading State */}
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+            <Loader2 className="w-8 h-8 text-emerald-500 dark:text-emerald-400 animate-spin" />
           </div>
         )}
 
         {/* Error State */}
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
-            <p className="text-red-400">{error}</p>
+            <p className="text-red-500 dark:text-red-400">{error}</p>
           </div>
         )}
 
         {/* Empty State */}
         {!loading && !error && teachers.length === 0 && (
           <div className="text-center py-12">
-            <Users className="w-12 h-12 text-white/20 mx-auto mb-4" />
-            <p className="text-white/60">No teachers found</p>
+            <Users className="w-12 h-12 text-border-subtle mx-auto mb-4" />
+            <p className="text-text-secondary">No teachers found</p>
           </div>
         )}
 
         {/* Teachers Table */}
         {!loading && !error && teachers.length > 0 && (
-          <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+          <div className="bg-surface-secondary rounded-xl border border-border-default overflow-hidden">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left p-4 text-sm font-medium text-white/60">Name</th>
-                  <th className="text-left p-4 text-sm font-medium text-white/60">Role/Type</th>
-                  <th className="text-left p-4 text-sm font-medium text-white/60">Grade</th>
-                  <th className="text-left p-4 text-sm font-medium text-white/60">Classes</th>
-                  <th className="text-left p-4 text-sm font-medium text-white/60">Email</th>
-                  <th className="text-right p-4 text-sm font-medium text-white/60 w-16"></th>
+                <tr className="border-b border-border-default">
+                  <th className="text-left p-4 text-sm font-medium text-text-secondary">Name</th>
+                  <th className="text-left p-4 text-sm font-medium text-text-secondary">Role/Type</th>
+                  <th className="text-left p-4 text-sm font-medium text-text-secondary">Grade</th>
+                  <th className="text-left p-4 text-sm font-medium text-text-secondary">Classes</th>
+                  <th className="text-left p-4 text-sm font-medium text-text-secondary">Email</th>
+                  <th className="text-right p-4 text-sm font-medium text-text-secondary w-16"></th>
                 </tr>
               </thead>
               <tbody>
@@ -197,14 +197,14 @@ export default function BrowseTeachersPage() {
                     href={`/teacher/${teacher.id}`}
                     className="contents group"
                   >
-                    <tr className="border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors">
-                      <td className="p-4 text-white font-medium group-hover:text-emerald-400 transition-colors">{teacher.full_name}</td>
+                    <tr className="border-b border-border-subtle hover:bg-surface-hover cursor-pointer transition-colors">
+                      <td className="p-4 text-text-primary font-medium group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors">{teacher.full_name}</td>
                       <td className="p-4">
                         <span className={`px-2 py-1 text-xs rounded-full ${getTypeBadgeColor(teacher.teacher_type, teacher.role)}`}>
                           {teacher.role === "head" ? "Head" : teacher.teacher_type || "-"}
                         </span>
                       </td>
-                      <td className="p-4 text-white/60">
+                      <td className="p-4 text-text-secondary">
                         {teacher.grade ? `G${teacher.grade}` : "-"}
                       </td>
                       <td className="p-4">
@@ -213,24 +213,24 @@ export default function BrowseTeachersPage() {
                             {teacher.assigned_classes.slice(0, 3).map((cls) => (
                               <span
                                 key={cls}
-                                className="px-2 py-0.5 bg-white/10 text-white/60 text-xs rounded"
+                                className="px-2 py-0.5 bg-surface-tertiary text-text-secondary text-xs rounded"
                               >
                                 {cls}
                               </span>
                             ))}
                             {teacher.assigned_classes.length > 3 && (
-                              <span className="px-2 py-0.5 bg-white/5 text-white/40 text-xs rounded">
+                              <span className="px-2 py-0.5 bg-surface-secondary text-text-tertiary text-xs rounded">
                                 +{teacher.assigned_classes.length - 3} more
                               </span>
                             )}
                           </div>
                         ) : (
-                          <span className="text-white/40 text-sm">No assignments</span>
+                          <span className="text-text-tertiary text-sm">No assignments</span>
                         )}
                       </td>
-                      <td className="p-4 text-white/40 text-sm">{teacher.email}</td>
+                      <td className="p-4 text-text-tertiary text-sm">{teacher.email}</td>
                       <td className="p-4 text-right">
-                        <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors inline-block" />
+                        <ChevronRight className="w-4 h-4 text-border-subtle group-hover:text-text-secondary transition-colors inline-block" />
                       </td>
                     </tr>
                   </Link>
@@ -242,25 +242,25 @@ export default function BrowseTeachersPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-5 gap-4">
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-            <div className="text-2xl font-bold text-white">{stats?.total || 0}</div>
-            <div className="text-xs text-white/40">Total</div>
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
+            <div className="text-2xl font-bold text-text-primary">{stats?.total || 0}</div>
+            <div className="text-xs text-text-tertiary">Total</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-            <div className="text-2xl font-bold text-green-400">{stats?.lt || 0}</div>
-            <div className="text-xs text-white/40">LT Teachers</div>
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats?.lt || 0}</div>
+            <div className="text-xs text-text-tertiary">LT Teachers</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-            <div className="text-2xl font-bold text-blue-400">{stats?.it || 0}</div>
-            <div className="text-xs text-white/40">IT Teachers</div>
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats?.it || 0}</div>
+            <div className="text-xs text-text-tertiary">IT Teachers</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-            <div className="text-2xl font-bold text-purple-400">{stats?.kcfs || 0}</div>
-            <div className="text-xs text-white/40">KCFS Teachers</div>
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
+            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats?.kcfs || 0}</div>
+            <div className="text-xs text-text-tertiary">KCFS Teachers</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-            <div className="text-2xl font-bold text-amber-400">{stats?.head || 0}</div>
-            <div className="text-xs text-white/40">Head Teachers</div>
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
+            <div className="text-2xl font-bold text-amber-500 dark:text-amber-400">{stats?.head || 0}</div>
+            <div className="text-xs text-text-tertiary">Head Teachers</div>
           </div>
         </div>
       </div>

@@ -38,11 +38,11 @@ export default async function GradebookPage({ searchParams }: PageProps) {
     <div className="h-full w-full p-4 flex items-center justify-center">
       <Window
         title={`${className} - Gradebook`}
-        className="w-[95%] h-[90%] max-w-7xl flex flex-col bg-white text-black"
+        className="w-[95%] h-[90%] max-w-7xl flex flex-col bg-surface-primary text-text-primary"
       >
         <Toolbar />
         {error ? (
-          <div className="flex-1 flex items-center justify-center text-red-500">
+          <div className="flex-1 flex items-center justify-center text-red-600 dark:text-red-400">
             {error}
           </div>
         ) : (
@@ -50,7 +50,7 @@ export default async function GradebookPage({ searchParams }: PageProps) {
         )}
 
         {/* Status Bar */}
-        <div className="h-6 bg-[#f3f3f3] border-t border-[#d1d1d1] flex items-center px-4 text-[10px] text-gray-600 justify-between">
+        <div className="h-6 bg-surface-secondary border-t border-border-default flex items-center px-4 text-[10px] text-text-secondary justify-between">
           <span>{classId ? "Ready" : "No Class Selected"}</span>
           <span>Sum: 0</span>
         </div>

@@ -131,16 +131,16 @@ export default function TeacherDetailPage() {
   }, [userId, teacherId]);
 
   const getTypeBadgeColor = (type: string | null, role: string) => {
-    if (role === "head") return "bg-amber-500/20 text-amber-400";
+    if (role === "head") return "bg-amber-500/20 text-amber-600 dark:text-amber-400";
     switch (type) {
       case "LT":
-        return "bg-green-500/20 text-green-400";
+        return "bg-green-500/20 text-green-600 dark:text-green-400";
       case "IT":
-        return "bg-blue-500/20 text-blue-400";
+        return "bg-blue-500/20 text-blue-600 dark:text-blue-400";
       case "KCFS":
-        return "bg-purple-500/20 text-purple-400";
+        return "bg-purple-500/20 text-purple-600 dark:text-purple-400";
       default:
-        return "bg-white/10 text-white/40";
+        return "bg-surface-secondary text-text-tertiary";
     }
   };
 
@@ -177,14 +177,14 @@ export default function TeacherDetailPage() {
         {/* Loading State */}
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+            <Loader2 className="w-8 h-8 text-emerald-500 dark:text-emerald-400 animate-spin" />
           </div>
         )}
 
         {/* Error State */}
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
-            <p className="text-red-400">{error}</p>
+            <p className="text-red-600 dark:text-red-400">{error}</p>
           </div>
         )}
 
@@ -192,19 +192,19 @@ export default function TeacherDetailPage() {
         {!loading && !error && teacher && (
           <>
             {/* Header */}
-            <div className="bg-white/5 rounded-xl border border-white/10 p-6">
+            <div className="bg-surface-secondary rounded-xl border border-border-default p-6">
               <div className="flex items-start gap-4">
                 <div className="p-3 bg-emerald-500/20 rounded-xl">
-                  <Users className="w-8 h-8 text-emerald-400" />
+                  <Users className="w-8 h-8 text-emerald-500 dark:text-emerald-400" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h1 className="text-2xl font-bold text-white">{teacher.full_name}</h1>
+                    <h1 className="text-2xl font-bold text-text-primary">{teacher.full_name}</h1>
                     <span className={`px-3 py-1 text-sm rounded-full ${getTypeBadgeColor(teacher.teacher_type, teacher.role)}`}>
                       {teacher.role === "head" ? "Head Teacher" : teacher.teacher_type || "Teacher"}
                     </span>
                   </div>
-                  <div className="flex items-center gap-4 text-white/60">
+                  <div className="flex items-center gap-4 text-text-secondary">
                     <span className="flex items-center gap-2">
                       <Mail className="w-4 h-4" />
                       {teacher.email}
@@ -222,58 +222,58 @@ export default function TeacherDetailPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-3 gap-4">
-              <div className="bg-white/5 rounded-xl border border-white/10 p-6">
+              <div className="bg-surface-secondary rounded-xl border border-border-default p-6">
                 <div className="flex items-center gap-3 mb-2">
-                  <School className="w-5 h-5 text-blue-400" />
-                  <span className="text-white/60">Classes</span>
+                  <School className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+                  <span className="text-text-secondary">Classes</span>
                 </div>
-                <div className="text-3xl font-bold text-white">{totalClasses}</div>
+                <div className="text-3xl font-bold text-text-primary">{totalClasses}</div>
               </div>
-              <div className="bg-white/5 rounded-xl border border-white/10 p-6">
+              <div className="bg-surface-secondary rounded-xl border border-border-default p-6">
                 <div className="flex items-center gap-3 mb-2">
-                  <Users className="w-5 h-5 text-emerald-400" />
-                  <span className="text-white/60">Students</span>
+                  <Users className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
+                  <span className="text-text-secondary">Students</span>
                 </div>
-                <div className="text-3xl font-bold text-white">{totalStudents}</div>
+                <div className="text-3xl font-bold text-text-primary">{totalStudents}</div>
               </div>
-              <div className="bg-white/5 rounded-xl border border-white/10 p-6">
+              <div className="bg-surface-secondary rounded-xl border border-border-default p-6">
                 <div className="flex items-center gap-3 mb-2">
-                  <BookOpen className="w-5 h-5 text-purple-400" />
-                  <span className="text-white/60">Grades</span>
+                  <BookOpen className="w-5 h-5 text-purple-500 dark:text-purple-400" />
+                  <span className="text-text-secondary">Grades</span>
                 </div>
-                <div className="text-3xl font-bold text-white">
+                <div className="text-3xl font-bold text-text-primary">
                   {uniqueGrades.length > 0 ? uniqueGrades.map(g => `G${g}`).join(", ") : "-"}
                 </div>
               </div>
             </div>
 
             {/* Assigned Classes */}
-            <div className="bg-white/5 rounded-xl border border-white/10">
-              <div className="p-4 border-b border-white/10">
-                <h2 className="text-lg font-semibold text-white">Assigned Classes</h2>
+            <div className="bg-surface-secondary rounded-xl border border-border-default">
+              <div className="p-4 border-b border-border-default">
+                <h2 className="text-lg font-semibold text-text-primary">Assigned Classes</h2>
               </div>
               {teacher.courses.length === 0 ? (
                 <div className="p-8 text-center">
-                  <School className="w-12 h-12 text-white/20 mx-auto mb-4" />
-                  <p className="text-white/60">No classes assigned</p>
+                  <School className="w-12 h-12 text-text-tertiary mx-auto mb-4" />
+                  <p className="text-text-secondary">No classes assigned</p>
                 </div>
               ) : (
-                <div className="divide-y divide-white/5">
+                <div className="divide-y divide-border-subtle">
                   {teacher.courses.map((course) => (
                     <Link
                       key={course.id}
                       href={`/class/${course.class_id}`}
-                      className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors group"
+                      className="flex items-center justify-between p-4 hover:bg-surface-hover transition-colors group"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="p-2 bg-white/5 rounded-lg">
-                          <School className="w-5 h-5 text-white/60" />
+                        <div className="p-2 bg-surface-elevated rounded-lg">
+                          <School className="w-5 h-5 text-text-secondary" />
                         </div>
                         <div>
-                          <div className="text-white font-medium group-hover:text-emerald-400 transition-colors">
+                          <div className="text-text-primary font-medium group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors">
                             {course.class_name}
                           </div>
-                          <div className="text-sm text-white/40">
+                          <div className="text-sm text-text-tertiary">
                             Grade {course.class_grade} • {course.student_count} students
                           </div>
                         </div>

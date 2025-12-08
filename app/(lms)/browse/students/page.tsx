@@ -130,7 +130,7 @@ export default function BrowseStudentsPage() {
               placeholder="Search by name or student ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-surface-tertiary border-[rgb(var(--border-default))] text-text-primary placeholder:text-text-tertiary"
+              className="pl-10 bg-surface-secondary border-border-default text-text-primary placeholder:text-text-tertiary"
             />
           </div>
         </div>
@@ -146,7 +146,7 @@ export default function BrowseStudentsPage() {
                 className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-normal ease-apple ${
                   selectedGrade === grade
                     ? "bg-purple-600 dark:bg-purple-500 text-white"
-                    : "bg-surface-tertiary text-text-secondary hover:bg-[rgb(var(--surface-hover))]"
+                    : "bg-surface-tertiary text-text-secondary hover:bg-surface-hover"
                 }`}
               >
                 {grade === "All" ? "All" : `G${grade}`}
@@ -162,7 +162,7 @@ export default function BrowseStudentsPage() {
                 className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-normal ease-apple ${
                   selectedLevel === level
                     ? "bg-purple-600 dark:bg-purple-500 text-white"
-                    : "bg-surface-tertiary text-text-secondary hover:bg-[rgb(var(--surface-hover))]"
+                    : "bg-surface-tertiary text-text-secondary hover:bg-surface-hover"
                 }`}
               >
                 {level}
@@ -195,10 +195,10 @@ export default function BrowseStudentsPage() {
 
         {/* Students Table */}
         {!loading && !error && data && data.students.length > 0 && (
-          <div className="bg-surface-elevated rounded-xl border border-[rgb(var(--border-default))] overflow-hidden shadow-sm">
+          <div className="bg-surface-elevated rounded-xl border border-border-default overflow-hidden shadow-sm">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[rgb(var(--border-default))]">
+                <tr className="border-b border-border-default">
                   <th className="text-left p-4 text-sm font-medium text-text-secondary">Student ID</th>
                   <th className="text-left p-4 text-sm font-medium text-text-secondary">Name</th>
                   <th className="text-left p-4 text-sm font-medium text-text-secondary">Grade</th>
@@ -214,7 +214,7 @@ export default function BrowseStudentsPage() {
                     href={`/student/${student.id}`}
                     className="contents group"
                   >
-                    <tr className="border-b border-[rgb(var(--border-subtle))] hover:bg-[rgb(var(--surface-hover))] cursor-pointer transition-colors duration-normal ease-apple">
+                    <tr className="border-b border-border-subtle hover:bg-surface-hover cursor-pointer transition-colors duration-normal ease-apple">
                       <td className="p-4 text-text-primary font-mono text-sm">{student.student_id}</td>
                       <td className="p-4 text-text-primary group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{student.full_name}</td>
                       <td className="p-4">
@@ -246,7 +246,7 @@ export default function BrowseStudentsPage() {
             </table>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between p-4 border-t border-[rgb(var(--border-default))]">
+            <div className="flex items-center justify-between p-4 border-t border-border-default">
               <div className="text-sm text-text-tertiary">
                 Showing {((page - 1) * pageSize) + 1} - {Math.min(page * pageSize, data.total)} of {data.total}
               </div>
@@ -254,7 +254,7 @@ export default function BrowseStudentsPage() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="p-2 rounded-lg bg-surface-tertiary text-text-secondary hover:bg-[rgb(var(--surface-hover))] disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-normal ease-apple"
+                  className="p-2 rounded-lg bg-surface-tertiary text-text-secondary hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-normal ease-apple"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
@@ -264,7 +264,7 @@ export default function BrowseStudentsPage() {
                 <button
                   onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
                   disabled={page === data.totalPages}
-                  className="p-2 rounded-lg bg-surface-tertiary text-text-secondary hover:bg-[rgb(var(--surface-hover))] disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-normal ease-apple"
+                  className="p-2 rounded-lg bg-surface-tertiary text-text-secondary hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-normal ease-apple"
                 >
                   <ChevronRightIcon className="w-4 h-4" />
                 </button>
@@ -275,19 +275,19 @@ export default function BrowseStudentsPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-4 gap-4">
-          <div className="bg-surface-elevated rounded-xl border border-[rgb(var(--border-default))] p-4 shadow-sm">
+          <div className="bg-surface-elevated rounded-xl border border-border-default p-4 shadow-sm">
             <div className="text-2xl font-bold text-text-primary">{stats?.total || 0}</div>
             <div className="text-xs text-text-tertiary">Total Students</div>
           </div>
-          <div className="bg-surface-elevated rounded-xl border border-[rgb(var(--border-default))] p-4 shadow-sm">
+          <div className="bg-surface-elevated rounded-xl border border-border-default p-4 shadow-sm">
             <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats?.e1 || 0}</div>
             <div className="text-xs text-text-tertiary">Level E1</div>
           </div>
-          <div className="bg-surface-elevated rounded-xl border border-[rgb(var(--border-default))] p-4 shadow-sm">
+          <div className="bg-surface-elevated rounded-xl border border-border-default p-4 shadow-sm">
             <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats?.e2 || 0}</div>
             <div className="text-xs text-text-tertiary">Level E2</div>
           </div>
-          <div className="bg-surface-elevated rounded-xl border border-[rgb(var(--border-default))] p-4 shadow-sm">
+          <div className="bg-surface-elevated rounded-xl border border-border-default p-4 shadow-sm">
             <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats?.e3 || 0}</div>
             <div className="text-xs text-text-tertiary">Level E3</div>
           </div>

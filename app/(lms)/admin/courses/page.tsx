@@ -285,11 +285,11 @@ export default function CourseAssignmentPage() {
   const getTypeColor = (type: "LT" | "IT" | "KCFS") => {
     switch (type) {
       case "LT":
-        return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+        return "bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30";
       case "IT":
-        return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
+        return "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30";
       case "KCFS":
-        return "bg-purple-500/20 text-purple-400 border-purple-500/30";
+        return "bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-500/30";
     }
   };
 
@@ -299,12 +299,12 @@ export default function CourseAssignmentPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-500/20 rounded-lg">
-              <BookOpen className="w-6 h-6 text-indigo-400" />
+            <div className="p-2 bg-surface-tertiary rounded-lg">
+              <BookOpen className="w-6 h-6 text-indigo-500 dark:text-indigo-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Course Assignments</h1>
-              <p className="text-sm text-white/60">
+              <h1 className="text-2xl font-bold text-text-primary">Course Assignments</h1>
+              <p className="text-sm text-text-secondary">
                 Assign teachers to courses for each class
               </p>
             </div>
@@ -314,12 +314,12 @@ export default function CourseAssignmentPage() {
         {/* Search and Filters */}
         <div className="flex gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
             <Input
               placeholder="Search by class or teacher name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+              className="pl-10 bg-surface-secondary border-border-default text-text-primary placeholder:text-text-tertiary"
             />
           </div>
 
@@ -327,7 +327,7 @@ export default function CourseAssignmentPage() {
           <div className="relative">
             <Button
               variant="outline"
-              className="border-white/10 text-white/70"
+              className="border-border-default text-text-secondary"
               onClick={() => {
                 setShowGradeDropdown(!showGradeDropdown);
                 setShowTypeDropdown(false);
@@ -338,9 +338,9 @@ export default function CourseAssignmentPage() {
               <ChevronDown className="w-4 h-4 ml-2" />
             </Button>
             {showGradeDropdown && (
-              <div className="absolute top-full mt-2 right-0 bg-slate-800 border border-white/10 rounded-lg shadow-lg z-10 py-1 min-w-[120px]">
+              <div className="absolute top-full mt-2 right-0 bg-surface-elevated border border-border-default rounded-lg shadow-notion z-10 py-1 min-w-[120px]">
                 <button
-                  className="w-full px-4 py-2 text-left text-white/70 hover:bg-white/10 text-sm"
+                  className="w-full px-4 py-2 text-left text-text-secondary hover:bg-surface-hover text-sm"
                   onClick={() => {
                     setGradeFilter(null);
                     setShowGradeDropdown(false);
@@ -351,7 +351,7 @@ export default function CourseAssignmentPage() {
                 {[1, 2, 3, 4, 5, 6].map((grade) => (
                   <button
                     key={grade}
-                    className="w-full px-4 py-2 text-left text-white/70 hover:bg-white/10 text-sm"
+                    className="w-full px-4 py-2 text-left text-text-secondary hover:bg-surface-hover text-sm"
                     onClick={() => {
                       setGradeFilter(grade);
                       setShowGradeDropdown(false);
@@ -368,7 +368,7 @@ export default function CourseAssignmentPage() {
           <div className="relative">
             <Button
               variant="outline"
-              className="border-white/10 text-white/70"
+              className="border-border-default text-text-secondary"
               onClick={() => {
                 setShowTypeDropdown(!showTypeDropdown);
                 setShowGradeDropdown(false);
@@ -379,9 +379,9 @@ export default function CourseAssignmentPage() {
               <ChevronDown className="w-4 h-4 ml-2" />
             </Button>
             {showTypeDropdown && (
-              <div className="absolute top-full mt-2 right-0 bg-slate-800 border border-white/10 rounded-lg shadow-lg z-10 py-1 min-w-[120px]">
+              <div className="absolute top-full mt-2 right-0 bg-surface-elevated border border-border-default rounded-lg shadow-notion z-10 py-1 min-w-[120px]">
                 <button
-                  className="w-full px-4 py-2 text-left text-white/70 hover:bg-white/10 text-sm"
+                  className="w-full px-4 py-2 text-left text-text-secondary hover:bg-surface-hover text-sm"
                   onClick={() => {
                     setTypeFilter(null);
                     setShowTypeDropdown(false);
@@ -392,7 +392,7 @@ export default function CourseAssignmentPage() {
                 {(["LT", "IT", "KCFS"] as const).map((type) => (
                   <button
                     key={type}
-                    className="w-full px-4 py-2 text-left text-white/70 hover:bg-white/10 text-sm"
+                    className="w-full px-4 py-2 text-left text-text-secondary hover:bg-surface-hover text-sm"
                     onClick={() => {
                       setTypeFilter(type);
                       setShowTypeDropdown(false);
@@ -408,48 +408,48 @@ export default function CourseAssignmentPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-4 gap-4">
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/60 text-sm">Total Courses</span>
-              <BookOpen className="w-4 h-4 text-indigo-400" />
+              <span className="text-text-secondary text-sm">Total Courses</span>
+              <BookOpen className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-16" />
             ) : (
-              <div className="text-2xl font-bold text-white">{stats?.total || 0}</div>
+              <div className="text-2xl font-bold text-text-primary">{stats?.total || 0}</div>
             )}
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/60 text-sm">Assigned</span>
-              <Check className="w-4 h-4 text-emerald-400" />
+              <span className="text-text-secondary text-sm">Assigned</span>
+              <Check className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-16" />
             ) : (
-              <div className="text-2xl font-bold text-emerald-400">{stats?.assigned || 0}</div>
+              <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats?.assigned || 0}</div>
             )}
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/60 text-sm">Unassigned</span>
-              <X className="w-4 h-4 text-amber-400" />
+              <span className="text-text-secondary text-sm">Unassigned</span>
+              <X className="w-4 h-4 text-amber-500 dark:text-amber-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-16" />
             ) : (
-              <div className="text-2xl font-bold text-amber-400">{stats?.unassigned || 0}</div>
+              <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats?.unassigned || 0}</div>
             )}
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/60 text-sm">Assignment Rate</span>
-              <Users className="w-4 h-4 text-blue-400" />
+              <span className="text-text-secondary text-sm">Assignment Rate</span>
+              <Users className="w-4 h-4 text-blue-500 dark:text-blue-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-16" />
             ) : (
-              <div className="text-2xl font-bold text-white">
+              <div className="text-2xl font-bold text-text-primary">
                 {stats && stats.total > 0
                   ? `${Math.round((stats.assigned / stats.total) * 100)}%`
                   : "0%"}
@@ -459,22 +459,22 @@ export default function CourseAssignmentPage() {
         </div>
 
         {/* Courses Table */}
-        <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+        <div className="bg-surface-secondary rounded-xl border border-border-default overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/10">
-                <th className="text-left p-4 text-sm font-medium text-white/60">Class</th>
-                <th className="text-left p-4 text-sm font-medium text-white/60">Grade</th>
-                <th className="text-left p-4 text-sm font-medium text-white/60">Course</th>
-                <th className="text-left p-4 text-sm font-medium text-white/60">Teacher</th>
-                <th className="text-left p-4 text-sm font-medium text-white/60">Status</th>
-                <th className="text-right p-4 text-sm font-medium text-white/60">Action</th>
+              <tr className="border-b border-border-default">
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Class</th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Grade</th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Course</th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Teacher</th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Status</th>
+                <th className="text-right p-4 text-sm font-medium text-text-secondary">Action</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 10 }).map((_, i) => (
-                  <tr key={i} className="border-b border-white/5">
+                  <tr key={i} className="border-b border-border-subtle">
                     <td className="p-4"><Skeleton className="h-5 w-32" /></td>
                     <td className="p-4"><Skeleton className="h-5 w-12" /></td>
                     <td className="p-4"><Skeleton className="h-5 w-16" /></td>
@@ -485,7 +485,7 @@ export default function CourseAssignmentPage() {
                 ))
               ) : filteredCourses.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-white/40">
+                  <td colSpan={6} className="p-8 text-center text-text-tertiary">
                     No courses found
                   </td>
                 </tr>
@@ -493,10 +493,10 @@ export default function CourseAssignmentPage() {
                 filteredCourses.map((course) => (
                   <tr
                     key={course.id}
-                    className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                    className="border-b border-border-subtle hover:bg-surface-hover transition-colors"
                   >
-                    <td className="p-4 text-white font-medium">{course.class_name}</td>
-                    <td className="p-4 text-white/80">G{course.grade}</td>
+                    <td className="p-4 text-text-primary font-medium">{course.class_name}</td>
+                    <td className="p-4 text-text-secondary">G{course.grade}</td>
                     <td className="p-4">
                       <span
                         className={`px-2 py-1 text-xs font-medium rounded-full border ${getTypeColor(
@@ -509,21 +509,21 @@ export default function CourseAssignmentPage() {
                     <td className="p-4">
                       {course.teacher_name ? (
                         <div>
-                          <div className="text-white">{course.teacher_name}</div>
-                          <div className="text-xs text-white/40">{course.teacher_email}</div>
+                          <div className="text-text-primary">{course.teacher_name}</div>
+                          <div className="text-xs text-text-tertiary">{course.teacher_email}</div>
                         </div>
                       ) : (
-                        <span className="text-white/40">Unassigned</span>
+                        <span className="text-text-tertiary">Unassigned</span>
                       )}
                     </td>
                     <td className="p-4">
                       {course.teacher_id ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-emerald-500/20 text-emerald-400">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
                           <Check className="w-3 h-3" />
                           Assigned
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-amber-500/20 text-amber-400">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400">
                           <X className="w-3 h-3" />
                           Pending
                         </span>
@@ -533,7 +533,7 @@ export default function CourseAssignmentPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="border-white/20 text-white/70 hover:text-white hover:border-white/40"
+                        className="border-border-default text-text-secondary hover:text-text-primary hover:border-border-emphasis"
                         onClick={() => openAssignDialog(course)}
                       >
                         {course.teacher_id ? (
@@ -558,7 +558,7 @@ export default function CourseAssignmentPage() {
 
         {/* Showing count */}
         {!loading && (
-          <div className="text-sm text-white/40 text-center">
+          <div className="text-sm text-text-tertiary text-center">
             Showing {filteredCourses.length} of {courses.length} courses
           </div>
         )}
@@ -566,7 +566,7 @@ export default function CourseAssignmentPage() {
 
       {/* Assignment Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="bg-slate-900 border-white/10 text-white">
+        <DialogContent className="bg-surface-elevated border-border-default text-text-primary">
           <DialogHeader>
             <DialogTitle>
               {selectedCourse?.teacher_id ? "Change Teacher" : "Assign Teacher"}
@@ -575,7 +575,7 @@ export default function CourseAssignmentPage() {
 
           <div className="py-4">
             {/* Course Info */}
-            <div className="mb-4 p-3 bg-white/5 rounded-lg">
+            <div className="mb-4 p-3 bg-surface-secondary rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <span
                   className={`px-2 py-1 text-xs font-medium rounded-full border ${
@@ -584,29 +584,29 @@ export default function CourseAssignmentPage() {
                 >
                   {selectedCourse?.course_type}
                 </span>
-                <span className="text-white/60">•</span>
-                <span className="text-white">{selectedCourse?.class_name}</span>
-                <span className="text-white/60">•</span>
-                <span className="text-white/60">G{selectedCourse?.grade}</span>
+                <span className="text-text-secondary">•</span>
+                <span className="text-text-primary">{selectedCourse?.class_name}</span>
+                <span className="text-text-secondary">•</span>
+                <span className="text-text-secondary">G{selectedCourse?.grade}</span>
               </div>
               {selectedCourse?.teacher_name && (
-                <div className="text-sm text-white/60">
+                <div className="text-sm text-text-secondary">
                   Current: {selectedCourse.teacher_name}
                 </div>
               )}
             </div>
 
             {/* Teacher List */}
-            <div className="text-sm text-white/60 mb-2">
+            <div className="text-sm text-text-secondary mb-2">
               Select a {selectedCourse?.course_type} teacher:
             </div>
 
             {loadingTeachers ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-white/40" />
+                <Loader2 className="w-6 h-6 animate-spin text-text-tertiary" />
               </div>
             ) : teachers.length === 0 ? (
-              <div className="text-center py-8 text-white/40">
+              <div className="text-center py-8 text-text-tertiary">
                 No {selectedCourse?.course_type} teachers available
               </div>
             ) : (
@@ -617,13 +617,13 @@ export default function CourseAssignmentPage() {
                     className={`w-full p-3 rounded-lg text-left transition-colors ${
                       selectedCourse?.teacher_id === teacher.id
                         ? "bg-indigo-500/20 border border-indigo-500/50"
-                        : "bg-white/5 hover:bg-white/10 border border-transparent"
+                        : "bg-surface-secondary hover:bg-surface-hover border border-transparent"
                     }`}
                     onClick={() => handleAssign(teacher.id)}
                     disabled={assigning}
                   >
-                    <div className="font-medium text-white">{teacher.full_name}</div>
-                    <div className="text-xs text-white/40">{teacher.email}</div>
+                    <div className="font-medium text-text-primary">{teacher.full_name}</div>
+                    <div className="text-xs text-text-tertiary">{teacher.email}</div>
                   </button>
                 ))}
               </div>
@@ -634,7 +634,7 @@ export default function CourseAssignmentPage() {
             {selectedCourse?.teacher_id && (
               <Button
                 variant="outline"
-                className="border-red-500/50 text-red-400 hover:bg-red-500/20"
+                className="border-red-500/50 text-red-500 dark:text-red-400 hover:bg-red-500/20"
                 onClick={handleUnassign}
                 disabled={assigning}
               >
@@ -648,7 +648,7 @@ export default function CourseAssignmentPage() {
             )}
             <Button
               variant="outline"
-              className="border-white/20"
+              className="border-border-default"
               onClick={() => setDialogOpen(false)}
             >
               Cancel

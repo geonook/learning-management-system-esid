@@ -144,11 +144,11 @@ export default function BrowseCommsPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-cyan-500/20 rounded-lg">
-              <MessageSquare className="w-6 h-6 text-cyan-400" />
+              <MessageSquare className="w-6 h-6 text-cyan-500 dark:text-cyan-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Browse Communications</h1>
-              <p className="text-sm text-white/60">
+              <h1 className="text-2xl font-bold text-text-primary">Browse Communications</h1>
+              <p className="text-sm text-text-secondary">
                 View all teacher-parent communications ({data?.total || 0} records)
               </p>
             </div>
@@ -158,12 +158,12 @@ export default function BrowseCommsPage() {
         {/* Search and Filters */}
         <div className="flex gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
             <Input
               placeholder="Search by student, teacher, or content..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-white/5 border-white/10 text-white"
+              className="pl-10 bg-surface-secondary border-border-default text-text-primary placeholder:text-text-tertiary"
             />
           </div>
 
@@ -176,7 +176,7 @@ export default function BrowseCommsPage() {
               if (parts[1]) setSemester(parts[1] as Semester);
             }}
           >
-            <SelectTrigger className="w-[200px] bg-white/5 border-white/10 text-white">
+            <SelectTrigger className="w-[200px] bg-surface-secondary border-border-default text-text-primary">
               <SelectValue placeholder="Select semester" />
             </SelectTrigger>
             <SelectContent>
@@ -204,7 +204,7 @@ export default function BrowseCommsPage() {
                     : type === "KCFS"
                     ? "bg-purple-500 text-white"
                     : "bg-cyan-500 text-white"
-                  : "bg-white/5 text-white/60 hover:bg-white/10"
+                  : "bg-surface-secondary text-text-secondary hover:bg-surface-hover"
               }`}
             >
               {type}
@@ -214,56 +214,56 @@ export default function BrowseCommsPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-5 gap-4">
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-            <div className="text-2xl font-bold text-white">{stats?.total || 0}</div>
-            <div className="text-xs text-white/40">Total Records</div>
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
+            <div className="text-2xl font-bold text-text-primary">{stats?.total || 0}</div>
+            <div className="text-xs text-text-tertiary">Total Records</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-            <div className="text-2xl font-bold text-cyan-400">{stats?.this_week || 0}</div>
-            <div className="text-xs text-white/40">This Week</div>
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
+            <div className="text-2xl font-bold text-cyan-500 dark:text-cyan-400">{stats?.this_week || 0}</div>
+            <div className="text-xs text-text-tertiary">This Week</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-            <div className="text-2xl font-bold text-green-400">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
+            <div className="text-2xl font-bold text-green-500 dark:text-green-400">
               {stats?.by_type.phone_call || 0}
             </div>
-            <div className="text-xs text-white/40">Phone Calls</div>
+            <div className="text-xs text-text-tertiary">Phone Calls</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-            <div className="text-2xl font-bold text-blue-400">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
+            <div className="text-2xl font-bold text-blue-500 dark:text-blue-400">
               {stats?.by_type.email || 0}
             </div>
-            <div className="text-xs text-white/40">Emails</div>
+            <div className="text-xs text-text-tertiary">Emails</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-            <div className="text-2xl font-bold text-purple-400">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
+            <div className="text-2xl font-bold text-purple-500 dark:text-purple-400">
               {(stats?.by_type.in_person || 0) +
                 (stats?.by_type.message || 0) +
                 (stats?.by_type.other || 0)}
             </div>
-            <div className="text-xs text-white/40">Other</div>
+            <div className="text-xs text-text-tertiary">Other</div>
           </div>
         </div>
 
         {/* Loading State */}
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
+            <Loader2 className="w-8 h-8 text-cyan-500 dark:text-cyan-400 animate-spin" />
           </div>
         )}
 
         {/* Error State */}
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
-            <p className="text-red-400">{error}</p>
+            <p className="text-red-500 dark:text-red-400">{error}</p>
           </div>
         )}
 
         {/* Empty State */}
         {!loading && !error && filteredComms.length === 0 && (
-          <div className="bg-white/5 rounded-xl border border-white/10 p-8 text-center">
-            <MessageSquare className="w-12 h-12 text-white/20 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-white mb-2">No Communications Found</h3>
-            <p className="text-white/40 max-w-md mx-auto">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-8 text-center">
+            <MessageSquare className="w-12 h-12 text-text-tertiary/50 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-text-primary mb-2">No Communications Found</h3>
+            <p className="text-text-tertiary max-w-md mx-auto">
               {data?.total === 0
                 ? "No communications have been recorded for this semester yet. Teachers can add communications from their class pages."
                 : "No communications match your search criteria."}
@@ -273,24 +273,24 @@ export default function BrowseCommsPage() {
 
         {/* Communications List */}
         {!loading && !error && filteredComms.length > 0 && (
-          <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+          <div className="bg-surface-secondary rounded-xl border border-border-default overflow-hidden">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left p-4 text-sm font-medium text-white/60">Date</th>
-                  <th className="text-left p-4 text-sm font-medium text-white/60">Type</th>
-                  <th className="text-left p-4 text-sm font-medium text-white/60">Student</th>
-                  <th className="text-left p-4 text-sm font-medium text-white/60">Teacher</th>
-                  <th className="text-left p-4 text-sm font-medium text-white/60">Class</th>
-                  <th className="text-left p-4 text-sm font-medium text-white/60">Period</th>
-                  <th className="text-left p-4 text-sm font-medium text-white/60">Content</th>
-                  <th className="text-right p-4 text-sm font-medium text-white/60 w-16"></th>
+                <tr className="border-b border-border-default">
+                  <th className="text-left p-4 text-sm font-medium text-text-secondary">Date</th>
+                  <th className="text-left p-4 text-sm font-medium text-text-secondary">Type</th>
+                  <th className="text-left p-4 text-sm font-medium text-text-secondary">Student</th>
+                  <th className="text-left p-4 text-sm font-medium text-text-secondary">Teacher</th>
+                  <th className="text-left p-4 text-sm font-medium text-text-secondary">Class</th>
+                  <th className="text-left p-4 text-sm font-medium text-text-secondary">Period</th>
+                  <th className="text-left p-4 text-sm font-medium text-text-secondary">Content</th>
+                  <th className="text-right p-4 text-sm font-medium text-text-secondary w-16"></th>
                 </tr>
               </thead>
               <tbody>
                 {filteredComms.map((comm) => (
-                  <tr key={comm.id} className="border-b border-white/5 hover:bg-white/5">
-                    <td className="p-4 text-white/60 text-sm whitespace-nowrap">
+                  <tr key={comm.id} className="border-b border-border-subtle hover:bg-surface-hover">
+                    <td className="p-4 text-text-secondary text-sm whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-3 h-3" />
                         {new Date(comm.communication_date).toLocaleDateString()}
@@ -300,10 +300,10 @@ export default function BrowseCommsPage() {
                       <div
                         className={`flex items-center gap-2 ${
                           comm.communication_type === "phone_call"
-                            ? "text-green-400"
+                            ? "text-green-500 dark:text-green-400"
                             : comm.communication_type === "email"
-                            ? "text-blue-400"
-                            : "text-purple-400"
+                            ? "text-blue-500 dark:text-blue-400"
+                            : "text-purple-500 dark:text-purple-400"
                         }`}
                       >
                         {getTypeIcon(comm.communication_type)}
@@ -312,32 +312,32 @@ export default function BrowseCommsPage() {
                         </span>
                       </div>
                     </td>
-                    <td className="p-4 text-white">{comm.student.full_name}</td>
-                    <td className="p-4 text-white/60">{comm.teacher.full_name}</td>
+                    <td className="p-4 text-text-primary">{comm.student.full_name}</td>
+                    <td className="p-4 text-text-secondary">{comm.teacher.full_name}</td>
                     <td className="p-4">
                       <span
                         className={`px-2 py-1 text-xs rounded-full ${
                           comm.course.course_type === "LT"
-                            ? "bg-green-500/20 text-green-400"
+                            ? "bg-green-500/20 text-green-500 dark:text-green-400"
                             : comm.course.course_type === "IT"
-                            ? "bg-blue-500/20 text-blue-400"
-                            : "bg-purple-500/20 text-purple-400"
+                            ? "bg-blue-500/20 text-blue-500 dark:text-blue-400"
+                            : "bg-purple-500/20 text-purple-500 dark:text-purple-400"
                         }`}
                       >
                         {comm.course.class_name} ({comm.course.course_type})
                       </span>
                     </td>
-                    <td className="p-4 text-white/40 text-sm">
+                    <td className="p-4 text-text-tertiary text-sm">
                       {comm.contact_period ? formatContactPeriod(comm.contact_period) : "-"}
                     </td>
-                    <td className="p-4 text-white/60 text-sm max-w-xs truncate">
+                    <td className="p-4 text-text-secondary text-sm max-w-xs truncate">
                       {comm.subject || comm.content.substring(0, 50)}
                       {comm.content.length > 50 && "..."}
                     </td>
                     <td className="p-4 text-right">
                       <Link
                         href={`/class/${comm.course.class_id}/communications`}
-                        className="p-2 rounded-lg hover:bg-white/10 text-white/40 hover:text-white inline-block"
+                        className="p-2 rounded-lg hover:bg-surface-hover text-text-tertiary hover:text-text-primary inline-block"
                       >
                         <ChevronRight className="w-4 h-4" />
                       </Link>
@@ -349,25 +349,25 @@ export default function BrowseCommsPage() {
 
             {/* Pagination */}
             {data && data.totalPages > 1 && (
-              <div className="flex items-center justify-between p-4 border-t border-white/10">
-                <div className="text-sm text-white/40">
+              <div className="flex items-center justify-between p-4 border-t border-border-default">
+                <div className="text-sm text-text-tertiary">
                   Showing {((page - 1) * pageSize) + 1} - {Math.min(page * pageSize, data.total)} of {data.total}
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page === 1}
-                    className="px-3 py-1 rounded-lg bg-white/5 text-white/60 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="px-3 py-1 rounded-lg bg-surface-secondary text-text-secondary hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     Previous
                   </button>
-                  <span className="text-sm text-white/60">
+                  <span className="text-sm text-text-secondary">
                     Page {page} of {data.totalPages}
                   </span>
                   <button
                     onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
                     disabled={page === data.totalPages}
-                    className="px-3 py-1 rounded-lg bg-white/5 text-white/60 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="px-3 py-1 rounded-lg bg-surface-secondary text-text-secondary hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     Next
                   </button>
@@ -379,8 +379,8 @@ export default function BrowseCommsPage() {
 
         {/* Info */}
         <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
-          <h3 className="text-blue-400 font-medium mb-2">Browse Mode</h3>
-          <p className="text-white/60 text-sm">
+          <h3 className="text-blue-500 dark:text-blue-400 font-medium mb-2">Browse Mode</h3>
+          <p className="text-text-secondary text-sm">
             This page shows all teacher-parent communications for oversight purposes.
             To add or edit communications, teachers should access their class communication pages.
           </p>

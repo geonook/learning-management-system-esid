@@ -221,16 +221,16 @@ export default function BrowseGradebookPage() {
   }, [exams]);
 
   const getStatusIcon = (rate: number) => {
-    if (rate >= 90) return <CheckCircle className="w-4 h-4 text-green-400" />;
-    if (rate > 0) return <Clock className="w-4 h-4 text-amber-400" />;
-    return <AlertTriangle className="w-4 h-4 text-red-400/50" />;
+    if (rate >= 90) return <CheckCircle className="w-4 h-4 text-green-500 dark:text-green-400" />;
+    if (rate > 0) return <Clock className="w-4 h-4 text-amber-500 dark:text-amber-400" />;
+    return <AlertTriangle className="w-4 h-4 text-red-500/50 dark:text-red-400/50" />;
   };
 
   const getStatusColor = (rate: number) => {
-    if (rate >= 90) return "text-green-400";
-    if (rate >= 50) return "text-amber-400";
-    if (rate > 0) return "text-amber-400";
-    return "text-white/40";
+    if (rate >= 90) return "text-green-500 dark:text-green-400";
+    if (rate >= 50) return "text-amber-500 dark:text-amber-400";
+    if (rate > 0) return "text-amber-500 dark:text-amber-400";
+    return "text-text-tertiary";
   };
 
   const formatDate = (dateStr: string | null) => {
@@ -249,11 +249,11 @@ export default function BrowseGradebookPage() {
               <BookOpen className="w-6 h-6 text-amber-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Browse Gradebook</h1>
-              <p className="text-sm text-white/60">View all assessments and score entry progress</p>
+              <h1 className="text-2xl font-bold text-text-primary">Browse Gradebook</h1>
+              <p className="text-sm text-text-secondary">View all assessments and score entry progress</p>
             </div>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white/70 hover:bg-white/10 transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 bg-surface-secondary border border-border-default rounded-lg text-text-secondary hover:bg-surface-hover transition-colors">
             <Download className="w-4 h-4" />
             <span>Export</span>
           </button>
@@ -261,93 +261,93 @@ export default function BrowseGradebookPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-5 gap-4">
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/60 text-sm">Assessments</span>
-              <FileSpreadsheet className="w-4 h-4 text-amber-400" />
+              <span className="text-text-secondary text-sm">Assessments</span>
+              <FileSpreadsheet className="w-4 h-4 text-amber-500 dark:text-amber-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
-              <div className="text-2xl font-bold text-white">{stats.total}</div>
+              <div className="text-2xl font-bold text-text-primary">{stats.total}</div>
             )}
-            <div className="text-xs text-white/40">total exams</div>
+            <div className="text-xs text-text-tertiary">total exams</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/60 text-sm">Completed</span>
-              <CheckCircle className="w-4 h-4 text-green-400" />
+              <span className="text-text-secondary text-sm">Completed</span>
+              <CheckCircle className="w-4 h-4 text-green-500 dark:text-green-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
-              <div className="text-2xl font-bold text-green-400">{stats.completed}</div>
+              <div className="text-2xl font-bold text-green-500 dark:text-green-400">{stats.completed}</div>
             )}
-            <div className="text-xs text-white/40">≥90% entered</div>
+            <div className="text-xs text-text-tertiary">≥90% entered</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/60 text-sm">In Progress</span>
-              <Clock className="w-4 h-4 text-amber-400" />
+              <span className="text-text-secondary text-sm">In Progress</span>
+              <Clock className="w-4 h-4 text-amber-500 dark:text-amber-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
-              <div className="text-2xl font-bold text-amber-400">{stats.inProgress}</div>
+              <div className="text-2xl font-bold text-amber-500 dark:text-amber-400">{stats.inProgress}</div>
             )}
-            <div className="text-xs text-white/40">partial entry</div>
+            <div className="text-xs text-text-tertiary">partial entry</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/60 text-sm">Not Started</span>
-              <AlertTriangle className="w-4 h-4 text-red-400/50" />
+              <span className="text-text-secondary text-sm">Not Started</span>
+              <AlertTriangle className="w-4 h-4 text-red-500/50 dark:text-red-400/50" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
-              <div className="text-2xl font-bold text-white/60">{stats.notStarted}</div>
+              <div className="text-2xl font-bold text-text-secondary">{stats.notStarted}</div>
             )}
-            <div className="text-xs text-white/40">no scores</div>
+            <div className="text-xs text-text-tertiary">no scores</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/60 text-sm">Avg Progress</span>
-              <Calendar className="w-4 h-4 text-blue-400" />
+              <span className="text-text-secondary text-sm">Avg Progress</span>
+              <Calendar className="w-4 h-4 text-blue-500 dark:text-blue-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
-              <div className="text-2xl font-bold text-white">{stats.avgCompletion}%</div>
+              <div className="text-2xl font-bold text-text-primary">{stats.avgCompletion}%</div>
             )}
-            <div className="text-xs text-white/40">completion</div>
+            <div className="text-xs text-text-tertiary">completion</div>
           </div>
         </div>
 
         {/* Filters */}
         <div className="flex gap-4 flex-wrap">
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
             <Input
               placeholder="Search assessments or classes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+              className="pl-10 bg-surface-secondary border-border-default text-text-primary placeholder:text-text-tertiary"
             />
           </div>
 
           {/* Grade Dropdown */}
           <div className="relative">
             <button
-              className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white/70 hover:bg-white/10 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-surface-secondary border border-border-default rounded-lg text-text-secondary hover:bg-surface-hover transition-colors"
               onClick={() => setShowGradeDropdown(!showGradeDropdown)}
             >
               {gradeFilter !== null ? `Grade ${gradeFilter}` : "All Grades"}
               <ChevronDown className="w-4 h-4" />
             </button>
             {showGradeDropdown && (
-              <div className="absolute top-full mt-2 right-0 bg-slate-800 border border-white/10 rounded-lg shadow-lg z-10 py-1 min-w-[120px]">
+              <div className="absolute top-full mt-2 right-0 bg-surface-elevated border border-border-default rounded-lg shadow-lg z-10 py-1 min-w-[120px]">
                 <button
-                  className="w-full px-4 py-2 text-left text-white/70 hover:bg-white/10 text-sm"
+                  className="w-full px-4 py-2 text-left text-text-secondary hover:bg-surface-hover text-sm"
                   onClick={() => {
                     setGradeFilter(null);
                     setShowGradeDropdown(false);
@@ -358,7 +358,7 @@ export default function BrowseGradebookPage() {
                 {[1, 2, 3, 4, 5, 6].map((grade) => (
                   <button
                     key={grade}
-                    className="w-full px-4 py-2 text-left text-white/70 hover:bg-white/10 text-sm"
+                    className="w-full px-4 py-2 text-left text-text-secondary hover:bg-surface-hover text-sm"
                     onClick={() => {
                       setGradeFilter(grade);
                       setShowGradeDropdown(false);
@@ -374,16 +374,16 @@ export default function BrowseGradebookPage() {
           {/* Course Type Dropdown */}
           <div className="relative">
             <button
-              className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white/70 hover:bg-white/10 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-surface-secondary border border-border-default rounded-lg text-text-secondary hover:bg-surface-hover transition-colors"
               onClick={() => setShowTypeDropdown(!showTypeDropdown)}
             >
               {courseTypeFilter || "All Types"}
               <ChevronDown className="w-4 h-4" />
             </button>
             {showTypeDropdown && (
-              <div className="absolute top-full mt-2 right-0 bg-slate-800 border border-white/10 rounded-lg shadow-lg z-10 py-1 min-w-[120px]">
+              <div className="absolute top-full mt-2 right-0 bg-surface-elevated border border-border-default rounded-lg shadow-lg z-10 py-1 min-w-[120px]">
                 <button
-                  className="w-full px-4 py-2 text-left text-white/70 hover:bg-white/10 text-sm"
+                  className="w-full px-4 py-2 text-left text-text-secondary hover:bg-surface-hover text-sm"
                   onClick={() => {
                     setCourseTypeFilter(null);
                     setShowTypeDropdown(false);
@@ -394,7 +394,7 @@ export default function BrowseGradebookPage() {
                 {["LT", "IT", "KCFS"].map((type) => (
                   <button
                     key={type}
-                    className="w-full px-4 py-2 text-left text-white/70 hover:bg-white/10 text-sm"
+                    className="w-full px-4 py-2 text-left text-text-secondary hover:bg-surface-hover text-sm"
                     onClick={() => {
                       setCourseTypeFilter(type);
                       setShowTypeDropdown(false);
@@ -421,8 +421,8 @@ export default function BrowseGradebookPage() {
               onClick={() => setAssessmentTypeFilter(type.key)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 assessmentTypeFilter === type.key
-                  ? "bg-amber-500 text-white"
-                  : "bg-white/5 text-white/60 hover:bg-white/10"
+                  ? "bg-amber-500 text-white dark:text-white"
+                  : "bg-surface-secondary text-text-secondary hover:bg-surface-hover"
               }`}
             >
               {type.label}
@@ -431,23 +431,23 @@ export default function BrowseGradebookPage() {
         </div>
 
         {/* Exams Table */}
-        <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+        <div className="bg-surface-secondary rounded-xl border border-border-default overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/10">
-                <th className="text-left p-4 text-sm font-medium text-white/60">Assessment</th>
-                <th className="text-left p-4 text-sm font-medium text-white/60">Class</th>
-                <th className="text-left p-4 text-sm font-medium text-white/60">Type</th>
-                <th className="text-left p-4 text-sm font-medium text-white/60">Date</th>
-                <th className="text-left p-4 text-sm font-medium text-white/60">Progress</th>
-                <th className="text-left p-4 text-sm font-medium text-white/60">Status</th>
-                <th className="text-left p-4 text-sm font-medium text-white/60">Actions</th>
+              <tr className="border-b border-border-default">
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Assessment</th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Class</th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Type</th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Date</th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Progress</th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Status</th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
-                  <tr key={i} className="border-b border-white/5">
+                  <tr key={i} className="border-b border-border-subtle">
                     <td className="p-4">
                       <Skeleton className="h-4 w-32" />
                     </td>
@@ -473,31 +473,31 @@ export default function BrowseGradebookPage() {
                 ))
               ) : filteredExams.length > 0 ? (
                 filteredExams.map((exam) => (
-                  <tr key={exam.id} className="border-b border-white/5 hover:bg-white/5">
-                    <td className="p-4 text-white font-medium">{exam.name}</td>
+                  <tr key={exam.id} className="border-b border-border-subtle hover:bg-surface-hover">
+                    <td className="p-4 text-text-primary font-medium">{exam.name}</td>
                     <td className="p-4">
-                      <div className="text-white/80">{exam.class_name}</div>
-                      <div className="text-white/40 text-xs">G{exam.class_grade}</div>
+                      <div className="text-text-primary">{exam.class_name}</div>
+                      <div className="text-text-tertiary text-xs">G{exam.class_grade}</div>
                     </td>
                     <td className="p-4">
                       {exam.course_type ? (
                         <span className={`px-2 py-1 text-xs rounded-full ${
                           exam.course_type === "LT"
-                            ? "bg-blue-500/20 text-blue-400"
+                            ? "bg-blue-500/20 text-blue-600 dark:text-blue-400"
                             : exam.course_type === "IT"
-                            ? "bg-green-500/20 text-green-400"
-                            : "bg-purple-500/20 text-purple-400"
+                            ? "bg-green-500/20 text-green-600 dark:text-green-400"
+                            : "bg-purple-500/20 text-purple-600 dark:text-purple-400"
                         }`}>
                           {exam.course_type}
                         </span>
                       ) : (
-                        <span className="text-white/40">-</span>
+                        <span className="text-text-tertiary">-</span>
                       )}
                     </td>
-                    <td className="p-4 text-white/60">{formatDate(exam.exam_date)}</td>
+                    <td className="p-4 text-text-secondary">{formatDate(exam.exam_date)}</td>
                     <td className="p-4">
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden max-w-[80px]">
+                        <div className="flex-1 h-2 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden max-w-[80px]">
                           <div
                             className={`h-full rounded-full ${
                               exam.completion_rate >= 90
@@ -506,7 +506,7 @@ export default function BrowseGradebookPage() {
                                 ? "bg-amber-500"
                                 : exam.completion_rate > 0
                                 ? "bg-amber-500"
-                                : "bg-white/20"
+                                : "bg-gray-300 dark:bg-white/20"
                             }`}
                             style={{ width: `${exam.completion_rate}%` }}
                           />
@@ -527,7 +527,7 @@ export default function BrowseGradebookPage() {
                     <td className="p-4">
                       <Link
                         href={`/class/${exam.class_id}/gradebook`}
-                        className="text-amber-400 hover:text-amber-300 text-sm"
+                        className="text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 text-sm"
                       >
                         View
                       </Link>
@@ -536,7 +536,7 @@ export default function BrowseGradebookPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-white/40">
+                  <td colSpan={7} className="p-8 text-center text-text-tertiary">
                     {exams.length === 0
                       ? "No assessments found in the system"
                       : "No assessments match your filters"}
@@ -549,15 +549,15 @@ export default function BrowseGradebookPage() {
 
         {/* Summary */}
         {!loading && filteredExams.length > 0 && (
-          <div className="text-sm text-white/40 text-center">
+          <div className="text-sm text-text-tertiary text-center">
             Showing {filteredExams.length} of {exams.length} assessments
           </div>
         )}
 
         {/* Info */}
         <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
-          <h3 className="text-blue-400 font-medium mb-2">Assessment Types</h3>
-          <p className="text-white/60 text-sm">
+          <h3 className="text-blue-600 dark:text-blue-400 font-medium mb-2">Assessment Types</h3>
+          <p className="text-text-secondary text-sm">
             <strong>FA1-FA8:</strong> Formative Assessments (15% weight) •
             <strong> SA1-SA4:</strong> Summative Assessments (20% weight) •
             <strong> FINAL:</strong> Final Exam (10% weight).

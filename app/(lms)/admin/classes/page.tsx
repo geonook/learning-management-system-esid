@@ -76,11 +76,11 @@ export default function ClassManagementPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-purple-500/20 rounded-lg">
-              <School className="w-6 h-6 text-purple-400" />
+              <School className="w-6 h-6 text-purple-500 dark:text-purple-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Class Management</h1>
-              <p className="text-sm text-white/60">
+              <h1 className="text-2xl font-bold text-text-primary">Class Management</h1>
+              <p className="text-sm text-text-secondary">
                 Manage classes and course assignments • 2025-2026
               </p>
             </div>
@@ -94,18 +94,18 @@ export default function ClassManagementPage() {
         {/* Search and Filters */}
         <div className="flex gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
             <Input
               placeholder="Search classes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+              className="pl-10 bg-surface-secondary border-border-default text-text-primary placeholder:text-text-tertiary"
             />
           </div>
           <div className="relative">
             <Button
               variant="outline"
-              className="border-white/10 text-white/70"
+              className="border-border-default text-text-secondary hover:text-text-primary"
               onClick={() => setShowGradeDropdown(!showGradeDropdown)}
             >
               <Filter className="w-4 h-4 mr-2" />
@@ -113,9 +113,9 @@ export default function ClassManagementPage() {
               <ChevronDown className="w-4 h-4 ml-2" />
             </Button>
             {showGradeDropdown && (
-              <div className="absolute top-full mt-2 right-0 bg-slate-800 border border-white/10 rounded-lg shadow-lg z-10 py-1 min-w-[120px]">
+              <div className="absolute top-full mt-2 right-0 bg-surface-elevated border border-border-default rounded-lg shadow-lg z-10 py-1 min-w-[120px]">
                 <button
-                  className="w-full px-4 py-2 text-left text-white/70 hover:bg-white/10 text-sm"
+                  className="w-full px-4 py-2 text-left text-text-secondary hover:bg-surface-hover text-sm"
                   onClick={() => {
                     setGradeFilter(null);
                     setShowGradeDropdown(false);
@@ -126,7 +126,7 @@ export default function ClassManagementPage() {
                 {[1, 2, 3, 4, 5, 6].map((grade) => (
                   <button
                     key={grade}
-                    className="w-full px-4 py-2 text-left text-white/70 hover:bg-white/10 text-sm"
+                    className="w-full px-4 py-2 text-left text-text-secondary hover:bg-surface-hover text-sm"
                     onClick={() => {
                       setGradeFilter(grade);
                       setShowGradeDropdown(false);
@@ -142,77 +142,77 @@ export default function ClassManagementPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-4 gap-4">
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4 shadow-sm">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/60 text-sm">Classes</span>
-              <School className="w-4 h-4 text-purple-400" />
+              <span className="text-text-secondary text-sm">Classes</span>
+              <School className="w-4 h-4 text-purple-500 dark:text-purple-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
-              <div className="text-2xl font-bold text-white">{stats.totalClasses}</div>
+              <div className="text-2xl font-bold text-text-primary">{stats.totalClasses}</div>
             )}
-            <div className="text-xs text-white/40">total active</div>
+            <div className="text-xs text-text-tertiary">total active</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4 shadow-sm">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/60 text-sm">Courses</span>
-              <BookOpen className="w-4 h-4 text-blue-400" />
+              <span className="text-text-secondary text-sm">Courses</span>
+              <BookOpen className="w-4 h-4 text-blue-500 dark:text-blue-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
-              <div className="text-2xl font-bold text-white">{stats.totalCourses}</div>
+              <div className="text-2xl font-bold text-text-primary">{stats.totalCourses}</div>
             )}
-            <div className="text-xs text-white/40">LT + IT + KCFS</div>
+            <div className="text-xs text-text-tertiary">LT + IT + KCFS</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4 shadow-sm">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/60 text-sm">Students</span>
-              <Users className="w-4 h-4 text-green-400" />
+              <span className="text-text-secondary text-sm">Students</span>
+              <Users className="w-4 h-4 text-green-500 dark:text-green-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-16" />
             ) : (
-              <div className="text-2xl font-bold text-white">
+              <div className="text-2xl font-bold text-text-primary">
                 {stats.totalStudents.toLocaleString()}
               </div>
             )}
-            <div className="text-xs text-white/40">enrolled</div>
+            <div className="text-xs text-text-tertiary">enrolled</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4 shadow-sm">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/60 text-sm">Grades</span>
-              <GraduationCap className="w-4 h-4 text-amber-400" />
+              <span className="text-text-secondary text-sm">Grades</span>
+              <GraduationCap className="w-4 h-4 text-amber-500 dark:text-amber-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-8" />
             ) : (
-              <div className="text-2xl font-bold text-white">{stats.uniqueGrades}</div>
+              <div className="text-2xl font-bold text-text-primary">{stats.uniqueGrades}</div>
             )}
-            <div className="text-xs text-white/40">G1-G6</div>
+            <div className="text-xs text-text-tertiary">G1-G6</div>
           </div>
         </div>
 
         {/* Classes Table */}
-        <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+        <div className="bg-surface-secondary rounded-xl border border-border-default overflow-hidden shadow-sm">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/10">
-                <th className="text-left p-4 text-sm font-medium text-white/60">Class</th>
-                <th className="text-left p-4 text-sm font-medium text-white/60">Grade</th>
-                <th className="text-left p-4 text-sm font-medium text-white/60">Level</th>
-                <th className="text-left p-4 text-sm font-medium text-white/60">Students</th>
-                <th className="text-center p-4 text-sm font-medium text-white/60">LT</th>
-                <th className="text-center p-4 text-sm font-medium text-white/60">IT</th>
-                <th className="text-center p-4 text-sm font-medium text-white/60">KCFS</th>
-                <th className="text-left p-4 text-sm font-medium text-white/60">Actions</th>
+              <tr className="border-b border-border-default">
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Class</th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Grade</th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Level</th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Students</th>
+                <th className="text-center p-4 text-sm font-medium text-text-secondary">LT</th>
+                <th className="text-center p-4 text-sm font-medium text-text-secondary">IT</th>
+                <th className="text-center p-4 text-sm font-medium text-text-secondary">KCFS</th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
-                  <tr key={i} className="border-b border-white/5">
+                  <tr key={i} className="border-b border-border-subtle">
                     <td className="p-4">
                       <Skeleton className="h-4 w-24" />
                     </td>
@@ -241,15 +241,15 @@ export default function ClassManagementPage() {
                 ))
               ) : filteredClasses.length > 0 ? (
                 filteredClasses.map((cls) => (
-                  <tr key={cls.id} className="border-b border-white/5 hover:bg-white/5">
-                    <td className="p-4 text-white font-medium">{cls.name}</td>
-                    <td className="p-4 text-white/80">G{cls.grade}</td>
+                  <tr key={cls.id} className="border-b border-border-subtle hover:bg-surface-hover">
+                    <td className="p-4 text-text-primary font-medium">{cls.name}</td>
+                    <td className="p-4 text-text-secondary">G{cls.grade}</td>
                     <td className="p-4">
-                      <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">
+                      <span className="px-2 py-1 bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs rounded-full">
                         {cls.level || "N/A"}
                       </span>
                     </td>
-                    <td className="p-4 text-white/80">{cls.student_count}</td>
+                    <td className="p-4 text-text-secondary">{cls.student_count}</td>
                     <td className="p-4 text-center">
                       {hasTeacher(cls.courses, "LT") ? (
                         <Check className="w-4 h-4 text-green-400 mx-auto" />
@@ -283,7 +283,7 @@ export default function ClassManagementPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-white/40">
+                  <td colSpan={8} className="p-8 text-center text-text-tertiary">
                     {searchQuery || gradeFilter !== null
                       ? "No classes match your filters"
                       : "No classes found"}
@@ -296,15 +296,15 @@ export default function ClassManagementPage() {
 
         {/* Summary */}
         {!loading && filteredClasses.length > 0 && (
-          <div className="text-sm text-white/40 text-center">
+          <div className="text-sm text-text-tertiary text-center">
             Showing {filteredClasses.length} of {classes.length} classes
           </div>
         )}
 
         {/* Info */}
         <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4">
-          <h3 className="text-purple-400 font-medium mb-2">One Class, Three Teachers</h3>
-          <p className="text-white/60 text-sm">
+          <h3 className="text-purple-600 dark:text-purple-400 font-medium mb-2">One Class, Three Teachers</h3>
+          <p className="text-text-secondary text-sm">
             Each class has three course slots: LT (Local Teacher), IT (International Teacher), and
             KCFS (Kang Chiao Future Skill). A checkmark indicates a teacher has been assigned to
             that course.

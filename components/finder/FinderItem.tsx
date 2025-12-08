@@ -66,7 +66,7 @@ export function FinderItem({
   return (
     <div
       className={cn(
-        "flex items-center justify-between px-3 py-2 cursor-pointer text-sm select-none transition-colors duration-fast ease-apple",
+        "flex items-center justify-between px-3 py-2 cursor-pointer text-sm select-none transition-colors duration-fast ease-apple text-text-primary",
         "hover:bg-[rgb(var(--surface-hover))]",
         selected && "bg-accent-blue text-white hover:bg-accent-blue"
       )}
@@ -97,7 +97,7 @@ export function FinderItem({
       {node.type === "folder" && (
         <ChevronRight
           size={14}
-          className={cn("opacity-50", selected && "opacity-100")}
+          className={cn("text-text-tertiary", selected && "text-white")}
         />
       )}
     </div>

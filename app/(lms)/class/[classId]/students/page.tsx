@@ -119,25 +119,25 @@ export default function ClassStudentsPage() {
 
   return (
     <AuthGuard requiredRoles={["admin", "head", "teacher", "office_member"]}>
-      <div className="h-full flex flex-col bg-white dark:bg-slate-950 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
+      <div className="h-full flex flex-col bg-surface-default rounded-xl border border-border-default shadow-sm overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50">
+        <div className="px-6 py-4 border-b border-border-default bg-surface-secondary">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Link
                 href={`/class/${classId}`}
-                className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
+                className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                <ArrowLeft className="w-5 h-5 text-text-secondary" />
               </Link>
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
                 <Users className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-semibold text-slate-800 dark:text-white">
+                <h1 className="text-lg font-semibold text-text-primary">
                   {loading ? "Loading..." : classInfo?.name || "Class"} - Student Roster
                 </h1>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-text-secondary">
                   {loading
                     ? "Loading students..."
                     : `${students.length} student${students.length !== 1 ? "s" : ""} enrolled`}
@@ -147,13 +147,13 @@ export default function ClassStudentsPage() {
 
             {/* Search */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
               <input
                 type="text"
                 placeholder="Search students..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-4 py-2 w-64 text-sm rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="pl-9 pr-4 py-2 w-64 text-sm rounded-lg border border-border-default bg-surface-elevated text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
               />
             </div>
           </div>
@@ -163,19 +163,19 @@ export default function ClassStudentsPage() {
         <div className="flex-1 overflow-auto">
           {loading ? (
             <div className="flex items-center justify-center h-64">
-              <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+              <Loader2 className="w-8 h-8 animate-spin text-text-tertiary" />
             </div>
           ) : error ? (
-            <div className="flex flex-col items-center justify-center h-64 text-red-500">
+            <div className="flex flex-col items-center justify-center h-64 text-red-600 dark:text-red-500">
               <p>{error}</p>
             </div>
           ) : filteredStudents.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64">
-              <Users className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-4" />
-              <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
+              <Users className="w-12 h-12 text-text-tertiary/50 mb-4" />
+              <h3 className="text-lg font-medium text-text-secondary mb-2">
                 {searchQuery ? "No Students Found" : "No Students Enrolled"}
               </h3>
-              <p className="text-sm text-slate-400 dark:text-slate-500 text-center max-w-md">
+              <p className="text-sm text-text-tertiary text-center max-w-md">
                 {searchQuery
                   ? `No students match "${searchQuery}"`
                   : "This class doesn't have any students yet."}
@@ -183,27 +183,27 @@ export default function ClassStudentsPage() {
             </div>
           ) : (
             <table className="w-full">
-              <thead className="sticky top-0 bg-gray-50 dark:bg-slate-900">
-                <tr className="border-b border-gray-200 dark:border-slate-700">
-                  <th className="text-left px-6 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <thead className="sticky top-0 bg-surface-secondary">
+                <tr className="border-b border-border-default">
+                  <th className="text-left px-6 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">
                     <div className="flex items-center gap-1">
                       <Hash className="w-3.5 h-3.5" />
                       Student ID
                     </div>
                   </th>
-                  <th className="text-left px-6 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <th className="text-left px-6 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">
                     <div className="flex items-center gap-1">
                       <Users className="w-3.5 h-3.5" />
                       Name
                     </div>
                   </th>
-                  <th className="text-left px-6 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <th className="text-left px-6 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">
                     <div className="flex items-center gap-1">
                       <GraduationCap className="w-3.5 h-3.5" />
                       Level
                     </div>
                   </th>
-                  <th className="text-left px-6 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <th className="text-left px-6 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">
                     <div className="flex items-center gap-1">
                       <Mail className="w-3.5 h-3.5" />
                       Email
@@ -211,14 +211,14 @@ export default function ClassStudentsPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-border-subtle">
                 {filteredStudents.map((student, index) => (
                   <tr
                     key={student.id}
-                    className="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors"
+                    className="hover:bg-surface-hover transition-colors"
                   >
                     <td className="px-6 py-4">
-                      <span className="text-sm font-mono text-slate-600 dark:text-slate-400">
+                      <span className="text-sm font-mono text-text-secondary">
                         {student.student_id}
                       </span>
                     </td>
@@ -232,7 +232,7 @@ export default function ClassStudentsPage() {
                             .slice(0, 2)
                             .toUpperCase()}
                         </div>
-                        <span className="text-sm font-medium text-slate-800 dark:text-white">
+                        <span className="text-sm font-medium text-text-primary">
                           {student.full_name}
                         </span>
                       </div>
@@ -251,7 +251,7 @@ export default function ClassStudentsPage() {
                           {student.level}
                         </span>
                       ) : (
-                        <span className="text-sm text-slate-400">-</span>
+                        <span className="text-sm text-text-tertiary">-</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
@@ -263,7 +263,7 @@ export default function ClassStudentsPage() {
                           {student.email}
                         </a>
                       ) : (
-                        <span className="text-sm text-slate-400">-</span>
+                        <span className="text-sm text-text-tertiary">-</span>
                       )}
                     </td>
                   </tr>
@@ -274,7 +274,7 @@ export default function ClassStudentsPage() {
         </div>
 
         {/* Status Bar */}
-        <div className="h-7 bg-gray-50/80 dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 flex items-center px-4 text-[11px] text-gray-500 dark:text-gray-400 justify-between">
+        <div className="h-7 bg-surface-secondary border-t border-border-default flex items-center px-4 text-[11px] text-text-tertiary justify-between">
           <span>
             {loading
               ? "Loading..."

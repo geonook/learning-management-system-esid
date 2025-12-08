@@ -41,12 +41,12 @@ export default function SystemSettingsPage() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-slate-500/20 rounded-lg">
-            <Settings className="w-6 h-6 text-slate-400" />
+          <div className="p-2 bg-surface-secondary rounded-lg">
+            <Settings className="w-6 h-6 text-text-secondary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">System Settings</h1>
-            <p className="text-sm text-white/60">Configure system-wide settings</p>
+            <h1 className="text-2xl font-bold text-text-primary">System Settings</h1>
+            <p className="text-sm text-text-secondary">Configure system-wide settings</p>
           </div>
         </div>
 
@@ -55,30 +55,30 @@ export default function SystemSettingsPage() {
           {settingsSections.map((section) => (
             <div
               key={section.title}
-              className="bg-white/5 rounded-xl border border-white/10 p-6 hover:bg-white/[0.07] transition-colors"
+              className="bg-surface-secondary rounded-xl border border-border-default p-6 hover:bg-surface-hover transition-colors"
             >
               <div className="flex items-start justify-between mb-4">
-                <div className="p-2 bg-white/10 rounded-lg">
-                  <section.icon className="w-5 h-5 text-white/70" />
+                <div className="p-2 bg-surface-tertiary rounded-lg">
+                  <section.icon className="w-5 h-5 text-text-secondary" />
                 </div>
                 <span
                   className={`px-2 py-1 text-xs rounded-full ${
                     section.statusColor === "green"
-                      ? "bg-green-500/20 text-green-400"
+                      ? "bg-green-500/20 text-green-600 dark:text-green-400"
                       : section.statusColor === "yellow"
-                      ? "bg-yellow-500/20 text-yellow-400"
-                      : "bg-orange-500/20 text-orange-400"
+                      ? "bg-yellow-500/20 text-yellow-600 dark:text-yellow-400"
+                      : "bg-orange-500/20 text-orange-600 dark:text-orange-400"
                   }`}
                 >
                   {section.status}
                 </span>
               </div>
-              <h3 className="text-lg font-medium text-white mb-1">{section.title}</h3>
-              <p className="text-sm text-white/50 mb-4">{section.description}</p>
+              <h3 className="text-lg font-medium text-text-primary mb-1">{section.title}</h3>
+              <p className="text-sm text-text-tertiary mb-4">{section.description}</p>
               <Button
                 variant="outline"
                 size="sm"
-                className="border-white/10 text-white/70"
+                className="border-border-default text-text-secondary"
                 disabled={section.status === "Coming Soon"}
               >
                 Configure
@@ -88,20 +88,20 @@ export default function SystemSettingsPage() {
         </div>
 
         {/* System Info */}
-        <div className="bg-white/5 rounded-xl border border-white/10 p-6">
-          <h3 className="text-lg font-medium text-white mb-4">System Information</h3>
+        <div className="bg-surface-secondary rounded-xl border border-border-default p-6">
+          <h3 className="text-lg font-medium text-text-primary mb-4">System Information</h3>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <div className="text-sm text-white/40">Version</div>
-              <div className="text-white font-mono">1.0.0-staging</div>
+              <div className="text-sm text-text-tertiary">Version</div>
+              <div className="text-text-primary font-mono">1.0.0-staging</div>
             </div>
             <div>
-              <div className="text-sm text-white/40">Environment</div>
-              <div className="text-white font-mono">Staging</div>
+              <div className="text-sm text-text-tertiary">Environment</div>
+              <div className="text-text-primary font-mono">Staging</div>
             </div>
             <div>
-              <div className="text-sm text-white/40">Database</div>
-              <div className="text-white font-mono">Supabase Cloud</div>
+              <div className="text-sm text-text-tertiary">Database</div>
+              <div className="text-text-primary font-mono">Supabase Cloud</div>
             </div>
           </div>
         </div>

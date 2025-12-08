@@ -115,8 +115,8 @@ export default function BrowseClassesPage() {
               onClick={() => setSelectedGrade(grade)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-normal ease-apple ${
                 selectedGrade === grade
-                  ? "bg-accent-blue text-white"
-                  : "bg-surface-tertiary text-text-secondary hover:bg-[rgb(var(--surface-hover))]"
+                  ? "bg-accent-blue text-white dark:text-white"
+                  : "bg-surface-tertiary text-text-secondary hover:bg-surface-hover"
               }`}
             >
               {grade === "All" ? "All" : `G${grade}`}
@@ -155,20 +155,20 @@ export default function BrowseClassesPage() {
                 href={`/class/${cls.id}`}
                 className="group block"
               >
-                <div className="relative bg-surface-elevated rounded-xl border border-[rgb(var(--border-default))] p-6 hover:bg-[rgb(var(--surface-hover))] hover:border-[rgb(var(--border-default))] transition-all duration-normal ease-apple shadow-sm">
+                <div className="relative bg-surface-elevated rounded-xl border border-border-default p-6 hover:bg-surface-hover hover:border-border-default transition-all duration-normal ease-apple shadow-sm">
                   {/* Hover indicator */}
                   <div className="absolute right-4 top-4 opacity-0 group-hover:opacity-100 transition-opacity duration-normal ease-apple">
                     <ChevronRight className="w-5 h-5 text-text-tertiary" />
                   </div>
                   <div className="flex items-center justify-between mb-4">
-                    <span className="px-2 py-1 bg-accent-blue/20 text-accent-blue text-xs rounded-full">
+                    <span className="px-2 py-1 bg-blue-500/20 dark:bg-blue-400/20 text-blue-600 dark:text-blue-400 text-xs rounded-full">
                       G{cls.grade}
                     </span>
                     <span className="text-xs text-text-tertiary mr-6">
                       {cls.student_count} student{cls.student_count !== 1 ? "s" : ""}
                     </span>
                   </div>
-                  <h3 className="text-lg font-medium text-text-primary mb-1 group-hover:text-accent-blue transition-colors duration-normal ease-apple">{cls.name}</h3>
+                  <h3 className="text-lg font-medium text-text-primary mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-normal ease-apple">{cls.name}</h3>
                   <p className="text-sm text-text-secondary mb-4">
                     Level: {cls.level || "N/A"}
                   </p>
@@ -201,8 +201,8 @@ export default function BrowseClassesPage() {
         )}
 
         {/* Info */}
-        <div className="bg-accent-blue/10 border border-accent-blue/20 rounded-xl p-4">
-          <h3 className="text-accent-blue font-medium mb-2">Browse Mode</h3>
+        <div className="bg-blue-500/10 dark:bg-blue-400/10 border border-blue-500/20 dark:border-blue-400/20 rounded-xl p-4">
+          <h3 className="text-blue-600 dark:text-blue-400 font-medium mb-2">Browse Mode</h3>
           <p className="text-text-secondary text-sm">
             Click on any class to view its details, gradebook, and student roster.
           </p>

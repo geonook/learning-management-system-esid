@@ -17,7 +17,7 @@ module.exports = {
     },
     extend: {
       colors: {
-        // Notion + Apple Design System Colors
+        // Notion Design System Colors
         "text-primary": "rgb(var(--text-primary) / <alpha-value>)",
         "text-secondary": "rgb(var(--text-secondary) / <alpha-value>)",
         "text-tertiary": "rgb(var(--text-tertiary) / <alpha-value>)",
@@ -25,6 +25,10 @@ module.exports = {
         "surface-secondary": "rgb(var(--bg-secondary) / <alpha-value>)",
         "surface-tertiary": "rgb(var(--bg-tertiary) / <alpha-value>)",
         "surface-elevated": "rgb(var(--bg-elevated) / <alpha-value>)",
+        "surface-hover": "rgb(var(--surface-hover) / <alpha-value>)",
+        "surface-active": "rgb(var(--surface-active) / <alpha-value>)",
+        "border-default": "rgb(var(--border-default) / <alpha-value>)",
+        "border-subtle": "rgb(var(--border-subtle) / <alpha-value>)",
         "accent-blue": "rgb(var(--accent-blue) / <alpha-value>)",
         "accent-green": "rgb(var(--accent-green) / <alpha-value>)",
         "accent-red": "rgb(var(--accent-red) / <alpha-value>)",
