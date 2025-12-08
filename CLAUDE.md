@@ -1,28 +1,27 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 3.1
+> **Documentation Version**: 3.2
 > **Last Updated**: 2025-12-08
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Both Systems Complete)**
-> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**, **Teacher Course Assignment (v1.42.0 ✅)**, **Data Pages Sprint 1-2 (v1.43.0 ✅)**, **Browse Pages Loading Fix (v1.44.0 ✅)**
+> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**, **Teacher Course Assignment (v1.42.0 ✅)**, **Data Pages Sprint 1-2 (v1.43.0 ✅)**, **Browse Pages Loading Fix (v1.44.0 ✅)**, **Auth State Change Fix (v1.45.0 ✅)**
 
 > **Current Status**:
 >
+> - ✅ **v1.45.0 Auth State Change Fix** - 修復 React 閉包與重複 fetch 問題 (2025-12-08)
+>   - AuthContext 使用 `useRef` 修復 React 閉包問題，正確跳過重複的 auth 事件
+>   - 建立 `useAuthReady` hook 作為標準 auth 模式
+>   - AdminClasses 改用 `useAuthReady`，修復重複 fetch 兩次問題
+>   - Browse Stats 移除無效的 Supabase join 語法，修復 400 錯誤
 > - ✅ **v1.44.1 Browse Pages Loading Fix (Improved)** - 簡化 useEffect 模式 (2025-12-08)
->   - 使用 `debouncedSearch` state 替代複雜的 `fetchVersion` 模式
->   - 單一 useEffect + isCancelled flag（移除 isInitialMount ref）
->   - 修復 4 個 Browse 頁面：classes, teachers, students, comms
->   - 搜尋輸入 debounce 300ms，其他篩選條件立即觸發
-> - ⏳ **待測試項目**：Browse 頁面導航載入、篩選功能、分頁切換
 > - ✅ **v1.43.0 Data Pages Complete** - Sprint 1 & 2 功能完善計畫完成 (2025-12-04)
 > - ✅ **v1.42.0 Teacher Course Assignment** - 252 courses assigned to 80 teachers (2025-12-03)
 > - ✅ **Production Teacher Import** - 81 users imported (admin:1, head:8, teacher:54, office_member:17)
 > - ✅ **Phase 4.1 Complete** - One OS Interface Unification with Info Hub
 > - ✅ **SSO Implementation** - Both LMS & Info Hub complete, alignment verified
 > - 🎯 **Next Steps**:
->   1. 測試驗證：Browse 頁面導航載入、篩選功能、分頁切換
->   2. Sprint 3: 班級學生名冊、課程指派系統、我的課表
->   3. Phase D2: 淺色模式配色統一、Notion 風格設計系統
+>   1. Sprint 3: 班級學生名冊、課程指派系統、我的課表
+>   2. Phase D2: 淺色模式配色統一、Notion 風格設計系統
 
 This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -142,6 +141,46 @@ useEffect(() => {
 - `isLoading`: boolean（載入中狀態）
 - `permissions`: UserPermissions | null（完整權限物件）
 - `grade`, `track`, `teacherType`, `fullName`：常用權限欄位
+
+### 🔧 AuthContext useRef 修復（v1.45.0）
+
+**問題**：切換 macOS 桌面再切回來時，`onAuthStateChange` 會觸發 `SIGNED_IN` 事件，但 skip 邏輯無法正確判斷是否為同一用戶。
+
+**根本原因**：React 閉包捕獲舊值
+
+```typescript
+// ❌ 錯誤：userPermissions 是閉包捕獲的初始值（null）
+useEffect(() => {
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (userPermissions?.userId === session?.user?.id) {
+      return  // 這個條件永遠不成立！
+    }
+  })
+}, [])  // 空依賴，閉包永遠捕獲初始值
+```
+
+**解決方案**：使用 `useRef` 追蹤最新值
+
+```typescript
+// ✅ 正確：使用 ref 追蹤最新的 userPermissions
+const userPermissionsRef = useRef<UserPermissions | null>(null);
+
+// 同步 ref 與 state
+useEffect(() => {
+  userPermissionsRef.current = userPermissions;
+}, [userPermissions]);
+
+// 在回調中使用 ref
+supabase.auth.onAuthStateChange((event, session) => {
+  if (['TOKEN_REFRESHED', 'SIGNED_IN', 'INITIAL_SESSION'].includes(event)
+      && userPermissionsRef.current?.userId === session?.user?.id) {
+    console.log('[AuthContext] Same user auth event, skipping permission refetch:', event)
+    return
+  }
+})
+```
+
+**效果**：切換桌面回來時，console 會顯示 `[AuthContext] Same user auth event, skipping permission refetch: SIGNED_IN`，不會重新 fetch 所有頁面資料。
 
 ### 測試要求
 
@@ -1148,6 +1187,79 @@ useEffect(() => {
 3. **只 debounce 需要的輸入**：搜尋框需要 debounce，下拉選單不需要
 4. **使用 `isCancelled` flag**：比 `AbortController` 更簡單，足夠應付大多數情況
 5. **直接在依賴陣列列出狀態**：比用 `fetchVersion` 更直觀、更可靠
+
+---
+
+## 🔐 v1.45.0 Auth State Change 修復 (2025-12-08) ✅ **完成**
+
+### 📋 問題描述
+
+透過 Console Log 分析發現三個問題：
+
+1. **React Closure Bug**：切換 macOS 桌面後，`onAuthStateChange` 的 skip 邏輯失效
+2. **AdminClasses 雙重 fetch**：頁面載入時重複抓取兩次資料
+3. **Browse Stats 400 錯誤**：Supabase 查詢語法無效
+
+### 🔍 根本原因
+
+| 問題 | 原因 |
+|------|------|
+| Skip 邏輯失效 | `onAuthStateChange` 回調捕獲的是 `userPermissions` 初始值（null），不是最新 state |
+| 雙重 fetch | AdminClasses 還在用舊的 `useAuth` 模式 |
+| 400 錯誤 | `courses:exams(courses!inner(...))` 語法錯誤 — `exams` 表沒有 FK 連接到 `courses` |
+
+### ✅ 修復方案
+
+**1. AuthContext useRef 修復**
+
+```typescript
+// 使用 ref 追蹤最新值，解決閉包問題
+const userPermissionsRef = useRef<UserPermissions | null>(null);
+
+useEffect(() => {
+  userPermissionsRef.current = userPermissions;
+}, [userPermissions]);
+
+// 在回調中使用 ref
+if (userPermissionsRef.current?.userId === session?.user?.id) {
+  console.log('[AuthContext] Same user, skipping...')
+  return
+}
+```
+
+**2. AdminClasses 改用 useAuthReady**
+
+```typescript
+const { isReady } = useAuthReady();
+
+useEffect(() => {
+  if (!isReady) return;
+  fetchClasses();
+}, [isReady]);
+```
+
+**3. Browse Stats 移除無效 join**
+
+```typescript
+// 移除 courses:exams(courses!inner(course_type))
+// 改用正確的 scores → exams → classes 關聯
+```
+
+### 📁 修改檔案清單
+
+| 檔案 | 修復內容 | Commit |
+|------|----------|--------|
+| `lib/supabase/auth-context.tsx` | useRef 修復 React 閉包 | `2f4c86d` |
+| `app/(lms)/admin/classes/page.tsx` | 改用 useAuthReady | `2f4c86d` |
+| `app/(lms)/browse/stats/page.tsx` | 移除無效 Supabase join | `2f4c86d` |
+| `hooks/useAuthReady.ts` | 新建標準 auth hook | `6e85c59` |
+| `hooks/use-current-user.ts` | 標記 @deprecated | `6e85c59` |
+
+### 🎯 預期效果
+
+1. 切換桌面回來時，console 顯示 `[AuthContext] Same user auth event, skipping permission refetch`
+2. AdminClasses 只 fetch 一次
+3. Browse Stats 正常載入，無 400 錯誤
 
 ---
 
