@@ -20,8 +20,10 @@
 > - ✅ **Phase 4.1 Complete** - One OS Interface Unification with Info Hub
 > - ✅ **SSO Implementation** - Both LMS & Info Hub complete, alignment verified
 > - 🎯 **Next Steps**:
->   1. Sprint 3: 班級學生名冊、課程指派系統、我的課表
->   2. Phase D2: 淺色模式配色統一、Notion 風格設計系統
+>   1. Sprint 3.1: 班級學生名冊（查看班級內學生列表）
+>   2. Sprint 3.2: 課程指派 UI（Admin 可在網頁上指派教師到課程）
+>   3. Phase D2: 淺色模式配色統一、Notion 風格設計系統
+>   4. Sprint 3.3: 我的課表（教師查看自己的課表）
 
 This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
