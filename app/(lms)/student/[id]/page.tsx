@@ -363,17 +363,17 @@ export default function StudentDetailPage() {
               <div className="flex gap-4">
                 <Link
                   href={`/class/${student.class_id}/gradebook`}
-                  className="flex-1 flex items-center justify-center gap-2 p-4 bg-surface-elevated rounded-xl border border-border-default hover:bg-surface-hover transition-colors duration-normal ease-apple text-text-primary shadow-sm"
+                  className="flex-1 flex items-center justify-center gap-2 p-4 bg-surface-elevated rounded-xl border border-border-default hover:shadow-md hover:border-purple-500/30 dark:hover:border-purple-400/30 hover:-translate-y-0.5 transition-all duration-normal ease-apple text-text-primary shadow-sm group"
                 >
-                  <BarChart3 className="w-5 h-5" />
-                  View Class Gradebook
+                  <BarChart3 className="w-5 h-5 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors" />
+                  <span className="group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">View Class Gradebook</span>
                 </Link>
                 <Link
                   href={`/class/${student.class_id}`}
-                  className="flex-1 flex items-center justify-center gap-2 p-4 bg-surface-elevated rounded-xl border border-border-default hover:bg-surface-hover transition-colors duration-normal ease-apple text-text-primary shadow-sm"
+                  className="flex-1 flex items-center justify-center gap-2 p-4 bg-surface-elevated rounded-xl border border-border-default hover:shadow-md hover:border-purple-500/30 dark:hover:border-purple-400/30 hover:-translate-y-0.5 transition-all duration-normal ease-apple text-text-primary shadow-sm group"
                 >
-                  <Users className="w-5 h-5" />
-                  View Class Details
+                  <Users className="w-5 h-5 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors" />
+                  <span className="group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">View Class Details</span>
                 </Link>
               </div>
             )}

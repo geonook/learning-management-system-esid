@@ -258,19 +258,19 @@ export default function TeacherDetailPage() {
                   <p className="text-text-secondary">No classes assigned</p>
                 </div>
               ) : (
-                <div className="divide-y divide-border-subtle">
+                <div className="grid gap-3 p-4">
                   {teacher.courses.map((course) => (
                     <Link
                       key={course.id}
                       href={`/class/${course.class_id}`}
-                      className="flex items-center justify-between p-4 hover:bg-surface-hover transition-colors group"
+                      className="flex items-center justify-between p-4 bg-surface-elevated rounded-xl border border-border-default hover:shadow-md hover:border-emerald-500/30 dark:hover:border-emerald-400/30 hover:-translate-y-0.5 transition-all duration-normal ease-apple group"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="p-2 bg-surface-elevated rounded-lg">
-                          <School className="w-5 h-5 text-text-secondary" />
+                        <div className="p-2 bg-surface-tertiary rounded-lg group-hover:bg-emerald-500/10 transition-colors">
+                          <School className="w-5 h-5 text-text-secondary group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors" />
                         </div>
                         <div>
-                          <div className="text-text-primary font-medium group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors">
+                          <div className="text-text-primary font-medium group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                             {course.class_name}
                           </div>
                           <div className="text-sm text-text-tertiary">
