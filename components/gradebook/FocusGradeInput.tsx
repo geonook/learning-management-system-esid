@@ -152,45 +152,62 @@ export function FocusGradeInput({
         </div>
 
         {/* Right: Statistics & Actions */}
-        <div className="w-80 bg-gray-50 flex flex-col p-6">
+        <div className={cn("w-80 flex flex-col p-6", FOCUS_STYLES.bgSecondary)}>
           <div className="flex justify-end mb-8">
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+              className={cn(
+                "p-2 rounded-full transition-colors",
+                "hover:bg-surface-hover",
+                FOCUS_STYLES.textMuted
+              )}
             >
-              <X className="w-6 h-6 text-gray-500" />
+              <X className="w-6 h-6" />
             </button>
           </div>
 
           <div className="space-y-6">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
+            <div className={cn(
+              "p-6 rounded-xl shadow-sm border",
+              FOCUS_STYLES.bgCard,
+              FOCUS_STYLES.borderSubtle
+            )}>
+              <h3 className={cn(
+                "text-sm font-semibold uppercase tracking-wider mb-4",
+                FOCUS_STYLES.textMuted
+              )}>
                 Statistics
               </h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-end">
-                  <span className="text-gray-600">Average</span>
-                  <span className="text-3xl font-bold text-blue-600">
+                  <span className={FOCUS_STYLES.textMuted}>Average</span>
+                  <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">
                     {average}
                   </span>
                 </div>
-                <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                <div className={cn(
+                  "w-full h-1.5 rounded-full overflow-hidden",
+                  "bg-gray-200 dark:bg-gray-700"
+                )}>
                   <div
-                    className="bg-blue-500 h-full rounded-full"
+                    className="bg-blue-500 dark:bg-blue-400 h-full rounded-full"
                     style={{ width: `${Math.min(Number(average) || 0, 100)}%` }}
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+                <div className={cn(
+                  "grid grid-cols-2 gap-4 pt-4 border-t",
+                  FOCUS_STYLES.borderSubtle
+                )}>
                   <div>
-                    <div className="text-xs text-gray-400">Highest</div>
-                    <div className="text-lg font-semibold text-green-600">
+                    <div className={cn("text-xs", FOCUS_STYLES.textLight)}>Highest</div>
+                    <div className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
                       {max}
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs text-gray-400">Lowest</div>
-                    <div className="text-lg font-semibold text-red-500">
+                    <div className={cn("text-xs", FOCUS_STYLES.textLight)}>Lowest</div>
+                    <div className="text-lg font-semibold text-red-600 dark:text-red-400">
                       {min}
                     </div>
                   </div>
@@ -198,12 +215,16 @@ export function FocusGradeInput({
               </div>
             </div>
 
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-              <h4 className="font-medium text-blue-800 mb-2 flex items-center">
+            <div className={cn(
+              "p-4 rounded-lg border",
+              "bg-blue-50 dark:bg-blue-900/20",
+              "border-blue-200 dark:border-blue-800"
+            )}>
+              <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2 flex items-center">
                 <Save className="w-4 h-4 mr-2" />
                 Auto-saving
               </h4>
-              <p className="text-xs text-blue-600 leading-relaxed">
+              <p className="text-xs text-blue-700 dark:text-blue-400 leading-relaxed">
                 Changes are saved automatically as you type. You can close this
                 window at any time.
               </p>
