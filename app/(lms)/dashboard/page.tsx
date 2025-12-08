@@ -447,10 +447,10 @@ export default function Dashboard() {
                 <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
+                  <div className="text-3xl font-bold text-yellow-700 dark:text-yellow-400">
                     {headKpis.activeIssues !== null ? headKpis.activeIssues : "N/A"}
                   </div>
-                  <div className="text-xs text-yellow-600 dark:text-yellow-300 mt-1">
+                  <div className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
                     {headKpis.activeIssues !== null ? "Active issues" : "Coming soon"}
                   </div>
                 </div>
@@ -480,19 +480,19 @@ export default function Dashboard() {
                 <BarChart data={distribution}>
                   <XAxis
                     dataKey="bucket"
-                    stroke="rgba(255,255,255,0.5)"
+                    className="text-text-secondary"
                     fontSize={10}
                     tickLine={false}
                     axisLine={false}
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "rgba(0,0,0,0.8)",
-                      border: "none",
+                      backgroundColor: "hsl(var(--surface-elevated))",
+                      border: "1px solid hsl(var(--border-default))",
                       borderRadius: "8px",
-                      color: "#fff",
+                      color: "hsl(var(--text-primary))",
                     }}
-                    cursor={{ fill: "rgba(255,255,255,0.1)" }}
+                    cursor={{ fill: "hsl(var(--surface-secondary))" }}
                   />
                   <Bar dataKey="count" fill="#60a5fa" radius={[4, 4, 0, 0]} />
                 </BarChart>
@@ -520,14 +520,14 @@ export default function Dashboard() {
                 <ScatterChart>
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    stroke="rgba(255,255,255,0.1)"
+                    className="stroke-border-subtle"
                   />
                   <XAxis
                     type="number"
                     dataKey="x"
                     name="Avg"
                     unit="%"
-                    stroke="rgba(255,255,255,0.5)"
+                    className="text-text-secondary"
                     fontSize={10}
                     tickLine={false}
                     axisLine={false}
@@ -537,7 +537,7 @@ export default function Dashboard() {
                     dataKey="y"
                     name="Coverage"
                     unit="%"
-                    stroke="rgba(255,255,255,0.5)"
+                    className="text-text-secondary"
                     fontSize={10}
                     tickLine={false}
                     axisLine={false}
@@ -545,10 +545,10 @@ export default function Dashboard() {
                   <Tooltip
                     cursor={{ strokeDasharray: "3 3" }}
                     contentStyle={{
-                      backgroundColor: "rgba(0,0,0,0.8)",
-                      border: "none",
+                      backgroundColor: "hsl(var(--surface-elevated))",
+                      border: "1px solid hsl(var(--border-default))",
                       borderRadius: "8px",
-                      color: "#fff",
+                      color: "hsl(var(--text-primary))",
                     }}
                   />
                   <Scatter data={scatterData} fill="#34d399" />
@@ -573,16 +573,16 @@ export default function Dashboard() {
                 deadlines.map((d) => (
                   <div
                     key={d.id}
-                    className="flex flex-col space-y-1 border-b border-slate-200/50 dark:border-white/10 pb-2 last:border-0"
+                    className="flex flex-col space-y-1 border-b border-border-default pb-2 last:border-0"
                   >
-                    <div className="font-medium text-sm text-slate-900 dark:text-white">
+                    <div className="font-medium text-sm text-text-primary">
                       {d.title}
                     </div>
-                    <div className="text-xs text-slate-500 dark:text-white/50">{d.due_at}</div>
+                    <div className="text-xs text-text-tertiary">{d.due_at}</div>
                   </div>
                 ))
               ) : (
-                <div className="text-sm text-slate-500 dark:text-white/50 text-center py-4">
+                <div className="text-sm text-text-tertiary text-center py-4">
                   No deadlines
                 </div>
               )}
@@ -604,16 +604,16 @@ export default function Dashboard() {
                 alerts.map((a) => (
                   <div
                     key={a.id}
-                    className="flex flex-col space-y-1 border-b border-slate-200/50 dark:border-white/10 pb-2 last:border-0"
+                    className="flex flex-col space-y-1 border-b border-border-default pb-2 last:border-0"
                   >
-                    <div className="font-medium text-sm text-slate-900 dark:text-white">
+                    <div className="font-medium text-sm text-text-primary">
                       {a.message}
                     </div>
-                    <div className="text-xs text-slate-500 dark:text-white/50">{a.when}</div>
+                    <div className="text-xs text-text-tertiary">{a.when}</div>
                   </div>
                 ))
               ) : (
-                <div className="text-sm text-slate-500 dark:text-white/50 text-center py-4">
+                <div className="text-sm text-text-tertiary text-center py-4">
                   No alerts
                 </div>
               )}
