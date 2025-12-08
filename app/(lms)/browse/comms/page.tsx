@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { useAuth } from "@/lib/supabase/auth-context";
@@ -57,72 +57,86 @@ export default function BrowseCommsPage() {
   const [courseType, setCourseType] = useState<CourseTypeFilter>("All");
   const [page, setPage] = useState(1);
   const pageSize = 50;
-  const isInitialMount = useRef(true);
-  const previousPage = useRef(page);
+
+  // Use a version counter to force refetch - increments on filter changes
+  const [fetchVersion, setFetchVersion] = useState(0);
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   const semesterOptions = getSemesterOptions();
 
-  // Fetch data - single useEffect with proper debounce
+  // Memoized fetch function
+  const fetchData = useCallback(async (signal: AbortSignal) => {
+    console.log("[BrowseComms] fetchData called");
+    setLoading(true);
+    setError(null);
+    try {
+      const [commsData, statsData] = await Promise.all([
+        getAllCommunications({
+          academic_year: academicYear,
+          semester: semester,
+          course_type: courseType === "All" ? undefined : courseType,
+          page,
+          pageSize,
+        }),
+        getCommunicationStats(academicYear, semester),
+      ]);
+      if (!signal.aborted) {
+        console.log("[BrowseComms] Data received:", commsData?.total);
+        setData(commsData);
+        setStats(statsData);
+        setLoading(false);
+      }
+    } catch (err) {
+      if (!signal.aborted) {
+        console.error("[BrowseComms] Failed to fetch communications:", err);
+        setError(err instanceof Error ? err.message : "Failed to fetch communications");
+        setLoading(false);
+      }
+    }
+  }, [academicYear, semester, courseType, page, pageSize]);
+
+  // Main data fetch effect - triggers on auth ready or fetchVersion change
   useEffect(() => {
-    // Wait for auth to be ready before fetching
-    if (authLoading || !user) {
+    console.log("[BrowseComms] useEffect triggered", { authLoading, hasUser: !!user, fetchVersion });
+
+    // Wait for auth to be ready
+    if (authLoading) {
+      console.log("[BrowseComms] Auth still loading, waiting...");
       return;
     }
 
-    let isCancelled = false;
-
-    async function fetchData() {
-      if (!isCancelled) {
-        setLoading(true);
-        setError(null);
-      }
-      try {
-        const [commsData, statsData] = await Promise.all([
-          getAllCommunications({
-            academic_year: academicYear,
-            semester: semester,
-            course_type: courseType === "All" ? undefined : courseType,
-            page,
-            pageSize,
-          }),
-          getCommunicationStats(academicYear, semester),
-        ]);
-        if (!isCancelled) {
-          setData(commsData);
-          setStats(statsData);
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error("Failed to fetch communications:", err);
-        if (!isCancelled) {
-          setError(err instanceof Error ? err.message : "Failed to fetch communications");
-          setLoading(false);
-        }
-      }
-    }
-
-    // On initial mount or page change, fetch immediately
-    if (isInitialMount.current || previousPage.current !== page) {
-      isInitialMount.current = false;
-      previousPage.current = page;
-      fetchData();
+    if (!user) {
+      console.log("[BrowseComms] No user, waiting...");
       return;
     }
 
-    // On filter changes, debounce
-    const timer = setTimeout(fetchData, 300);
+    console.log("[BrowseComms] Auth ready, starting fetch");
+    const abortController = new AbortController();
+    fetchData(abortController.signal);
+
     return () => {
-      isCancelled = true;
-      clearTimeout(timer);
+      abortController.abort();
     };
-  }, [authLoading, user, academicYear, semester, courseType, page]);
+  }, [authLoading, user, fetchVersion, fetchData]);
 
-  // Reset page when filters change
+  // Debounced filter/search handler - updates fetchVersion after debounce
   useEffect(() => {
-    if (!isInitialMount.current) {
-      setPage(1);
+    // Clear any existing timer
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
     }
-  }, [academicYear, semester, courseType, searchQuery]);
+
+    // Set new debounce timer
+    debounceTimer.current = setTimeout(() => {
+      setFetchVersion(v => v + 1);
+    }, 300);
+
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, [academicYear, semester, courseType, page]);
 
   // Get communication type icon
   const getTypeIcon = (type: CommunicationType) => {
