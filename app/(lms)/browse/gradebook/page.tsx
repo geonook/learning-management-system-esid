@@ -497,7 +497,7 @@ export default function BrowseGradebookPage() {
                     <td className="p-4 text-text-secondary">{formatDate(exam.exam_date)}</td>
                     <td className="p-4">
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden max-w-[80px]">
+                        <div className="flex-1 h-2 bg-border-subtle rounded-full overflow-hidden max-w-[80px]">
                           <div
                             className={`h-full rounded-full ${
                               exam.completion_rate >= 90
@@ -506,7 +506,7 @@ export default function BrowseGradebookPage() {
                                 ? "bg-amber-500"
                                 : exam.completion_rate > 0
                                 ? "bg-amber-500"
-                                : "bg-gray-300 dark:bg-white/20"
+                                : "bg-border-default"
                             }`}
                             style={{ width: `${exam.completion_rate}%` }}
                           />
