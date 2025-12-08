@@ -155,24 +155,24 @@ export default function BrowseClassesPage() {
                 href={`/class/${cls.id}`}
                 className="group block"
               >
-                <div className="relative bg-surface-elevated rounded-xl border border-border-default p-6 hover:bg-surface-hover hover:border-border-default transition-all duration-normal ease-apple shadow-sm">
+                <div className="relative bg-surface-elevated rounded-xl border border-border-default p-6 h-[180px] flex flex-col hover:shadow-md hover:border-blue-500/30 dark:hover:border-blue-400/30 hover:-translate-y-0.5 transition-all duration-normal ease-apple shadow-sm">
                   {/* Hover indicator */}
                   <div className="absolute right-4 top-4 opacity-0 group-hover:opacity-100 transition-opacity duration-normal ease-apple">
                     <ChevronRight className="w-5 h-5 text-text-tertiary" />
                   </div>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="px-2 py-1 bg-blue-500/20 dark:bg-blue-400/20 text-blue-600 dark:text-blue-400 text-xs rounded-full">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="px-2 py-1 bg-blue-500/20 dark:bg-blue-400/20 text-blue-600 dark:text-blue-400 text-xs font-medium rounded-full">
                       G{cls.grade}
                     </span>
                     <span className="text-xs text-text-tertiary mr-6">
                       {cls.student_count} student{cls.student_count !== 1 ? "s" : ""}
                     </span>
                   </div>
-                  <h3 className="text-lg font-medium text-text-primary mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-normal ease-apple">{cls.name}</h3>
-                  <p className="text-sm text-text-secondary mb-4">
+                  <h3 className="text-lg font-semibold text-text-primary mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-normal ease-apple">{cls.name}</h3>
+                  <p className="text-sm text-text-secondary mb-auto">
                     Level: {cls.level || "N/A"}
                   </p>
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-text-tertiary">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-text-tertiary pt-3 border-t border-border-subtle">
                     <span className="flex items-center gap-1">
                       <span className="text-green-600 dark:text-green-400">LT:</span>
                       <span className="text-text-secondary truncate max-w-[80px]">
