@@ -4,15 +4,16 @@
 > **Last Updated**: 2025-12-08
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Both Systems Complete)**
-> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**, **Teacher Course Assignment (v1.42.0 ✅)**, **Data Pages Sprint 1-2 (v1.43.0 ✅)**, **Browse Pages Loading Fix (v1.44.0 ✅)**, **Auth State Change Fix (v1.45.0 ✅)**
+> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**, **Teacher Course Assignment (v1.42.0 ✅)**, **Data Pages Sprint 1-2 (v1.43.0 ✅)**, **Browse Pages Loading Fix (v1.44.0 ✅)**, **Auth State Change Fix (v1.45.0 ✅)**, **Class Student Roster (v1.46.0 ✅)**
 
 > **Current Status**:
 >
+> - ✅ **v1.46.0 Sprint 3.1 Class Student Roster** - 班級學生名冊功能實作 (2025-12-08)
+>   - 實作 `/class/[classId]/students` 頁面，取代 placeholder
+>   - 顯示學生 ID、姓名、Level、Email
+>   - 支援即時搜尋（client-side filtering）
+>   - 使用標準 useEffect 模式（isInitialMount ref + isCancelled flag）
 > - ✅ **v1.45.0 Auth State Change Fix** - 修復 React 閉包與重複 fetch 問題 (2025-12-08)
->   - AuthContext 使用 `useRef` 修復 React 閉包問題，正確跳過重複的 auth 事件
->   - 建立 `useAuthReady` hook 作為標準 auth 模式
->   - AdminClasses 改用 `useAuthReady`，修復重複 fetch 兩次問題
->   - Browse Stats 移除無效的 Supabase join 語法，修復 400 錯誤
 > - ✅ **v1.44.1 Browse Pages Loading Fix (Improved)** - 簡化 useEffect 模式 (2025-12-08)
 > - ✅ **v1.43.0 Data Pages Complete** - Sprint 1 & 2 功能完善計畫完成 (2025-12-04)
 > - ✅ **v1.42.0 Teacher Course Assignment** - 252 courses assigned to 80 teachers (2025-12-03)
@@ -20,10 +21,9 @@
 > - ✅ **Phase 4.1 Complete** - One OS Interface Unification with Info Hub
 > - ✅ **SSO Implementation** - Both LMS & Info Hub complete, alignment verified
 > - 🎯 **Next Steps**:
->   1. Sprint 3.1: 班級學生名冊（查看班級內學生列表）
->   2. Sprint 3.2: 課程指派 UI（Admin 可在網頁上指派教師到課程）
->   3. Phase D2: 淺色模式配色統一、Notion 風格設計系統
->   4. Sprint 3.3: 我的課表（教師查看自己的課表）
+>   1. Sprint 3.2: 課程指派 UI（Admin 可在網頁上指派教師到課程）
+>   2. Phase D2: 淺色模式配色統一、Notion 風格設計系統
+>   3. Sprint 3.3: 我的課表（教師查看自己的課表）
 
 This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
