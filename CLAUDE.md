@@ -482,17 +482,15 @@ npm run import:cli
   - ✅ Dashboard 400 錯誤已解決
 - **相關檔案**: `db/migrations/021_fix_courses_rls_recursion.sql`
 
-#### Migration 022: Fix Assessment Codes Schema (2025-11-28) ⏳ **待執行於 Production**
+#### Migration 022: Fix Assessment Codes Schema (2025-11-28) ✅ **已完成**
 
-- **目的**: 修復 `assessment_codes` 表缺少 `sequence_order` 欄位和種子資料的問題
+- **目的**: 修復 `assessment_codes` 表缺少種子資料的問題
 - **變更內容**:
-  - 添加 `sequence_order` 欄位（如不存在）
-  - 添加 `is_active` 欄位（如不存在）
   - 插入 13 個 assessment codes（FA1-FA8, SA1-SA4, FINAL）
+  - 設定權重: FA=0.0188, SA=0.05, FINAL=0.10 (總計 0.45)
 - **部署狀態**:
-  - ✅ **Staging** (`kqvpcoolgyhjqleekmee`): 已有資料，不需執行
-  - ⏳ **Production** (`piwbooidofbaqklhijup`): 待執行（表為空）
-- **執行方式**: 在 Supabase Dashboard SQL Editor 執行
+  - ✅ **Staging** (`kqvpcoolgyhjqleekmee`): 已有資料
+  - ✅ **Production** (`piwbooidofbaqklhijup`): 2025-12-08 已執行（13 筆記錄）
 - **相關檔案**: `db/migrations/022_fix_assessment_codes_schema.sql`
 
 ### 📊 真實資料部署狀態

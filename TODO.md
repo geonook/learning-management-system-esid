@@ -93,7 +93,7 @@
 | E2E SSO Integration Testing on Staging | 2025-12-02 |
 | SSO User ID Mismatch Fix (Auth ID vs public.users ID) | 2025-12-02 |
 | Production & Staging Data Seeding | 2025-12-02 |
-| Migration 022: Assessment Codes | 2025-12-02 |
+| Migration 022: Assessment Codes (Production) | 2025-12-08 |
 | Info Hub Teacher Import (72 teachers) | 2025-12-02 |
 | v1.41.0 TeacherOS UI Refinements | 2025-12-01 |
 | Dockerfile Optimization | 2025-11-28 |
