@@ -1,25 +1,26 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 3.0
-> **Last Updated**: 2025-12-05
+> **Documentation Version**: 3.1
+> **Last Updated**: 2025-12-08
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Both Systems Complete)**
 > **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**, **Teacher Course Assignment (v1.42.0 ✅)**, **Data Pages Sprint 1-2 (v1.43.0 ✅)**, **Browse Pages Loading Fix (v1.44.0 ✅)**
 
 > **Current Status**:
 >
-> - ✅ **v1.44.0 Browse Pages Loading Fix** - 修復 Browse 頁面無限載入問題 (2025-12-05)
->   - 統一 useEffect 模式：單一 useEffect + isInitialMount ref + isCancelled flag
->   - 修復 6 個 Browse 頁面：classes, teachers, students, gradebook, comms, stats
->   - 移除 exams.course_id 依賴（該欄位在 Staging 環境不存在）
-> - ⏳ **待測試項目**：Browse 頁面載入、Dashboard 載入、頁面切換、Office Member 雙重身份
+> - ✅ **v1.44.1 Browse Pages Loading Fix (Improved)** - 簡化 useEffect 模式 (2025-12-08)
+>   - 使用 `debouncedSearch` state 替代複雜的 `fetchVersion` 模式
+>   - 單一 useEffect + isCancelled flag（移除 isInitialMount ref）
+>   - 修復 4 個 Browse 頁面：classes, teachers, students, comms
+>   - 搜尋輸入 debounce 300ms，其他篩選條件立即觸發
+> - ⏳ **待測試項目**：Browse 頁面導航載入、篩選功能、分頁切換
 > - ✅ **v1.43.0 Data Pages Complete** - Sprint 1 & 2 功能完善計畫完成 (2025-12-04)
 > - ✅ **v1.42.0 Teacher Course Assignment** - 252 courses assigned to 80 teachers (2025-12-03)
 > - ✅ **Production Teacher Import** - 81 users imported (admin:1, head:8, teacher:54, office_member:17)
 > - ✅ **Phase 4.1 Complete** - One OS Interface Unification with Info Hub
 > - ✅ **SSO Implementation** - Both LMS & Info Hub complete, alignment verified
 > - 🎯 **Next Steps**:
->   1. 測試驗證：Browse 頁面載入、Dashboard 載入、頁面切換功能
+>   1. 測試驗證：Browse 頁面導航載入、篩選功能、分頁切換
 >   2. Sprint 3: 班級學生名冊、課程指派系統、我的課表
 >   3. Phase D2: 淺色模式配色統一、Notion 風格設計系統
 
@@ -1009,76 +1010,107 @@ COPY --from=builder /app/public ./public
 
 ---
 
-## 🔧 Phase F: Browse 頁面無限載入修復 (2025-12-05) ✅ **完成**
+## 🔧 Phase F: Browse 頁面無限載入修復 (2025-12-08) ✅ **v1.44.1 改進版**
 
 ### 📋 問題描述
 
-Browse 頁面出現無限載入問題，載入 spinner 永遠不會消失。
+Browse 頁面從其他頁面導航進入時出現無限載入問題，必須重新整理才能正確顯示資料。
 
-### 🔍 根本原因
+### 🔍 根本原因分析
 
-**問題模式**：`useCallback` + 多個 `useEffect` 組合導致：
-1. `useCallback` 依賴陣列變化時建立新函式參照
-2. 新參照觸發 `useEffect` 重新執行
-3. 多個 `useEffect` 互相干擾，形成無限迴圈
-4. 某些情況下 `loading` 狀態無法正確設為 `false`
+**第一版問題**（`isInitialMount` ref 模式）：
+- Next.js client-side navigation 時，React 可能重用組件實例
+- `useRef` 值在導航之間保持不變，`isInitialMount.current` 不會重置
+- 導致 fetch 邏輯走錯分支
 
-### ✅ 修復方案
+**第二版問題**（`fetchVersion` + debounce effect 模式）：
+- Debounce effect 在初始掛載時也會執行
+- 300ms 後會增加 `fetchVersion`，觸發第二次 fetch
+- 造成**雙重 fetch** 問題
 
-**統一模式**：單一 `useEffect` + `isInitialMount` ref + `isCancelled` flag
+### ✅ 最終解決方案
+
+**簡化模式**：`debouncedSearch` state + 單一 useEffect
 
 ```typescript
-const isInitialMount = useRef(true);
+// 1. 只對搜尋輸入做 debounce（唯一需要 debounce 的輸入）
+const [debouncedSearch, setDebouncedSearch] = useState("");
 
 useEffect(() => {
+  const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+  return () => clearTimeout(timer);
+}, [searchQuery]);
+
+// 2. 單一 effect 處理所有資料抓取
+useEffect(() => {
   if (authLoading || !user) return;
+
   let isCancelled = false;
 
   async function fetchData() {
-    if (!isCancelled) { setLoading(true); setError(null); }
+    setLoading(true);
+    setError(null);
     try {
-      const data = await apiCall({ filter1, filter2 });
-      if (!isCancelled) { setData(data); setLoading(false); }
+      const data = await apiCall({
+        grade: selectedGrade === "All" ? undefined : selectedGrade,
+        search: debouncedSearch || undefined,
+      });
+      if (!isCancelled) {
+        setData(data);
+        setLoading(false);
+      }
     } catch (err) {
-      if (!isCancelled) { setError(err.message); setLoading(false); }
+      if (!isCancelled) {
+        setError(err.message);
+        setLoading(false);
+      }
     }
   }
 
-  if (isInitialMount.current) {
-    isInitialMount.current = false;
-    fetchData();
-    return;
-  }
-
-  const timer = setTimeout(fetchData, 300);
-  return () => { isCancelled = true; clearTimeout(timer); };
-}, [authLoading, user, filter1, filter2, searchQuery]);
+  fetchData();
+  return () => { isCancelled = true; };
+}, [authLoading, user, selectedGrade, debouncedSearch]);
 ```
+
+### 📊 模式比較
+
+| 項目 | 舊模式 (fetchVersion) | 新模式 (debouncedSearch) |
+|------|----------------------|-------------------------|
+| Effect 數量 | 3 個互相干擾 | 2 個獨立 |
+| 初始載入 | 可能雙重 fetch | 單次 fetch |
+| 複雜度 | 高（useCallback、useRef、fetchVersion） | 低（直接依賴） |
+| 可讀性 | 難以理解 | 一目了然 |
+| 篩選響應 | 全部 debounce 300ms | 搜尋 debounce，其他立即 |
 
 ### 📁 已修復的檔案
 
-| 檔案 | 狀態 | Commit |
+| 檔案 | 模式 | Commit |
 |------|------|--------|
-| `app/(lms)/browse/classes/page.tsx` | ✅ 已修復 | `06d0077` |
-| `app/(lms)/browse/comms/page.tsx` | ✅ 已修復 | `06d0077` |
-| `app/(lms)/browse/teachers/page.tsx` | ✅ 已修復 | `19349a6` |
-| `app/(lms)/browse/students/page.tsx` | ✅ 已修復 | `19349a6` |
-| `app/(lms)/browse/gradebook/page.tsx` | ✅ 已修復 | `3a85bbf` |
-| `app/(lms)/browse/stats/page.tsx` | ✅ 原本正確 | - |
+| `app/(lms)/browse/classes/page.tsx` | debouncedSearch | `45e8188` |
+| `app/(lms)/browse/teachers/page.tsx` | debouncedSearch | `45e8188` |
+| `app/(lms)/browse/students/page.tsx` | debouncedSearch | `45e8188` |
+| `app/(lms)/browse/comms/page.tsx` | 單一 effect（無搜尋 debounce） | `45e8188` |
+| `app/(lms)/browse/gradebook/page.tsx` | 已修復 | `3a85bbf` |
+| `app/(lms)/browse/stats/page.tsx` | 原本正確 | - |
 
 ### 📋 待測試項目
 
 | 測試項目 | 狀態 |
 |----------|------|
-| Browse Classes 頁面載入 | ⏳ 待測試 |
-| Browse Teachers 頁面載入 | ⏳ 待測試 |
-| Browse Students 頁面載入 | ⏳ 待測試 |
-| Browse Gradebook 頁面載入 | ⏳ 待測試 |
-| Browse Comms 頁面載入 | ⏳ 待測試 |
-| 篩選條件變更後重新載入 | ⏳ 待測試 |
-| 搜尋功能 debounce (300ms) | ⏳ 待測試 |
+| 從 Dashboard 導航到 Browse Students | ⏳ 待測試 |
+| 從 Browse Students 導航到 Browse Teachers | ⏳ 待測試 |
+| 年級篩選（立即響應） | ⏳ 待測試 |
+| 搜尋輸入（300ms debounce） | ⏳ 待測試 |
 | 分頁切換 | ⏳ 待測試 |
 | 離開再返回頁面 | ⏳ 待測試 |
+
+### 💡 學習要點
+
+1. **避免複雜的 ref 模式**：`isInitialMount` ref 在 Next.js navigation 中不可靠
+2. **避免多個互相依賴的 effects**：容易造成競爭條件和無限迴圈
+3. **只 debounce 需要的輸入**：搜尋框需要 debounce，下拉選單不需要
+4. **使用 `isCancelled` flag**：比 `AbortController` 更簡單，足夠應付大多數情況
+5. **直接在依賴陣列列出狀態**：比用 `fetchVersion` 更直觀、更可靠
 
 ---
 
