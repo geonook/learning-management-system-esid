@@ -17,7 +17,8 @@ import { PageHeader } from "@/components/layout/PageHeader";
 type TypeFilter = "All" | "LT" | "IT" | "KCFS";
 
 export default function BrowseTeachersPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
+  const userId = user?.id;
   const [teachers, setTeachers] = useState<TeacherWithCourses[]>([]);
   const [stats, setStats] = useState<{ total: number; lt: number; it: number; kcfs: number; head: number } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,15 +37,10 @@ export default function BrowseTeachersPage() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Single effect for all data fetching - simpler and more reliable
+  // Single effect for all data fetching - follows Dashboard pattern
   useEffect(() => {
-    // Wait for auth to be ready
-    if (authLoading) {
-      console.log("[BrowseTeachers] Auth still loading, waiting...");
-      return;
-    }
-
-    if (!user) {
+    // Wait for user to be available (don't depend on authLoading)
+    if (!userId) {
       console.log("[BrowseTeachers] No user, waiting...");
       return;
     }
@@ -80,11 +76,11 @@ export default function BrowseTeachersPage() {
     return () => {
       isCancelled = true;
     };
-  }, [authLoading, user, selectedType, debouncedSearch]);
+  }, [userId, selectedType, debouncedSearch]);
 
-  // Fetch stats only once when auth is ready
+  // Fetch stats only once when user is available
   useEffect(() => {
-    if (authLoading || !user) return;
+    if (!userId) return;
 
     async function fetchStats() {
       try {
@@ -95,7 +91,7 @@ export default function BrowseTeachersPage() {
       }
     }
     fetchStats();
-  }, [authLoading, user]);
+  }, [userId]);
 
   // Get type badge color
   const getTypeBadgeColor = (type: string | null, role: string) => {

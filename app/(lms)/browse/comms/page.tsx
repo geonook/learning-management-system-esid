@@ -44,7 +44,8 @@ import {
 type CourseTypeFilter = "All" | "LT" | "IT" | "KCFS";
 
 export default function BrowseCommsPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
+  const userId = user?.id;
   const [data, setData] = useState<PaginatedCommunications | null>(null);
   const [stats, setStats] = useState<CommunicationStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,15 +61,10 @@ export default function BrowseCommsPage() {
 
   const semesterOptions = getSemesterOptions();
 
-  // Single effect for all data fetching - simpler and more reliable
+  // Single effect for all data fetching - follows Dashboard pattern
   useEffect(() => {
-    // Wait for auth to be ready
-    if (authLoading) {
-      console.log("[BrowseComms] Auth still loading, waiting...");
-      return;
-    }
-
-    if (!user) {
+    // Wait for user to be available (don't depend on authLoading)
+    if (!userId) {
       console.log("[BrowseComms] No user, waiting...");
       return;
     }
@@ -111,7 +107,7 @@ export default function BrowseCommsPage() {
     return () => {
       isCancelled = true;
     };
-  }, [authLoading, user, academicYear, semester, courseType, page, pageSize]);
+  }, [userId, academicYear, semester, courseType, page, pageSize]);
 
   // Get communication type icon
   const getTypeIcon = (type: CommunicationType) => {

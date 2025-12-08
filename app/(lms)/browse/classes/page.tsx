@@ -12,7 +12,8 @@ import { PageHeader } from "@/components/layout/PageHeader";
 type GradeFilter = "All" | 1 | 2 | 3 | 4 | 5 | 6;
 
 export default function BrowseClassesPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
+  const userId = user?.id;
   const [classes, setClasses] = useState<ClassWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,15 +31,10 @@ export default function BrowseClassesPage() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Single effect for all data fetching - simpler and more reliable
+  // Single effect for all data fetching - follows Dashboard pattern
   useEffect(() => {
-    // Wait for auth to be ready
-    if (authLoading) {
-      console.log("[BrowseClasses] Auth still loading, waiting...");
-      return;
-    }
-
-    if (!user) {
+    // Wait for user to be available (don't depend on authLoading)
+    if (!userId) {
       console.log("[BrowseClasses] No user, waiting...");
       return;
     }
@@ -74,7 +70,7 @@ export default function BrowseClassesPage() {
     return () => {
       isCancelled = true;
     };
-  }, [authLoading, user, selectedGrade, debouncedSearch]);
+  }, [userId, selectedGrade, debouncedSearch]);
 
   // Helper to get teacher name by course type
   const getTeacherName = (courses: ClassWithDetails["courses"], type: "LT" | "IT" | "KCFS") => {

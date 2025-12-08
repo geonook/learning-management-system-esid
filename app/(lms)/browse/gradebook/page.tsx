@@ -26,7 +26,8 @@ interface ExamWithDetails {
 }
 
 export default function BrowseGradebookPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
+  const userId = user?.id;
   const [loading, setLoading] = useState(true);
   const [exams, setExams] = useState<ExamWithDetails[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -37,8 +38,8 @@ export default function BrowseGradebookPage() {
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
 
   useEffect(() => {
-    // Wait for auth to be ready before fetching
-    if (authLoading || !user) {
+    // Wait for user to be available (don't depend on authLoading)
+    if (!userId) {
       return;
     }
 
@@ -169,7 +170,7 @@ export default function BrowseGradebookPage() {
     }
 
     fetchExams();
-  }, [authLoading, user]);
+  }, [userId]);
 
   // Filter exams
   const filteredExams = useMemo(() => {

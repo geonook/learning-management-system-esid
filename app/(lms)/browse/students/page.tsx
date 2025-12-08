@@ -17,7 +17,8 @@ type GradeFilter = "All" | 1 | 2 | 3 | 4 | 5 | 6;
 type LevelFilter = "All" | "E1" | "E2" | "E3";
 
 export default function BrowseStudentsPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
+  const userId = user?.id;
   const [data, setData] = useState<PaginatedStudents | null>(null);
   const [stats, setStats] = useState<{ total: number; e1: number; e2: number; e3: number } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,15 +40,10 @@ export default function BrowseStudentsPage() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Single effect for all data fetching - simpler and more reliable
+  // Single effect for all data fetching - follows Dashboard pattern
   useEffect(() => {
-    // Wait for auth to be ready
-    if (authLoading) {
-      console.log("[BrowseStudents] Auth still loading, waiting...");
-      return;
-    }
-
-    if (!user) {
+    // Wait for user to be available (don't depend on authLoading)
+    if (!userId) {
       console.log("[BrowseStudents] No user, waiting...");
       return;
     }
@@ -86,11 +82,11 @@ export default function BrowseStudentsPage() {
     return () => {
       isCancelled = true;
     };
-  }, [authLoading, user, selectedGrade, selectedLevel, debouncedSearch, page, pageSize]);
+  }, [userId, selectedGrade, selectedLevel, debouncedSearch, page, pageSize]);
 
-  // Fetch stats only once when auth is ready
+  // Fetch stats only once when user is available
   useEffect(() => {
-    if (authLoading || !user) return;
+    if (!userId) return;
 
     async function fetchStats() {
       try {
@@ -101,7 +97,7 @@ export default function BrowseStudentsPage() {
       }
     }
     fetchStats();
-  }, [authLoading, user]);
+  }, [userId]);
 
   // Extract level display (e.g., "G1E1" -> "E1")
   const getLevelDisplay = (level: string | null | undefined) => {
