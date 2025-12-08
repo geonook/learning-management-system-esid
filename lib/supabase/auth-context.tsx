@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { User } from '@supabase/supabase-js'
 import { supabase } from './client'
 import type { UserPermissions } from '@/lib/api/teacher-data'
@@ -29,6 +29,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [isHydrated, setIsHydrated] = useState(false)
   const [isDevelopmentMockActive, setIsDevelopmentMockActive] = useState(false)
+
+  // Ref 用於在 onAuthStateChange 回調中追蹤最新的 userPermissions
+  // 這解決了閉包捕獲舊值的問題
+  const userPermissionsRef = useRef<UserPermissions | null>(null)
 
   const fetchUserPermissions = async (userId: string): Promise<UserPermissions | null> => {
     try {
@@ -80,6 +84,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null)
     setUserPermissions(null)
   }
+
+  // 同步 ref 與 state，確保 onAuthStateChange 回調讀取到最新值
+  useEffect(() => {
+    userPermissionsRef.current = userPermissions
+  }, [userPermissions])
 
   useEffect(() => {
     // Set hydrated state
@@ -167,9 +176,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Skip if this is the same user (no need to refetch permissions)
         // This covers TOKEN_REFRESHED, SIGNED_IN, and INITIAL_SESSION events
-        // Use userPermissions instead of user to check - user state may not be updated yet
+        // 使用 ref 而非 state，避免閉包捕獲舊值的問題
         if (['TOKEN_REFRESHED', 'SIGNED_IN', 'INITIAL_SESSION'].includes(event)
-            && userPermissions?.userId === session?.user?.id) {
+            && userPermissionsRef.current?.userId === session?.user?.id) {
           console.log('[AuthContext] Same user auth event, skipping permission refetch:', event)
           return
         }

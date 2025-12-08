@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { useAuth } from "@/lib/supabase/auth-context";
+import { useAuthReady } from "@/hooks/useAuthReady";
 import { School, Search, Plus, Filter, Users, BookOpen, GraduationCap, ChevronDown, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,8 +11,8 @@ import { getClassesWithDetails, type ClassWithDetails } from "@/lib/api/classes"
 import Link from "next/link";
 
 export default function ClassManagementPage() {
-  const { user } = useAuth();
-  const userId = user?.id;
+  // ✅ 使用標準 useAuthReady hook
+  const { isReady } = useAuthReady();
   const [loading, setLoading] = useState(true);
   const [classes, setClasses] = useState<ClassWithDetails[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -20,8 +20,8 @@ export default function ClassManagementPage() {
   const [showGradeDropdown, setShowGradeDropdown] = useState(false);
 
   useEffect(() => {
-    // Wait for user to be available
-    if (!userId) {
+    // 使用 isReady 判斷是否可以開始載入
+    if (!isReady) {
       return;
     }
 
@@ -41,7 +41,7 @@ export default function ClassManagementPage() {
       }
     }
     fetchClasses();
-  }, [userId]);
+  }, [isReady]);
 
   // Filter classes based on search and grade
   const filteredClasses = useMemo(() => {

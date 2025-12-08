@@ -58,6 +58,7 @@ export default function BrowseStatsPage() {
           .eq("is_active", true);
 
         // 2. Fetch all recent scores for average calculation
+        // 注意：移除了不存在的 courses join（exams 沒有直接連接到 courses）
         const { data: scores } = await supabase
           .from("scores")
           .select(`
@@ -68,11 +69,6 @@ export default function BrowseStatsPage() {
               classes!inner(
                 grade,
                 is_active
-              )
-            ),
-            courses:exams(
-              courses!inner(
-                course_type
               )
             )
           `)
