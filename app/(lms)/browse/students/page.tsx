@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { useAuth } from "@/lib/supabase/auth-context";
@@ -28,41 +28,19 @@ export default function BrowseStudentsPage() {
   const [page, setPage] = useState(1);
   const pageSize = 50;
 
-  // Use a version counter to force refetch - increments on filter changes
-  const [fetchVersion, setFetchVersion] = useState(0);
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+  // Debounced search state - only search input needs debouncing
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  // Memoized fetch function
-  const fetchData = useCallback(async (signal: AbortSignal) => {
-    console.log("[BrowseStudents] fetchData called");
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await getStudentsWithPagination({
-        page,
-        pageSize,
-        grade: selectedGrade === "All" ? undefined : selectedGrade,
-        level: selectedLevel === "All" ? undefined : selectedLevel,
-        search: searchQuery || undefined,
-      });
-      if (!signal.aborted) {
-        console.log("[BrowseStudents] Data received:", result?.total);
-        setData(result);
-        setLoading(false);
-      }
-    } catch (err) {
-      if (!signal.aborted) {
-        console.error("[BrowseStudents] Failed to fetch students:", err);
-        setError(err instanceof Error ? err.message : "Failed to fetch students");
-        setLoading(false);
-      }
-    }
-  }, [page, pageSize, selectedGrade, selectedLevel, searchQuery]);
-
-  // Main data fetch effect - triggers on auth ready or fetchVersion change
+  // Debounce search input only
   useEffect(() => {
-    console.log("[BrowseStudents] useEffect triggered", { authLoading, hasUser: !!user, fetchVersion });
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
+  // Single effect for all data fetching - simpler and more reliable
+  useEffect(() => {
     // Wait for auth to be ready
     if (authLoading) {
       console.log("[BrowseStudents] Auth still loading, waiting...");
@@ -74,14 +52,41 @@ export default function BrowseStudentsPage() {
       return;
     }
 
-    console.log("[BrowseStudents] Auth ready, starting fetch");
-    const abortController = new AbortController();
-    fetchData(abortController.signal);
+    console.log("[BrowseStudents] Fetching data...", { selectedGrade, selectedLevel, debouncedSearch, page });
+
+    let isCancelled = false;
+
+    async function fetchData() {
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await getStudentsWithPagination({
+          page,
+          pageSize,
+          grade: selectedGrade === "All" ? undefined : selectedGrade,
+          level: selectedLevel === "All" ? undefined : selectedLevel,
+          search: debouncedSearch || undefined,
+        });
+        if (!isCancelled) {
+          console.log("[BrowseStudents] Data received:", result?.total);
+          setData(result);
+          setLoading(false);
+        }
+      } catch (err) {
+        if (!isCancelled) {
+          console.error("[BrowseStudents] Failed to fetch students:", err);
+          setError(err instanceof Error ? err.message : "Failed to fetch students");
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchData();
 
     return () => {
-      abortController.abort();
+      isCancelled = true;
     };
-  }, [authLoading, user, fetchVersion, fetchData]);
+  }, [authLoading, user, selectedGrade, selectedLevel, debouncedSearch, page, pageSize]);
 
   // Fetch stats only once when auth is ready
   useEffect(() => {
@@ -97,25 +102,6 @@ export default function BrowseStudentsPage() {
     }
     fetchStats();
   }, [authLoading, user]);
-
-  // Debounced filter/search handler - updates fetchVersion after debounce
-  useEffect(() => {
-    // Clear any existing timer
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
-
-    // Set new debounce timer
-    debounceTimer.current = setTimeout(() => {
-      setFetchVersion(v => v + 1);
-    }, 300);
-
-    return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-    };
-  }, [selectedGrade, selectedLevel, searchQuery, page]);
 
   // Extract level display (e.g., "G1E1" -> "E1")
   const getLevelDisplay = (level: string | null | undefined) => {

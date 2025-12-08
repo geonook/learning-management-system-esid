@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { useAuth } from "@/lib/supabase/auth-context";
@@ -19,38 +19,19 @@ export default function BrowseClassesPage() {
   const [selectedGrade, setSelectedGrade] = useState<GradeFilter>("All");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Use a version counter to force refetch - increments on filter changes
-  const [fetchVersion, setFetchVersion] = useState(0);
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+  // Debounced search state - only search input needs debouncing
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  // Memoized fetch function
-  const fetchData = useCallback(async (signal: AbortSignal) => {
-    console.log("[BrowseClasses] fetchData called");
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getClassesWithDetails({
-        grade: selectedGrade === "All" ? undefined : selectedGrade,
-        search: searchQuery || undefined,
-      });
-      if (!signal.aborted) {
-        console.log("[BrowseClasses] Data received:", data?.length);
-        setClasses(data);
-        setLoading(false);
-      }
-    } catch (err) {
-      if (!signal.aborted) {
-        console.error("[BrowseClasses] Failed to fetch classes:", err);
-        setError(err instanceof Error ? err.message : "Failed to fetch classes");
-        setLoading(false);
-      }
-    }
-  }, [selectedGrade, searchQuery]);
-
-  // Main data fetch effect - triggers on auth ready or fetchVersion change
+  // Debounce search input only
   useEffect(() => {
-    console.log("[BrowseClasses] useEffect triggered", { authLoading, hasUser: !!user, fetchVersion });
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
+  // Single effect for all data fetching - simpler and more reliable
+  useEffect(() => {
     // Wait for auth to be ready
     if (authLoading) {
       console.log("[BrowseClasses] Auth still loading, waiting...");
@@ -62,33 +43,38 @@ export default function BrowseClassesPage() {
       return;
     }
 
-    console.log("[BrowseClasses] Auth ready, starting fetch");
-    const abortController = new AbortController();
-    fetchData(abortController.signal);
+    console.log("[BrowseClasses] Fetching data...", { selectedGrade, debouncedSearch });
 
-    return () => {
-      abortController.abort();
-    };
-  }, [authLoading, user, fetchVersion, fetchData]);
+    let isCancelled = false;
 
-  // Debounced filter/search handler - updates fetchVersion after debounce
-  useEffect(() => {
-    // Clear any existing timer
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
+    async function fetchData() {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await getClassesWithDetails({
+          grade: selectedGrade === "All" ? undefined : selectedGrade,
+          search: debouncedSearch || undefined,
+        });
+        if (!isCancelled) {
+          console.log("[BrowseClasses] Data received:", data?.length);
+          setClasses(data);
+          setLoading(false);
+        }
+      } catch (err) {
+        if (!isCancelled) {
+          console.error("[BrowseClasses] Failed to fetch classes:", err);
+          setError(err instanceof Error ? err.message : "Failed to fetch classes");
+          setLoading(false);
+        }
+      }
     }
 
-    // Set new debounce timer
-    debounceTimer.current = setTimeout(() => {
-      setFetchVersion(v => v + 1);
-    }, 300);
+    fetchData();
 
     return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
+      isCancelled = true;
     };
-  }, [selectedGrade, searchQuery]);
+  }, [authLoading, user, selectedGrade, debouncedSearch]);
 
   // Helper to get teacher name by course type
   const getTeacherName = (courses: ClassWithDetails["courses"], type: "LT" | "IT" | "KCFS") => {

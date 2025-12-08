@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { useAuth } from "@/lib/supabase/auth-context";
@@ -25,38 +25,19 @@ export default function BrowseTeachersPage() {
   const [selectedType, setSelectedType] = useState<TypeFilter>("All");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Use a version counter to force refetch - increments on filter changes
-  const [fetchVersion, setFetchVersion] = useState(0);
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+  // Debounced search state - only search input needs debouncing
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  // Memoized fetch function
-  const fetchData = useCallback(async (signal: AbortSignal) => {
-    console.log("[BrowseTeachers] fetchData called");
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getTeachersWithCourses({
-        teacherType: selectedType === "All" ? undefined : selectedType as TeacherType,
-        search: searchQuery || undefined,
-      });
-      if (!signal.aborted) {
-        console.log("[BrowseTeachers] Data received:", data?.length);
-        setTeachers(data);
-        setLoading(false);
-      }
-    } catch (err) {
-      if (!signal.aborted) {
-        console.error("[BrowseTeachers] Failed to fetch teachers:", err);
-        setError(err instanceof Error ? err.message : "Failed to fetch teachers");
-        setLoading(false);
-      }
-    }
-  }, [selectedType, searchQuery]);
-
-  // Main data fetch effect - triggers on auth ready or fetchVersion change
+  // Debounce search input only
   useEffect(() => {
-    console.log("[BrowseTeachers] useEffect triggered", { authLoading, hasUser: !!user, fetchVersion });
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
+  // Single effect for all data fetching - simpler and more reliable
+  useEffect(() => {
     // Wait for auth to be ready
     if (authLoading) {
       console.log("[BrowseTeachers] Auth still loading, waiting...");
@@ -68,14 +49,38 @@ export default function BrowseTeachersPage() {
       return;
     }
 
-    console.log("[BrowseTeachers] Auth ready, starting fetch");
-    const abortController = new AbortController();
-    fetchData(abortController.signal);
+    console.log("[BrowseTeachers] Fetching data...", { selectedType, debouncedSearch });
+
+    let isCancelled = false;
+
+    async function fetchData() {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await getTeachersWithCourses({
+          teacherType: selectedType === "All" ? undefined : selectedType as TeacherType,
+          search: debouncedSearch || undefined,
+        });
+        if (!isCancelled) {
+          console.log("[BrowseTeachers] Data received:", data?.length);
+          setTeachers(data);
+          setLoading(false);
+        }
+      } catch (err) {
+        if (!isCancelled) {
+          console.error("[BrowseTeachers] Failed to fetch teachers:", err);
+          setError(err instanceof Error ? err.message : "Failed to fetch teachers");
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchData();
 
     return () => {
-      abortController.abort();
+      isCancelled = true;
     };
-  }, [authLoading, user, fetchVersion, fetchData]);
+  }, [authLoading, user, selectedType, debouncedSearch]);
 
   // Fetch stats only once when auth is ready
   useEffect(() => {
@@ -91,25 +96,6 @@ export default function BrowseTeachersPage() {
     }
     fetchStats();
   }, [authLoading, user]);
-
-  // Debounced filter/search handler - updates fetchVersion after debounce
-  useEffect(() => {
-    // Clear any existing timer
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
-
-    // Set new debounce timer
-    debounceTimer.current = setTimeout(() => {
-      setFetchVersion(v => v + 1);
-    }, 300);
-
-    return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-    };
-  }, [selectedType, searchQuery]);
 
   // Get type badge color
   const getTypeBadgeColor = (type: string | null, role: string) => {
