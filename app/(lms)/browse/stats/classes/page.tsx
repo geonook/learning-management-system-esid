@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { School, ArrowLeft, Search, Filter, Download } from "lucide-react";
+import { School, ArrowLeft, Search, Download } from "lucide-react";
 import Link from "next/link";
 import { getClassStatistics } from "@/lib/api/statistics";
 import { formatNumber, formatPercentage } from "@/lib/statistics/calculations";
@@ -241,7 +241,7 @@ export default function ClassStatisticsPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredStats.map((stat, idx) => (
+                  filteredStats.map((stat) => (
                     <tr
                       key={`${stat.class_id}-${stat.subject_type}`}
                       className="border-b border-border-subtle hover:bg-surface-hover transition-colors"

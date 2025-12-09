@@ -39,28 +39,11 @@ import type {
 // Raw Data Types (from Supabase)
 // ============================================================
 
-interface RawStudentScore {
-  student_id: string;
-  student_number: string;
-  full_name: string;
-  class_id: string;
-  class_name: string;
-  class_level: string;
-  course_type: CourseType;
-  scores: Record<string, number | null>;
-}
-
 interface RawClassData {
   id: string;
   name: string;
   grade: number;
   level: string;
-}
-
-interface RawCourseData {
-  id: string;
-  class_id: string;
-  course_type: CourseType;
 }
 
 // ============================================================
@@ -450,7 +433,6 @@ export async function getStudentGrades(
   }
 
   // Build lookup maps
-  const courseByCourseId = new Map(courses?.map(c => [c.id, c]) || []);
   const courseByClassId = new Map<string, typeof courses>();
   for (const course of courses || []) {
     if (!courseByClassId.has(course.class_id)) {

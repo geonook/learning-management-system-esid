@@ -8,10 +8,7 @@
  * - null, 'X', '-', 'N/A', '缺考', 'absent' are excluded
  */
 
-import type {
-  PerformanceLevel,
-  PERFORMANCE_THRESHOLDS,
-} from '@/types/statistics';
+import type { PerformanceLevel } from '@/types/statistics';
 
 // ============================================================
 // Value Validation
