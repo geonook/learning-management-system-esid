@@ -228,7 +228,7 @@ export class AnalyticsEngine {
       .filter((id): id is string => !!id))]
 
     // Fetch course types based on class_id
-    let classCoursesMap: Record<string, string[]> = {}
+    const classCoursesMap: Record<string, string[]> = {}
     if (classIds.length > 0) {
       const { data: coursesData } = await this.supabase
         .from('courses')
@@ -244,7 +244,7 @@ export class AnalyticsEngine {
     }
 
     // Fetch class info separately
-    let classInfoMap: Record<string, { grade: number; track: string | null }> = {}
+    const classInfoMap: Record<string, { grade: number; track: string | null }> = {}
     if (classIds.length > 0) {
       const { data: classesData } = await this.supabase
         .from('classes')

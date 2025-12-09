@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { useAuth } from "@/lib/supabase/auth-context";
 import {

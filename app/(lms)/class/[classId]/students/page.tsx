@@ -212,7 +212,7 @@ export default function ClassStudentsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle">
-                {filteredStudents.map((student, index) => (
+                {filteredStudents.map((student) => (
                   <tr
                     key={student.id}
                     className="hover:bg-surface-hover transition-colors"

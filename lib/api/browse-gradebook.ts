@@ -11,7 +11,6 @@ import type {
   BrowseGradebookStats,
   BrowseGradebookFilters,
   ProgressStatus,
-  ASSESSMENT_COUNT,
 } from '@/types/browse-gradebook';
 
 const ASSESSMENT_ITEMS = 13; // FA1-FA8 (8) + SA1-SA4 (4) + MID (1)

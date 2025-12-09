@@ -10,12 +10,6 @@ interface CourseTypeSelectorProps {
   onChange: (courseType: CourseType) => void;
 }
 
-const COURSE_TYPE_LABELS: Record<CourseType, string> = {
-  LT: "LT (Local Teacher)",
-  IT: "IT (International Teacher)",
-  KCFS: "KCFS",
-};
-
 const COURSE_TYPE_COLORS: Record<CourseType, { bg: string; text: string; border: string; activeBg: string }> = {
   LT: {
     bg: "bg-emerald-50 dark:bg-emerald-900/20",

@@ -374,7 +374,7 @@ export class AnalyticsQueries {
         .map(s => (s.exams as any).class_id)
         .filter((id: string | null): id is string => id !== null))]
 
-      let classCoursesMap: Record<string, string[]> = {}
+      const classCoursesMap: Record<string, string[]> = {}
       if (classIds.length > 0) {
         const { data: coursesData } = await this.supabase
           .from('courses')

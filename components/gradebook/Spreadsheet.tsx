@@ -41,6 +41,7 @@ interface SpreadsheetProps {
   onSaveStatusChange?: (status: SaveStatus) => void;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function Spreadsheet({ classId, initialData, courseType, onSaveStatusChange }: SpreadsheetProps) {
   const [data, setData] = useState<GradeRow[]>(initialData);
   const [focusModeCode, setFocusModeCode] = useState<string | null>(null);
