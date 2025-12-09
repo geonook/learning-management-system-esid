@@ -5,11 +5,17 @@
 -- Related: Gradebook import feature for 25 Fall Midterm
 
 -- ============================================================
--- Add MID assessment code
+-- Step 1: Add MID to assessment_code ENUM type
 -- ============================================================
 
-INSERT INTO public.assessment_codes (code, category, sequence_order, is_active)
-VALUES ('MID', 'final', 14, true)
+ALTER TYPE assessment_code ADD VALUE IF NOT EXISTS 'MID' AFTER 'FINAL';
+
+-- ============================================================
+-- Step 2: Add MID assessment code record
+-- ============================================================
+
+INSERT INTO public.assessment_codes (code, display_name, category, weight, sort_order, sequence_order, is_active)
+VALUES ('MID', 'Midterm', 'final', 0.10, 0, 14, true)
 ON CONFLICT (code) DO NOTHING;
 
 -- ============================================================
