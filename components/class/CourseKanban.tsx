@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Plus,
   Calendar,
@@ -20,6 +20,57 @@ import {
   deleteCourseTask,
   moveTask,
 } from "@/lib/api/course-tasks";
+
+// English Date Picker Component
+function EnglishDatePicker({
+  value,
+  onChange,
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Format date for display in English
+  const formatDisplayDate = (dateStr: string) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr + "T00:00:00");
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const handleClick = () => {
+    inputRef.current?.showPicker();
+  };
+
+  return (
+    <div className={cn("relative", className)}>
+      <button
+        type="button"
+        onClick={handleClick}
+        className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg border border-border-default bg-surface-elevated text-text-primary hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[140px]"
+      >
+        <Calendar className="w-4 h-4 text-text-secondary" />
+        <span className={value ? "text-text-primary" : "text-text-tertiary"}>
+          {value ? formatDisplayDate(value) : "Due date"}
+        </span>
+      </button>
+      <input
+        ref={inputRef}
+        type="date"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="absolute inset-0 opacity-0 cursor-pointer"
+        tabIndex={-1}
+      />
+    </div>
+  );
+}
 
 interface CourseKanbanProps {
   courseId: string;
@@ -220,11 +271,9 @@ export function CourseKanban({
               className="flex-1 px-3 py-2 text-sm rounded-lg border border-border-default bg-surface-elevated text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-blue-500"
               autoFocus
             />
-            <input
-              type="date"
+            <EnglishDatePicker
               value={newTaskDueDate}
-              onChange={(e) => setNewTaskDueDate(e.target.value)}
-              className="px-3 py-2 text-sm rounded-lg border border-border-default bg-surface-elevated text-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={setNewTaskDueDate}
             />
             <button
               onClick={handleAddTask}
