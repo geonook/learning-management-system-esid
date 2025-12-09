@@ -3,240 +3,145 @@
 import { useState, useEffect, useMemo } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { useAuth } from "@/lib/supabase/auth-context";
-import { BookOpen, Search, Download, FileSpreadsheet, Calendar, CheckCircle, Clock, AlertTriangle, ChevronDown } from "lucide-react";
+import {
+  BookOpen,
+  Search,
+  Download,
+  School,
+  CheckCircle,
+  Clock,
+  AlertTriangle,
+  ChevronDown,
+  Users,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-
-interface ExamWithDetails {
-  id: string;
-  name: string;
-  exam_date: string | null;
-  class_id: string;
-  course_id: string | null;
-  created_at: string;
-  class_name: string;
-  class_grade: number;
-  course_type: string | null;
-  scores_entered: number;
-  total_students: number;
-  completion_rate: number;
-}
+import { getClassesProgress } from "@/lib/api/browse-gradebook";
+import type { ClassProgress, BrowseGradebookStats, ProgressStatus } from "@/types/browse-gradebook";
 
 export default function BrowseGradebookPage() {
   const { user } = useAuth();
   const userId = user?.id;
   const [loading, setLoading] = useState(true);
-  const [exams, setExams] = useState<ExamWithDetails[]>([]);
+  const [classes, setClasses] = useState<ClassProgress[]>([]);
+  const [stats, setStats] = useState<BrowseGradebookStats>({
+    total_classes: 0,
+    on_track: 0,
+    behind: 0,
+    not_started: 0,
+  });
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [gradeFilter, setGradeFilter] = useState<number | null>(null);
-  const [courseTypeFilter, setCourseTypeFilter] = useState<string | null>(null);
-  const [assessmentTypeFilter, setAssessmentTypeFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<ProgressStatus | null>(null);
   const [showGradeDropdown, setShowGradeDropdown] = useState(false);
-  const [showTypeDropdown, setShowTypeDropdown] = useState(false);
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
 
+  // Debounce search input
   useEffect(() => {
-    // Wait for user to be available (don't depend on authLoading)
-    if (!userId) {
-      return;
-    }
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-    async function fetchExams() {
+  // Fetch data
+  useEffect(() => {
+    if (!userId) return;
+
+    let isCancelled = false;
+
+    async function fetchData() {
+      setLoading(true);
       try {
-        const supabase = createClient();
+        const { data, stats: newStats } = await getClassesProgress({
+          grade: gradeFilter || undefined,
+          status: statusFilter || undefined,
+          search: debouncedSearch || undefined,
+        });
 
-        // Get all exams with class info
-        // Note: exams table may not have max_score or course_id column in some environments
-        const { data: examsData, error: examsError } = await supabase
-          .from("exams")
-          .select(`
-            id,
-            name,
-            exam_date,
-            class_id,
-            created_at,
-            classes!inner (
-              name,
-              grade
-            )
-          `)
-          .order("exam_date", { ascending: false });
-
-        if (examsError) {
-          console.error("Error fetching exams:", examsError);
-          return;
+        if (!isCancelled) {
+          setClasses(data);
+          setStats(newStats);
         }
-
-        // Get courses for each class to determine course type
-        // This is a workaround since exams.course_id may not exist
-        const classIds = [...new Set((examsData || []).map(e => e.class_id))];
-        let classCoursesMap: Record<string, { id: string; course_type: string }[]> = {};
-
-        if (classIds.length > 0) {
-          const { data: coursesData } = await supabase
-            .from("courses")
-            .select("id, class_id, course_type")
-            .in("class_id", classIds);
-
-          coursesData?.forEach(c => {
-            if (!classCoursesMap[c.class_id]) {
-              classCoursesMap[c.class_id] = [];
-            }
-            // Safe access since we check classCoursesMap[c.class_id] above
-            const courses = classCoursesMap[c.class_id];
-            if (courses) {
-              courses.push({ id: c.id, course_type: c.course_type });
-            }
-          });
-        }
-
-        // Get student counts per class
-        const { data: studentCounts } = await supabase
-          .from("students")
-          .select("class_id")
-          .eq("is_active", true);
-
-        const classStudentCounts: Record<string, number> = {};
-        studentCounts?.forEach((s) => {
-          classStudentCounts[s.class_id] = (classStudentCounts[s.class_id] || 0) + 1;
-        });
-
-        // Get score counts per exam
-        const examIds = (examsData || []).map((e) => e.id);
-        const { data: scoreCounts } = await supabase
-          .from("scores")
-          .select("exam_id, score")
-          .in("exam_id", examIds)
-          .not("score", "is", null);
-
-        const examScoreCounts: Record<string, number> = {};
-        scoreCounts?.forEach((s) => {
-          if (s.score !== null && s.score > 0) {
-            examScoreCounts[s.exam_id] = (examScoreCounts[s.exam_id] || 0) + 1;
-          }
-        });
-
-        // Transform data
-        const examsWithDetails: ExamWithDetails[] = (examsData || []).map((exam) => {
-          const classData = exam.classes as unknown as { name: string; grade: number };
-          const totalStudents = classStudentCounts[exam.class_id] || 0;
-          const scoresEntered = examScoreCounts[exam.id] || 0;
-          const completionRate = totalStudents > 0 ? Math.round((scoresEntered / totalStudents) * 100) : 0;
-
-          // Try to infer course_type from exam name (e.g., "LT FA1", "IT SA2", "KCFS Final")
-          // or use the first course from the class if available
-          let courseType: string | null = null;
-          const examNameUpper = exam.name.toUpperCase();
-          if (examNameUpper.startsWith("LT ") || examNameUpper.includes(" LT")) {
-            courseType = "LT";
-          } else if (examNameUpper.startsWith("IT ") || examNameUpper.includes(" IT")) {
-            courseType = "IT";
-          } else if (examNameUpper.startsWith("KCFS ") || examNameUpper.includes(" KCFS")) {
-            courseType = "KCFS";
-          } else {
-            // If class only has one course, use that
-            const classCourses = classCoursesMap[exam.class_id];
-            if (classCourses && classCourses.length === 1 && classCourses[0]) {
-              courseType = classCourses[0].course_type;
-            }
-          }
-
-          return {
-            id: exam.id,
-            name: exam.name,
-            exam_date: exam.exam_date,
-            class_id: exam.class_id,
-            course_id: null, // course_id may not exist in exams table
-            created_at: exam.created_at,
-            class_name: classData?.name || "Unknown",
-            class_grade: classData?.grade || 0,
-            course_type: courseType,
-            scores_entered: scoresEntered,
-            total_students: totalStudents,
-            completion_rate: completionRate,
-          };
-        });
-
-        setExams(examsWithDetails);
       } catch (error) {
-        console.error("Failed to fetch exams:", error);
+        console.error("Failed to fetch gradebook data:", error);
       } finally {
-        setLoading(false);
+        if (!isCancelled) {
+          setLoading(false);
+        }
       }
     }
 
-    fetchExams();
-  }, [userId]);
+    fetchData();
+    return () => {
+      isCancelled = true;
+    };
+  }, [userId, gradeFilter, statusFilter, debouncedSearch]);
 
-  // Filter exams
-  const filteredExams = useMemo(() => {
-    return exams.filter((exam) => {
-      // Search filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        if (!exam.name.toLowerCase().includes(query) && !exam.class_name.toLowerCase().includes(query)) {
-          return false;
-        }
-      }
+  // Progress bar component
+  const ProgressBar = ({
+    progress,
+    teacherName,
+    courseType,
+  }: {
+    progress: number;
+    teacherName: string | null;
+    courseType: "LT" | "IT" | "KCFS";
+  }) => {
+    const colorClass =
+      courseType === "LT"
+        ? "bg-green-500"
+        : courseType === "IT"
+        ? "bg-blue-500"
+        : "bg-purple-500";
 
-      // Grade filter
-      if (gradeFilter !== null && exam.class_grade !== gradeFilter) {
-        return false;
-      }
+    const textColorClass =
+      courseType === "LT"
+        ? "text-green-600 dark:text-green-400"
+        : courseType === "IT"
+        ? "text-blue-600 dark:text-blue-400"
+        : "text-purple-600 dark:text-purple-400";
 
-      // Course type filter
-      if (courseTypeFilter && exam.course_type !== courseTypeFilter) {
-        return false;
-      }
+    return (
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <div className="flex-1 h-2 bg-border-subtle rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full ${colorClass}`}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <span className={`text-sm font-medium w-10 ${textColorClass}`}>
+            {progress}%
+          </span>
+        </div>
+        {teacherName && (
+          <div className="text-xs text-text-tertiary truncate" title={teacherName}>
+            {teacherName}
+          </div>
+        )}
+      </div>
+    );
+  };
 
-      // Assessment type filter
-      if (assessmentTypeFilter !== "all") {
-        const name = exam.name.toUpperCase();
-        if (assessmentTypeFilter === "formative" && !name.match(/^FA\d/)) {
-          return false;
-        }
-        if (assessmentTypeFilter === "summative" && !name.match(/^SA\d/)) {
-          return false;
-        }
-        if (assessmentTypeFilter === "final" && !name.includes("FINAL")) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-  }, [exams, searchQuery, gradeFilter, courseTypeFilter, assessmentTypeFilter]);
-
-  // Calculate stats
-  const stats = useMemo(() => {
-    const total = exams.length;
-    const completed = exams.filter((e) => e.completion_rate >= 90).length;
-    const inProgress = exams.filter((e) => e.completion_rate > 0 && e.completion_rate < 90).length;
-    const notStarted = exams.filter((e) => e.completion_rate === 0).length;
-    const avgCompletion = exams.length > 0
-      ? Math.round(exams.reduce((sum, e) => sum + e.completion_rate, 0) / exams.length)
-      : 0;
-    return { total, completed, inProgress, notStarted, avgCompletion };
-  }, [exams]);
-
-  const getStatusIcon = (rate: number) => {
-    if (rate >= 90) return <CheckCircle className="w-4 h-4 text-green-500 dark:text-green-400" />;
-    if (rate > 0) return <Clock className="w-4 h-4 text-amber-500 dark:text-amber-400" />;
+  const getStatusIcon = (status: ProgressStatus) => {
+    if (status === "on_track")
+      return <CheckCircle className="w-4 h-4 text-green-500 dark:text-green-400" />;
+    if (status === "behind")
+      return <Clock className="w-4 h-4 text-amber-500 dark:text-amber-400" />;
     return <AlertTriangle className="w-4 h-4 text-red-500/50 dark:text-red-400/50" />;
   };
 
-  const getStatusColor = (rate: number) => {
-    if (rate >= 90) return "text-green-500 dark:text-green-400";
-    if (rate >= 50) return "text-amber-500 dark:text-amber-400";
-    if (rate > 0) return "text-amber-500 dark:text-amber-400";
-    return "text-text-tertiary";
+  const getStatusLabel = (status: ProgressStatus) => {
+    if (status === "on_track") return "On Track";
+    if (status === "behind") return "Behind";
+    return "Not Started";
   };
 
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return "-";
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const getStatusColor = (status: ProgressStatus) => {
+    if (status === "on_track") return "text-green-500 dark:text-green-400";
+    if (status === "behind") return "text-amber-500 dark:text-amber-400";
+    return "text-text-tertiary";
   };
 
   return (
@@ -250,7 +155,9 @@ export default function BrowseGradebookPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-text-primary">Browse Gradebook</h1>
-              <p className="text-sm text-text-secondary">View all assessments and score entry progress</p>
+              <p className="text-sm text-text-secondary">
+                Monitor score entry progress across all classes
+              </p>
             </div>
           </div>
           <button className="flex items-center gap-2 px-4 py-2 bg-surface-secondary border border-border-default rounded-lg text-text-secondary hover:bg-surface-hover transition-colors">
@@ -260,42 +167,46 @@ export default function BrowseGradebookPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-5 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-text-secondary text-sm">Assessments</span>
-              <FileSpreadsheet className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+              <span className="text-text-secondary text-sm">Classes</span>
+              <School className="w-4 h-4 text-amber-500 dark:text-amber-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
-              <div className="text-2xl font-bold text-text-primary">{stats.total}</div>
+              <div className="text-2xl font-bold text-text-primary">{stats.total_classes}</div>
             )}
-            <div className="text-xs text-text-tertiary">total exams</div>
+            <div className="text-xs text-text-tertiary">total classes</div>
           </div>
           <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-text-secondary text-sm">Completed</span>
+              <span className="text-text-secondary text-sm">On Track</span>
               <CheckCircle className="w-4 h-4 text-green-500 dark:text-green-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
-              <div className="text-2xl font-bold text-green-500 dark:text-green-400">{stats.completed}</div>
+              <div className="text-2xl font-bold text-green-500 dark:text-green-400">
+                {stats.on_track}
+              </div>
             )}
-            <div className="text-xs text-text-tertiary">≥90% entered</div>
+            <div className="text-xs text-text-tertiary">all courses ≥80%</div>
           </div>
           <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-text-secondary text-sm">In Progress</span>
+              <span className="text-text-secondary text-sm">Behind</span>
               <Clock className="w-4 h-4 text-amber-500 dark:text-amber-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
-              <div className="text-2xl font-bold text-amber-500 dark:text-amber-400">{stats.inProgress}</div>
+              <div className="text-2xl font-bold text-amber-500 dark:text-amber-400">
+                {stats.behind}
+              </div>
             )}
-            <div className="text-xs text-text-tertiary">partial entry</div>
+            <div className="text-xs text-text-tertiary">some progress</div>
           </div>
           <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
@@ -305,21 +216,9 @@ export default function BrowseGradebookPage() {
             {loading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
-              <div className="text-2xl font-bold text-text-secondary">{stats.notStarted}</div>
+              <div className="text-2xl font-bold text-text-secondary">{stats.not_started}</div>
             )}
-            <div className="text-xs text-text-tertiary">no scores</div>
-          </div>
-          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-text-secondary text-sm">Avg Progress</span>
-              <Calendar className="w-4 h-4 text-blue-500 dark:text-blue-400" />
-            </div>
-            {loading ? (
-              <Skeleton className="h-8 w-12" />
-            ) : (
-              <div className="text-2xl font-bold text-text-primary">{stats.avgCompletion}%</div>
-            )}
-            <div className="text-xs text-text-tertiary">completion</div>
+            <div className="text-xs text-text-tertiary">no scores entered</div>
           </div>
         </div>
 
@@ -328,7 +227,7 @@ export default function BrowseGradebookPage() {
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
             <Input
-              placeholder="Search assessments or classes..."
+              placeholder="Search classes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 bg-surface-secondary border-border-default text-text-primary placeholder:text-text-tertiary"
@@ -371,36 +270,37 @@ export default function BrowseGradebookPage() {
             )}
           </div>
 
-          {/* Course Type Dropdown */}
+          {/* Status Dropdown */}
           <div className="relative">
             <button
               className="flex items-center gap-2 px-4 py-2 bg-surface-secondary border border-border-default rounded-lg text-text-secondary hover:bg-surface-hover transition-colors"
-              onClick={() => setShowTypeDropdown(!showTypeDropdown)}
+              onClick={() => setShowStatusDropdown(!showStatusDropdown)}
             >
-              {courseTypeFilter || "All Types"}
+              {statusFilter ? getStatusLabel(statusFilter) : "All Status"}
               <ChevronDown className="w-4 h-4" />
             </button>
-            {showTypeDropdown && (
-              <div className="absolute top-full mt-2 right-0 bg-surface-elevated border border-border-default rounded-lg shadow-lg z-10 py-1 min-w-[120px]">
+            {showStatusDropdown && (
+              <div className="absolute top-full mt-2 right-0 bg-surface-elevated border border-border-default rounded-lg shadow-lg z-10 py-1 min-w-[140px]">
                 <button
                   className="w-full px-4 py-2 text-left text-text-secondary hover:bg-surface-hover text-sm"
                   onClick={() => {
-                    setCourseTypeFilter(null);
-                    setShowTypeDropdown(false);
+                    setStatusFilter(null);
+                    setShowStatusDropdown(false);
                   }}
                 >
-                  All Types
+                  All Status
                 </button>
-                {["LT", "IT", "KCFS"].map((type) => (
+                {(["on_track", "behind", "not_started"] as ProgressStatus[]).map((status) => (
                   <button
-                    key={type}
-                    className="w-full px-4 py-2 text-left text-text-secondary hover:bg-surface-hover text-sm"
+                    key={status}
+                    className="w-full px-4 py-2 text-left text-text-secondary hover:bg-surface-hover text-sm flex items-center gap-2"
                     onClick={() => {
-                      setCourseTypeFilter(type);
-                      setShowTypeDropdown(false);
+                      setStatusFilter(status);
+                      setShowStatusDropdown(false);
                     }}
                   >
-                    {type}
+                    {getStatusIcon(status)}
+                    {getStatusLabel(status)}
                   </button>
                 ))}
               </div>
@@ -408,38 +308,26 @@ export default function BrowseGradebookPage() {
           </div>
         </div>
 
-        {/* Assessment Type Tabs */}
-        <div className="flex gap-2">
-          {[
-            { key: "all", label: "All" },
-            { key: "formative", label: "Formative (FA)" },
-            { key: "summative", label: "Summative (SA)" },
-            { key: "final", label: "Final" },
-          ].map((type) => (
-            <button
-              key={type.key}
-              onClick={() => setAssessmentTypeFilter(type.key)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                assessmentTypeFilter === type.key
-                  ? "bg-amber-500 text-white dark:text-white"
-                  : "bg-surface-secondary text-text-secondary hover:bg-surface-hover"
-              }`}
-            >
-              {type.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Exams Table */}
+        {/* Classes Table */}
         <div className="bg-surface-secondary rounded-xl border border-border-default overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border-default">
-                <th className="text-left p-4 text-sm font-medium text-text-secondary">Assessment</th>
                 <th className="text-left p-4 text-sm font-medium text-text-secondary">Class</th>
-                <th className="text-left p-4 text-sm font-medium text-text-secondary">Type</th>
-                <th className="text-left p-4 text-sm font-medium text-text-secondary">Date</th>
-                <th className="text-left p-4 text-sm font-medium text-text-secondary">Progress</th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Grade</th>
+                <th className="text-center p-4 text-sm font-medium text-text-secondary">
+                  <Users className="w-4 h-4 inline mr-1" />
+                  Students
+                </th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary w-40">
+                  <span className="text-green-500">LT</span> Progress
+                </th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary w-40">
+                  <span className="text-blue-500">IT</span> Progress
+                </th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary w-40">
+                  <span className="text-purple-500">KCFS</span> Progress
+                </th>
                 <th className="text-left p-4 text-sm font-medium text-text-secondary">Status</th>
                 <th className="text-left p-4 text-sm font-medium text-text-secondary">Actions</th>
               </tr>
@@ -449,84 +337,73 @@ export default function BrowseGradebookPage() {
                 Array.from({ length: 8 }).map((_, i) => (
                   <tr key={i} className="border-b border-border-subtle">
                     <td className="p-4">
-                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-4 w-28" />
                     </td>
                     <td className="p-4">
-                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-8" />
+                    </td>
+                    <td className="p-4 text-center">
+                      <Skeleton className="h-4 w-8 mx-auto" />
                     </td>
                     <td className="p-4">
-                      <Skeleton className="h-4 w-12" />
+                      <Skeleton className="h-4 w-full" />
                     </td>
                     <td className="p-4">
-                      <Skeleton className="h-4 w-16" />
+                      <Skeleton className="h-4 w-full" />
+                    </td>
+                    <td className="p-4">
+                      <Skeleton className="h-4 w-full" />
                     </td>
                     <td className="p-4">
                       <Skeleton className="h-4 w-20" />
-                    </td>
-                    <td className="p-4">
-                      <Skeleton className="h-4 w-16" />
                     </td>
                     <td className="p-4">
                       <Skeleton className="h-4 w-12" />
                     </td>
                   </tr>
                 ))
-              ) : filteredExams.length > 0 ? (
-                filteredExams.map((exam) => (
-                  <tr key={exam.id} className="border-b border-border-subtle hover:bg-surface-hover">
-                    <td className="p-4 text-text-primary font-medium">{exam.name}</td>
+              ) : classes.length > 0 ? (
+                classes.map((cls) => (
+                  <tr key={cls.class_id} className="border-b border-border-subtle hover:bg-surface-hover">
+                    <td className="p-4 text-text-primary font-medium">{cls.class_name}</td>
                     <td className="p-4">
-                      <div className="text-text-primary">{exam.class_name}</div>
-                      <div className="text-text-tertiary text-xs">G{exam.class_grade}</div>
+                      <span className="px-2 py-1 bg-surface-elevated rounded text-text-secondary text-sm">
+                        G{cls.grade}
+                      </span>
+                    </td>
+                    <td className="p-4 text-center text-text-secondary">{cls.student_count}</td>
+                    <td className="p-4">
+                      <ProgressBar
+                        progress={cls.lt_progress}
+                        teacherName={cls.lt_teacher}
+                        courseType="LT"
+                      />
                     </td>
                     <td className="p-4">
-                      {exam.course_type ? (
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          exam.course_type === "LT"
-                            ? "bg-blue-500/20 text-blue-600 dark:text-blue-400"
-                            : exam.course_type === "IT"
-                            ? "bg-green-500/20 text-green-600 dark:text-green-400"
-                            : "bg-purple-500/20 text-purple-600 dark:text-purple-400"
-                        }`}>
-                          {exam.course_type}
-                        </span>
-                      ) : (
-                        <span className="text-text-tertiary">-</span>
-                      )}
+                      <ProgressBar
+                        progress={cls.it_progress}
+                        teacherName={cls.it_teacher}
+                        courseType="IT"
+                      />
                     </td>
-                    <td className="p-4 text-text-secondary">{formatDate(exam.exam_date)}</td>
                     <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-border-subtle rounded-full overflow-hidden max-w-[80px]">
-                          <div
-                            className={`h-full rounded-full ${
-                              exam.completion_rate >= 90
-                                ? "bg-green-500"
-                                : exam.completion_rate >= 50
-                                ? "bg-amber-500"
-                                : exam.completion_rate > 0
-                                ? "bg-amber-500"
-                                : "bg-border-default"
-                            }`}
-                            style={{ width: `${exam.completion_rate}%` }}
-                          />
-                        </div>
-                        <span className={`text-sm ${getStatusColor(exam.completion_rate)}`}>
-                          {exam.scores_entered}/{exam.total_students}
-                        </span>
-                      </div>
+                      <ProgressBar
+                        progress={cls.kcfs_progress}
+                        teacherName={cls.kcfs_teacher}
+                        courseType="KCFS"
+                      />
                     </td>
                     <td className="p-4">
                       <div className="flex items-center gap-2">
-                        {getStatusIcon(exam.completion_rate)}
-                        <span className={`text-sm ${getStatusColor(exam.completion_rate)}`}>
-                          {exam.completion_rate}%
+                        {getStatusIcon(cls.overall_status)}
+                        <span className={`text-sm ${getStatusColor(cls.overall_status)}`}>
+                          {getStatusLabel(cls.overall_status)}
                         </span>
                       </div>
                     </td>
                     <td className="p-4">
                       <Link
-                        href={`/class/${exam.class_id}/gradebook`}
+                        href={`/class/${cls.class_id}/gradebook`}
                         className="text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 text-sm"
                       >
                         View
@@ -536,10 +413,8 @@ export default function BrowseGradebookPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-text-tertiary">
-                    {exams.length === 0
-                      ? "No assessments found in the system"
-                      : "No assessments match your filters"}
+                  <td colSpan={8} className="p-8 text-center text-text-tertiary">
+                    No classes found matching your filters
                   </td>
                 </tr>
               )}
@@ -548,20 +423,21 @@ export default function BrowseGradebookPage() {
         </div>
 
         {/* Summary */}
-        {!loading && filteredExams.length > 0 && (
+        {!loading && classes.length > 0 && (
           <div className="text-sm text-text-tertiary text-center">
-            Showing {filteredExams.length} of {exams.length} assessments
+            Showing {classes.length} of {stats.total_classes} classes
           </div>
         )}
 
         {/* Info */}
         <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
-          <h3 className="text-blue-600 dark:text-blue-400 font-medium mb-2">Assessment Types</h3>
+          <h3 className="text-blue-600 dark:text-blue-400 font-medium mb-2">Progress Calculation</h3>
           <p className="text-text-secondary text-sm">
-            <strong>FA1-FA8:</strong> Formative Assessments (15% weight) •
-            <strong> SA1-SA4:</strong> Summative Assessments (20% weight) •
-            <strong> FINAL:</strong> Final Exam (10% weight).
-            Semester = (F×0.15 + S×0.20 + Final×0.10) ÷ 0.45
+            Progress = (Scores Entered) / (Students × 13 Assessments). Each course has 13 assessment items:
+            <strong> FA1-FA8</strong> (8 Formative) +
+            <strong> SA1-SA4</strong> (4 Summative) +
+            <strong> MID</strong> (1 Midterm).
+            A class is &quot;On Track&quot; when all three courses (LT, IT, KCFS) reach ≥80% completion.
           </p>
         </div>
       </div>
