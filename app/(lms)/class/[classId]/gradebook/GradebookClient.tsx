@@ -6,7 +6,9 @@ import { CourseTypeSelector } from "@/components/gradebook/CourseTypeSelector";
 import { GradeRow } from "@/lib/gradebook/FormulaEngine";
 import { getGradebookData, CourseType } from "@/lib/actions/gradebook";
 import { cn } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
+import { Loader2, User, Check, AlertCircle, Users } from "lucide-react";
+
+export type SaveStatus = "saved" | "saving" | "error";
 
 interface GradebookClientProps {
   classId: string;
@@ -32,6 +34,7 @@ export function GradebookClient({
   );
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
 
   const handleCourseTypeChange = (courseType: CourseType) => {
     if (courseType === currentCourseType) return;
@@ -58,51 +61,60 @@ export function GradebookClient({
 
   return (
     <div className="flex-1 flex flex-col bg-surface-primary rounded-xl border border-border-default shadow-sm overflow-hidden">
-      {/* Toolbar with Course Type Selector */}
+      {/* Unified Toolbar: Course Selector + Teacher + Student Count + Save Status */}
       <div
         className={cn(
-          "flex items-center justify-between px-4 py-3",
+          "flex items-center justify-between px-4 py-2.5",
           "bg-surface-elevated",
           "border-b border-border-default"
         )}
       >
+        {/* Left: Course Type Selector */}
         <CourseTypeSelector
           availableCourseTypes={availableCourseTypes}
           currentCourseType={currentCourseType}
           onChange={handleCourseTypeChange}
         />
 
-        {/* Current course type and teacher indicator */}
-        {currentCourseType && (
-          <div className="flex items-center gap-3 text-sm text-text-secondary">
-            <div className="flex items-center gap-2">
-              <span>Viewing:</span>
-              <span
-                className={cn(
-                  "px-2 py-0.5 rounded font-medium",
-                  currentCourseType === "LT" &&
-                    "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
-                  currentCourseType === "IT" &&
-                    "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
-                  currentCourseType === "KCFS" &&
-                    "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
-                )}
-              >
-                {currentCourseType === "LT"
-                  ? "LT English"
-                  : currentCourseType === "IT"
-                  ? "IT English"
-                  : "KCFS"}
+        {/* Center: Teacher Info */}
+        <div className="flex items-center gap-2 text-sm">
+          <User className="w-4 h-4 text-text-tertiary" />
+          <span className={cn(
+            teacherName ? "text-text-secondary" : "text-text-tertiary italic"
+          )}>
+            {teacherName || "Unassigned"}
+          </span>
+        </div>
+
+        {/* Right: Student Count + Save Status */}
+        <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-1.5 text-text-secondary">
+            <Users className="w-4 h-4 text-text-tertiary" />
+            <span>{data.length} Students</span>
+          </div>
+
+          {/* Save Status Indicator */}
+          <div className="flex items-center gap-1.5">
+            {saveStatus === "saving" && (
+              <span className="text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span className="text-xs">Saving...</span>
               </span>
-            </div>
-            {teacherName && (
-              <div className="flex items-center gap-2 border-l border-border-default pl-3">
-                <span className="text-text-tertiary">Teacher:</span>
-                <span className="font-medium text-text-primary">{teacherName}</span>
-              </div>
+            )}
+            {saveStatus === "saved" && (
+              <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <Check className="w-3.5 h-3.5" />
+                <span className="text-xs">Saved</span>
+              </span>
+            )}
+            {saveStatus === "error" && (
+              <span className="text-red-600 dark:text-red-400 flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5" />
+                <span className="text-xs">Failed</span>
+              </span>
             )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Loading Overlay */}
@@ -128,23 +140,10 @@ export function GradebookClient({
             classId={classId}
             initialData={data}
             courseType={currentCourseType}
+            onSaveStatusChange={setSaveStatus}
           />
         </div>
       )}
-
-      {/* Status Bar */}
-      <div className="h-7 bg-surface-secondary border-t border-border-default flex items-center px-4 text-[11px] text-text-secondary justify-between">
-        <span>
-          {currentCourseType
-            ? `${currentCourseType} Gradebook • ${data.length} Students`
-            : "Ready"}
-        </span>
-        <span className="text-text-tertiary">
-          {availableCourseTypes.length > 1
-            ? `${availableCourseTypes.length} course types available`
-            : ""}
-        </span>
-      </div>
     </div>
   );
 }

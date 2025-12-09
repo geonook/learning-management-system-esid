@@ -48,7 +48,6 @@ export default async function ClassGradebookPage({ params, searchParams }: PageP
         <GradebookHeader
           classId={classId}
           courseType={currentCourseType}
-          teacherName={teacherInfo?.teacherName}
         />
 
         {error ? (

@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useTransition, useEffect } from "react";
 import { FormulaEngine, GradeRow } from "@/lib/gradebook/FormulaEngine";
 import { cn } from "@/lib/utils";
 import { FocusGradeInput } from "./FocusGradeInput";
 import { updateScore } from "@/lib/actions/gradebook";
-import { Loader2, AlertCircle, Check } from "lucide-react";
+
+export type SaveStatus = "saved" | "saving" | "error";
 
 // Notion + Apple unified design tokens
 const NOTION_STYLES = {
@@ -37,21 +38,25 @@ interface SpreadsheetProps {
   classId: string;
   initialData: GradeRow[];
   courseType?: string | null;
+  onSaveStatusChange?: (status: SaveStatus) => void;
 }
 
-export function Spreadsheet({ classId, initialData, courseType }: SpreadsheetProps) {
+export function Spreadsheet({ classId, initialData, courseType, onSaveStatusChange }: SpreadsheetProps) {
   const [data, setData] = useState<GradeRow[]>(initialData);
   const [focusModeCode, setFocusModeCode] = useState<string | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isPending, startTransition] = useTransition();
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
 
   // Update data when initialData changes (e.g., course type switch)
-  React.useEffect(() => {
+  useEffect(() => {
     setData(initialData);
   }, [initialData]);
-  const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "error">(
-    "saved"
-  );
+
+  // Notify parent of save status changes
+  useEffect(() => {
+    onSaveStatusChange?.(saveStatus);
+  }, [saveStatus, onSaveStatusChange]);
 
   // Columns Configuration
   const ASSESSMENT_COLS = [
@@ -99,40 +104,8 @@ export function Spreadsheet({ classId, initialData, courseType }: SpreadsheetPro
 
   return (
     <div className={cn("flex-1 flex flex-col h-full overflow-hidden", NOTION_STYLES.bg)}>
-      {/* Notion-style Status Bar */}
-      <div className={cn(
-        "px-6 py-3 flex justify-between items-center shrink-0",
-        NOTION_STYLES.bgCard,
-        "border-b",
-        NOTION_STYLES.border
-      )}>
-        <div className={cn("text-sm font-medium", NOTION_STYLES.textMuted)}>
-          {data.length} Students
-        </div>
-        <div className="flex items-center space-x-3">
-          {saveStatus === "saving" && (
-            <span className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
-              <Loader2 className="w-3 h-3 animate-spin" />
-              <span>Saving...</span>
-            </span>
-          )}
-          {saveStatus === "saved" && (
-            <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-              <Check className="w-3 h-3" />
-              <span>Saved</span>
-            </span>
-          )}
-          {saveStatus === "error" && (
-            <span className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1.5">
-              <AlertCircle className="w-3 h-3" />
-              <span>Save failed</span>
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Main Grid */}
-      <div className="flex-1 overflow-auto p-6">
+      {/* Main Grid - Status bar moved to parent component */}
+      <div className="flex-1 overflow-auto p-4">
         <div className={cn(
           "shadow-sm rounded-xl inline-block min-w-full overflow-hidden",
           NOTION_STYLES.bgCard,
