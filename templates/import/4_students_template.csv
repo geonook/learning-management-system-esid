@@ -1,19 +1,1512 @@
-student_id,full_name,grade,level,class_name
-S2025001,Alex Chen,1,G1E1,G1 Explorers
-S2025002,Bella Wang,1,G1E1,G1 Explorers
-S2025003,Charlie Liu,1,G1E1,G1 Discoverers
-S2025004,Diana Zhang,1,G1E2,G1 Adventurers
-S2025005,Ethan Lin,1,G1E2,G1 Adventurers
-S2025006,Fiona Huang,1,G1E3,G1 Pioneers
-S2025007,George Wu,2,G2E1,G2 Navigators
-S2025008,Hannah Lee,2,G2E1,G2 Navigators
-S2025009,Isaac Chang,2,G2E2,G2 Voyagers
-S2025010,Julia Yang,2,G2E2,G2 Voyagers
-S2025011,Kevin Hsu,3,G3E1,G3 Seekers
-S2025012,Lily Chen,3,G3E2,G3 Questors
-S2025013,Mason Wang,4,G4E1,G4 Innovators
-S2025014,Nora Liu,4,G4E2,G4 Creators
-S2025015,Oliver Zhang,5,G5E1,G5 Leaders
-S2025016,Penny Lin,5,G5E2,G5 Champions
-S2025017,Quinn Huang,6,G6E1,G6 Achievers
-S2025018,Ryan Wu,6,G6E2,G6 Scholars
+student_id,chinese_name,english_name,grade,level,class_name,home_room
+LE14007,陳星甯,Lollie Chen,1,G1E1,G1 Achievers,102
+LE14008,王允睿,RAYMOND,1,G1E1,G1 Achievers,103
+LE14142,高偉捷,Jason Kao,1,G1E1,G1 Achievers,106
+LE14149,高楷博,Harry,1,G1E1,G1 Achievers,102
+LE14154,胡嘉涵,Hannah,1,G1E1,G1 Achievers,107
+LE14159,許禾樂,Lele,1,G1E1,G1 Achievers,101
+LE14162,游晴安,Gianna,1,G1E1,G1 Achievers,103
+LE14169,蔡尚宸,Chen,1,G1E1,G1 Achievers,106
+LE14174,兒玉澪,Mio,1,G1E1,G1 Achievers,107
+LE14176,李宜穎,Sophia,1,G1E1,G1 Achievers,102
+LE14185,陳玥安,Yuean,1,G1E1,G1 Achievers,107
+LE14194,李承諺,Ian,1,G1E1,G1 Achievers,104
+LE14202,吳宓芙,Sophie,1,G1E1,G1 Achievers,104
+LE14207,高赫言,Cedric,1,G1E1,G1 Achievers,107
+LE14209,趙伯丹,Boston Chao,1,G1E1,G1 Achievers,103
+LE14221,吳子宜,Zooey,1,G1E1,G1 Achievers,101
+LE14229,陳邑享,Sean,1,G1E1,G1 Achievers,106
+LE14234,殷煜承,Hunter YIN,1,G1E1,G1 Achievers,101
+LE14240,陳國捷,Kayden Chen,1,G1E1,G1 Achievers,105
+LE14250,林倢安,Sonia,1,G1E1,G1 Achievers,102
+LE14017,林軒宇,Steven Lin,1,G1E2,G1 Adventurers,104
+LE14018,周于涵,Esme Chou,1,G1E2,G1 Adventurers,103
+LE14024,陳品潼,Aimee Chen,1,G1E2,G1 Adventurers,107
+LE14025,王璽,Roy Wang,1,G1E2,G1 Adventurers,106
+LE14038,林恩睿,Vincent Lin,1,G1E2,G1 Adventurers,104
+LE14046,方棠,Tammy Fang,1,G1E2,G1 Adventurers,103
+LE14061,杜若菲,Murphy Tu,1,G1E2,G1 Adventurers,106
+LE14076,楊丞浤,Carlos Yang,1,G1E2,G1 Adventurers,101
+LE14094,侯品言,Phyllis Hou,1,G1E2,G1 Adventurers,101
+LE14097,梁立宏,Nathan Liang,1,G1E2,G1 Adventurers,107
+LE14100,黃宣霓,NINI HUANG,1,G1E2,G1 Adventurers,103
+LE14105,林楹家,Emma Lin,1,G1E2,G1 Adventurers,101
+LE14122,萬時豪,Jayden Wan,1,G1E2,G1 Adventurers,101
+LE14134,蔡昀恩,Alina Tsai,1,G1E2,G1 Adventurers,106
+LE14189,張有朋,Patrick,1,G1E2,G1 Adventurers,105
+LE14200,陳宥靜,Janice Chen,1,G1E2,G1 Adventurers,102
+LE14246,姚宇謙,Vic Yao,1,G1E2,G1 Adventurers,103
+LE14255,蔡青澔,Lucas,1,G1E2,G1 Adventurers,104
+LE14010,童詩云,Hannah Tung,1,G1E1,G1 Discoverers,107
+LE14023,吳玟琳,Chloe Wu,1,G1E1,G1 Discoverers,104
+LE14029,何濬瀚,Andrew Ho,1,G1E1,G1 Discoverers,103
+LE14043,張傅安,Valentin Chang,1,G1E1,G1 Discoverers,101
+LE14052,王宇恩,Winnie Wang,1,G1E1,G1 Discoverers,103
+LE14088,陳妍寧,Yannie Chen,1,G1E1,G1 Discoverers,106
+LE14139,李明軒,Sean,1,G1E1,G1 Discoverers,102
+LE14148,潘廷碩,Aiden,1,G1E1,G1 Discoverers,103
+LE14152,楊謙睿,Franky,1,G1E1,G1 Discoverers,104
+LE14160,咸祉安,Jennie,1,G1E1,G1 Discoverers,105
+LE14163,黃喻澤,Ian,1,G1E1,G1 Discoverers,107
+LE14170,林齊樂,Toby,1,G1E1,G1 Discoverers,101
+LE14177,王牧喬,Bella,1,G1E1,G1 Discoverers,106
+LE14196,蔡丞惟,Nick Tsai,1,G1E1,G1 Discoverers,101
+LE14203,葉芯寧,Katrina,1,G1E1,G1 Discoverers,104
+LE14204,張筱悅,Chloe Chang,1,G1E1,G1 Discoverers,106
+LE14211,曾靖堯,Jax,1,G1E1,G1 Discoverers,102
+LE14212,黃予昊,Cloud,1,G1E1,G1 Discoverers,101
+LE14223,胡凱寧,Katie Hu,1,G1E1,G1 Discoverers,104
+LE14231,呂奇恩,Ryan,1,G1E1,G1 Discoverers,107
+LE14001,簡大洋,DYLAN CHIEN,1,G1E1,G1 Explorers,103
+LE14015,吳沐澄,Charlotte Wu,1,G1E1,G1 Explorers,105
+LE14055,張芯寧,Umi Chang,1,G1E1,G1 Explorers,101
+LE14060,胡勤智,Aubrey Wu,1,G1E1,G1 Explorers,105
+LE14075,朱宥澄,YU CHENG,1,G1E1,G1 Explorers,102
+LE14136,林庭儀,Evelyn,1,G1E1,G1 Explorers,104
+LE14138,吳宇傑,Harper Wu,1,G1E1,G1 Explorers,105
+LE14146,林東燁,Adam,1,G1E1,G1 Explorers,107
+LE14151,藍博洋,Jack,1,G1E1,G1 Explorers,104
+LE14153,周善菲,Fifi,1,G1E1,G1 Explorers,104
+LE14173,黃彥棋,Andy Huang,1,G1E1,G1 Explorers,106
+LE14183,鮑貞元,Jennie,1,G1E1,G1 Explorers,107
+LE14192,陳玧煥,Neil,1,G1E1,G1 Explorers,102
+LE14195,楊沛杰,Anderson,1,G1E1,G1 Explorers,102
+LE14198,廖予熙,Judy,1,G1E1,G1 Explorers,107
+LE14215,許元齊,Remo,1,G1E1,G1 Explorers,103
+LE14225,陳宥凝,Uni,1,G1E1,G1 Explorers,105
+LE14235,劉冠宇,Ethan,1,G1E1,G1 Explorers,107
+LE14236,賴靖宇,Jimmy Lai,1,G1E1,G1 Explorers,102
+LE14248,林法樂,Ary Lin,1,G1E1,G1 Explorers,104
+LE14027,江懿棋,Emma Kong,1,G1E2,G1 Guardians,103
+LE14032,林睿宏,Ray Lin,1,G1E2,G1 Guardians,104
+LE14036,秦依岑,Ariel Chin,1,G1E2,G1 Guardians,105
+LE14053,李沂儒,Yiru Lee,1,G1E2,G1 Guardians,101
+LE14054,陳品璿,Shelly Chen,1,G1E2,G1 Guardians,105
+LE14062,翁子晴,Sunny Weng,1,G1E2,G1 Guardians,102
+LE14106,吳梓語,Amber Wu,1,G1E2,G1 Guardians,103
+LE14119,陳莫羲,Moses Chen,1,G1E2,G1 Guardians,102
+LE14123,温郡之,Amilia Wen,1,G1E2,G1 Guardians,104
+LE14157,姚安恬,Adela,1,G1E2,G1 Guardians,106
+LE14167,王竣生,Jason,1,G1E2,G1 Guardians,103
+LE14179,劉倚函,Kate,1,G1E2,G1 Guardians,101
+LE14191,江品毅,Elias,1,G1E2,G1 Guardians,101
+LE14201,謝騫慬,Jezy,1,G1E2,G1 Guardians,106
+LE14219,李柔箮,Lorian,1,G1E2,G1 Guardians,103
+LE14238,陳恆泰,Terence,1,G1E2,G1 Guardians,105
+LE14239,吳少鋒,Leo,1,G1E2,G1 Guardians,106
+LE14258,劉晉菘,Justin,1,G1E2,G1 Guardians,103
+LE14002,何承羲,Harvey HO,1,G1E2,G1 Innovators,105
+LE14019,劉家希,Belle Liu,1,G1E2,G1 Innovators,103
+LE14031,李思誼,Chloe Lee,1,G1E2,G1 Innovators,106
+LE14039,施韋安,Wayne,1,G1E2,G1 Innovators,101
+LE14047,黃品喬,Joyce,1,G1E2,G1 Innovators,105
+LE14049,黃筠芯,Amelia Huang,1,G1E2,G1 Innovators,105
+LE14071,曾懷萱,Rhea Tseng,1,G1E2,G1 Innovators,102
+LE14095,翁翊芯,Yi Sin Wong,1,G1E2,G1 Innovators,106
+LE14116,郭芮瑞,Remi Kuo,1,G1E2,G1 Innovators,102
+LE14124,温齊之,Jackson Wen,1,G1E2,G1 Innovators,107
+LE14128,游以謙,Nicholas Yu,1,G1E2,G1 Innovators,102
+LE14132,蔡芷綺,Carlin,1,G1E3,G1 Trailblazers,101
+LE14164,林子越,Neil Lin,1,G1E2,G1 Innovators,101
+LE14197,李吉永,Leon,1,G1E2,G1 Innovators,104
+LE14218,蔡尚玹,Hsuan,1,G1E2,G1 Innovators,102
+LE14249,胡洛伊,Chloe Hu,1,G1E2,G1 Innovators,104
+LE14256,施昕辰,Dylan Shi,1,G1E2,G1 Innovators,104
+LE14259,藍沐晞,Ariel Lan,1,G1E2,G1 Innovators,101
+LE14020,王偲齊,Lucas Wang,1,G1E3,G1 Inventors,102
+LE14028,白智愛,Aeris Pai,1,G1E3,G1 Inventors,104
+LE14033,曾宥銘,Cooper Tseng,1,G1E3,G1 Inventors,103
+LE14048,薛林真,Abigail Hsueh,1,G1E3,G1 Inventors,104
+LE14065,唐琛,"Sum, Shawnette",1,G1E3,G1 Inventors,105
+LE14083,郭品謙,Marcus Kuo,1,G1E3,G1 Inventors,102
+LE14090,劉旭揚,Sean,1,G1E3,G1 Inventors,107
+LE14113,羅妍馨,Ruby Luo,1,G1E3,G1 Inventors,106
+LE14117,陳彥寧,Laurie chen,1,G1E3,G1 Inventors,102
+LE14126,陳宥安,Casper Chen,1,G1E3,G1 Inventors,103
+LE14129,林宥銨,Aimee Lin,1,G1E3,G1 Inventors,105
+LE14140,陳宥然,Eddie,1,G1E3,G1 Inventors,105
+LE14199,吳依瑾,Helena,1,G1E3,G1 Inventors,102
+LE14228,陳星瑜,BoBo,1,G1E3,G1 Inventors,103
+LE14252,張宇辰,Casper Chang,1,G1E3,G1 Inventors,102
+LE14004,劉芯妤,Leah Liu,1,G1E1,G1 Navigators,104
+LE14051,胡宸崴,Austin Hu,1,G1E1,G1 Navigators,106
+LE14058,徐悦唐,Utah Hsu,1,G1E1,G1 Navigators,106
+LE14059,鄭允霏,Edlyn,1,G1E1,G1 Navigators,107
+LE14063,高宇竑,HARVEY KAO,1,G1E1,G1 Navigators,105
+LE14131,徐嘉妤,Esther,1,G1E1,G1 Navigators,102
+LE14137,李艾潔,Nina LEE,1,G1E1,G1 Navigators,107
+LE14143,李修亦,Lucas,1,G1E1,G1 Navigators,101
+LE14147,徐子桓,Kurtis,1,G1E1,G1 Navigators,105
+LE14155,劉加星,Iris,1,G1E1,G1 Navigators,102
+LE14171,楊力丞,Milton,1,G1E1,G1 Navigators,102
+LE14184,薩拉斯卡塔麗娜,Catalina Salas,1,G1E1,G1 Navigators,103
+LE14193,陳沅豐,Ricky Chen,1,G1E1,G1 Navigators,103
+LE14206,鄭安妡,Amber Cheng,1,G1E1,G1 Navigators,101
+LE14208,洪暟陽,Kai Hung,1,G1E1,G1 Navigators,107
+LE14210,李丞軒,Sean,1,G1E1,G1 Navigators,104
+LE14216,王泓允,Jeremy Wang,1,G1E1,G1 Navigators,105
+LE14220,劉璽非,Audrey Liu,1,G1E1,G1 Navigators,105
+LE14226,黃若喬,Ashley,1,G1E1,G1 Navigators,102
+LE14237,陳君仁,Charlie,1,G1E1,G1 Navigators,102
+LE14003,王以棠,Shelby Wang,1,G1E3,G1 Pathfinders,104
+LE14012,林昕樂,Denton Lin,1,G1E3,G1 Pathfinders,104
+LE14021,吳堉堯,Abi Wu,1,G1E3,G1 Pathfinders,107
+LE14030,陳立芙,LOLA CHEN,1,G1E3,G1 Pathfinders,107
+LE14074,鄭宥恬,Trista Cheng,1,G1E3,G1 Pathfinders,103
+LE14077,謝安睿,Ray HSIEH,1,G1E3,G1 Pathfinders,107
+LE14084,賴柏宇,Charlie Lai,1,G1E3,G1 Pathfinders,102
+LE14089,游鎛碩,Owen Yu,1,G1E3,G1 Pathfinders,101
+LE14107,張宥寧,Leena,1,G1E3,G1 Pathfinders,104
+LE14110,陳宥澔,Grayson Chan,1,G1E3,G1 Pathfinders,102
+LE14112,顏明穎,Terry Yan,1,G1E3,G1 Pathfinders,107
+LE14118,王昱叡,Paxton Wang,1,G1E3,G1 Pathfinders,105
+LE14120,紀翔月,Brian Chi,1,G1E3,G1 Pathfinders,104
+LE14180,陳妡晴,Bonnie,1,G1E3,G1 Pathfinders,103
+LE14187,顏宏羲,Percy,1,G1E3,G1 Pathfinders,103
+LE14253,苗以晨,Phoebe Miao,1,G1E3,G1 Pathfinders,106
+LE14257,黃馳宴,Owen huang,1,G1E3,G1 Pathfinders,105
+LE14005,高晨曦,Ariel Kao,1,G1E2,G1 Pioneers,107
+LE14009,王苡晴,Celia Wang,1,G1E2,G1 Pioneers,101
+LE14026,吳沛諺,Anson Wu,1,G1E2,G1 Pioneers,103
+LE14034,吳以希,Brigitte WU,1,G1E2,G1 Pioneers,104
+LE14045,彭騫,Chien Peng,1,G1E2,G1 Pioneers,106
+LE14050,郭雨凝,YU NING KUO,1,G1E2,G1 Pioneers,104
+LE14066,李芝嫚,Ivanka Lee,1,G1E2,G1 Pioneers,102
+LE14067,陳楷妍,Carly Chen,1,G1E2,G1 Pioneers,106
+LE14069,蔡睿宇,Ray Tsai,1,G1E2,G1 Pioneers,104
+LE14079,陳宗潁,Jerry,1,G1E2,G1 Pioneers,107
+LE14098,藍薇琳,Irene Lan,1,G1E2,G1 Pioneers,107
+LE14127,劉爰曄,Charlotte Liu,1,G1E2,G1 Pioneers,105
+LE14168,劉哲嘉,Evan,1,G1E2,G1 Pioneers,105
+LE14172,林子原,Eason,1,G1E2,G1 Pioneers,105
+LE14181,劉伊翎,Hannah,1,G1E2,G1 Pioneers,107
+LE14214,田庭宇,Ryan,1,G1E2,G1 Pioneers,105
+LE14222,馬唯芯,Fiona,1,G1E2,G1 Pioneers,107
+LE14232,鄭崴元,Andrew Cheng,1,G1E2,G1 Pioneers,104
+LE14013,陳亭安,Angela Chen,1,G1E3,G1 Seekers,102
+LE14035,徐梓宸,Aiden Hsu,1,G1E3,G1 Seekers,102
+LE14040,倪晨硯,Ian Ni,1,G1E3,G1 Seekers,105
+LE14041,劉澈,Chris Liou,1,G1E3,G1 Seekers,106
+LE14068,呂冠鋆,Owen Lu,1,G1E3,G1 Seekers,107
+LE14080,羅心吾,Luca Lo,1,G1E3,G1 Seekers,106
+LE14081,邱韋澔,Cyrus Chiu,1,G1E3,G1 Seekers,105
+LE14082,邱亦菲,Effie Chiu,1,G1E3,G1 Seekers,101
+LE14096,朱允睿,Desmond Chu,1,G1E3,G1 Seekers,104
+LE14101,吳禹彤,Mia Wu,1,G1E3,G1 Seekers,106
+LE14108,林晞,Cici,1,G1E3,G1 Seekers,107
+LE14121,鄭安妘,Annie Cheng,1,G1E3,G1 Seekers,105
+LE14125,黃翎銨,Lillian Huang,1,G1E3,G1 Seekers,105
+LE14145,楊子霆,Justin,1,G1E3,G1 Seekers,106
+LE14242,鄭安淣,Annie,1,G1E3,G1 Seekers,101
+LE14247,戴秝,Boris DAI,1,G1E3,G1 Seekers,106
+LE14006,林予訸,Olly Lin,1,G1E3,G1 Trailblazers,102
+LE14014,馮熙媛,Ximier Feng,1,G1E3,G1 Trailblazers,101
+LE14057,郭宇晨,Ethan Kuo,1,G1E3,G1 Trailblazers,101
+LE14085,高瑈希,Crystal Kao,1,G1E3,G1 Trailblazers,106
+LE14087,楊苡妡,Phoebe Yang,1,G1E3,G1 Trailblazers,106
+LE14091,簡銓佑,Mark Chien,1,G1E3,G1 Trailblazers,107
+LE14092,李宸薰,Cody Lee,1,G1E3,G1 Trailblazers,104
+LE14099,陳禹廷,Raymond Chen,1,G1E3,G1 Trailblazers,106
+LE14102,童奕翔,Shawn Tung,1,G1E3,G1 Trailblazers,104
+LE14103,陳世睿,Ray Chen,1,G1E3,G1 Trailblazers,101
+LE14109,黃傑莫,Jie Ｍo Huang,1,G1E3,G1 Trailblazers,103
+LE14111,曹太一,Tai Tsao,1,G1E3,G1 Trailblazers,105
+LE14114,耿主君,King Keng,1,G1E3,G1 Trailblazers,106
+LE14227,許詠喬,Winnie,1,G1E3,G1 Trailblazers,105
+LE14241,范以恩,Ian Fan,1,G1E3,G1 Trailblazers,107
+LE14254,錢思元,Serena Chien,1,G1E3,G1 Trailblazers,101
+LE14011,黃士益,Ethan Huang,1,G1E2,G1 Visionaries,105
+LE14022,葉喆允,Jerry Yeh,1,G1E2,G1 Visionaries,107
+LE14042,鐘聖傑,George Tsung,1,G1E2,G1 Visionaries,101
+LE14056,王宥棋,Yuki Wang,1,G1E2,G1 Visionaries,103
+LE14064,林家愛,Hope Lin,1,G1E2,G1 Visionaries,107
+LE14070,黃祈淯,Henry Huang,1,G1E2,G1 Visionaries,103
+LE14073,劉芮祺,Rachel Liu,1,G1E2,G1 Visionaries,101
+LE14078,許元齊,Rex,1,G1E2,G1 Visionaries,101
+LE14086,陳筠昀,Ariel Chen,1,G1E2,G1 Visionaries,101
+LE14104,張舒媛,Hannah Chang,1,G1E2,G1 Visionaries,106
+LE14141,蘇呈軒,Leon,1,G1E2,G1 Visionaries,101
+LE14156,王晨妃,Miruku,1,G1E2,G1 Visionaries,104
+LE14158,曾苡晨,Aurora,1,G1E2,G1 Visionaries,103
+LE14188,李朝陽,Asahi Lee,1,G1E2,G1 Visionaries,106
+LE14230,姚學洋,Shawn,1,G1E2,G1 Visionaries,103
+LE14243,許鈜浩,Otto Hsu,1,G1E2,G1 Visionaries,102
+LE14016,王宇傑,Jacob Wang,1,G1E1,G1 Voyagers,103
+LE14037,李家惟,Lucas Li,1,G1E1,G1 Voyagers,106
+LE14072,張傅宣,Svetlana,1,G1E1,G1 Voyagers,103
+LE14093,Aaradhana,Aaradhana Arunkumar,1,G1E1,G1 Voyagers,101
+LE14135,楊昇晴,Chantelle,1,G1E1,G1 Voyagers,107
+LE14150,王鋯一,Eden,1,G1E1,G1 Voyagers,103
+LE14161,黃筱媛,MAX,1,G1E1,G1 Voyagers,102
+LE14165,陳峻邦,Benny,1,G1E1,G1 Voyagers,107
+LE14166,洪子森,Jeremy,1,G1E1,G1 Voyagers,106
+LE14175,曾梓洋,Alec Tseng,1,G1E1,G1 Voyagers,104
+LE14178,黃玧熙,Ashlynn,1,G1E1,G1 Voyagers,106
+LE14182,陳韞安,Leann,1,G1E1,G1 Voyagers,105
+LE14186,張卿原,Ori,1,G1E1,G1 Voyagers,101
+LE14190,陳皓,Johnny Chen,1,G1E1,G1 Voyagers,105
+LE14205,黃芊予,Abbie Huang,1,G1E1,G1 Voyagers,105
+LE14217,呂恩睿,Wilson,1,G1E1,G1 Voyagers,104
+LE14224,王子瑜,Mia,1,G1E1,G1 Voyagers,102
+LE14233,楊凱勛,Lucas Yang,1,G1E1,G1 Voyagers,106
+LE14245,何曉玥,Cayla Ho,1,G1E1,G1 Voyagers,107
+LE13006,藍婕芸,Anna Lan,2,G2E1,G2 Achievers,204
+LE13021,傅裕恩,YuAn Fu,2,G2E1,G2 Achievers,201
+LE13046,馮暘,Leo Feng,2,G2E1,G2 Achievers,206
+LE13047,王靖淮,Aldrich Wang,2,G2E1,G2 Achievers,204
+LE13050,賴沛萱,Anna Lai,2,G2E1,G2 Achievers,202
+LE13054,華晨妤,Avery Hua,2,G2E1,G2 Achievers,207
+LE13057,陳霏,Fei Chen,2,G2E1,G2 Achievers,201
+LE13093,周品佑,Eric Chou,2,G2E1,G2 Achievers,205
+LE13108,王迎曦,XiXi Wang,2,G2E1,G2 Achievers,202
+LE13110,林書慧,Sophie Lin,2,G2E1,G2 Achievers,201
+LE13117,顏翊斐,Fynn Yen,2,G2E1,G2 Achievers,204
+LE13124,王策允,William Wang,2,G2E1,G2 Achievers,207
+LE13177,林喬曦,Jesse Lin,2,G2E1,G2 Achievers,206
+LE13192,林楷晅,Audrey Lin,2,G2E1,G2 Achievers,203
+LE13193,許昕媮,Kelly Hsu,2,G2E1,G2 Achievers,206
+LE13201,温允齊,Victor Wen,2,G2E1,G2 Achievers,205
+LE13221,鄭宇晴,Clara Cheng,2,G2E1,G2 Achievers,204
+LE13254,羅苡宸,Riley Lo,2,G2E1,G2 Achievers,203
+LE13259,嚴俐捷,Emma Yan,2,G2E1,G2 Achievers,205
+LE13004,劉唯希,Yuiki Liu,2,G2E2,G2 Adventurers,205
+LE13010,盧巧耘,Joanne Lu,2,G2E2,G2 Adventurers,204
+LE13014,林宏恩,Ian Lin,2,G2E2,G2 Adventurers,207
+LE13020,盧莛諾,Aino Lu,2,G2E2,G2 Adventurers,207
+LE13037,廖宥翔,Victor Liao,2,G2E2,G2 Adventurers,201
+LE13039,周宏宇,Andrew Chou,2,G2E2,G2 Adventurers,202
+LE13060,呂沛蕎,Josephine Lu,2,G2E2,G2 Adventurers,205
+LE13064,王紘軒,Aaron Wang,2,G2E2,G2 Adventurers,202
+LE13068,蔡定橙,Ryder Tsai,2,G2E2,G2 Adventurers,204
+LE13094,林維羿,Mateo Lin,2,G2E2,G2 Adventurers,204
+LE13107,林筠蓁,Mina Lin,2,G2E2,G2 Adventurers,207
+LE13109,簡妍伊,Isabelle Chien,2,G2E2,G2 Adventurers,204
+LE13128,陳妤溱,Abigail Chen,2,G2E2,G2 Adventurers,206
+LE13160,楊淳安,Ann Yang,2,G2E2,G2 Adventurers,202
+LE13195,陳以芊,Chloe Chen,2,G2E2,G2 Adventurers,207
+LE13204,鄭穎宸,Ying-Chern CHIANG,2,G2E2,G2 Adventurers,202
+LE13229,陳昱齊,Sheldon Chen,2,G2E2,G2 Adventurers,204
+LE13237,蔡舒帆,Sophie Tsai,2,G2E2,G2 Adventurers,207
+LE13248,詹勳政,Ryan Chan,2,G2E2,G2 Adventurers,202
+LE13262,呂品樂,Lia Lu,2,G2E3,G2 Seekers,206
+LE13267,任玫,Milene,2,G2E2,G2 Adventurers,205
+LE13072,楊子稷,Eden Yang,2,G2E3,G2 Discoverers,206
+LE13074,郭軒睿,Sean Kuo,2,G2E3,G2 Discoverers,206
+LE13083,杜倩瑢,Naomi Du,2,G2E3,G2 Discoverers,203
+LE13085,陳亞若,Ariel Chen,2,G2E3,G2 Discoverers,204
+LE13088,蕭睿妍,Reese,2,G2E3,G2 Discoverers,201
+LE13097,郭錦諺,Brian Kuo,2,G2E3,G2 Discoverers,207
+LE13100,郭丞熙,Tyson Kuo,2,G2E3,G2 Discoverers,202
+LE13102,周珊羽,Sandy chou,2,G2E3,G2 Discoverers,207
+LE13103,陳聿盈,Maggie Chen,2,G2E3,G2 Discoverers,206
+LE13118,高于宸,Eddie Kao,2,G2E3,G2 Discoverers,204
+LE13148,傅弘勝,Brian Fu,2,G2E3,G2 Discoverers,203
+LE13253,張之瑜,Jennie Chang,2,G2E3,G2 Discoverers,204
+LE13261,吳亞甯,Elsa Wu,2,G2E3,G2 Discoverers,205
+LE13265,陳彥宇,CJ Chen,2,G2E3,G2 Discoverers,205
+LE13008,李雲霏,Fernanda Lee,2,G2E1,G2 Explorers,203
+LE13017,何宥均,Eugene Ho,2,G2E1,G2 Explorers,201
+LE13030,盧巧貽,Joy Lu,2,G2E1,G2 Explorers,205
+LE13031,陳靖涵,Claire Chen,2,G2E1,G2 Explorers,207
+LE13059,謝名璦,Ellie Hsieh,2,G2E1,G2 Explorers,206
+LE13063,林世暟,Kyle Lin,2,G2E1,G2 Explorers,205
+LE13105,邢欣愉,Alice Hsin,2,G2E1,G2 Explorers,203
+LE13111,戴佳彤,Venus Tai,2,G2E1,G2 Explorers,206
+LE13113,洪翊發,Yi Fa,2,G2E1,G2 Explorers,201
+LE13120,許悟,Wu Hsu,2,G2E1,G2 Explorers,206
+LE13138,黃宥程,Joseph Huang,2,G2E1,G2 Explorers,206
+LE13169,黃昱幃,Ryder Huang,2,G2E1,G2 Explorers,205
+LE13174,王元浩,Albert Wang,2,G2E1,G2 Explorers,205
+LE13175,吳騏希,Nick Wu,2,G2E1,G2 Explorers,203
+LE13189,陳恬安,Tiann Chen,2,G2E1,G2 Explorers,207
+LE13226,翁心妮,Mia Weng,2,G2E1,G2 Explorers,206
+LE13234,饒昕宸,Abbie Jao,2,G2E1,G2 Explorers,207
+LE13235,黃煦晴,Hsu-Ching Huang,2,G2E1,G2 Explorers,204
+LE13247,藍海菲,Skylar Lan,2,G2E1,G2 Explorers,204
+LE13257,朱彥宇,Lucas Chu,2,G2E1,G2 Explorers,202
+LE13001,嚴仟祐,Bless Yen,2,G2E2,G2 Guardians,203
+LE13003,蔣方瑜,Ｍelody Chiang,2,G2E2,G2 Guardians,202
+LE13007,陳宣靜,SARAH Chen,2,G2E2,G2 Guardians,206
+LE13011,蔡侑希,Hannah Tsai,2,G2E2,G2 Guardians,205
+LE13012,陳畇希,Dora Chen,2,G2E2,G2 Guardians,205
+LE13024,陳愉謹,Riley Chen,2,G2E2,G2 Guardians,207
+LE13027,李芫韶,Kaia Lee,2,G2E2,G2 Guardians,205
+LE13066,江彥辰,Austin Chiang,2,G2E2,G2 Guardians,207
+LE13078,張瑜恩,Wilma Chang,2,G2E2,G2 Guardians,206
+LE13130,姜懿日,Yoyo Jiang,2,G2E2,G2 Guardians,207
+LE13134,陳韋昕,Matthew Chen,2,G2E2,G2 Guardians,205
+LE13137,吳紀妍,Carina Wu,2,G2E2,G2 Guardians,206
+LE13149,邱楷紘,Seiya Chiu,2,G2E2,G2 Guardians,204
+LE13202,沈楀恩,Harper Shen,2,G2E2,G2 Guardians,201
+LE13207,鄭凱元,Jasper Cheng,2,G2E2,G2 Guardians,205
+LE13223,王騰樂,Tayler Wang,2,G2E2,G2 Guardians,206
+LE13228,呂學聿,Jerry Lu,2,G2E2,G2 Guardians,207
+LE13240,李睦紳,Luke Lee,2,G2E2,G2 Guardians,202
+LE13250,陳奎聿,Kui Yu,2,G2E2,G2 Guardians,204
+LE13260,劉夏言,Lillian Liu,2,G2E2,G2 Guardians,205
+LE13002,蔣方綺,Kate Chiang,2,G2E2,G2 Innovators,202
+LE13035,李伊秦,Queenie Lee,2,G2E2,G2 Innovators,205
+LE13045,黃子勳,Leo Huang,2,G2E2,G2 Innovators,205
+LE13049,陳頎皓,Jasper Chen,2,G2E2,G2 Innovators,203
+LE13081,古倢綾,Jlin Ku,2,G2E2,G2 Innovators,201
+LE13090,賴裕承,Lucas Lai,2,G2E2,G2 Innovators,201
+LE13091,許靖晨,Ryan Hsu,2,G2E2,G2 Innovators,203
+LE13106,劉芯妤,Claire Liu,2,G2E2,G2 Innovators,202
+LE13112,陳朝楊,Peter Tan,2,G2E2,G2 Innovators,205
+LE13114,蘇禹僑,Leo Su,2,G2E2,G2 Innovators,206
+LE13115,陳恩燦,Aiden Chen,2,G2E2,G2 Innovators,205
+LE13133,湯崴宇,Rory Tang,2,G2E2,G2 Innovators,205
+LE13141,楊川樂,Leo Yang,2,G2E2,G2 Innovators,204
+LE13152,林恩熹,Mavis LIN,2,G2E2,G2 Innovators,204
+LE13153,余樂,Nana Yu,2,G2E2,G2 Innovators,202
+LE13170,陳宇綸,Adam Chen,2,G2E2,G2 Innovators,201
+LE13179,簡舞墨,Hannah Chien,2,G2E2,G2 Innovators,204
+LE13213,金其霏,Melody Chin,2,G2E2,G2 Innovators,204
+LE13241,林筠甯,Ning Ning,2,G2E2,G2 Innovators,204
+LE13256,尤姸心,Carol Yu,2,G2E2,G2 Innovators,203
+LE13026,陳楷甯,Ninni Chen,2,G2E1,G2 Inventors,202
+LE13036,劉喬熙,Chelsea Kuo Liu,2,G2E1,G2 Inventors,201
+LE13055,陳星妍,Venus Chen,2,G2E1,G2 Inventors,207
+LE13056,黃畇瑄,Orla Huang,2,G2E1,G2 Inventors,205
+LE13099,吳孟謙,Matt Wu,2,G2E1,G2 Inventors,202
+LE13122,徐赫均,Lucas Hsu,2,G2E1,G2 Inventors,207
+LE13123,洪楷睿,Cary Hung,2,G2E1,G2 Inventors,202
+LE13136,趙伯琳,Berlin Chao,2,G2E1,G2 Inventors,202
+LE13143,陳紀凱,Oli Chen,2,G2E1,G2 Inventors,204
+LE13154,蕭詠娜,Nana,2,G2E1,G2 Inventors,206
+LE13165,莊顥寧,Hao Ning Chuang,2,G2E1,G2 Inventors,207
+LE13167,陳沐亨,STORMY CHEN,2,G2E1,G2 Inventors,202
+LE13186,紀宇忻,Mellay Chi,2,G2E1,G2 Inventors,205
+LE13212,楊珞菲,Zofie Yang,2,G2E1,G2 Inventors,201
+LE13225,李宜澤,Aurora Li,2,G2E1,G2 Inventors,202
+LE13230,紀彥堂,Ryan Chi,2,G2E1,G2 Inventors,202
+LE13233,林芮瑩,Josie Lin,2,G2E1,G2 Inventors,203
+LE13239,鄧力誠,Liam Teng,2,G2E1,G2 Inventors,201
+LE13249,林孟穎,Miranda Lin,2,G2E1,G2 Inventors,204
+LE13252,黃悅宸,Celia Huang,2,G2E1,G2 Inventors,201
+LE13025,陳家宜,Joy Chen,2,G2E3,G2 Navigators,201
+LE13033,楊舒恩,Sue Anne Yang,2,G2E3,G2 Navigators,206
+LE13041,許辰愷,Bryan HSU,2,G2E3,G2 Navigators,201
+LE13043,徐仕翰,HAN HSU,2,G2E3,G2 Navigators,203
+LE13069,蔡昀稘,Oliver,2,G2E3,G2 Navigators,206
+LE13071,李科樺,Jasper Lee,2,G2E3,G2 Navigators,203
+LE13077,陳詠璿,Molly Chen,2,G2E3,G2 Navigators,202
+LE13084,蔡安娜,Anna,2,G2E3,G2 Navigators,205
+LE13119,曾紹恩,Sean Tseng,2,G2E3,G2 Navigators,203
+LE13178,葉羽恒,Kevin Yeh,2,G2E3,G2 Navigators,207
+LE13190,陳宥親,Lucy Chen,2,G2E3,G2 Navigators,206
+LE13196,郭子岑,Melody Kuo,2,G2E3,G2 Navigators,206
+LE13219,賀丹丹,Vanessa Ho,2,G2E3,G2 Navigators,201
+LE13005,莊紫瑜,Ellie Chuang,2,G2E2,G2 Pathfinders,201
+LE13018,詹杰恩,Jayden Jan,2,G2E2,G2 Pathfinders,202
+LE13022,陳興璿,Sean Chen,2,G2E2,G2 Pathfinders,202
+LE13042,吳昱翰,Jimmy Wu,2,G2E2,G2 Pathfinders,206
+LE13058,林侑緗,Sharron Lin,2,G2E2,G2 Pathfinders,205
+LE13082,王以安,Anne Wang,2,G2E2,G2 Pathfinders,204
+LE13101,陳湘澐,Bella Chen,2,G2E2,G2 Pathfinders,203
+LE13156,陳憶菲,Trinity Tan,2,G2E2,G2 Pathfinders,202
+LE13162,郭宇捷,Eddie Kuo,2,G2E2,G2 Pathfinders,201
+LE13163,汪書侑,Alston Wang,2,G2E2,G2 Pathfinders,207
+LE13171,余祐昊,Yurick Yu,2,G2E2,G2 Pathfinders,207
+LE13198,林芷如,Nini Lin,2,G2E2,G2 Pathfinders,207
+LE13199,劉圳塏,James Liu,2,G2E2,G2 Pathfinders,207
+LE13210,陳語若,Olivia CHEN,2,G2E2,G2 Pathfinders,203
+LE13224,沈柏潤,Benson Shen,2,G2E2,G2 Pathfinders,207
+LE13227,徐子晏,Kyrie Hsu,2,G2E2,G2 Pathfinders,201
+LE13246,黃煒喬,Doris Huang,2,G2E2,G2 Pathfinders,201
+LE13255,李艾橙,Nora Lee,2,G2E2,G2 Pathfinders,201
+LE13263,馮爰甄,Jessica Feng,2,G2E2,G2 Pathfinders,207
+LE13269,陳語汵,Mina Chen,2,G2E2,G2 Pathfinders,203
+LE13023,李向融,Solomon Lee,2,G2E1,G2 Pioneers,206
+LE13029,黃薷逸,Ruyi Huang,2,G2E1,G2 Pioneers,203
+LE13032,林昕濡,Veronica Lin,2,G2E1,G2 Pioneers,206
+LE13051,徐語希,Daisy Hsu,2,G2E1,G2 Pioneers,201
+LE13061,賴沐晨,Farah Lai,2,G2E1,G2 Pioneers,206
+LE13121,陳奕安,Ian Chen,2,G2E1,G2 Pioneers,202
+LE13126,蔡希悠,Scarlett Choi,2,G2E1,G2 Pioneers,207
+LE13127,張芯桐,Jocelyn Chang,2,G2E1,G2 Pioneers,207
+LE13129,吳宸安,Anson Wu,2,G2E1,G2 Pioneers,204
+LE13132,張鉦靈,Auston Chang,2,G2E1,G2 Pioneers,201
+LE13155,洪元懿,Ariel Hung,2,G2E1,G2 Pioneers,202
+LE13159,陳宥穎,Elliott Chen,2,G2E1,G2 Pioneers,206
+LE13183,廖苡岑,Rena Liao,2,G2E1,G2 Pioneers,201
+LE13187,羅靖涵,Jing-Han Luo,2,G2E1,G2 Pioneers,201
+LE13222,葉僖潼,Hilary Ip,2,G2E1,G2 Pioneers,202
+LE13232,王心悅,Evelyn Wang,2,G2E1,G2 Pioneers,201
+LE13238,黃翊軒,Ethan Huang,2,G2E1,G2 Pioneers,202
+LE13242,郭宇恩,Ian Kuo,2,G2E1,G2 Pioneers,201
+LE13243,張靖朗,Caleb Sepnio,2,G2E1,G2 Pioneers,204
+LE13264,林思嫚,Ning Lin,2,G2E1,G2 Pioneers,207
+LE13013,陳洛伊,Roy Chen,2,G2E3,G2 Seekers,203
+LE13065,王希澤,Enzo Pirini,2,G2E3,G2 Seekers,201
+LE13086,張語芯,Livia Chang,2,G2E3,G2 Seekers,207
+LE13095,林恒碩,Darren Lin,2,G2E3,G2 Seekers,202
+LE13098,郭定勳,Oliver Kuo,2,G2E3,G2 Seekers,207
+LE13104,李姵縈,Allie Lee,2,G2E3,G2 Seekers,207
+LE13135,周子琁,Winnie Chou,2,G2E3,G2 Seekers,203
+LE13145,陳沐軒,Sam Chen,2,G2E3,G2 Seekers,205
+LE13150,洪煦寰,Austin Hung,2,G2E3,G2 Seekers,204
+LE13151,陳可娣,Heidi Chen,2,G2E3,G2 Seekers,204
+LE13172,楊博硯,Jeremy Yang,2,G2E3,G2 Seekers,206
+LE13214,曾畹純,Momo TSENG,2,G2E3,G2 Seekers,203
+LE13028,李梓寧,Ginny LEE,2,G2E3,G2 Trailblazers,202
+LE13092,陳宥丞,Astor Chen,2,G2E3,G2 Trailblazers,206
+LE13116,蕭御丞,Kaya Hsiao,2,G2E3,G2 Trailblazers,204
+LE13131,徐賦,Wesley Hsu,2,G2E3,G2 Trailblazers,203
+LE13164,陳建安,Andy Chen,2,G2E3,G2 Trailblazers,203
+LE13166,周宥均,Nelson Chou,2,G2E3,G2 Trailblazers,206
+LE13182,林書禾,Renee Lin,2,G2E3,G2 Trailblazers,202
+LE13208,蔡閎宇,Eason Tsai,2,G2E3,G2 Trailblazers,203
+LE13217,林品均,Nina Lin,2,G2E3,G2 Trailblazers,204
+LE13220,劉昀朵,Doris Liu,2,G2E3,G2 Trailblazers,201
+LE13245,曾梓喻,Michelle,2,G2E3,G2 Trailblazers,206
+LE13258,黃宣晴,Pinky Huang,2,G2E3,G2 Trailblazers,203
+LE13266,李侑恩,Jonathan Lee,2,G2E3,G2 Trailblazers,202
+LE13009,顧媚媚,MeiMei Ku,2,G2E2,G2 Visionaries,204
+LE13034,徐可妮,Courtney HSU,2,G2E2,G2 Visionaries,204
+LE13038,蔡葳立,Victor Tsai,2,G2E2,G2 Visionaries,204
+LE13053,林孟霏,Emma Lin,2,G2E2,G2 Visionaries,207
+LE13067,王子軒,ETHAN Wang,2,G2E2,G2 Visionaries,201
+LE13073,洪宇璿,Ethan Hung,2,G2E2,G2 Visionaries,202
+LE13075,李元熙,Hans Lee,2,G2E2,G2 Visionaries,203
+LE13125,張心寧,Enid Chang,2,G2E2,G2 Visionaries,205
+LE13142,劉耘希,Jude Liu,2,G2E2,G2 Visionaries,201
+LE13158,洪毅達,Owen Hong,2,G2E2,G2 Visionaries,206
+LE13173,陳宇哲,Jay Chen,2,G2E2,G2 Visionaries,203
+LE13176,林喬翰,Jehan Lin,2,G2E2,G2 Visionaries,206
+LE13188,葉俐思,Liz Yap,2,G2E2,G2 Visionaries,206
+LE13191,吳姵緹,PEITI WU,2,G2E2,G2 Visionaries,205
+LE13197,莊俐亞,LEAH CHUANG,2,G2E2,G2 Visionaries,202
+LE13206,童毅愷,Asher Tung,2,G2E2,G2 Visionaries,203
+LE13209,藍摯誠,Alexander Stewart,2,G2E2,G2 Visionaries,204
+LE13211,黃品湘,Peggy Huang,2,G2E2,G2 Visionaries,203
+LE13215,楊紫筠,Abby YANG,2,G2E2,G2 Visionaries,205
+LE13268,林柏穎,Brendan,2,G2E2,G2 Visionaries,205
+LE13015,柳樂帆,Levan Liu,2,G2E1,G2 Voyagers,203
+LE13052,黃于晏,Bella Huang,2,G2E1,G2 Voyagers,203
+LE13070,許仁愷,Nolan Hsu,2,G2E1,G2 Voyagers,205
+LE13080,陳以欣,Kinsley Chen,2,G2E1,G2 Voyagers,207
+LE13087,董文文,Teiya Tung,2,G2E1,G2 Voyagers,204
+LE13089,呂承勳,Ryan Lu,2,G2E1,G2 Voyagers,204
+LE13096,鄭承劼,Alvin Cheng,2,G2E1,G2 Voyagers,203
+LE13157,楊若水,Catherine Yang,2,G2E1,G2 Voyagers,205
+LE13180,鄭朵芩,Amelia Cheng,2,G2E1,G2 Voyagers,202
+LE13181,林毓婕,Yujie Lin,2,G2E1,G2 Voyagers,201
+LE13184,張瑜庭,Ting-Ting Chang,2,G2E1,G2 Voyagers,205
+LE13185,蔡至清,Kelly Tsai,2,G2E1,G2 Voyagers,203
+LE13194,黃芯甯,Ally Huang,2,G2E1,G2 Voyagers,207
+LE13200,林倢愷,Eason Lin,2,G2E1,G2 Voyagers,206
+LE13203,張家睿,Ray Chang,2,G2E1,G2 Voyagers,201
+LE13205,王宥登,Jordan Wang,2,G2E1,G2 Voyagers,203
+LE13216,游宸昕,Chelsie Yu,2,G2E1,G2 Voyagers,205
+LE13218,吳羽禾,Audrey Wu,2,G2E1,G2 Voyagers,207
+LE13236,施惇晴,Xena Shih,2,G2E1,G2 Voyagers,203
+LE13251,楊昇月,Sierra Yang,2,G2E1,G2 Voyagers,201
+LE12013,劉晉睿,Raymond Liu,3,G3E1,G3 Achievers,305
+LE12025,王宇璇,Ivy Wang,3,G3E1,G3 Achievers,304
+LE12031,楊恬懿,Blair Yang,3,G3E1,G3 Achievers,307
+LE12035,王亭嵐,Ariel Wang,3,G3E1,G3 Achievers,301
+LE12057,謝昕佑,Fina Hsieh,3,G3E1,G3 Achievers,305
+LE12058,宋樂珊,Melody Sung,3,G3E1,G3 Achievers,306
+LE12070,寇凌菲,Sonja Koh,3,G3E1,G3 Achievers,302
+LE12080,林又綸,Darren Lin,3,G3E1,G3 Achievers,306
+LE12094,林妍希,Ariel Lin,3,G3E1,G3 Achievers,304
+LE12111,麥宇承,WenLi Mai,3,G3E1,G3 Achievers,306
+LE12151,賴信丞,Alex LAI,3,G3E1,G3 Achievers,306
+LE12155,陳予蔚,Austin Chen,3,G3E1,G3 Achievers,306
+LE12156,蘇則尹,Ryan Su,3,G3E1,G3 Achievers,302
+LE12172,丁翎絜,Carla Ting,3,G3E1,G3 Achievers,301
+LE12233,李述,ZUMA LEE,3,G3E1,G3 Achievers,305
+LE12241,易千意,Emma YI,3,G3E1,G3 Achievers,302
+LE12242,蔡佑晨,Nora Tsai,3,G3E1,G3 Achievers,301
+LE12264,陳乙菲,Fei Chen,3,G3E1,G3 Achievers,304
+LE12273,劉靜茹,Fiona,3,G3E1,G3 Achievers,303
+LE12010,駱奕辰,Eason Lo,3,G3E2,G3 Adventurers,307
+LE12012,林宸寬,Chen Kuan,3,G3E2,G3 Adventurers,304
+LE12027,何品璇,Olivia Ho,3,G3E2,G3 Adventurers,307
+LE12029,葉瑞雪,Natalie Yeh,3,G3E2,G3 Adventurers,301
+LE12049,蔡秉宸,Tristan Tsai,3,G3E2,G3 Adventurers,304
+LE12072,陳映喬,Olivia Chen,3,G3E2,G3 Adventurers,306
+LE12091,盧師宇,Ethan Lu,3,G3E2,G3 Adventurers,307
+LE12095,吳悠,Joyce Wu,3,G3E2,G3 Adventurers,304
+LE12101,曹甯,Abby Tsao,3,G3E2,G3 Adventurers,306
+LE12103,西山比稀,NAMIKI NISHIYAMA,3,G3E2,G3 Adventurers,303
+LE12116,汪亮禾,Parker Wang,3,G3E2,G3 Adventurers,302
+LE12132,邱子晴,Leia Chiu,3,G3E2,G3 Adventurers,302
+LE12163,黃宥凱,Aegon Huang,3,G3E2,G3 Adventurers,305
+LE12186,賴岳亨,Henry Lai,3,G3E2,G3 Adventurers,306
+LE12220,郭宇廷,Tim Kuo,3,G3E2,G3 Adventurers,303
+LE12229,徐翊凱,Kai Hsu,3,G3E2,G3 Adventurers,303
+LE12246,陳心樂,Liv Chen,3,G3E2,G3 Adventurers,301
+LE12272,李晨希,Xenia Li,3,G3E2,G3 Adventurers,306
+LE12274,林廷翰,Ting,3,G3E2,G3 Adventurers,305
+LE12009,賴冠佑,Kyle Lai,3,G3E2,G3 Discoverers,303
+LE12016,黃睦宸,Marshall Huang,3,G3E2,G3 Discoverers,304
+LE12019,林妮蓁,Grace Lin,3,G3E2,G3 Discoverers,307
+LE12037,蕭以辰,Ethan Hsiao,3,G3E2,G3 Discoverers,304
+LE12041,邢柏霆,Tim Hshing,3,G3E2,G3 Discoverers,301
+LE12050,林齊天,Carson Lin,3,G3E2,G3 Discoverers,307
+LE12056,王奕丹,Demi Wang,3,G3E2,G3 Discoverers,304
+LE12089,柳侑辰,Max Liu,3,G3E2,G3 Discoverers,303
+LE12093,鄭宇倢,Corrine Cheng,3,G3E2,G3 Discoverers,301
+LE12104,林千媞,Audrey Lin,3,G3E2,G3 Discoverers,307
+LE12105,林子淇,Olivia Lin,3,G3E2,G3 Discoverers,302
+LE12110,鄭允哲,Danny Cheng,3,G3E2,G3 Discoverers,301
+LE12113,黃字璿,Rex Huang,3,G3E2,G3 Discoverers,305
+LE12114,林睦謙,Morten Lin,3,G3E2,G3 Discoverers,301
+LE12180,張詩佳,Dora Chang,3,G3E2,G3 Discoverers,306
+LE12198,文紹恆,Harvie Wen,3,G3E2,G3 Discoverers,301
+LE12201,劉姵吟,Bella Liu,3,G3E2,G3 Discoverers,307
+LE12211,王薆甯,Annie Wang,3,G3E2,G3 Discoverers,302
+LE12255,黃圓元,Yuliana Huang,3,G3E2,G3 Discoverers,302
+LE12257,黃品潔,Jenny Huang,3,G3E2,G3 Discoverers,307
+LE12004,蔡昀展,James Tsai,3,G3E2,G3 Explorers,303
+LE12007,廖宸諒,Lucas Liao,3,G3E2,G3 Explorers,303
+LE12020,呂沐恩,Astrid Lu,3,G3E2,G3 Explorers,305
+LE12062,王品霓,Olive Lin Hedges,3,G3E2,G3 Explorers,303
+LE12074,余品陞,Peter Yu,3,G3E2,G3 Explorers,306
+LE12081,林軒齊,Nick Lin,3,G3E2,G3 Explorers,301
+LE12087,潘又綸,Allen Pan,3,G3E2,G3 Explorers,307
+LE12090,孫俊霆,David Sun,3,G3E2,G3 Explorers,305
+LE12092,何育昀,Mina HO,3,G3E2,G3 Explorers,303
+LE12097,李芮潁,Ellie Lee,3,G3E2,G3 Explorers,301
+LE12119,盛傑立,Jie li Sheng,3,G3E2,G3 Explorers,303
+LE12125,江竑陞,Iverson Chiang,3,G3E2,G3 Explorers,304
+LE12128,孫可語,Rachel Sun,3,G3E2,G3 Explorers,305
+LE12170,李名媗,Audrey Li,3,G3E2,G3 Explorers,303
+LE12177,邱禹寧,Rosey Chiu,3,G3E2,G3 Explorers,301
+LE12190,詹昕澄,Joseph Zhan,3,G3E2,G3 Explorers,301
+LE12206,曾苡晴,Emily Tseng,3,G3E2,G3 Explorers,306
+LE12232,蔡宇程,Cyrille Tsai,3,G3E2,G3 Explorers,304
+LE12238,王若安,Anna Wang,3,G3E2,G3 Explorers,303
+LE12268,江懿昕,Elly Kong,3,G3E2,G3 Explorers,303
+LE12008,苗以軒,Jeremy Miao,3,G3E1,G3 Guardians,304
+LE12085,楊鎧銓,Kyle,3,G3E1,G3 Guardians,303
+LE12122,林裕凱,Kevin LIN,3,G3E1,G3 Guardians,307
+LE12129,蘇巧甯,Micá Perry,3,G3E1,G3 Guardians,304
+LE12131,翁昀希,Lisa Weng,3,G3E1,G3 Guardians,302
+LE12135,林禹安,Sophia Lin,3,G3E1,G3 Guardians,301
+LE12140,陳昕樂,Kira Chen,3,G3E1,G3 Guardians,303
+LE12141,陳愛語,Momo Chen,3,G3E1,G3 Guardians,304
+LE12149,劉承壅,Morris Liu,3,G3E1,G3 Guardians,304
+LE12175,楊艾霓,Elly Yang,3,G3E1,G3 Guardians,304
+LE12194,成聲慕,Samuel Cheng,3,G3E1,G3 Guardians,304
+LE12205,林文心,Elsa LIN,3,G3E1,G3 Guardians,303
+LE12209,林昱芊,Chloe Lin,3,G3E1,G3 Guardians,304
+LE12212,陳嬟臻,Fenix Chen,3,G3E1,G3 Guardians,305
+LE12214,胡喬娜,Johnna Hu,3,G3E1,G3 Guardians,307
+LE12224,江宇弘,Ricky Chiang,3,G3E1,G3 Guardians,304
+LE12226,黃宥仁,Aiden Huang,3,G3E1,G3 Guardians,301
+LE12250,江予晴,Rina Chiang,3,G3E1,G3 Guardians,304
+LE12270,梁湘怡,Mia Liang,3,G3E1,G3 Guardians,302
+LE12021,廖予晨,Clara Liao,3,G3E1,G3 Innovators,306
+LE12022,邱禹潔,Rachel Chiu,3,G3E1,G3 Innovators,306
+LE12023,陽若晴,Laura Yang,3,G3E1,G3 Innovators,306
+LE12034,何藺穎,Emma Ho,3,G3E1,G3 Innovators,303
+LE12068,謝昕妍,ELENA HSIEH,3,G3E1,G3 Innovators,305
+LE12073,沈郁珈,Alice SHEN,3,G3E1,G3 Innovators,302
+LE12076,林子垣,Dalton LIN,3,G3E1,G3 Innovators,307
+LE12086,江翊睿,Iestyn Chiang,3,G3E1,G3 Innovators,301
+LE12106,陳妡菲,Belle Chen,3,G3E1,G3 Innovators,305
+LE12121,李瑞迪,Ori LEE,3,G3E1,G3 Innovators,302
+LE12136,黃予晞,Yu XI (Luna) Huang,3,G3E1,G3 Innovators,305
+LE12142,吳沛穎,Amber WU,3,G3E1,G3 Innovators,306
+LE12168,陳品蓉,ROSE CHEN,3,G3E1,G3 Innovators,307
+LE12178,邱莉亞,Amilia Chiu,3,G3E1,G3 Innovators,305
+LE12185,李維晏,Apollo Lee,3,G3E1,G3 Innovators,302
+LE12188,蔡佑澤,Jake Tsai,3,G3E1,G3 Innovators,304
+LE12199,潘奐廷,Nick PAN,3,G3E1,G3 Innovators,306
+LE12237,黃品宸,Faye Huang,3,G3E1,G3 Innovators,305
+LE12260,莊崴翔,Wilson Zhuang,3,G3E1,G3 Innovators,304
+LE12005,林健宇,Ken Lin,3,G3E1,G3 Inventors,302
+LE12024,江睦儀,Bonnie Chiang,3,G3E1,G3 Inventors,302
+LE12038,何愷安,Evan Ho,3,G3E1,G3 Inventors,306
+LE12042,陳又愷,William Chen,3,G3E1,G3 Inventors,307
+LE12053,陳子睿,Ray Chen,3,G3E1,G3 Inventors,307
+LE12059,許忻蔓,Amanda Hsu,3,G3E1,G3 Inventors,302
+LE12063,黃筠棠,Nora Huang,3,G3E1,G3 Inventors,303
+LE12096,張天瑠,Solar Chang,3,G3E1,G3 Inventors,303
+LE12139,凌宇舒,Melody Ling,3,G3E1,G3 Inventors,304
+LE12184,林日向,RISHIANG LIN,3,G3E1,G3 Inventors,305
+LE12192,沈諭恆,Oliver Shen,3,G3E1,G3 Inventors,303
+LE12202,藍以安,Sienna Lan,3,G3E1,G3 Inventors,302
+LE12203,張絲淳,Ayla Chang,3,G3E1,G3 Inventors,307
+LE12239,廖湛衣,Sofia Liao,3,G3E1,G3 Inventors,303
+LE12240,楊若熙,Zoe Conlan,3,G3E1,G3 Inventors,305
+LE12261,曾翊宸,Adrien Tseng,3,G3E1,G3 Inventors,302
+LE12262,陳宥妡,Lucy Chen,3,G3E1,G3 Inventors,304
+LE12263,許睿岑,Phoebe Hsu,3,G3E1,G3 Inventors,303
+LE12269,劉柏均,Jasper Liu,3,G3E1,G3 Inventors,307
+LE12002,蔡竣翔,Jim Tsai,3,G3E2,G3 Navigators,306
+LE12014,張亦均,Felix Chang,3,G3E2,G3 Navigators,303
+LE12036,陳昱臻,Esther Chen,3,G3E2,G3 Navigators,307
+LE12047,霍普寧,Theodore Ning Hopper,3,G3E2,G3 Navigators,301
+LE12052,張宸彬,Patrick Chang,3,G3E2,G3 Navigators,305
+LE12077,陳柏睿,Jonas Chen,3,G3E2,G3 Navigators,302
+LE12098,吳若妃,Janet Wu,3,G3E2,G3 Navigators,305
+LE12099,陳維恩,Zoey Chen,3,G3E2,G3 Navigators,302
+LE12115,林宇珩,Jonas Lin,3,G3E2,G3 Navigators,304
+LE12145,吳采澧,Cherry Wu,3,G3E2,G3 Navigators,306
+LE12147,秦偲齊,Chi Chi,3,G3E2,G3 Navigators,306
+LE12148,楊宜宸,Josh Yang,3,G3E2,G3 Navigators,304
+LE12150,陳竑宇,Julian Chen,3,G3E2,G3 Navigators,307
+LE12152,陳宥宇,Oakley Chen,3,G3E2,G3 Navigators,303
+LE12169,洪儀恩,Ernie HONG,3,G3E2,G3 Navigators,302
+LE12171,唐曼榕,Samantha Donaldson,3,G3E2,G3 Navigators,302
+LE12187,朱柏諭,Bowie Chu,3,G3E2,G3 Navigators,307
+LE12217,陶耘萱,Doris Tao,3,G3E2,G3 Navigators,306
+LE12251,陳臻,Lydia Chen,3,G3E2,G3 Navigators,302
+LE12267,徐敬童,ChingTung Hsu,3,G3E2,G3 Navigators,307
+LE12043,盧俊伸,Luke Lu,3,G3E3,G3 Pathfinders,303
+LE12051,池晨均,Jasper CHIH,3,G3E3,G3 Pathfinders,301
+LE12084,陳星諾,Justin Chen,3,G3E3,G3 Pathfinders,304
+LE12112,張晉赫,CHIN HE CHANG,3,G3E3,G3 Pathfinders,302
+LE12133,王襄,Hedy Wang,3,G3E3,G3 Pathfinders,301
+LE12137,賴昕荷,Hollie Lai,3,G3E3,G3 Pathfinders,305
+LE12138,蕭鈺宣,Helen Hsiao,3,G3E3,G3 Pathfinders,306
+LE12153,李衡威,Mitch Lee,3,G3E3,G3 Pathfinders,302
+LE12157,葉宸翔,Sean Yeh,3,G3E3,G3 Pathfinders,301
+LE12173,陳宜伶,Sophie Chen,3,G3E3,G3 Pathfinders,306
+LE12176,陳亮妍,Una Chen,3,G3E3,G3 Pathfinders,303
+LE12235,杜富堯,Rex,3,G3E3,G3 Pathfinders,305
+LE12265,呂品璇,Tia Lu,3,G3E3,G3 Pathfinders,307
+LE12001,張宸睿,Ray Chang,3,G3E3,G3 Pioneers,301
+LE12079,古羽立,Eddie Ku,3,G3E3,G3 Pioneers,302
+LE12100,陳允艾,KELLY CHEN,3,G3E3,G3 Pioneers,304
+LE12120,劉雍,YOUNG LIU,3,G3E3,G3 Pioneers,306
+LE12123,謝瑋仁,Steven Hsieh,3,G3E3,G3 Pioneers,307
+LE12134,馬楷涵,Amelia Ma,3,G3E3,G3 Pioneers,303
+LE12193,陳堂晏,Ian Chen,3,G3E3,G3 Pioneers,305
+LE12210,劉坤頤,Queeny,3,G3E3,G3 Pioneers,303
+LE12231,楊雨叡,Casper Yang,3,G3E3,G3 Pioneers,307
+LE12253,劉牧唯,Winter Liu,3,G3E3,G3 Pioneers,307
+LE12254,呂凱米,Kemi Lu,3,G3E3,G3 Pioneers,301
+LE12271,吳佳蒨,Carol wu,3,G3E3,G3 Pioneers,303
+LE12003,謝岩恩,Ian HSIEH,3,G3E3,G3 Seekers,301
+LE12026,許筑媛,Anna,3,G3E3,G3 Seekers,304
+LE12067,李苡菲,Miffy Lee,3,G3E3,G3 Seekers,306
+LE12127,高珩晉,Elroy GAO,3,G3E3,G3 Seekers,302
+LE12143,張予華,HuaHua Chang,3,G3E3,G3 Seekers,307
+LE12164,張涵軒,Sandy Chang,3,G3E3,G3 Seekers,306
+LE12182,黃芊芮,Rachel Huang,3,G3E3,G3 Seekers,304
+LE12208,金雪,Shirley KIM,3,G3E3,G3 Seekers,301
+LE12218,黃彩桐,Daisy Huang,3,G3E3,G3 Seekers,302
+LE12227,洪睿謙,HUNG Justin,3,G3E3,G3 Seekers,302
+LE12259,沈品妡,Amber Shen,3,G3E3,G3 Seekers,306
+LE12018,林致瑋,Giovanni Lin,3,G3E2,G3 Trailblazers,306
+LE12028,吳可凡,Skye Wu,3,G3E2,G3 Trailblazers,302
+LE12032,王語宸,Yvonna Wang,3,G3E2,G3 Trailblazers,302
+LE12040,許泓基,Marc Hsu,3,G3E2,G3 Trailblazers,303
+LE12045,林佑熹,Matt Lin,3,G3E2,G3 Trailblazers,302
+LE12046,朱晨碩,Archer CHU,3,G3E2,G3 Trailblazers,303
+LE12055,林恩立,Elory Lin,3,G3E2,G3 Trailblazers,305
+LE12060,謝安倢,Angie Hsieh,3,G3E2,G3 Trailblazers,307
+LE12065,楊羽霏,Krystal Yang,3,G3E2,G3 Trailblazers,307
+LE12083,丁俊恩,John Ding,3,G3E2,G3 Trailblazers,302
+LE12117,汪益菲,Phil Wang,3,G3E2,G3 Trailblazers,305
+LE12154,李宸宏,Alen Lee,3,G3E2,G3 Trailblazers,305
+LE12174,張家瑜,Anna Chang,3,G3E2,G3 Trailblazers,305
+LE12181,鄭卉喬,Lori Cheng,3,G3E2,G3 Trailblazers,301
+LE12189,王楷勛,KaiHsun Wang,3,G3E2,G3 Trailblazers,305
+LE12200,李彥辰,Neo Lee,3,G3E2,G3 Trailblazers,302
+LE12230,侯威呈,wilson Hou,3,G3E2,G3 Trailblazers,301
+LE12245,郭奕言,Mia Guo,3,G3E2,G3 Trailblazers,306
+LE12247,林千筠,DOLLY LIN,3,G3E2,G3 Trailblazers,304
+LE12258,呂佳諠,Azalea Lu,3,G3E2,G3 Trailblazers,304
+LE12048,王牧傑,Bruno Wang,3,G3E2,G3 Visionaries,302
+LE12054,林恩正,Elvis LIN,3,G3E2,G3 Visionaries,305
+LE12061,朱妍語,Elsa Ju,3,G3E2,G3 Visionaries,301
+LE12069,陳盈菲,Remi Chen,3,G3E2,G3 Visionaries,304
+LE12071,陳彥鳳,Minimei,3,G3E2,G3 Visionaries,305
+LE12075,劉加陽,EVAN LIU,3,G3E2,G3 Visionaries,301
+LE12107,王又仟,Belle Wang,3,G3E2,G3 Visionaries,305
+LE12108,何宜穜,Abby Ho,3,G3E2,G3 Visionaries,307
+LE12118,陳冠彣,Gavin Chen,3,G3E2,G3 Visionaries,303
+LE12130,黃湘珺,Joy Huang,3,G3E2,G3 Visionaries,301
+LE12160,廖承熙,William Liao,3,G3E2,G3 Visionaries,303
+LE12166,廖嘉綺,kiki,3,G3E2,G3 Visionaries,305
+LE12183,王思淮,Eric Wang,3,G3E2,G3 Visionaries,305
+LE12191,葉品毅,Ryan Yeh,3,G3E2,G3 Visionaries,307
+LE12196,蕭予安,Ian HSIAO,3,G3E2,G3 Visionaries,301
+LE12204,陳希,C.C CHEN,3,G3E2,G3 Visionaries,301
+LE12216,陳尊宓,Zoe Chen,3,G3E2,G3 Visionaries,303
+LE12221,陳柏睿,Chris Chen,3,G3E2,G3 Visionaries,306
+LE12222,黃子恆,Robot Huang,3,G3E2,G3 Visionaries,302
+LE12236,陳彥希,Rafael Chen,3,G3E2,G3 Visionaries,306
+LE12006,賴楷承,Kasen Lai,3,G3E2,G3 Voyagers,301
+LE12017,詹定昕,Anson Chan,3,G3E2,G3 Voyagers,307
+LE12033,黃宥欣,Jessie Huang,3,G3E2,G3 Voyagers,306
+LE12039,陳彥綸,Bobo Chen,3,G3E2,G3 Voyagers,304
+LE12064,洪丞妍,Jamie HUNG,3,G3E2,G3 Voyagers,301
+LE12066,陳星晴,Anita Chen,3,G3E2,G3 Voyagers,304
+LE12078,林天一,Eagle LIN,3,G3E2,G3 Voyagers,307
+LE12124,呂皓綸,Kieran LU,3,G3E2,G3 Voyagers,307
+LE12146,范名希,Amanda Fan,3,G3E2,G3 Voyagers,307
+LE12162,顏睿晨,Raycen YEN,3,G3E2,G3 Voyagers,301
+LE12207,周晏妘,Olivia Chou,3,G3E2,G3 Voyagers,305
+LE12213,巫姵瑩,Joanna WU,3,G3E2,G3 Voyagers,301
+LE12215,陳巧霏,Jophy Chen,3,G3E2,G3 Voyagers,305
+LE12219,郭宇凡,Ivan Kuo,3,G3E2,G3 Voyagers,303
+LE12223,黃玧皓,Ashton Huang,3,G3E2,G3 Voyagers,304
+LE12225,陳祐頡,Jay Chen,3,G3E2,G3 Voyagers,306
+LE12228,林宸瑋,Wilson Lin,3,G3E2,G3 Voyagers,307
+LE12248,許唯恩,Amber Hsu,3,G3E2,G3 Voyagers,305
+LE12252,黃晨熙,Ollie Huang,3,G3E2,G3 Voyagers,306
+LE12256,黃喻陽,Aiden Huang,3,G3E2,G3 Voyagers,306
+LE11020,李家妤,Emily Lee,4,G4E1,G4 Achievers,404
+LE11042,趙宥凱,Chester Chao,4,G4E1,G4 Achievers,402
+LE11058,和睿萱,Jocelyn Ho,4,G4E1,G4 Achievers,404
+LE11094,張予禎,Keira Chang,4,G4E1,G4 Achievers,403
+LE11096,高于棠,Emma Kao,4,G4E1,G4 Achievers,407
+LE11101,許茲雁,Kira Hsu,4,G4E1,G4 Achievers,406
+LE11114,湯崴舜,Caspar Tang,4,G4E1,G4 Achievers,403
+LE11119,劉旭璘,Cyril Liu,4,G4E1,G4 Achievers,407
+LE11121,王顗睿,Daniel Wang,4,G4E1,G4 Achievers,403
+LE11146,黃浩維,Howard Huang,4,G4E1,G4 Achievers,401
+LE11156,王子宸,Prince Wang,4,G4E1,G4 Achievers,401
+LE11165,楊芯雨,Mira Yang,4,G4E1,G4 Achievers,407
+LE11183,鄭先策,Gordon Cheng,4,G4E1,G4 Achievers,406
+LE11204,陳熙悅,Cecilia Chen,4,G4E1,G4 Achievers,407
+LE11206,王宥晴,Claire Wang,4,G4E1,G4 Achievers,403
+LE11235,吳婕熙,Jessie Wu,4,G4E1,G4 Achievers,407
+LE11265,李仁琋,Elliott Li,4,G4E1,G4 Achievers,403
+LE11270,曾子倪,Neah Tseng,4,G4E1,G4 Achievers,402
+LE11280,土井惠理紗,Elisa Doi,4,G4E1,G4 Achievers,407
+LE11012,吳承軒,Adonis Wu,4,G4E2,G4 Adventurers,405
+LE11018,駱佩希,Paige Lo,4,G4E2,G4 Adventurers,401
+LE11024,李旻姸,Miya Li,4,G4E2,G4 Adventurers,403
+LE11027,周子凌,Celine Chou,4,G4E2,G4 Adventurers,401
+LE11050,張維宸,Ethan Zhang,4,G4E2,G4 Adventurers,406
+LE11053,馮宇闊,Avery Feng,4,G4E2,G4 Adventurers,406
+LE11067,鍾欣琪,Vicky Chung,4,G4E2,G4 Adventurers,402
+LE11069,傅淳雍,Livia Fu,4,G4E2,G4 Adventurers,405
+LE11083,陳崴祈,Maison Chen,4,G4E2,G4 Adventurers,403
+LE11084,陳羿愷,Yi-kai Chen,4,G4E2,G4 Adventurers,401
+LE11085,梁軒齊,Tristan Liang,4,G4E2,G4 Adventurers,404
+LE11087,李昊澂,Harrison Li,4,G4E2,G4 Adventurers,406
+LE11142,蔡昕霏,Faye Tsai,4,G4E2,G4 Adventurers,407
+LE11149,李桀睿,Jerry Lee,4,G4E2,G4 Adventurers,403
+LE11155,杜秉軒,Bing Tu,4,G4E2,G4 Adventurers,403
+LE11179,洪語晨,Charlotte Hung,4,G4E2,G4 Adventurers,406
+LE11221,周允起,Victor Chou,4,G4E2,G4 Adventurers,405
+LE11243,池語瑄,Abby Chih,4,G4E2,G4 Adventurers,401
+LE11250,邱宇涵,Viola Chiu,4,G4E2,G4 Adventurers,404
+LE11289,雷雨熹,Lexie Lei,4,G4E2,G4 Adventurers,404
+LE11003,楊賢亮,Liang Yang,4,G4E2,G4 Discoverers,406
+LE11008,江東蔚,Kurtis Chiang,4,G4E2,G4 Discoverers,406
+LE11052,趙祖佑,Caden Chao,4,G4E2,G4 Discoverers,406
+LE11054,王心佑,Olivia Wang,4,G4E2,G4 Discoverers,403
+LE11061,馮媛,Kira Feng,4,G4E2,G4 Discoverers,406
+LE11068,許宸瑜,Karena Hsu,4,G4E2,G4 Discoverers,406
+LE11074,陳柏睿,Adam Chen,4,G4E2,G4 Discoverers,405
+LE11080,李柏橙,Paddy Lee,4,G4E2,G4 Discoverers,404
+LE11098,邱苡甯,Yining Chiu,4,G4E2,G4 Discoverers,407
+LE11113,陳亮捷,Leon Chen,4,G4E2,G4 Discoverers,405
+LE11115,游翔恩,Eric Yu,4,G4E2,G4 Discoverers,404
+LE11141,蔡依倫,Eileen Tsai,4,G4E2,G4 Discoverers,404
+LE11195,張晟軒,Edison Chang,4,G4E2,G4 Discoverers,403
+LE11220,洪苡豪,Max Hong,4,G4E2,G4 Discoverers,404
+LE11236,陳芝樺,Amber Chen,4,G4E2,G4 Discoverers,406
+LE11263,楊苡辰,Jules Yang,4,G4E2,G4 Discoverers,404
+LE11278,林楷霏,Olivia Lin,4,G4E2,G4 Discoverers,407
+LE11282,王俐潼,Anna Wang,4,G4E2,G4 Discoverers,403
+LE11006,徐紹揚,Daniel Hsu,4,G4E2,G4 Explorers,402
+LE11007,蘇禹睿,Rain Su,4,G4E2,G4 Explorers,407
+LE11036,劉閎逸,Mark Liu,4,G4E2,G4 Explorers,401
+LE11041,李丞遠,Eason Li,4,G4E2,G4 Explorers,407
+LE11086,黃翰威,William Huang,4,G4E2,G4 Explorers,406
+LE11117,胡栢寧,Bernie Hu,4,G4E2,G4 Explorers,406
+LE11125,吳子甯,Zena Wu,4,G4E2,G4 Explorers,406
+LE11133,簡翊芯,Ida Andersen,4,G4E2,G4 Explorers,401
+LE11168,邱詩庭,Serena Chiu,4,G4E2,G4 Explorers,402
+LE11210,陳靚語,Jane Chen,4,G4E2,G4 Explorers,401
+LE11219,闕子荃,Jacob Chueh,4,G4E2,G4 Explorers,403
+LE11228,姚奕丞,Aiden Yao,4,G4E2,G4 Explorers,407
+LE11230,陳淂璿,Ted Chen,4,G4E2,G4 Explorers,402
+LE11245,孫宓雅,Miya Sun,4,G4E2,G4 Explorers,402
+LE11249,張宸瑋,Sophie Chang,4,G4E2,G4 Explorers,403
+LE11256,王寀寧,Stefanie Wang,4,G4E2,G4 Explorers,404
+LE11271,黃鈺琁,Angel Huang,4,G4E2,G4 Explorers,404
+LE11279,林嘉緯,Miller Lin,4,G4E2,G4 Explorers,402
+LE11288,徐榆喬,Clara Hsu,4,G4E2,G4 Explorers,403
+LE11025,楊舒晴,Amber Yang,4,G4E3,G4 Guardians,407
+LE11100,方子綺,Alyssa Fang,4,G4E3,G4 Guardians,404
+LE11103,蔡縈瑄,Lucy Tsai,4,G4E3,G4 Guardians,402
+LE11147,陳皓軒,Jasper Chen,4,G4E3,G4 Guardians,402
+LE11150,侯威任,William Hou,4,G4E3,G4 Guardians,407
+LE11158,郭安喆,Calix Kuo,4,G4E3,G4 Guardians,401
+LE11214,陳薇恩,Elvire Chen,4,G4E3,G4 Guardians,404
+LE11229,黃奕愷,Eric Huang,4,G4E3,G4 Guardians,402
+LE11231,陳諾亞,Noah Chen,4,G4E3,G4 Guardians,403
+LE11246,廖禹希,Cynthia Liao,4,G4E3,G4 Guardians,406
+LE11264,楊米霓,Minnie Yang,4,G4E3,G4 Guardians,407
+LE11268,沈郁崴,Felix Shen,4,G4E3,G4 Guardians,401
+LE11286,許尹馨,Cindy Hsu,4,G4E3,G4 Guardians,402
+LE11290,吳季栩,Anton Wu,4,G4E3,G4 Guardians,402
+LE11295,姚嘉薇,Evelyn,4,G4E3,G4 Guardians,405
+LE11297,黃敏溱,Minnie Huang,4,G4E3,G4 Guardians,402
+LE11014,廖晟佑,Nicholas Liao,4,G4E2,G4 Innovators,405
+LE11030,蕭子婷,Love Hsiao,4,G4E2,G4 Innovators,403
+LE11039,陳柏霖,Brooklyn Chen,4,G4E2,G4 Innovators,403
+LE11043,杜英睿,Ryan Tu,4,G4E2,G4 Innovators,401
+LE11076,黄康允,Otto Huang,4,G4E2,G4 Innovators,407
+LE11097,黃品忻,Olivia Huang,4,G4E2,G4 Innovators,403
+LE11104,陳柔彤,Sophia Chen,4,G4E2,G4 Innovators,404
+LE11140,陳玥霖,Joanna Chen,4,G4E2,G4 Innovators,401
+LE11145,劉修帆,Blake Liu,4,G4E2,G4 Innovators,405
+LE11152,董哲希,Jesse Tung,4,G4E2,G4 Innovators,406
+LE11164,郭芊妤,Coco Kuo,4,G4E2,G4 Innovators,404
+LE11173,許婷淇,Sophia Hsu,4,G4E2,G4 Innovators,401
+LE11177,蕭晨芸,Amber Hsiao,4,G4E2,G4 Innovators,407
+LE11192,張詠謙,Derrick Chang,4,G4E2,G4 Innovators,405
+LE11193,黃浩雲,Howard Huang,4,G4E2,G4 Innovators,405
+LE11238,連悅,Joy Lien,4,G4E2,G4 Innovators,401
+LE11241,林恒菲,Kelsey Lin,4,G4E2,G4 Innovators,403
+LE11247,蔡依樂,Katherine Tsai,4,G4E2,G4 Innovators,405
+LE11272,詹蕎羽,Mia Chan,4,G4E2,G4 Innovators,405
+LE11292,陳姷妃,Phoebe Chen,4,G4E2,G4 Innovators,404
+LE11005,鄭又睿,Rex Cheng,4,G4E3,G4 Inventors,407
+LE11034,官歆悅,Pearl Kuan,4,G4E3,G4 Inventors,401
+LE11035,譚韻綺,Kiki Tan,4,G4E3,G4 Inventors,405
+LE11099,黃芮婕,Riley Huang,4,G4E3,G4 Inventors,406
+LE11112,顏宏甫,Kevin Yen,4,G4E3,G4 Inventors,401
+LE11124,陳俊諺,Ryan Chen,4,G4E3,G4 Inventors,407
+LE11135,許芷瑜,Jumia Hsu,4,G4E3,G4 Inventors,405
+LE11137,岑欣,Tera Tsen,4,G4E3,G4 Inventors,407
+LE11180,張恩語,Lilian Chang,4,G4E3,G4 Inventors,401
+LE11182,陳昭旭,Justin Chen,4,G4E3,G4 Inventors,404
+LE11188,施瑞誌,George Shih,4,G4E3,G4 Inventors,406
+LE11191,陳冠綸,Alan Chen,4,G4E3,G4 Inventors,401
+LE11212,張瑾妍,Elsa Chang,4,G4E3,G4 Inventors,404
+LE11291,郭家睿,Gary Kuo,4,G4E3,G4 Inventors,403
+LE11009,李展亘,Samuel Li,4,G4E2,G4 Navigators,403
+LE11011,黃宇安,Zach Wong,4,G4E2,G4 Navigators,401
+LE11019,王姵晴,Peggy Wang,4,G4E2,G4 Navigators,405
+LE11033,鍾佳恩,Vera Chung,4,G4E2,G4 Navigators,406
+LE11062,陳宥希,Madison Chen,4,G4E2,G4 Navigators,402
+LE11071,陳采言,Hattie Chen,4,G4E2,G4 Navigators,402
+LE11093,陳庭蓁,Amber Chen,4,G4E2,G4 Navigators,405
+LE11095,胡瑀棠,Adelyn Hu,4,G4E2,G4 Navigators,401
+LE11122,林星辰,Ricky Lin,4,G4E2,G4 Navigators,404
+LE11136,陳盈亮,Omi Chen,4,G4E2,G4 Navigators,406
+LE11153,劉定穎,Daniel Liu,4,G4E2,G4 Navigators,405
+LE11159,劉諭澤,Zack Liu,4,G4E2,G4 Navigators,406
+LE11171,陳允兒,Sophie Chen,4,G4E2,G4 Navigators,402
+LE11181,靳博翔,Ryder Chin,4,G4E2,G4 Navigators,407
+LE11218,吳亦文,Owen Wu,4,G4E2,G4 Navigators,405
+LE11234,李昀庭,Candice Lee,4,G4E2,G4 Navigators,402
+LE11260,周品希,Gordon Chou,4,G4E2,G4 Navigators,406
+LE11262,許潔洢,Delphine Hsu,4,G4E2,G4 Navigators,406
+LE11284,梁振航,Hunter Liang,4,G4E2,G4 Navigators,407
+LE11300,鄭宏旭,Alex,4,G4E2,G4 Navigators,404
+LE11023,殷宇馨,Vera Yin,4,G4E2,G4 Pathfinders,404
+LE11029,蔡沐容,Jemma Tsai,4,G4E2,G4 Pathfinders,406
+LE11031,徐溦鍹,Bibi Hsu,4,G4E2,G4 Pathfinders,402
+LE11045,傅昫賓,Benjamin Fu,4,G4E2,G4 Pathfinders,404
+LE11066,何曉喬,Chrissy Ho,4,G4E2,G4 Pathfinders,405
+LE11081,陳佑澤,Alston Chen,4,G4E2,G4 Pathfinders,403
+LE11176,郭珈嘉,Molly Kuo,4,G4E2,G4 Pathfinders,405
+LE11194,林維熙,Nathan Lin,4,G4E2,G4 Pathfinders,402
+LE11200,尤嘉恩,Rebecca You,4,G4E2,G4 Pathfinders,406
+LE11208,許子宸,Mia Hsu,4,G4E2,G4 Pathfinders,402
+LE11216,吳湘琟,Kristie Wu,4,G4E2,G4 Pathfinders,402
+LE11224,朱子樂,Zach Chu,4,G4E2,G4 Pathfinders,401
+LE11255,陳宥宇,Greyson Chen,4,G4E2,G4 Pathfinders,402
+LE11261,洪子宸,Zachery Hung,4,G4E2,G4 Pathfinders,407
+LE11277,翁尚澤,Sean Weng,4,G4E2,G4 Pathfinders,403
+LE11283,蔡孟軒,Meng Xuan Tsai,4,G4E2,G4 Pathfinders,401
+LE11287,黃承方,Vincent Huang,4,G4E2,G4 Pathfinders,401
+LE11022,曾亮晴,Abigail Tseng,4,G4E3,G4 Pioneers,407
+LE11038,馬楷恩,Ryan Ma,4,G4E3,G4 Pioneers,407
+LE11092,賴艾萱,Iris Lai,4,G4E3,G4 Pioneers,405
+LE11102,王晨淅,Emilia Wang,4,G4E3,G4 Pioneers,403
+LE11138,陳宣,Mikaela Chen,4,G4E3,G4 Pioneers,403
+LE11166,陳庭芸,Momo Chen,4,G4E3,G4 Pioneers,404
+LE11169,林明欣,Yami Lin,4,G4E3,G4 Pioneers,406
+LE11172,吳依瞳,Hannah Wu,4,G4E3,G4 Pioneers,403
+LE11190,李丞晧,Harvey Lee,4,G4E3,G4 Pioneers,405
+LE11196,徐郁翔,Ryan Hsu,4,G4E3,G4 Pioneers,407
+LE11276,鄭宇宸,Adam Cheng,4,G4E3,G4 Pioneers,405
+LE11294,徐莀琋,Aura,4,G4E3,G4 Pioneers,406
+LE11296,洪仕軒,Andrew Hung,4,G4E3,G4 Pioneers,407
+LE11299,謝秉宸,Benson,4,G4E3,G4 Pioneers,406
+LE11049,李祐霆,Max Lee,4,G4E1,G4 Seekers,404
+LE11055,莊瑀心,Olivia Chuang,4,G4E1,G4 Seekers,407
+LE11123,林柏彥,Bryan Lin,4,G4E1,G4 Seekers,402
+LE11129,陳家妍,Abbie Chen,4,G4E1,G4 Seekers,404
+LE11132,邢樂萱,Claire Hsin,4,G4E1,G4 Seekers,404
+LE11170,黃禹睎,Viviana Huang,4,G4E1,G4 Seekers,405
+LE11178,孫瑀為,Cara Sun,4,G4E1,G4 Seekers,403
+LE11185,陳祈安,Hoyt chen,4,G4E1,G4 Seekers,407
+LE11189,陳冠穎,Kwun Wing Chen,4,G4E1,G4 Seekers,401
+LE11198,黃婕寧,Jeannine Huang,4,G4E1,G4 Seekers,402
+LE11222,謝宇宸,Henry Hsieh,4,G4E1,G4 Seekers,402
+LE11227,劉宸亞,Adam Liu,4,G4E1,G4 Seekers,407
+LE11239,林芷安,Ellie Lin,4,G4E1,G4 Seekers,405
+LE11240,吳庭妮,Tina Wu,4,G4E1,G4 Seekers,407
+LE11248,陳立函,Teagan McCreesh,4,G4E1,G4 Seekers,405
+LE11274,孫熙妘,XI YUN,4,G4E1,G4 Seekers,406
+LE11275,戴廷瑞,Ray Tai,4,G4E1,G4 Seekers,406
+LE11293,李亮毅,Edison Lee,4,G4E1,G4 Seekers,404
+LE11298,徐敬允,Morris,4,G4E1,G4 Seekers,404
+LE11010,梁惟凱,Ray Liang,4,G4E2,G4 Trailblazers,403
+LE11016,郭㒥澤,Ryder Kuo,4,G4E2,G4 Trailblazers,401
+LE11028,陳以曦,Yi-hsi Chen,4,G4E2,G4 Trailblazers,407
+LE11047,呂時宇,Eason Lu,4,G4E2,G4 Trailblazers,405
+LE11048,呂佑宸,Louis Lu,4,G4E2,G4 Trailblazers,405
+LE11056,莊妤嫻,Aurora Chuang,4,G4E2,G4 Trailblazers,401
+LE11082,陳宥宇,Brian Chen,4,G4E2,G4 Trailblazers,405
+LE11089,陳星璇,Chloe Chen,4,G4E2,G4 Trailblazers,401
+LE11107,何芊樂,Mia Ho,4,G4E2,G4 Trailblazers,402
+LE11118,李洛瑾,Roy Lee,4,G4E2,G4 Trailblazers,405
+LE11128,黃筱喬,Amber Huang,4,G4E2,G4 Trailblazers,405
+LE11157,陳詠霖,Alan Chen,4,G4E2,G4 Trailblazers,404
+LE11160,陳尼克,Nick Chen,4,G4E2,G4 Trailblazers,406
+LE11163,楊羽馨,Ivory Yang,4,G4E2,G4 Trailblazers,401
+LE11187,楊程越,Ryan Yang,4,G4E2,G4 Trailblazers,402
+LE11201,盧芊熙,Lucy Lu,4,G4E2,G4 Trailblazers,405
+LE11207,楊丞晞,Chelsea Yang,4,G4E2,G4 Trailblazers,401
+LE11237,陳韵宜,Alisa Chen,4,G4E2,G4 Trailblazers,404
+LE11273,周杰穎,Archie Chou,4,G4E2,G4 Trailblazers,404
+LE11285,許安妍,LALA,4,G4E2,G4 Trailblazers,402
+LE11013,陳宥宏,Jager Chen,4,G4E1,G4 Visionaries,404
+LE11037,林育丞,Neio Lin,4,G4E1,G4 Visionaries,405
+LE11046,吳泊槿,Adam Wu,4,G4E1,G4 Visionaries,403
+LE11064,周晏竹,Lyanne Chou,4,G4E1,G4 Visionaries,403
+LE11078,李宇皓,Evan Lee,4,G4E1,G4 Visionaries,402
+LE11090,李明韵,Scarlett Li,4,G4E1,G4 Visionaries,405
+LE11126,朱怡笙,Ally Chu,4,G4E1,G4 Visionaries,402
+LE11130,朱書靚,Shu-ching Chu,4,G4E1,G4 Visionaries,403
+LE11139,張宸瑀,Rita Chang,4,G4E1,G4 Visionaries,401
+LE11154,吳昀展,Neo Wu,4,G4E1,G4 Visionaries,404
+LE11161,殷祐澤,Curry Yin,4,G4E1,G4 Visionaries,407
+LE11162,Zia,Arian Zia Evangelista,4,G4E1,G4 Visionaries,402
+LE11202,洪苡軒,Mia Hung,4,G4E1,G4 Visionaries,403
+LE11213,陳書薰,Carol Chen,4,G4E1,G4 Visionaries,403
+LE11226,簡浩任,Laurence Chien,4,G4E1,G4 Visionaries,406
+LE11258,許揚杰,Cillian Xu,4,G4E1,G4 Visionaries,404
+LE11266,廖苡妡,YIHSIN LIAO,4,G4E1,G4 Visionaries,404
+LE11269,蘇媺甯,Milly Su,4,G4E1,G4 Visionaries,401
+LE11002,吳東烜,Oscar Wu,4,G4E1,G4 Voyagers,402
+LE11026,何藺嬛,Amber Ling Shan Ho,4,G4E1,G4 Voyagers,402
+LE11040,李哲宇,Jerry Lee,4,G4E1,G4 Voyagers,407
+LE11057,謝薇禕,Olivia Hsieh,4,G4E1,G4 Voyagers,407
+LE11060,林欣逸,Ashley Lin,4,G4E1,G4 Voyagers,401
+LE11091,黃鉑渝,Tessa Huang,4,G4E1,G4 Voyagers,402
+LE11111,林昕澤,Damian Lin,4,G4E1,G4 Voyagers,401
+LE11131,柳明恩,Alyssa Liu,4,G4E1,G4 Voyagers,403
+LE11134,高子甯,Jessica Kao,4,G4E1,G4 Voyagers,405
+LE11143,葉汶欣,Kayla Yip,4,G4E1,G4 Voyagers,407
+LE11151,郭達政,Ronald Kuo,4,G4E1,G4 Voyagers,402
+LE11209,林苙筠,Ariel Lin,4,G4E1,G4 Voyagers,405
+LE11211,林禹馨,Anita Lin,4,G4E1,G4 Voyagers,406
+LE11217,梁少棋,Kyle Liang,4,G4E1,G4 Voyagers,406
+LE11225,陳倬辰,Joel Chen,4,G4E1,G4 Voyagers,403
+LE11233,梁啟雲,Claude Liang,4,G4E1,G4 Voyagers,401
+LE11281,陳語岑,Mia Chen,4,G4E1,G4 Voyagers,401
+LE10011,角地真仁,Mani Kakuchi,5,G5E2,G5 Achievers,502
+LE10027,許睦妍,Monica Hsu,5,G5E2,G5 Achievers,503
+LE10033,郭尚芸,Calla Kuo,5,G5E2,G5 Achievers,506
+LE10046,蕭御廷,Mika Hsiao,5,G5E2,G5 Achievers,507
+LE10053,劉哲宇,Jerry Liu,5,G5E2,G5 Achievers,502
+LE10056,陳芯辰,Emma Chen,5,G5E2,G5 Achievers,504
+LE10058,林衣芃,Jasmine Lin,5,G5E2,G5 Achievers,503
+LE10074,楊博翔,Paul Yang,5,G5E2,G5 Achievers,504
+LE10099,王筠晰,Dorothy Wang,5,G5E2,G5 Achievers,501
+LE10112,黃謙,Ryder Huang,5,G5E2,G5 Achievers,506
+LE10122,江品均,Leon Chiang,5,G5E2,G5 Achievers,507
+LE10131,陳彤瑄,Rainie Chen,5,G5E2,G5 Achievers,505
+LE10153,藍天佐,Carson Lane,5,G5E2,G5 Achievers,501
+LE10157,徐睿廷,Tim Hsu,5,G5E2,G5 Achievers,503
+LE10163,林詩栩,Angela Lin,5,G5E2,G5 Achievers,506
+LE10196,劉家妤,Dora Liu,5,G5E2,G5 Achievers,506
+LE10228,徐執欽,Triston Hsu,5,G5E2,G5 Achievers,502
+LE10239,蔡蓒妮,Nini Tsai,5,G5E2,G5 Achievers,503
+LE10242,陳若菲,Oli Chen,5,G5E2,G5 Achievers,502
+LE10277,胡彥斌,YUN-BIN HU,5,G5E2,G5 Achievers,505
+LE10001,蕭伯軒,Bo Hsuan Hsiao,5,G5E1,G5 Adventurers,506
+LE10008,許少杰,Jay Hsu,5,G5E1,G5 Adventurers,503
+LE10019,丁可馨,Kexin Ding,5,G5E1,G5 Adventurers,501
+LE10020,李睿玹,Rosie Li,5,G5E1,G5 Adventurers,506
+LE10037,林子晰,Mattias Lin,5,G5E1,G5 Adventurers,502
+LE10078,賴予晞,Curt Lai,5,G5E1,G5 Adventurers,501
+LE10083,姜泓羽,Ray Chiang,5,G5E1,G5 Adventurers,506
+LE10093,呂俐葳,Olivia Lu,5,G5E1,G5 Adventurers,504
+LE10097,黃文俞,Megan Bigler,5,G5E1,G5 Adventurers,506
+LE10116,林禮燊,Sam Lin,5,G5E1,G5 Adventurers,502
+LE10129,林佩妍,Peggy Lin,5,G5E1,G5 Adventurers,506
+LE10138,蔡丞甯,Chriselle Tsai,5,G5E1,G5 Adventurers,502
+LE10152,鄭丞宏,Ericsson Cheng,5,G5E1,G5 Adventurers,507
+LE10198,賴禹希,Debbie Lai,5,G5E1,G5 Adventurers,505
+LE10201,黃若桓,Hannah Huang,5,G5E1,G5 Adventurers,504
+LE10218,林揚宸,Asher Lin,5,G5E1,G5 Adventurers,507
+LE10234,華毓晴,Emma Hua,5,G5E1,G5 Adventurers,502
+LE10238,簡造儀,Mandy Chien,5,G5E1,G5 Adventurers,505
+LE10246,陳若瑀,Maggie Tan,5,G5E1,G5 Adventurers,507
+LE10280,林霓蔓,Mandy Lin,5,G5E1,G5 Adventurers,507
+LE10003,施予喆,Vettel Shih,5,G5E2,G5 Discoverers,503
+LE10025,張靖喬,Elly Chang,5,G5E2,G5 Discoverers,507
+LE10026,姜槿妍,Ariel Chiang,5,G5E2,G5 Discoverers,503
+LE10050,李東學,Gui Gui Lee,5,G5E2,G5 Discoverers,504
+LE10052,賴昕皜,Ivan Lai,5,G5E2,G5 Discoverers,501
+LE10079,陳宥銓,Rex Chen,5,G5E2,G5 Discoverers,503
+LE10085,方之介,Oliver Fang,5,G5E2,G5 Discoverers,504
+LE10087,李奧,Leo Lee,5,G5E2,G5 Discoverers,503
+LE10090,蔡昀珊,Jessica Tsai,5,G5E2,G5 Discoverers,506
+LE10092,黃品瑄,Erica Huang,5,G5E2,G5 Discoverers,501
+LE10103,陳欣卉,Flora Chen,5,G5E2,G5 Discoverers,503
+LE10142,許敬稚,Ryan Hsu,5,G5E2,G5 Discoverers,503
+LE10164,汪芷廷,Zoe Wang,5,G5E2,G5 Discoverers,503
+LE10186,葉耿嘉,Jasber Yeh,5,G5E2,G5 Discoverers,503
+LE10195,許靖,Hannah Hsu,5,G5E2,G5 Discoverers,506
+LE10247,葉貞明,Esme Yeh,5,G5E2,G5 Discoverers,505
+LE10254,劉偎,Silvia Liu,5,G5E2,G5 Discoverers,504
+LE10256,吳宜蓁,Leanne Goh,5,G5E2,G5 Discoverers,504
+LE10292,任南,Neilen,5,G5E2,G5 Discoverers,502
+LE10005,鄧凱駿,Kyson Deng,5,G5E2,G5 Explorers,503
+LE10038,林煜宸,Ethan Lin,5,G5E2,G5 Explorers,506
+LE10039,曹睿廷,Matt Tsao,5,G5E2,G5 Explorers,504
+LE10080,王孟元,Lucas Wang,5,G5E2,G5 Explorers,506
+LE10104,廖翔之,Amber Liao,5,G5E2,G5 Explorers,506
+LE10117,郭秉毅,Evan Kuo,5,G5E2,G5 Explorers,502
+LE10120,洪凱梃,Timothy Hung,5,G5E2,G5 Explorers,502
+LE10137,范聿涵,Lumi Fan,5,G5E2,G5 Explorers,503
+LE10141,許錦洢,Sophia Hsu,5,G5E2,G5 Explorers,507
+LE10161,高宇葳,Amanda Kao,5,G5E2,G5 Explorers,505
+LE10167,林昕樂,Scarlett Lin,5,G5E2,G5 Explorers,505
+LE10192,陳勇燁,Jasper Chen,5,G5E2,G5 Explorers,501
+LE10212,邱晨甯,Nessa Chiu,5,G5E2,G5 Explorers,505
+LE10220,陳秉桓,Hubert Chen,5,G5E2,G5 Explorers,502
+LE10233,黃筱媗,Sharon Huang,5,G5E2,G5 Explorers,506
+LE10253,張涵毓,Alyssa CHANG,5,G5E2,G5 Explorers,501
+LE10260,林辰威,WESLEY LIN,5,G5E2,G5 Explorers,507
+LE10268,洪儷庭,Nicole HUNG,5,G5E2,G5 Explorers,507
+LE10279,李家樺,Kenny Li,5,G5E2,G5 Explorers,502
+LE10067,陳宣媗,Elsa Chen,5,G5E2,G5 Guardians,506
+LE10068,藍雪比,Shelbie Lan,5,G5E2,G5 Guardians,501
+LE10069,陶妍喜,Shelby Tao,5,G5E2,G5 Guardians,501
+LE10086,楊介愷,Ryder Yang,5,G5E2,G5 Guardians,506
+LE10108,王廷恩,Skyler Wang,5,G5E2,G5 Guardians,505
+LE10119,郭桐,Peter Kuo,5,G5E2,G5 Guardians,505
+LE10121,簡祈瑞,Ray Jean,5,G5E2,G5 Guardians,501
+LE10135,陳佳儀,Nina Chen,5,G5E2,G5 Guardians,504
+LE10150,江紳睿,Ray Chiang,5,G5E2,G5 Guardians,504
+LE10182,傅天翔,Wesbie Fu,5,G5E2,G5 Guardians,507
+LE10194,劉展滔,Jourell Liu,5,G5E2,G5 Guardians,505
+LE10200,唐玥,Skylar Tong,5,G5E2,G5 Guardians,505
+LE10214,陳言愷,Toby Chen,5,G5E2,G5 Guardians,501
+LE10229,劉駿逸,Jonathan Liu,5,G5E2,G5 Guardians,501
+LE10265,李紫柔,Vanessa Lee,5,G5E2,G5 Guardians,505
+LE10270,藍懿君,Elizabeth Stewart,5,G5E2,G5 Guardians,502
+LE10275,吳采霏,Fifi Wu,5,G5E2,G5 Guardians,507
+LE10281,蔡騏宇,Martyn Tsai,5,G5E2,G5 Guardians,506
+LE10293,李宇禾,Darren Lee,5,G5E2,G5 Guardians,507
+LE10004,郭名軒,Brian Kuo,5,G5E3,G5 Innovators,502
+LE10009,曲則熙,Jay Chiu,5,G5E3,G5 Innovators,507
+LE10012,陳楷逸,Evan Chen,5,G5E3,G5 Innovators,505
+LE10059,郭智欣,Ingrid Kuo,5,G5E3,G5 Innovators,502
+LE10082,黃奕盛,Eason Huang,5,G5E3,G5 Innovators,503
+LE10114,張元昕,Ryan Chang,5,G5E3,G5 Innovators,504
+LE10154,劉昇泓,Harry Liu,5,G5E3,G5 Innovators,506
+LE10190,黃宥誠,Patrick Huang,5,G5E3,G5 Innovators,501
+LE10208,王喬音,Chelsea Wang,5,G5E3,G5 Innovators,501
+LE10210,周貝憶,Bella Chou,5,G5E3,G5 Innovators,502
+LE10217,余弈杋,Yuma Yu,5,G5E3,G5 Innovators,504
+LE10227,鄭崇言,Lucas Cheng,5,G5E3,G5 Innovators,503
+LE10245,周芷安,Amber Chou,5,G5E3,G5 Innovators,505
+LE10290,張宸瑜,Claire Chang,5,G5E3,G5 Innovators,502
+LE10013,徐弘毅,Ryder Hsu,5,G5E2,G5 Inventors,507
+LE10015,陳宥燊,Elroy Chen,5,G5E2,G5 Inventors,504
+LE10030,蘇永玹,Alison Su,5,G5E2,G5 Inventors,504
+LE10042,陳禹傑,Curtis McCreesh,5,G5E2,G5 Inventors,501
+LE10045,葉秉程,Alan Yeh,5,G5E2,G5 Inventors,506
+LE10084,簡乙賢,Eason Chien,5,G5E2,G5 Inventors,503
+LE10088,廖茗寬,Kerby Liao,5,G5E2,G5 Inventors,501
+LE10100,許茲晴,Dora Hsu,5,G5E2,G5 Inventors,503
+LE10133,林筱茵,Elaine Lin,5,G5E2,G5 Inventors,507
+LE10143,黃士欣,Oscar Huang,5,G5E2,G5 Inventors,502
+LE10149,邱奐瑋,Roy Chiu,5,G5E2,G5 Inventors,507
+LE10156,蔡易宬,William Tsai,5,G5E2,G5 Inventors,505
+LE10159,林陳佑,Nike Lin,5,G5E2,G5 Inventors,505
+LE10168,布楀嫣,Yolanda Pou,5,G5E2,G5 Inventors,503
+LE10206,張甯萱,Sibyl Zhang,5,G5E2,G5 Inventors,507
+LE10231,王宥甯,Vivian Wang,5,G5E2,G5 Inventors,502
+LE10236,王楚臻,Chloe Wang,5,G5E2,G5 Inventors,501
+LE10243,潘泳晴,Natalie Pan,5,G5E2,G5 Inventors,506
+LE10249,黃竣安,Jayden Huang,5,G5E2,G5 Inventors,505
+LE10269,陳柏勳,Paul Chen,5,G5E2,G5 Inventors,504
+LE10002,李宇恩,Ian Lee,5,G5E1,G5 Navigators,501
+LE10018,楊軒祐,Mikey Yang,5,G5E1,G5 Navigators,505
+LE10098,陳家芊,Angela Chen,5,G5E1,G5 Navigators,506
+LE10101,林亞盺,Emma Lin,5,G5E1,G5 Navigators,501
+LE10105,李彌,Lily Rose Lee,5,G5E1,G5 Navigators,503
+LE10127,陳詠昕,Sofia Chen,5,G5E1,G5 Navigators,504
+LE10130,李家羽,Hannah Lee,5,G5E1,G5 Navigators,505
+LE10132,周采臻,Nora Chou,5,G5E1,G5 Navigators,506
+LE10172,江昕蔓,Charlotte Chiang,5,G5E1,G5 Navigators,503
+LE10174,張可晴,Cathy Chang,5,G5E1,G5 Navigators,507
+LE10178,林暐捷,Lucas Lin,5,G5E1,G5 Navigators,507
+LE10199,杜欣橙,Cynthia Tu,5,G5E1,G5 Navigators,502
+LE10205,楊婕瑀,Apple Yang,5,G5E1,G5 Navigators,505
+LE10219,林揚朔,Oliver Lin,5,G5E1,G5 Navigators,506
+LE10237,邱若穎,Mollie Chiu,5,G5E1,G5 Navigators,506
+LE10241,潘羿安,Angel Pan,5,G5E1,G5 Navigators,504
+LE10266,柳宗佑,Oscar Liu,5,G5E1,G5 Navigators,506
+LE10278,林芯宇,Amelia Lin,5,G5E1,G5 Navigators,507
+LE10283,陳書萭,Gabriel (Gabby),5,G5E1,G5 Navigators,502
+LE10284,孫品謙,Ryan Sun,5,G5E1,G5 Navigators,504
+LE10017,周杰,Jay Chou,5,G5E2,G5 Pathfinders,503
+LE10032,蔡淳如,Lulu Tsai,5,G5E2,G5 Pathfinders,502
+LE10035,楊馥安,Angela Yang,5,G5E2,G5 Pathfinders,507
+LE10040,賴弘邦,Ian Lai,5,G5E2,G5 Pathfinders,503
+LE10041,朱焱槿,Ian Ju,5,G5E2,G5 Pathfinders,501
+LE10057,尤宣穎,Sofi Yu,5,G5E2,G5 Pathfinders,501
+LE10081,謝皓翔,Nathan Hsieh,5,G5E2,G5 Pathfinders,504
+LE10089,俞岳,Jayden Yu,5,G5E2,G5 Pathfinders,505
+LE10102,陳品蓉,Pin Pin Chen,5,G5E2,G5 Pathfinders,504
+LE10110,戴震緯,Jaden Dai,5,G5E2,G5 Pathfinders,502
+LE10139,蕭羽棠,Ava Hsiao,5,G5E2,G5 Pathfinders,503
+LE10148,侯丞陽,Willie Hou,5,G5E2,G5 Pathfinders,507
+LE10151,陳允可,Calvin Chen,5,G5E2,G5 Pathfinders,507
+LE10185,林天宇,Sky Lin,5,G5E2,G5 Pathfinders,505
+LE10197,陳柔伊,Zoe Chen,5,G5E2,G5 Pathfinders,501
+LE10202,黃于芮,Raine Huang,5,G5E2,G5 Pathfinders,503
+LE10203,王昕卉,Cynthia Wang,5,G5E2,G5 Pathfinders,502
+LE10259,陳元霆,Joshua Chen,5,G5E2,G5 Pathfinders,502
+LE10261,林語熙,Kimberley Lin,5,G5E2,G5 Pathfinders,503
+LE10007,藍天佑,Mason Lane,5,G5E1,G5 Pioneers,506
+LE10054,葉奕廷,Aiden Yeh,5,G5E1,G5 Pioneers,505
+LE10055,李彥妤,Chloe Lee,5,G5E1,G5 Pioneers,504
+LE10063,羅心彤,Neomi Lo,5,G5E1,G5 Pioneers,507
+LE10091,莊宜軒,Anna Chuang,5,G5E1,G5 Pioneers,503
+LE10106,張語芙,Alisha Chang,5,G5E1,G5 Pioneers,503
+LE10125,趙翊茵,Lillian Chao,5,G5E1,G5 Pioneers,501
+LE10128,李曦瑤,Chloe Lei,5,G5E1,G5 Pioneers,501
+LE10136,黃筠喬,Nelly Huang,5,G5E1,G5 Pioneers,505
+LE10162,林恩希,Elena Lin,5,G5E1,G5 Pioneers,501
+LE10165,陳唯雯,Elma Tan,5,G5E1,G5 Pioneers,502
+LE10170,賴禹心,Fiona Lia,5,G5E1,G5 Pioneers,502
+LE10187,徐嘉煕,Stefano Hsu,5,G5E1,G5 Pioneers,506
+LE10204,賴予晨,Audrey Lai,5,G5E1,G5 Pioneers,501
+LE10221,李昕叡,Darren Lee,5,G5E1,G5 Pioneers,507
+LE10248,陳亮蓁,Alicia Chen,5,G5E1,G5 Pioneers,504
+LE10257,柯卉芯,Chloe Ko,5,G5E1,G5 Pioneers,504
+LE10276,洪承裕,Casper Hung,5,G5E1,G5 Pioneers,504
+LE10282,王晨恩,Mia Wang,5,G5E1,G5 Pioneers,502
+LE10287,林敬謙,Austin Lin,5,G5E1,G5 Pioneers,503
+LE10294,王楷翔,Kyle,5,G5E1,G5 Pioneers,505
+LE10010,林琯鈞,Rex Lin,5,G5E2,G5 Seekers,506
+LE10016,林尚逸,Sean Lin,5,G5E2,G5 Seekers,502
+LE10023,黃柔璇,Chanel Huang,5,G5E2,G5 Seekers,503
+LE10043,李睿晟,Rex Lee,5,G5E2,G5 Seekers,502
+LE10065,吳怡安,Olivia Wu,5,G5E2,G5 Seekers,504
+LE10072,吳秉峻,Benjamin Wu,5,G5E2,G5 Seekers,507
+LE10115,李奕霆,Tim Lee,5,G5E2,G5 Seekers,505
+LE10160,陳世杰,Jay Chen,5,G5E2,G5 Seekers,502
+LE10173,陳柏蓁,Janet Chen,5,G5E2,G5 Seekers,507
+LE10177,張硯筑,Jasmine Chang,5,G5E2,G5 Seekers,504
+LE10179,何佑勳,Lucas Ho,5,G5E2,G5 Seekers,502
+LE10183,陳禹仲,Nick Chen,5,G5E2,G5 Seekers,506
+LE10207,林芯羽,Cinny Lin,5,G5E2,G5 Seekers,504
+LE10211,陳子昕,Haley Chen,5,G5E2,G5 Seekers,505
+LE10225,賴仕鈞,Junior Lai,5,G5E2,G5 Seekers,505
+LE10264,李若穎,Renée Lee,5,G5E2,G5 Seekers,506
+LE10272,李家燁,Kent Li,5,G5E2,G5 Seekers,501
+LE10285,閔智衙,Jia Min,5,G5E2,G5 Seekers,502
+LE10286,林禹翔,Murphy Lin,5,G5E2,G5 Seekers,504
+LE10048,鍾凱丞,Eric Chung,5,G5E3,G5 Trailblazers,503
+LE10073,曾宥傑,Jay Tseng,5,G5E3,G5 Trailblazers,506
+LE10109,陳柏霖,Benson Chen,5,G5E3,G5 Trailblazers,504
+LE10126,范詠可,Chloe Fan,5,G5E3,G5 Trailblazers,507
+LE10140,林德臻,Vita Lin,5,G5E3,G5 Trailblazers,506
+LE10145,陳帥,Shuai Chen,5,G5E3,G5 Trailblazers,501
+LE10147,郭祈寬,Mick Kuo,5,G5E3,G5 Trailblazers,504
+LE10184,林秉州,Jasper Lin,5,G5E3,G5 Trailblazers,501
+LE10191,許鈞翔,JX Hsu,5,G5E3,G5 Trailblazers,501
+LE10222,宋季洋,Bastian Sung,5,G5E3,G5 Trailblazers,504
+LE10240,嚴仟晴,Sunny Yen,5,G5E3,G5 Trailblazers,502
+LE10255,陳穎潔,Jessie Chen,5,G5E3,G5 Trailblazers,507
+LE10258,魏邑臻,Jenny Wei,5,G5E3,G5 Trailblazers,505
+LE10274,林品岑,Anna Lin,5,G5E3,G5 Trailblazers,502
+LE10291,游凱博,Casper YU,5,G5E3,G5 Trailblazers,506
+LE10028,陳姿欣,Zora Chen,5,G5E3,G5 Visionaries,505
+LE10062,李書琳,Catherine Lee,5,G5E3,G5 Visionaries,505
+LE10075,張瑞麟,Ryan Chang,5,G5E3,G5 Visionaries,507
+LE10094,張芯語,Dora Chang,5,G5E3,G5 Visionaries,504
+LE10107,盧林邑泰,Tai Lu,5,G5E3,G5 Visionaries,505
+LE10146,龍頎政,Ryan Lung,5,G5E3,G5 Visionaries,507
+LE10158,曾榆庭,Benjamin Tseng,5,G5E3,G5 Visionaries,503
+LE10176,徐羽葳,Yvette Hsu,5,G5E3,G5 Visionaries,507
+LE10226,陳柏翰,Hayden Chen,5,G5E3,G5 Visionaries,505
+LE10235,邱歆羽,Shirley Chiu,5,G5E3,G5 Visionaries,506
+LE10263,陳楷茗,Charles Chen,5,G5E3,G5 Visionaries,507
+LE10273,章芝婕,Queenie Chang,5,G5E3,G5 Visionaries,501
+LE10288,陳彥安,AJ Chen,5,G5E3,G5 Visionaries,504
+LE10006,陳帆義,Eason Chen,5,G5E3,G5 Voyagers,504
+LE10021,鄭采彤,Andrea Cheng,5,G5E3,G5 Voyagers,503
+LE10049,黃泓鎧,Kimi Huang,5,G5E3,G5 Voyagers,506
+LE10060,江苡榛,Janet Chiang,5,G5E3,G5 Voyagers,501
+LE10066,陳禹綺,Claire Chen,5,G5E3,G5 Voyagers,501
+LE10076,謝恩祖,Andrew Tse,5,G5E3,G5 Voyagers,507
+LE10096,辜巧慧,Amanda Gu,5,G5E3,G5 Voyagers,507
+LE10113,胡哲騫,Stanley Hu,5,G5E3,G5 Voyagers,505
+LE10123,徐永霖,Ian Hsu,5,G5E3,G5 Voyagers,503
+LE10155,林宥榤,Vincent Lin,5,G5E3,G5 Voyagers,504
+LE10180,黃昱程,Eric Huang,5,G5E3,G5 Voyagers,501
+LE10251,朱宣宇,Sunny Chu,5,G5E3,G5 Voyagers,501
+LE10271,童莛翰,Hank Tung,5,G5E3,G5 Voyagers,503
+LE10289,吳秉千,Twinkle Wu,5,G5E3,G5 Voyagers,505
+LE09019,黃亭禎,Daisy Huang,6,G6E1,G6 Achievers,605
+LE09023,劉冠妤,Moomoo Liu,6,G6E1,G6 Achievers,601
+LE09024,陳婕馨,Jesine Chen,6,G6E1,G6 Achievers,604
+LE09055,蔡誼蕾,Adelaide Tsai,6,G6E1,G6 Achievers,606
+LE09088,陳禹彤,Phoebe Chen,6,G6E1,G6 Achievers,602
+LE09127,張詠晴,Gloria Chang,6,G6E1,G6 Achievers,601
+LE09138,林世騏,Chase Lin,6,G6E1,G6 Achievers,607
+LE09142,張至侖,Alan Chang,6,G6E1,G6 Achievers,603
+LE09152,李榕容,Ora Lee,6,G6E1,G6 Achievers,603
+LE09158,陳采葳,Xiavira Chen,6,G6E1,G6 Achievers,603
+LE09160,李允心,Abby Lee,6,G6E1,G6 Achievers,602
+LE09167,俞壘,Julian Yu,6,G6E1,G6 Achievers,607
+LE09185,王靚霏,Joanne Wang,6,G6E1,G6 Achievers,604
+LE09203,張芯恬,Agnes Chang,6,G6E1,G6 Achievers,603
+LE09215,林宇秦,Jean Lin,6,G6E1,G6 Achievers,604
+LE09232,邱敬和,Jim Chiu,6,G6E1,G6 Achievers,601
+LE09279,張敬莀,Andrew Chang,6,G6E1,G6 Achievers,602
+LE09301,吳宸軒,Brian Wu,6,G6E1,G6 Achievers,602
+LE09305,曾誠,Donnie Tseng,6,G6E1,G6 Achievers,603
+LE09028,詹雲媗,Dora Chan,6,G6E1,G6 Adventurers,607
+LE09042,梁少羲,Ryan Liang,6,G6E1,G6 Adventurers,604
+LE09046,陳柏佑,Louis Chen,6,G6E1,G6 Adventurers,606
+LE09053,胡牧宸,Mikayla Hu,6,G6E1,G6 Adventurers,607
+LE09062,李若希,Rosie Lee,6,G6E1,G6 Adventurers,607
+LE09077,陳宥銓,Oliver Chen,6,G6E1,G6 Adventurers,604
+LE09092,SHANAYA SHARMA,SHANAYA SHARMA,6,G6E1,G6 Adventurers,604
+LE09099,黃伊岑,Yvonne Huang,6,G6E1,G6 Adventurers,606
+LE09135,林宸銘,Jeremy Lin,6,G6E1,G6 Adventurers,605
+LE09177,陳柏勳,Benjamin Chen,6,G6E1,G6 Adventurers,605
+LE09196,丁孟忻,Momo Ting,6,G6E1,G6 Adventurers,606
+LE09199,程靖恆,Morgan Cheng,6,G6E1,G6 Adventurers,605
+LE09204,潘宥甯,Sophia Pan,6,G6E1,G6 Adventurers,601
+LE09222,林忠邑,Edric Lin,6,G6E1,G6 Adventurers,604
+LE09235,黃晨,Kyle huang,6,G6E1,G6 Adventurers,605
+LE09242,黃建喬,Joe Huang,6,G6E1,G6 Adventurers,607
+LE09272,呂宥希,Yuki Lu,6,G6E1,G6 Adventurers,602
+LE09274,李亞融,Minni Lee,6,G6E1,G6 Adventurers,603
+LE09302,張善喜,Vivi Chang,6,G6E1,G6 Adventurers,604
+LE09038,吳承恩,Ryan Wu,6,G6E2,G6 Discoverers,601
+LE09068,劉丞峰,Quintus Liu,6,G6E2,G6 Discoverers,601
+LE09076,蔡睿宸,Ray Tsai,6,G6E2,G6 Discoverers,601
+LE09083,張傑翔,Sean Chang,6,G6E2,G6 Discoverers,607
+LE09085,陳語晨,Lizzy Chen,6,G6E2,G6 Discoverers,606
+LE09124,謝宇茜,Sherry Hsieh,6,G6E2,G6 Discoverers,602
+LE09132,楊詠甯,Dolly Yang,6,G6E2,G6 Discoverers,605
+LE09139,陳秉霖,Benlin Chen,6,G6E2,G6 Discoverers,602
+LE09212,王晨驊,Aaron Wang,6,G6E2,G6 Discoverers,603
+LE09236,王柏翔,Ollie Hedges,6,G6E2,G6 Discoverers,606
+LE09246,王薇晴,VERONICA WANG,6,G6E2,G6 Discoverers,605
+LE09256,劉芯,Phoebe Liu,6,G6E2,G6 Discoverers,607
+LE09257,彭奕璇,Madeline Peng,6,G6E2,G6 Discoverers,602
+LE09263,孔德懿,Ellie Kong,6,G6E2,G6 Discoverers,604
+LE09284,陳晶元,Avril Chen,6,G6E2,G6 Discoverers,606
+LE09292,黃莃恩,Celine Huang,6,G6E2,G6 Discoverers,601
+LE09296,蔡珩,Ethan Tsai,6,G6E2,G6 Discoverers,601
+LE09308,蕭楚葳,Trista Hsiao,6,G6E2,G6 Discoverers,601
+LE09004,王胤恆,Ian Wang,6,G6E1,G6 Explorers,601
+LE09021,劉襄縈,Queenie Liu,6,G6E1,G6 Explorers,601
+LE09036,顏步熹,Grayson Yen,6,G6E1,G6 Explorers,604
+LE09054,王又尼,Yuni Wang,6,G6E1,G6 Explorers,604
+LE09057,游茲甯,Ginny Yu,6,G6E1,G6 Explorers,607
+LE09072,朱恩楷,Micah Ju,6,G6E1,G6 Explorers,603
+LE09074,簡品倫,Harvey Chien,6,G6E1,G6 Explorers,605
+LE09106,鍾宇威,Nathaniel Chung,6,G6E1,G6 Explorers,604
+LE09118,邱唯晴,Mavis Chiu,6,G6E1,G6 Explorers,604
+LE09119,謝昕桐,Lia Hsieh,6,G6E1,G6 Explorers,603
+LE09120,周紓宇,Riley Chou,6,G6E1,G6 Explorers,601
+LE09122,顧子琪,Mika Ku,6,G6E1,G6 Explorers,607
+LE09133,裴立夫,Aidan Pei,6,G6E1,G6 Explorers,602
+LE09137,林子恆,Maximilian Lin,6,G6E1,G6 Explorers,601
+LE09198,吳若妘,Sofie Wu,6,G6E1,G6 Explorers,603
+LE09213,陳瑾葳,Crystal,6,G6E1,G6 Explorers,605
+LE09216,王薆扉,Abbie,6,G6E1,G6 Explorers,602
+LE09229,陳庭緯,Wesley Chen,6,G6E1,G6 Explorers,607
+LE09267,狄亞特,Elliot Ti,6,G6E1,G6 Explorers,604
+LE09304,胡采絜,Anna Hu,6,G6E1,G6 Explorers,605
+LE09007,林奕豪,Eason Lin,6,G6E2,G6 Guardians,607
+LE09016,王宏遠,Austin Wang,6,G6E2,G6 Guardians,605
+LE09018,劉元晞,Nana Liu,6,G6E2,G6 Guardians,605
+LE09061,黃敏媗,Naomi Huang,6,G6E2,G6 Guardians,606
+LE09080,謝定穎,Adonis Hsieh,6,G6E2,G6 Guardians,602
+LE09084,王妤榛,Paris Wang,6,G6E2,G6 Guardians,606
+LE09123,郭沛穎,Audrey Kuo,6,G6E2,G6 Guardians,606
+LE09170,陳震語,Jasper Chen,6,G6E2,G6 Guardians,601
+LE09173,張一太,Dylan Chang,6,G6E2,G6 Guardians,606
+LE09188,歐陽羽希,Mia Ou Yang,6,G6E2,G6 Guardians,602
+LE09189,陳昹諭,Irene Chen,6,G6E2,G6 Guardians,601
+LE09206,楊采潔,Chloe Yang,6,G6E2,G6 Guardians,604
+LE09248,林城睿,Ray Lin,6,G6E2,G6 Guardians,601
+LE09254,賴梓丞,Lincoln Lai,6,G6E2,G6 Guardians,607
+LE09259,蘇于晴,Sofia Su,6,G6E2,G6 Guardians,602
+LE09266,劉柏漢,Hank Liu,6,G6E2,G6 Guardians,606
+LE09268,洪宜安,Olivia Hong,6,G6E2,G6 Guardians,601
+LE09282,洪聖傑,Victor Hung,6,G6E2,G6 Guardians,605
+LE09283,洪苡恩,Ariel Hung,6,G6E2,G6 Guardians,606
+LE09001,黃宇翔,Matt Wong,6,G6E2,G6 Innovators,602
+LE09003,黃宥鈞,Oliver Huang,6,G6E2,G6 Innovators,605
+LE09029,朱睿榆,Marnie Chu,6,G6E2,G6 Innovators,604
+LE09048,林佑勳,Toby Lin,6,G6E2,G6 Innovators,602
+LE09064,陳禹晴,Summer Chen,6,G6E2,G6 Innovators,602
+LE09095,侯佳閱,Emma Hou,6,G6E2,G6 Innovators,607
+LE09110,蘇睿杰,Bowen Su,6,G6E2,G6 Innovators,605
+LE09150,李品言,Adora Li,6,G6E2,G6 Innovators,603
+LE09164,陳芝穎,Claire Chen,6,G6E2,G6 Innovators,601
+LE09179,王牧冉,Kingsley Wang,6,G6E2,G6 Innovators,606
+LE09184,黎妍廷,Joy Li,6,G6E2,G6 Innovators,604
+LE09192,賴昕妮,Nini Lai,6,G6E2,G6 Innovators,601
+LE09201,張芛榤,Darren Chang,6,G6E2,G6 Innovators,602
+LE09208,姚艾彤,Alice Yao,6,G6E2,G6 Innovators,603
+LE09210,黃啓倫,Allen Huang,6,G6E2,G6 Innovators,604
+LE09226,張鈞維,Willy Chang,6,G6E2,G6 Innovators,605
+LE09241,邱歆霓,Stephanie Chiu,6,G6E2,G6 Innovators,603
+LE09297,蔡琳,Emma Tsai,6,G6E2,G6 Innovators,605
+LE09022,江盈希,Amber Chiang,6,G6E1,G6 Inventors,604
+LE09032,蔡依辰,Sunny Tsai,6,G6E1,G6 Inventors,603
+LE09034,林言恆,Henry Lin,6,G6E1,G6 Inventors,602
+LE09039,陳宥均,Ryan Chen,6,G6E1,G6 Inventors,607
+LE09058,江于安,Anna Chiang,6,G6E1,G6 Inventors,607
+LE09060,陳語棠,Vita Chen,6,G6E1,G6 Inventors,604
+LE09103,王宥崴,Nick Wang,6,G6E1,G6 Inventors,602
+LE09117,楊昀芝,Claire Yang,6,G6E1,G6 Inventors,601
+LE09126,顧媛元,Yuan Yuan Ku,6,G6E1,G6 Inventors,602
+LE09157,周靖,Jin Chou,6,G6E1,G6 Inventors,605
+LE09168,朱廷崴,Terry Chu,6,G6E1,G6 Inventors,603
+LE09171,陳彥廷,Marc Chen,6,G6E1,G6 Inventors,602
+LE09214,董柔辰,Anita Tung,6,G6E1,G6 Inventors,605
+LE09228,黃唯恩,Isabelle Huang,6,G6E1,G6 Inventors,602
+LE09238,陳雅敏,Victoria Chen,6,G6E1,G6 Inventors,603
+LE09247,黃英睿,Ray Huang,6,G6E1,G6 Inventors,607
+LE09250,張夏綸,Shiron Chang,6,G6E1,G6 Inventors,604
+LE09280,林沛錡,Peggy Lin,6,G6E1,G6 Inventors,603
+LE09286,盧建新,Timothy Lu,6,G6E1,G6 Inventors,604
+LE09002,林翊軒,Eason Lin,6,G6E3,G6 Navigators,604
+LE09040,陳伯峻,Bojun Chen,6,G6E3,G6 Navigators,606
+LE09045,李宸諺,Ian Lee,6,G6E3,G6 Navigators,603
+LE09082,黃祺軒,Nick Huang,6,G6E3,G6 Navigators,604
+LE09114,郭峯郡,Felton Kuo,6,G6E3,G6 Navigators,606
+LE09145,劉允崴,William Liu,6,G6E3,G6 Navigators,602
+LE09162,張奕宣,Shana Chang,6,G6E3,G6 Navigators,603
+LE09165,許芷馨,Dora Hsu,6,G6E3,G6 Navigators,602
+LE09169,歐陽羽辰,Leo Ou Yang,6,G6E3,G6 Navigators,602
+LE09183,陳亮妍,Grace Chen,6,G6E3,G6 Navigators,601
+LE09218,鄭匡嵂,Kuang,6,G6E3,G6 Navigators,607
+LE09234,劉亨利,Henry Liu,6,G6E3,G6 Navigators,607
+LE09240,楊子萱,Elisa Yang,6,G6E3,G6 Navigators,604
+LE09300,劉方然,Sophy Liu,6,G6E3,G6 Navigators,607
+LE09303,張宸熙,Christine,6,G6E3,G6 Navigators,603
+LE09310,張緁芮,JAZLIN,6,G6E3,G6 Navigators,603
+LE09005,陳冠迪,Eddie Chen,6,G6E2,G6 Pathfinders,607
+LE09027,黃子蕾,Lesley Huang,6,G6E2,G6 Pathfinders,607
+LE09031,吳羿萱,Allison Wu,6,G6E2,G6 Pathfinders,605
+LE09037,邱晨皓,QB Chiu,6,G6E2,G6 Pathfinders,603
+LE09047,吳昱達,Jacky Wu,6,G6E2,G6 Pathfinders,603
+LE09063,連靜,Ginny Lian,6,G6E2,G6 Pathfinders,606
+LE09065,駱品橦,Emma Luo,6,G6E2,G6 Pathfinders,605
+LE09075,鄭仲軒,Benjamin Cheng,6,G6E2,G6 Pathfinders,606
+LE09101,吳翟,Woody Wu,6,G6E2,G6 Pathfinders,601
+LE09128,潘芃恩,Elsa Pan,6,G6E2,G6 Pathfinders,606
+LE09134,魏子恆,Eddie Wei,6,G6E2,G6 Pathfinders,604
+LE09136,楊鈞至,Alston Yang,6,G6E2,G6 Pathfinders,601
+LE09156,駱又寧,Hannah Lo,6,G6E2,G6 Pathfinders,604
+LE09178,李翰翔,Shawn Lee,6,G6E2,G6 Pathfinders,602
+LE09217,邱宇睎,Sisi Chiu,6,G6E2,G6 Pathfinders,607
+LE09219,傅亮瑄,Layla Fu,6,G6E2,G6 Pathfinders,606
+LE09271,林琬翊,Ingrid Lin,6,G6E2,G6 Pathfinders,604
+LE09276,吳定頤,Ashton Wu,6,G6E2,G6 Pathfinders,601
+LE09290,蔡雨芹,Dolphin Tsai,6,G6E2,G6 Pathfinders,604
+LE09010,徐仕叡,Ray Hsu,6,G6E3,G6 Pioneers,604
+LE09013,朱睿樺,Googie Chu,6,G6E3,G6 Pioneers,604
+LE09094,伏以晴,Karen Fu,6,G6E3,G6 Pioneers,605
+LE09108,陳威廷,Ray Chen,6,G6E3,G6 Pioneers,607
+LE09148,謝瑋翰,Aaron Hsieh,6,G6E3,G6 Pioneers,601
+LE09230,李貞蓁,Sherry,6,G6E3,G6 Pioneers,606
+LE09231,范懿飛,George,6,G6E3,G6 Pioneers,601
+LE09237,楊奕璟,Ines Yang,6,G6E3,G6 Pioneers,605
+LE09251,陳思霖,minnie chen,6,G6E3,G6 Pioneers,607
+LE09252,陳詠璿,Sally Chen,6,G6E3,G6 Pioneers,601
+LE09291,孫唯綸,Ryan Sun,6,G6E3,G6 Pioneers,605
+LE09294,吳秉豐,PING-FENG WU,6,G6E3,G6 Pioneers,603
+LE09295,李芯羽,Cindy Li,6,G6E3,G6 Pioneers,605
+LE09307,黃宇釩,Ken Huang,6,G6E3,G6 Pioneers,606
+LE09015,譚杰睿,Jerry Tan,6,G6E2,G6 Seekers,602
+LE09017,凌維謙,Oscar Ling,6,G6E2,G6 Seekers,606
+LE09026,鄭淮語,Berni Cheng,6,G6E2,G6 Seekers,607
+LE09041,張瑋珵,William Chang,6,G6E2,G6 Seekers,603
+LE09087,李樂希,Janelle Lee,6,G6E2,G6 Seekers,603
+LE09098,陸芊儒,Doris Lu,6,G6E2,G6 Seekers,607
+LE09121,來裕琋,Melissa Lai,6,G6E2,G6 Seekers,605
+LE09140,陳宥安,Anson Chen,6,G6E2,G6 Seekers,606
+LE09141,黃敬軒,Lucas Huang,6,G6E2,G6 Seekers,605
+LE09155,王語晴,Natalie Wang,6,G6E2,G6 Seekers,603
+LE09163,鄭卉晴,Winnie Cheng,6,G6E2,G6 Seekers,605
+LE09174,謝昀宸,Chad Hsieh,6,G6E2,G6 Seekers,607
+LE09176,陳弘軒,George Chen,6,G6E2,G6 Seekers,605
+LE09186,陳鈺婷,Tiffany Chen,6,G6E2,G6 Seekers,602
+LE09194,吳勻馨,Abbie Wu,6,G6E2,G6 Seekers,602
+LE09269,楊靖霆,Keenta Yang,6,G6E2,G6 Seekers,603
+LE09275,江容希,Cece Chiang,6,G6E2,G6 Seekers,607
+LE09278,周恩宇,Anson Chou,6,G6E2,G6 Seekers,606
+LE09288,林宥希,Eli Lin,6,G6E2,G6 Seekers,601
+LE09079,彭品程,Linus Peng,6,G6E3,G6 Trailblazers,601
+LE09086,郭亭均,Paula Guo,6,G6E3,G6 Trailblazers,603
+LE09093,李芊彤,Ariel Lee,6,G6E3,G6 Trailblazers,606
+LE09109,郭宸瑞,Raymond Kuo,6,G6E3,G6 Trailblazers,606
+LE09143,蕭逸,Eden Hsiao,6,G6E3,G6 Trailblazers,604
+LE09147,翁子軒,Stanley Weng,6,G6E3,G6 Trailblazers,602
+LE09149,柯奕杰,Jay Ko,6,G6E3,G6 Trailblazers,603
+LE09175,師祺睿,Andy Shih,6,G6E3,G6 Trailblazers,605
+LE09225,林育丞,Eason Lin,6,G6E3,G6 Trailblazers,607
+LE09255,余丞胤,George Yu,6,G6E3,G6 Trailblazers,603
+LE09258,劉久熙,JESSE LIOU,6,G6E3,G6 Trailblazers,606
+LE09270,謝依帆,Yvonne Hsieh,6,G6E3,G6 Trailblazers,603
+LE09287,李亮妍,Aurora LEE,6,G6E3,G6 Trailblazers,604
+LE09289,李柔萱,JOU-HSUAN LEE,6,G6E3,G6 Trailblazers,606
+LE09298,姜品伊,Hanna Chiang,6,G6E3,G6 Trailblazers,605
+LE09309,周昕穎,Serci,6,G6E3,G6 Trailblazers,606
+LE09020,張文馨,Elsa Chang,6,G6E2,G6 Visionaries,602
+LE09030,陳平安,Judy Chen,6,G6E2,G6 Visionaries,606
+LE09052,王箬歆,Sofia Wang,6,G6E2,G6 Visionaries,601
+LE09070,陳品硯,Woody Chen,6,G6E2,G6 Visionaries,607
+LE09071,陳柏宇,Felix Chen,6,G6E2,G6 Visionaries,604
+LE09091,徐子芸,Ivy Hsu,6,G6E2,G6 Visionaries,607
+LE09102,尤檍愷,Kyle Yu,6,G6E2,G6 Visionaries,606
+LE09112,周宸苰,Lucas Chou,6,G6E2,G6 Visionaries,602
+LE09154,蔡佳軒,Rossa Tsai,6,G6E2,G6 Visionaries,601
+LE09197,唐梓晴,Emily Tang,6,G6E2,G6 Visionaries,602
+LE09224,季筱晴,Dora Chi,6,G6E2,G6 Visionaries,601
+LE09245,趙祖玄,Jayden Chao,6,G6E2,G6 Visionaries,606
+LE09249,孫磊,RAY SUN,6,G6E2,G6 Visionaries,603
+LE09260,許軒語,Bryant Hsu,6,G6E2,G6 Visionaries,607
+LE09264,張恩希,Belle Chang,6,G6E2,G6 Visionaries,602
+LE09285,許維宸,Vincent Hsu,6,G6E2,G6 Visionaries,606
+LE09306,林禹岑,Meg Lin,6,G6E2,G6 Visionaries,606
+LE09006,鐘思宇,Jerry Chung,6,G6E2,G6 Voyagers,604
+LE09014,鄧杰民,Benjamin Teng,6,G6E2,G6 Voyagers,605
+LE09089,許雅媛,Emma Hsu,6,G6E2,G6 Voyagers,605
+LE09100,陳漢祥,Max Chen,6,G6E2,G6 Voyagers,603
+LE09104,林梓耀,Sky Lin,6,G6E2,G6 Voyagers,603
+LE09115,蔡昕恩,Sean Tsai,6,G6E2,G6 Voyagers,605
+LE09153,葉伊淳,Eva Yeh,6,G6E2,G6 Voyagers,601
+LE09180,吳振謙,Luke Wu,6,G6E2,G6 Voyagers,606
+LE09195,邱莉妤,Lillian Chiu,6,G6E2,G6 Voyagers,602
+LE09202,謝鎮鑫,Leo Hsieh,6,G6E2,G6 Voyagers,603
+LE09209,沈楷崴,Clooney Shen,6,G6E2,G6 Voyagers,601
+LE09220,鄭得心,Jasmine,6,G6E2,G6 Voyagers,607
+LE09221,李妃羚,Misha,6,G6E2,G6 Voyagers,607
+LE09243,鍾欣琳,Cindy Chung,6,G6E2,G6 Voyagers,604
+LE09265,王廷赫,Jimmy Wang,6,G6E2,G6 Voyagers,602
+LE09273,張宸菲,Queena Chang,6,G6E2,G6 Voyagers,605
+LE09277,林采頤,Zoe Lin,6,G6E2,G6 Voyagers,607
+LE09281,張晨希,Daisy Chang,6,G6E2,G6 Voyagers,606
+LE09293,黃歆恩,Mckayla Huang,6,G6E2,G6 Voyagers,601
+LE12275,許岑甄,Queenie Syu,3,G3E1,G3 Guardians,305
+LE14260,彭翔宣,Shawn Peng,1,G1E1,G1 Voyagers,103

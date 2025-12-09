@@ -122,7 +122,89 @@ async function createOrUpdateUser(
 ): Promise<string> {
   const supabase = createServiceRoleClient();
 
-  // Check if user exists
+  // First, get or create Auth user to get the canonical ID
+  let authUserId = "";
+
+  // Try to find existing user by listing users with pagination
+  // Note: listUsers returns paginated results, we search through pages
+  let existingAuthUser: { id: string; email?: string } | null | undefined = null;
+  let page = 1;
+  const perPage = 1000;
+
+  while (!existingAuthUser) {
+    const { data: usersData, error: listError } = await supabase.auth.admin.listUsers({
+      page,
+      perPage,
+    });
+
+    if (listError) {
+      console.error("[OAuth] Error listing users:", listError);
+      break;
+    }
+
+    existingAuthUser = usersData?.users.find(
+      (u) => u.email?.toLowerCase() === params.email.toLowerCase()
+    );
+
+    // If we found the user or there are no more pages, stop
+    if (existingAuthUser || !usersData?.users || usersData.users.length < perPage) {
+      break;
+    }
+
+    page++;
+    // Safety limit to prevent infinite loop
+    if (page > 10) {
+      console.warn("[OAuth] Reached page limit while searching for user");
+      break;
+    }
+  }
+
+  if (existingAuthUser) {
+    // User already exists in Auth
+    authUserId = existingAuthUser.id;
+    console.log(`[OAuth] Found existing Auth user: ${authUserId}`);
+  } else {
+    // User doesn't exist, create new one
+    console.log(`[OAuth] Auth user not found, creating new one for: ${params.email}`);
+    const { data: newAuthUser, error: authError } = await supabase.auth.admin.createUser({
+      email: params.email,
+      email_confirm: true,
+      user_metadata: {
+        full_name: params.fullName,
+        avatar_url: params.avatarUrl,
+        infohub_user_id: params.infohubUserId,
+      },
+    });
+
+    if (authError) {
+      // Check if it's "already exists" error - handle race condition
+      if (authError.code === 'email_exists') {
+        console.log(`[OAuth] Race condition: user was created between check and create, retrying lookup...`);
+        // Retry with fresh listUsers call
+        const { data: retryData } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+        const retryUser = retryData?.users.find(
+          (u) => u.email?.toLowerCase() === params.email.toLowerCase()
+        );
+        if (retryUser) {
+          authUserId = retryUser.id;
+          console.log(`[OAuth] Found Auth user on retry: ${authUserId}`);
+        } else {
+          console.error("[OAuth] Still cannot find user after retry");
+          throw authError;
+        }
+      } else {
+        console.error("[OAuth] Failed to create auth user:", authError);
+        throw authError;
+      }
+    } else if (newAuthUser?.user) {
+      authUserId = newAuthUser.user.id;
+      console.log(`[OAuth] Created new Auth user: ${authUserId}`);
+    } else {
+      throw new Error("No user returned from auth.createUser");
+    }
+  }
+
+  // Check if user exists in public.users table
   const { data: existingUser } = await supabase
     .from("users")
     .select("id")
@@ -130,7 +212,45 @@ async function createOrUpdateUser(
     .single();
 
   if (existingUser) {
-    // Update existing user
+    // User exists - check if ID matches Auth user ID
+    if (existingUser.id !== authUserId) {
+      // ID mismatch! Need to delete old row and create new one with correct ID
+      console.warn(`[OAuth] ID mismatch detected! public.users.id=${existingUser.id}, auth.id=${authUserId}`);
+      console.log("[OAuth] Deleting old user row and creating new one with correct ID...");
+
+      // Delete old row
+      const { error: deleteError } = await supabase
+        .from("users")
+        .delete()
+        .eq("id", existingUser.id);
+
+      if (deleteError) {
+        console.error("[OAuth] Failed to delete old user row:", deleteError);
+        throw deleteError;
+      }
+
+      // Create new row with correct ID
+      const { error: insertError } = await supabase.from("users").insert({
+        id: authUserId,
+        email: params.email,
+        full_name: params.fullName,
+        role: params.role,
+        teacher_type: params.teacherType as CourseType | null,
+        track: params.track,
+        grade: params.grade || null,
+        created_at: new Date().toISOString(),
+      });
+
+      if (insertError) {
+        console.error("[OAuth] Failed to create user with correct ID:", insertError);
+        throw insertError;
+      }
+
+      console.log(`[OAuth] Recreated user with correct ID: ${params.email} (${authUserId})`);
+      return authUserId;
+    }
+
+    // ID matches - just update existing user
     const { error } = await supabase
       .from("users")
       .update({
@@ -151,63 +271,9 @@ async function createOrUpdateUser(
     return existingUser.id;
   }
 
-  // Create new user
-  let userId = "";
-
-  const { data: authData, error: authError } =
-    await supabase.auth.admin.createUser({
-      email: params.email,
-      email_confirm: true,
-      user_metadata: {
-        full_name: params.fullName,
-        avatar_url: params.avatarUrl,
-        infohub_user_id: params.infohubUserId,
-      },
-    });
-
-  if (authError) {
-    // Handle "User already registered" case
-    if (
-      authError.message?.includes("already registered") ||
-      authError.status === 422
-    ) {
-      console.log("[OAuth] User already exists in Auth, fetching ID...");
-      const { data: users, error: listError } =
-        await supabase.auth.admin.listUsers();
-
-      if (listError) {
-        console.error("[OAuth] Failed to list users for recovery:", listError);
-        throw authError;
-      }
-
-      const foundUser = users.users.find(
-        (u) => u.email?.toLowerCase() === params.email.toLowerCase()
-      );
-
-      if (foundUser) {
-        console.log(
-          "[OAuth] Found existing Auth user, recovering...",
-          foundUser.id
-        );
-        userId = foundUser.id;
-      } else {
-        console.error(
-          "[OAuth] User reported as registered but not found in list."
-        );
-        throw authError;
-      }
-    } else {
-      console.error("[OAuth] Failed to create auth user:", authError);
-      throw authError;
-    }
-  } else if (authData.user) {
-    userId = authData.user.id;
-  } else {
-    throw new Error("No user returned from auth.createUser");
-  }
-
+  // No existing user in public.users - create new row with Auth user ID
   const { error: userError } = await supabase.from("users").insert({
-    id: userId,
+    id: authUserId,
     email: params.email,
     full_name: params.fullName,
     role: params.role,
@@ -222,8 +288,8 @@ async function createOrUpdateUser(
     throw userError;
   }
 
-  console.log(`[OAuth] Created user via compensatory sync: ${params.email}`);
-  return userId;
+  console.log(`[OAuth] Created user via compensatory sync: ${params.email} (${authUserId})`);
+  return authUserId;
 }
 
 /**
@@ -339,12 +405,7 @@ export async function GET(request: NextRequest) {
     const cookieState = cookies.get("sso_state")?.value;
 
     if (!cookieState || cookieState !== callbackParams.state) {
-      console.error("[OAuth] State validation failed");
-      console.error(
-        "[OAuth] Cookie state:",
-        cookieState ? "Present" : "Missing"
-      );
-      console.error("[OAuth] Param state:", callbackParams.state);
+      console.error("[OAuth] State validation failed - cookie missing or mismatch");
       return NextResponse.redirect(
         buildRedirectUrl("/auth/login?error=invalid_state")
       );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/lib/supabase/auth-context";
 import AuthGuard from "@/components/auth/auth-guard";
 import {
@@ -41,7 +41,7 @@ import {
 } from "recharts";
 import { MissionControl } from "@/components/os/MissionControl";
 import { Widget } from "@/components/os/Widget";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonKPI, SkeletonList } from "@/components/ui/skeleton";
 
 export default function Dashboard() {
   const { user, userPermissions } = useAuth();
@@ -54,23 +54,23 @@ export default function Dashboard() {
 
   // Data states
   const [teacherKpis, setTeacherKpis] = useState<TeacherKpis>({
-    attendanceRate: 0,
+    attendanceRate: null,
     averageScore: 0,
     passRate: 0,
-    activeAlerts: 0,
+    activeAlerts: null,
   });
   const [adminKpis, setAdminKpis] = useState<AdminKpis>({
     totalExams: 0,
     notDue: 0,
     overdue: 0,
     coverage: 0,
-    onTime: 0,
+    onTime: null,
   });
   const [headKpis, setHeadKpis] = useState<HeadTeacherKpis>({
     totalClasses: 0,
     averageScore: 0,
     coverageRate: 0,
-    activeIssues: 0,
+    activeIssues: null,
     studentsCount: 0,
     teachersCount: 0,
   });
@@ -79,45 +79,54 @@ export default function Dashboard() {
   const [deadlines, setDeadlines] = useState<UpcomingDeadline[]>([]);
   const [alerts, setAlerts] = useState<RecentAlert[]>([]);
 
-  useEffect(() => {
-    console.log('[Dashboard] useEffect triggered', { userId: user?.id, userRole });
+  // Extract primitive values to prevent re-renders from object reference changes
+  const userId = user?.id;
+  const userGrade = userPermissions?.grade;
+  const userTrack = userPermissions?.track;
 
-    if (!user?.id || !userRole) {
-      console.log('[Dashboard] Missing user or role, skipping data load');
+  // Track if data has been loaded at least once
+  const hasLoadedOnce = useRef(false);
+
+  useEffect(() => {
+    // Skip if user data is not ready yet
+    if (!userId || !userRole) {
+      // If we've loaded before and auth state changes, don't show loading again
+      if (hasLoadedOnce.current) {
+        return;
+      }
+      // Initial load - keep loading states as true
       return;
     }
 
+    // For head teachers, wait until grade and track are loaded
+    if (userRole === "head" && (!userGrade || !userTrack)) {
+      // If we've loaded before, don't show loading again
+      if (hasLoadedOnce.current) {
+        return;
+      }
+      return;
+    }
+
+    // Track if component is still mounted to prevent state updates after unmount
+    let isCancelled = false;
+
     // 1. Load KPIs (Fastest)
     const loadKpis = async () => {
-      console.log('[Dashboard] Loading KPIs for role:', userRole);
       try {
         if (userRole === "teacher") {
-          console.log('[Dashboard] Fetching teacher KPIs...');
-          const data = await getTeacherKpis(user.id);
-          console.log('[Dashboard] Teacher KPIs loaded:', data);
-          setTeacherKpis(data);
+          const data = await getTeacherKpis(userId);
+          if (!isCancelled) setTeacherKpis(data);
         } else if (userRole === "admin" || userRole === "office_member") {
-          console.log('[Dashboard] Fetching admin KPIs...');
           const data = await getAdminKpis();
-          console.log('[Dashboard] Admin KPIs loaded:', data);
-          setAdminKpis(data);
-        } else if (
-          userRole === "head" &&
-          userPermissions?.grade &&
-          userPermissions?.track
-        ) {
-          console.log('[Dashboard] Fetching head teacher KPIs...');
-          const [data] = await Promise.all([
-            getHeadTeacherKpis(userPermissions.grade, userPermissions.track),
-          ]);
-          console.log('[Dashboard] Head KPIs loaded:', data);
-          setHeadKpis(data);
+          if (!isCancelled) setAdminKpis(data);
+        } else if (userRole === "head" && userGrade && userTrack) {
+          const data = await getHeadTeacherKpis(userGrade, userTrack);
+          if (!isCancelled) setHeadKpis(data);
         }
       } catch (e) {
-        console.error("[Dashboard] Failed to load KPIs", e);
+        if (!isCancelled) console.error("[Dashboard] Failed to load KPIs", e);
       } finally {
-        console.log('[Dashboard] KPIs loading complete');
-        setLoadingKpis(false);
+        if (!isCancelled) setLoadingKpis(false);
       }
     };
 
@@ -127,18 +136,20 @@ export default function Dashboard() {
         const [distData, scatterPoints] = await Promise.all([
           getClassDistribution(
             userRole,
-            user.id,
-            userPermissions?.grade || undefined,
-            userPermissions?.track || undefined
+            userId,
+            userGrade || undefined,
+            userTrack || undefined
           ),
-          getScatterData(userRole, user.id),
+          getScatterData(userRole, userId),
         ]);
-        setDistribution(distData);
-        setScatterData(scatterPoints);
+        if (!isCancelled) {
+          setDistribution(distData);
+          setScatterData(scatterPoints);
+        }
       } catch (e) {
-        console.error("Failed to load charts", e);
+        if (!isCancelled) console.error("Failed to load charts", e);
       } finally {
-        setLoadingCharts(false);
+        if (!isCancelled) setLoadingCharts(false);
       }
     };
 
@@ -148,26 +159,36 @@ export default function Dashboard() {
         const [upcomingDeadlines, recentAlerts] = await Promise.all([
           getUpcomingDeadlines(
             userRole,
-            user.id,
-            userPermissions?.grade || undefined,
-            userPermissions?.track || undefined
+            userId,
+            userGrade || undefined,
+            userTrack || undefined
           ),
-          getRecentAlerts(userRole, user.id),
+          getRecentAlerts(userRole, userId),
         ]);
-        setDeadlines(upcomingDeadlines);
-        setAlerts(recentAlerts);
+        if (!isCancelled) {
+          setDeadlines(upcomingDeadlines);
+          setAlerts(recentAlerts);
+        }
       } catch (e) {
-        console.error("Failed to load lists", e);
+        if (!isCancelled) console.error("Failed to load lists", e);
       } finally {
-        setLoadingLists(false);
+        if (!isCancelled) setLoadingLists(false);
       }
     };
+
+    // Mark that we've started loading - prevents loading flash on auth state changes
+    hasLoadedOnce.current = true;
 
     // Trigger all fetches independently
     loadKpis();
     loadCharts();
     loadLists();
-  }, [user?.id, userRole, userPermissions?.grade, userPermissions?.track]);
+
+    // Cleanup function to prevent state updates after unmount
+    return () => {
+      isCancelled = true;
+    };
+  }, [userId, userRole, userGrade, userTrack]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -186,16 +207,16 @@ export default function Dashboard() {
           delay={0}
         >
           <div className="flex h-full flex-col justify-center p-4">
-            <h1 className="text-3xl font-bold text-white mb-2">
+            <h1 className="text-3xl font-bold text-text-primary mb-2">
               {getGreeting()},{" "}
               {user?.user_metadata?.full_name?.split(" ")[0] || "Teacher"}
             </h1>
-            <p className="text-white/70 text-lg">
+            <p className="text-text-secondary text-lg">
               Here&apos;s what&apos;s happening in your classes today.
             </p>
             <div className="mt-6 flex items-center space-x-2">
-              <Clock className="h-4 w-4 text-white/60" />
-              <span className="text-sm text-white/80">
+              <Clock className="h-4 w-4 text-text-secondary" />
+              <span className="text-sm text-text-primary">
                 {new Date().toLocaleDateString()}
               </span>
             </div>
@@ -212,17 +233,14 @@ export default function Dashboard() {
               delay={1}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-white">
-                    {teacherKpis.attendanceRate}%
+                  <div className="text-3xl font-bold text-text-primary">
+                    {teacherKpis.attendanceRate !== null ? `${teacherKpis.attendanceRate}%` : "N/A"}
                   </div>
-                  <div className="text-xs text-white/50 mt-1">
-                    This semester
+                  <div className="text-xs text-text-tertiary mt-1">
+                    {teacherKpis.attendanceRate !== null ? "This semester" : "Coming soon"}
                   </div>
                 </div>
               )}
@@ -234,16 +252,13 @@ export default function Dashboard() {
               delay={2}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-white">
+                  <div className="text-3xl font-bold text-text-primary">
                     {teacherKpis.averageScore}
                   </div>
-                  <div className="text-xs text-white/50 mt-1">
+                  <div className="text-xs text-text-tertiary mt-1">
                     Class average
                   </div>
                 </div>
@@ -256,16 +271,13 @@ export default function Dashboard() {
               delay={3}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-white">
+                  <div className="text-3xl font-bold text-text-primary">
                     {teacherKpis.passRate}%
                   </div>
-                  <div className="text-xs text-white/50 mt-1">
+                  <div className="text-xs text-text-tertiary mt-1">
                     Above 60 points
                   </div>
                 </div>
@@ -278,17 +290,14 @@ export default function Dashboard() {
               delay={4}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-white">
-                    {teacherKpis.activeAlerts}
+                  <div className="text-3xl font-bold text-text-primary">
+                    {teacherKpis.activeAlerts !== null ? teacherKpis.activeAlerts : "N/A"}
                   </div>
-                  <div className="text-xs text-yellow-400 mt-1">
-                    Requires attention
+                  <div className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                    {teacherKpis.activeAlerts !== null ? "Requires attention" : "Coming soon"}
                   </div>
                 </div>
               )}
@@ -306,16 +315,13 @@ export default function Dashboard() {
               delay={1}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-white">
+                  <div className="text-3xl font-bold text-text-primary">
                     {adminKpis.totalExams}
                   </div>
-                  <div className="text-xs text-white/50 mt-1">This semester</div>
+                  <div className="text-xs text-text-tertiary mt-1">This semester</div>
                 </div>
               )}
             </Widget>
@@ -326,16 +332,13 @@ export default function Dashboard() {
               delay={2}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-white">
+                  <div className="text-3xl font-bold text-text-primary">
                     {adminKpis.coverage}%
                   </div>
-                  <div className="text-xs text-white/50 mt-1">Score coverage</div>
+                  <div className="text-xs text-text-tertiary mt-1">Score coverage</div>
                 </div>
               )}
             </Widget>
@@ -346,17 +349,14 @@ export default function Dashboard() {
               delay={3}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-white">
-                    {adminKpis.onTime}%
+                  <div className="text-3xl font-bold text-text-primary">
+                    {adminKpis.onTime !== null ? `${adminKpis.onTime}%` : "N/A"}
                   </div>
-                  <div className="text-xs text-white/50 mt-1">
-                    Submission rate
+                  <div className="text-xs text-text-tertiary mt-1">
+                    {adminKpis.onTime !== null ? "Submission rate" : "Coming soon"}
                   </div>
                 </div>
               )}
@@ -368,16 +368,13 @@ export default function Dashboard() {
               delay={4}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-red-400">
+                  <div className="text-3xl font-bold text-red-600 dark:text-red-400">
                     {adminKpis.overdue}
                   </div>
-                  <div className="text-xs text-red-300 mt-1">Action needed</div>
+                  <div className="text-xs text-red-500 dark:text-red-300 mt-1">Action needed</div>
                 </div>
               )}
             </Widget>
@@ -394,16 +391,13 @@ export default function Dashboard() {
               delay={1}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-white">
+                  <div className="text-3xl font-bold text-text-primary">
                     {headKpis.totalClasses}
                   </div>
-                  <div className="text-xs text-white/60">Total Classes</div>
+                  <div className="text-xs text-text-secondary">Total Classes</div>
                 </div>
               )}
             </Widget>
@@ -414,16 +408,13 @@ export default function Dashboard() {
               delay={2}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-white">
+                  <div className="text-3xl font-bold text-text-primary">
                     {headKpis.studentsCount}
                   </div>
-                  <div className="text-xs text-white/60">Total Students</div>
+                  <div className="text-xs text-text-secondary">Total Students</div>
                 </div>
               )}
             </Widget>
@@ -434,16 +425,13 @@ export default function Dashboard() {
               delay={3}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-white">
+                  <div className="text-3xl font-bold text-text-primary">
                     {headKpis.averageScore}
                   </div>
-                  <div className="text-xs text-white/50 mt-1">
+                  <div className="text-xs text-text-tertiary mt-1">
                     Grade average
                   </div>
                 </div>
@@ -456,17 +444,14 @@ export default function Dashboard() {
               delay={4}
             >
               {loadingKpis ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
+                <SkeletonKPI />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-yellow-400">
-                    {headKpis.activeIssues}
+                  <div className="text-3xl font-bold text-yellow-700 dark:text-yellow-400">
+                    {headKpis.activeIssues !== null ? headKpis.activeIssues : "N/A"}
                   </div>
-                  <div className="text-xs text-yellow-300 mt-1">
-                    Active issues
+                  <div className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                    {headKpis.activeIssues !== null ? "Active issues" : "Coming soon"}
                   </div>
                 </div>
               )}
@@ -495,19 +480,19 @@ export default function Dashboard() {
                 <BarChart data={distribution}>
                   <XAxis
                     dataKey="bucket"
-                    stroke="rgba(255,255,255,0.5)"
+                    className="text-text-secondary"
                     fontSize={10}
                     tickLine={false}
                     axisLine={false}
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "rgba(0,0,0,0.8)",
-                      border: "none",
+                      backgroundColor: "hsl(var(--surface-elevated))",
+                      border: "1px solid hsl(var(--border-default))",
                       borderRadius: "8px",
-                      color: "#fff",
+                      color: "hsl(var(--text-primary))",
                     }}
-                    cursor={{ fill: "rgba(255,255,255,0.1)" }}
+                    cursor={{ fill: "hsl(var(--surface-secondary))" }}
                   />
                   <Bar dataKey="count" fill="#60a5fa" radius={[4, 4, 0, 0]} />
                 </BarChart>
@@ -535,14 +520,14 @@ export default function Dashboard() {
                 <ScatterChart>
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    stroke="rgba(255,255,255,0.1)"
+                    className="stroke-border-subtle"
                   />
                   <XAxis
                     type="number"
                     dataKey="x"
                     name="Avg"
                     unit="%"
-                    stroke="rgba(255,255,255,0.5)"
+                    className="text-text-secondary"
                     fontSize={10}
                     tickLine={false}
                     axisLine={false}
@@ -552,7 +537,7 @@ export default function Dashboard() {
                     dataKey="y"
                     name="Coverage"
                     unit="%"
-                    stroke="rgba(255,255,255,0.5)"
+                    className="text-text-secondary"
                     fontSize={10}
                     tickLine={false}
                     axisLine={false}
@@ -560,10 +545,10 @@ export default function Dashboard() {
                   <Tooltip
                     cursor={{ strokeDasharray: "3 3" }}
                     contentStyle={{
-                      backgroundColor: "rgba(0,0,0,0.8)",
-                      border: "none",
+                      backgroundColor: "hsl(var(--surface-elevated))",
+                      border: "1px solid hsl(var(--border-default))",
                       borderRadius: "8px",
-                      color: "#fff",
+                      color: "hsl(var(--text-primary))",
                     }}
                   />
                   <Scatter data={scatterData} fill="#34d399" />
@@ -581,27 +566,23 @@ export default function Dashboard() {
           delay={7}
         >
           {loadingLists ? (
-            <div className="space-y-3">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </div>
+            <SkeletonList rows={3} />
           ) : (
             <div className="space-y-3">
               {deadlines.length > 0 ? (
                 deadlines.map((d) => (
                   <div
                     key={d.id}
-                    className="flex flex-col space-y-1 border-b border-white/10 pb-2 last:border-0"
+                    className="flex flex-col space-y-1 border-b border-border-default pb-2 last:border-0"
                   >
-                    <div className="font-medium text-sm text-white">
+                    <div className="font-medium text-sm text-text-primary">
                       {d.title}
                     </div>
-                    <div className="text-xs text-white/50">{d.due_at}</div>
+                    <div className="text-xs text-text-tertiary">{d.due_at}</div>
                   </div>
                 ))
               ) : (
-                <div className="text-sm text-white/50 text-center py-4">
+                <div className="text-sm text-text-tertiary text-center py-4">
                   No deadlines
                 </div>
               )}
@@ -616,27 +597,23 @@ export default function Dashboard() {
           delay={8}
         >
           {loadingLists ? (
-            <div className="space-y-3">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </div>
+            <SkeletonList rows={3} />
           ) : (
             <div className="space-y-3">
               {alerts.length > 0 ? (
                 alerts.map((a) => (
                   <div
                     key={a.id}
-                    className="flex flex-col space-y-1 border-b border-white/10 pb-2 last:border-0"
+                    className="flex flex-col space-y-1 border-b border-border-default pb-2 last:border-0"
                   >
-                    <div className="font-medium text-sm text-white">
+                    <div className="font-medium text-sm text-text-primary">
                       {a.message}
                     </div>
-                    <div className="text-xs text-white/50">{a.when}</div>
+                    <div className="text-xs text-text-tertiary">{a.when}</div>
                   </div>
                 ))
               ) : (
-                <div className="text-sm text-white/50 text-center py-4">
+                <div className="text-sm text-text-tertiary text-center py-4">
                   No alerts
                 </div>
               )}

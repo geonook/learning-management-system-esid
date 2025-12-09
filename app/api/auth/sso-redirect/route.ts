@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
       maxAge: 900, // 15 minutes
     })
 
-    console.log('[SSO Redirect] Cookies set, redirecting to Info Hub OAuth')
+    console.log('[SSO Redirect] Redirecting to Info Hub OAuth')
 
     return response
   } catch (error) {

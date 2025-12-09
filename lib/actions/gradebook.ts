@@ -3,6 +3,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+export type CourseType = "LT" | "IT" | "KCFS";
+
+export type TeacherInfo = {
+  teacherName: string | null;
+  teacherId: string | null;
+};
+
 export type GradebookData = {
   students: {
     id: string;
@@ -11,37 +18,93 @@ export type GradebookData = {
     scores: Record<string, number | null>; // code -> score
   }[];
   assessmentCodes: string[];
+  availableCourseTypes: CourseType[];
+  currentCourseType: CourseType | null;
+  teacherInfo: TeacherInfo | null;
 };
 
 /**
- * Fetch all students and their scores for a given class
+ * Get available course types for a class
+ */
+export async function getAvailableCourseTypes(
+  classId: string
+): Promise<CourseType[]> {
+  const supabase = createClient();
+
+  const { data: courses, error } = await supabase
+    .from("courses")
+    .select("course_type")
+    .eq("class_id", classId)
+    .eq("is_active", true);
+
+  if (error) {
+    console.error("Failed to fetch course types:", error.message);
+    return [];
+  }
+
+  const courseTypes = [...new Set(courses.map((c) => c.course_type as CourseType))];
+  // Sort in consistent order: LT, IT, KCFS
+  const order: CourseType[] = ["LT", "IT", "KCFS"];
+  return courseTypes.sort((a, b) => order.indexOf(a) - order.indexOf(b));
+}
+
+/**
+ * Fetch all students and their scores for a given class and course type
  */
 export async function getGradebookData(
-  classId: string
+  classId: string,
+  courseType?: CourseType | null
 ): Promise<GradebookData> {
   const supabase = createClient();
 
-  // 1. Get students in class
+  // 1. Get available course types for this class
+  const availableCourseTypes = await getAvailableCourseTypes(classId);
+
+  // Default to first available course type if not specified
+  const selectedCourseType = courseType || availableCourseTypes[0] || null;
+
+  // 2. Get students in class
   const { data: students, error: studentsError } = await supabase
     .from("students")
     .select("id, student_id, full_name")
     .eq("class_id", classId)
+    .eq("is_active", true)
     .order("student_id");
 
   if (studentsError)
     throw new Error(`Failed to fetch students: ${studentsError.message}`);
 
-  // 2. Get scores for these students
+  // 3. Get scores filtered by course type via exam -> course relationship
   const studentIds = students.map((s) => s.id);
-  const { data: scores, error: scoresError } = await supabase
+
+  let scoresQuery = supabase
     .from("scores")
-    .select("student_id, assessment_code, score")
+    .select(`
+      student_id,
+      assessment_code,
+      score,
+      exam:exams!inner(
+        course_id,
+        course:courses!inner(
+          course_type
+        )
+      )
+    `)
     .in("student_id", studentIds);
 
-  if (scoresError)
-    throw new Error(`Failed to fetch scores: ${scoresError.message}`);
+  // Filter by course type if specified
+  if (selectedCourseType) {
+    scoresQuery = scoresQuery.eq("exam.course.course_type", selectedCourseType);
+  }
 
-  // 3. Transform to GradebookData format
+  const { data: scores, error: scoresError } = await scoresQuery;
+
+  if (scoresError) {
+    console.error("Scores query error:", scoresError);
+    throw new Error(`Failed to fetch scores: ${scoresError.message}`);
+  }
+
+  // 4. Transform to GradebookData format
   const studentsWithScores = students.map((student) => {
     const studentScores: Record<string, number | null> = {};
     scores
@@ -55,6 +118,31 @@ export async function getGradebookData(
       scores: studentScores,
     };
   });
+
+  // 5. Get teacher info for the selected course type
+  let teacherInfo: TeacherInfo | null = null;
+
+  if (selectedCourseType) {
+    const { data: course } = await supabase
+      .from("courses")
+      .select(`
+        teacher_id,
+        teacher:users(full_name)
+      `)
+      .eq("class_id", classId)
+      .eq("course_type", selectedCourseType)
+      .eq("is_active", true)
+      .single();
+
+    if (course) {
+      // Handle the nested teacher object - Supabase returns object for single FK relation
+      const teacher = course.teacher as unknown as { full_name: string } | null;
+      teacherInfo = {
+        teacherName: teacher?.full_name || null,
+        teacherId: course.teacher_id,
+      };
+    }
+  }
 
   return {
     students: studentsWithScores,
@@ -73,12 +161,16 @@ export async function getGradebookData(
       "SA4",
       "MID",
     ],
+    availableCourseTypes,
+    currentCourseType: selectedCourseType,
+    teacherInfo,
   };
 }
 
 /**
  * Update a single score
- * Permission: Class Teacher OR Head Teacher of same grade
+ * Permission: Course Teacher (via courses table) OR Head Teacher of same grade OR Admin
+ * Note: Office Members with teaching assignments can also edit their own courses
  */
 export async function updateScore(
   classId: string,
@@ -104,23 +196,32 @@ export async function updateScore(
 
   if (userError || !currentUser) throw new Error("User not found");
 
-  // Get class details (teacher_id, grade)
+  // Get class details (grade)
   const { data: classData, error: classError } = await supabase
     .from("classes")
-    .select("teacher_id, grade")
+    .select("grade")
     .eq("id", classId)
     .single();
 
   if (classError || !classData) throw new Error("Class not found");
 
-  const isClassTeacher = classData.teacher_id === user.id;
+  // Check if user is a teacher for this class via courses table
+  // This includes regular teachers AND office_members with teaching assignments
+  const { data: courseAssignment } = await supabase
+    .from("courses")
+    .select("id")
+    .eq("class_id", classId)
+    .eq("teacher_id", user.id)
+    .single();
+
+  const isCourseTeacher = !!courseAssignment;
   const isGradeHead =
-    currentUser.role === "head" && currentUser.grade === classData.grade;
+    currentUser.role === "head" && currentUser.grade === String(classData.grade);
   const isAdmin = currentUser.role === "admin";
 
-  if (!isClassTeacher && !isGradeHead && !isAdmin) {
+  if (!isCourseTeacher && !isGradeHead && !isAdmin) {
     throw new Error(
-      "Permission denied: Only Class Teacher or Grade Head can edit grades."
+      "Permission denied: Only Course Teacher or Grade Head can edit grades."
     );
   }
   // ------------------------

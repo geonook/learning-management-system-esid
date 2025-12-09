@@ -32,24 +32,57 @@ G4 Seekers,4,G4E1,2025-2026,Linkou
 
 | CSV Column | Database Field | Type | Example | Notes |
 |------------|----------------|------|---------|-------|
-| `full_name` | `full_name` | TEXT | John Smith | English name preferred |
-| `email` | `email` | TEXT | john.smith@kcis.ntpc.edu.tw | Unique, used for login |
+| `full_name` | `full_name` | TEXT | John Smith | English name preferred (can be empty, filled by SSO) |
+| `email` | `email` | TEXT | john.smith@kcislk.ntpc.edu.tw | Unique, used for login |
 | `teacher_type` | `teacher_type` | ENUM | LT, IT, KCFS | Required for teacher/head |
-| `grade` | `grade` | INTEGER | 4 | Required for head only |
-| `role` | `role` | ENUM | admin, head, teacher | User role |
+| `grade_band` | `grade_band` | TEXT | 3-4, 1-6 | **Grade Band** for head teachers |
+| `role` | `role` | ENUM | admin, head, teacher, office_member | User role |
 
 **Example CSV**:
 ```csv
-full_name,email,teacher_type,grade,role
-John Smith,john.smith@kcis.ntpc.edu.tw,IT,,teacher
-G4 IT Head Teacher,g4-it-head@kcis.ntpc.edu.tw,IT,4,head
-System Administrator,admin@kcis.ntpc.edu.tw,,,admin
+full_name,email,teacher_type,grade_band,role
+,john.smith@kcislk.ntpc.edu.tw,IT,,teacher
+,kassieshih@kcislk.ntpc.edu.tw,LT,1,head
+,angelpeng@kcislk.ntpc.edu.tw,LT,3-4,head
+,jonathanperry@kcislk.ntpc.edu.tw,IT,1-2,head
+,carolegodfrey@kcislk.ntpc.edu.tw,KCFS,1-6,head
+,tsehungchen@kcislk.ntpc.edu.tw,,,admin
+,vickielicari@kcislk.ntpc.edu.tw,,,office_member
 ```
 
 **Field Rules**:
-- `teacher_type`: Required when `role` is `teacher` or `head`
-- `grade`: Required when `role` is `head` (1-6)
-- `role`: Must be one of: `admin`, `head`, `teacher`
+- `full_name`: Optional (will be filled via Google SSO on first login)
+- `teacher_type`: Required when `role` is `teacher`, `head`, or `office_member` (if teaching)
+- `grade_band`: Required when `role` is `head`. Valid values:
+  - Single grade: `1`, `2`, `3`, `4`, `5`, `6`
+  - Grade range: `1-2`, `3-4`, `5-6`, `1-6`
+- `role`: Must be one of: `admin`, `head`, `teacher`, `office_member`
+
+**Note**: `office_member` with `teacher_type` can be assigned to teach specific classes via course assignments.
+
+---
+
+### 🎓 Grade Band System
+
+Head Teachers are assigned to **Grade Bands** based on their teacher type:
+
+| Teacher Type | Grade Bands | Description |
+|--------------|-------------|-------------|
+| **LT** | `1`, `2`, `3-4`, `5-6` | Local Teachers - separate bands per grade/range |
+| **IT** | `1-2`, `3-4`, `5-6` | International Teachers - paired grade bands |
+| **KCFS** | `1-6` | KCFS Teachers - all grades |
+
+**Grade Band Examples**:
+```
+G1 LT Head → grade_band: 1
+G2 LT Head → grade_band: 2
+G3-G4 LT Head → grade_band: 3-4
+G5-G6 LT Head → grade_band: 5-6
+G1-G2 IT Head → grade_band: 1-2
+G3-G4 IT Head → grade_band: 3-4
+G5-G6 IT Head → grade_band: 5-6
+G1-G6 KCFS Head → grade_band: 1-6
+```
 
 ---
 
@@ -99,13 +132,20 @@ S2025002,Bella Wang,4,G4E2,G4 Explorers
 
 ### Role Types
 ```typescript
-type Role = 'admin' | 'head' | 'teacher';
+type Role = 'admin' | 'head' | 'teacher' | 'office_member';
 ```
 
 **Usage**:
 - `admin`: System Administrator (full access)
 - `head`: Head Teacher (grade + course_type scope)
 - `teacher`: Regular Teacher (assigned courses only)
+- `office_member`: Office Staff (can view all classes, edit only assigned courses)
+
+**Special Case: Office Member + Teacher**:
+- If someone is both office staff and a teacher, use `office_member` role
+- Then assign them to courses via `course_assignments.csv`
+- They can **view** all classes (via office_member role)
+- They can **edit grades** only for classes they're assigned to (via courses.teacher_id)
 
 ---
 
@@ -210,9 +250,12 @@ Invalid Examples:
 ### Teachers
 - [ ] `email` is unique across all users
 - [ ] `email` is valid format (contains @)
-- [ ] `teacher_type` is LT, IT, or KCFS (for teacher/head roles)
-- [ ] `grade` is 1-6 (for head role only)
-- [ ] `role` is admin, head, or teacher
+- [ ] `teacher_type` is LT, IT, or KCFS (for teacher/head/office_member roles if teaching)
+- [ ] `grade_band` is valid format for head role:
+  - Single: `1`, `2`, `3`, `4`, `5`, `6`
+  - Range: `1-2`, `3-4`, `5-6`, `1-6`
+- [ ] `role` is admin, head, teacher, or office_member
+- [ ] `full_name` is optional (will be filled via SSO)
 
 ### Course Assignments
 - [ ] `teacher_email` exists in users table
@@ -321,11 +364,17 @@ david@kcis.ntpc.edu.tw
 
 ### Error 4: Missing Required Field
 ```
-❌ Error: Grade is required for role 'head'
-✅ Fix: Add grade value (1-6) for head teachers
+❌ Error: grade_band is required for role 'head'
+✅ Fix: Add grade_band value (e.g., '3-4', '1-6') for head teachers
+```
+
+### Error 5: Invalid Grade Band Format
+```
+❌ Error: grade_band '3-4-5' does not match pattern
+✅ Fix: Use valid formats: '1', '2', '3-4', '5-6', '1-2', '1-6'
 ```
 
 ---
 
-**Last Updated**: 2025-10-29
+**Last Updated**: 2025-12-02
 **Maintained By**: System Administrator

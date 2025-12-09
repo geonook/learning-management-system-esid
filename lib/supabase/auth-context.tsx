@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { User } from '@supabase/supabase-js'
 import { supabase } from './client'
 import type { UserPermissions } from '@/lib/api/teacher-data'
@@ -30,13 +30,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false)
   const [isDevelopmentMockActive, setIsDevelopmentMockActive] = useState(false)
 
+  // Ref 用於在 onAuthStateChange 回調中追蹤最新的 userPermissions
+  // 這解決了閉包捕獲舊值的問題
+  const userPermissionsRef = useRef<UserPermissions | null>(null)
+
   const fetchUserPermissions = async (userId: string): Promise<UserPermissions | null> => {
     try {
       console.log('[AuthContext] Fetching permissions for userId:', userId)
 
       const { data, error } = await supabase
         .from('users')
-        .select('id, role, grade, track, teacher_type, full_name')
+        .select('id, role, grade_band, track, teacher_type, full_name')
         .eq('id', userId)
         .single()
 
@@ -57,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return {
         userId: data.id,
         role: data.role,
-        grade: data.grade,
+        grade: data.grade_band,
         track: data.track,
         teacher_type: data.teacher_type,
         full_name: data.full_name
@@ -80,6 +84,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null)
     setUserPermissions(null)
   }
+
+  // 同步 ref 與 state，確保 onAuthStateChange 回調讀取到最新值
+  useEffect(() => {
+    userPermissionsRef.current = userPermissions
+  }, [userPermissions])
 
   useEffect(() => {
     // Set hydrated state
@@ -137,11 +146,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session.user)
         const permissions = await fetchUserPermissions(session.user.id)
         console.log('[AuthContext] Permissions result:', permissions)
+        if (!permissions) {
+          console.error('[AuthContext] WARNING: User has session but no permissions - user may not exist in database')
+          console.error('[AuthContext] User ID:', session.user.id, 'Email:', session.user.email)
+        }
         setUserPermissions(permissions)
       } else {
         console.log('[AuthContext] No session found, user will be redirected to login')
       }
 
+      console.log('[AuthContext] Initial load complete, setting loading=false')
       setLoading(false)
     }
 
@@ -150,26 +164,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email)
-        
+        console.log('[AuthContext] Auth state changed:', event, session?.user?.email)
+
         const useMockAuth = process.env.NEXT_PUBLIC_USE_MOCK_AUTH === 'true'
-        
+
         // If mock auth is active, ignore real auth state changes
         if (useMockAuth && process.env.NODE_ENV === 'development' && isDevelopmentMockActive) {
-          console.log('Development mode: Ignoring auth state change - mock admin user is active')
+          console.log('[AuthContext] Development mode: Ignoring auth state change')
           return
         }
-        
+
+        // Skip if this is the same user (no need to refetch permissions)
+        // This covers TOKEN_REFRESHED, SIGNED_IN, and INITIAL_SESSION events
+        // 使用 ref 而非 state，避免閉包捕獲舊值的問題
+        if (['TOKEN_REFRESHED', 'SIGNED_IN', 'INITIAL_SESSION'].includes(event)
+            && userPermissionsRef.current?.userId === session?.user?.id) {
+          console.log('[AuthContext] Same user auth event, skipping permission refetch:', event)
+          return
+        }
+
         if (session?.user) {
+          // Set loading to true while fetching permissions to prevent race condition
+          console.log('[AuthContext] Auth state changed with user, fetching permissions...')
+          setLoading(true)
           setUser(session.user)
           const permissions = await fetchUserPermissions(session.user.id)
+          if (!permissions) {
+            console.error('[AuthContext] WARNING: Auth state changed but no permissions - user may not exist in database')
+            console.error('[AuthContext] User ID:', session.user.id, 'Email:', session.user.email)
+          }
           setUserPermissions(permissions)
+          console.log('[AuthContext] Auth state change complete, setting loading=false')
+          setLoading(false)
         } else {
+          console.log('[AuthContext] Auth state changed: no session, clearing user')
           setUser(null)
           setUserPermissions(null)
+          setLoading(false)
         }
-        
-        setLoading(false)
       }
     )
 

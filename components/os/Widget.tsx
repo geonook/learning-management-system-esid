@@ -44,9 +44,9 @@ export function Widget({
         hoverEffect
       >
         {title && (
-          <div className="flex items-center space-x-2 mb-3 pb-2 border-b border-white/10">
-            {icon && <div className="text-white/80">{icon}</div>}
-            <h3 className="text-sm font-semibold text-white/90 tracking-wide uppercase">
+          <div className="flex items-center space-x-2 mb-3 pb-2 border-b border-slate-200/50 dark:border-white/10">
+            {icon && <div className="text-slate-600 dark:text-white/80">{icon}</div>}
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-white/90 tracking-wide uppercase">
               {title}
             </h3>
           </div>

@@ -195,8 +195,10 @@ export class AnalyticsEngine {
 
   /**
    * Get student scores with grade calculations
+   * Note: exams table may not have course_id column, so we infer course_type from exam name or class
    */
   private async getStudentScores(studentId: string, filters: AnalyticsFilters) {
+    // First, get scores with exam info (without course_id since it may not exist)
     const { data: rawScores, error } = await this.supabase
       .from('scores')
       .select(`
@@ -206,13 +208,7 @@ export class AnalyticsEngine {
           id,
           name,
           exam_date,
-          courses!inner(
-            course_type,
-            classes!inner(
-              grade,
-              track
-            )
-          )
+          class_id
         )
       `)
       .eq('student_id', studentId)
@@ -226,7 +222,71 @@ export class AnalyticsEngine {
       return []
     }
 
-    return rawScores.filter(score => score.score !== null)
+    // Get unique class_ids from exams
+    const classIds = [...new Set(rawScores
+      .map(s => (s.exams as { class_id: string }).class_id)
+      .filter((id): id is string => !!id))]
+
+    // Fetch course types based on class_id
+    let classCoursesMap: Record<string, string[]> = {}
+    if (classIds.length > 0) {
+      const { data: coursesData } = await this.supabase
+        .from('courses')
+        .select('class_id, course_type')
+        .in('class_id', classIds)
+
+      coursesData?.forEach(c => {
+        if (!classCoursesMap[c.class_id]) {
+          classCoursesMap[c.class_id] = []
+        }
+        classCoursesMap[c.class_id].push(c.course_type)
+      })
+    }
+
+    // Fetch class info separately
+    let classInfoMap: Record<string, { grade: number; track: string | null }> = {}
+    if (classIds.length > 0) {
+      const { data: classesData } = await this.supabase
+        .from('classes')
+        .select('id, grade, track')
+        .in('id', classIds)
+
+      classesData?.forEach(c => {
+        classInfoMap[c.id] = { grade: c.grade, track: c.track }
+      })
+    }
+
+    // Transform and attach course/class info to scores
+    return rawScores
+      .filter(score => score.score !== null)
+      .map(score => {
+        const exam = score.exams as { id: string; name: string; exam_date: string; class_id: string }
+
+        // Infer course type from exam name or use first course type from class
+        let courseType: string | null = null
+        const examNameUpper = exam.name?.toUpperCase() || ''
+        if (examNameUpper.startsWith('LT ') || examNameUpper.includes(' LT')) {
+          courseType = 'LT'
+        } else if (examNameUpper.startsWith('IT ') || examNameUpper.includes(' IT')) {
+          courseType = 'IT'
+        } else if (examNameUpper.startsWith('KCFS ') || examNameUpper.includes(' KCFS')) {
+          courseType = 'KCFS'
+        } else if (classCoursesMap[exam.class_id]?.length === 1) {
+          courseType = classCoursesMap[exam.class_id][0]
+        }
+
+        const classInfo = classInfoMap[exam.class_id] || { grade: 0, track: null }
+
+        return {
+          ...score,
+          exams: {
+            ...exam,
+            course_type: courseType,
+            class_grade: classInfo.grade,
+            class_track: classInfo.track
+          }
+        }
+      })
   }
 
   /**
@@ -398,9 +458,9 @@ export class AnalyticsEngine {
         scores.forEach(score => {
           if (score.score !== null) {
             allScores.push(score.score)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const courseType = (score.exams as any).courses.course_type as 'LT' | 'IT' | 'KCFS'
-            if (courseScores[courseType]) {
+            // course_type is now directly on exams object (fetched separately in getStudentScores)
+            const courseType = (score.exams as { course_type: string | null }).course_type as 'LT' | 'IT' | 'KCFS' | null
+            if (courseType && courseScores[courseType]) {
               courseScores[courseType].push(score.score)
             }
           }

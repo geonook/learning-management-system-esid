@@ -35,10 +35,10 @@ export interface DashboardStudent {
 }
 
 export interface TeacherKpis {
-  attendanceRate: number;
+  attendanceRate: number | null; // null = 待出席系統實作
   averageScore: number;
   passRate: number;
-  activeAlerts: number;
+  activeAlerts: number | null; // null = 待警告系統實作
 }
 
 export interface AdminKpis {
@@ -46,7 +46,7 @@ export interface AdminKpis {
   notDue: number;
   overdue: number;
   coverage: number;
-  onTime: number;
+  onTime: number | null; // null = 待實作準時完成率計算
 }
 
 export interface ClassDistribution {
@@ -255,19 +255,19 @@ export async function getTeacherKpis(teacherId: string): Promise<TeacherKpis> {
           100
         : 0;
 
-    // Mock attendance rate and alerts for now (can be implemented later)
-    const attendanceRate = Math.round(85 + Math.random() * 10);
-    const activeAlerts = Math.floor(Math.random() * 3);
+    // 出席率和警告需要專門的系統實作，暫時返回 null
+    // attendanceRate: 待出席追蹤系統
+    // activeAlerts: 待警告/問題追蹤系統
 
     return {
-      attendanceRate,
+      attendanceRate: null, // 待出席系統實作
       averageScore: Math.round(averageScore * 10) / 10,
       passRate: Math.round(passRate),
-      activeAlerts,
+      activeAlerts: null, // 待警告系統實作
     };
   } catch (error) {
     console.error("Exception in getTeacherKpis:", error);
-    return { attendanceRate: 0, averageScore: 0, passRate: 0, activeAlerts: 0 };
+    return { attendanceRate: null, averageScore: 0, passRate: 0, activeAlerts: null };
   }
 }
 
@@ -320,19 +320,19 @@ export async function getAdminKpis(): Promise<AdminKpis> {
         ? Math.round((uniqueStudentsWithScores / totalActiveStudents) * 100)
         : 0;
 
-    // Mock onTime percentage (can be refined later)
-    const onTime = Math.round(70 + Math.random() * 20);
+    // onTime 需要計算實際的準時完成率，暫時返回 null
+    // 待實作：比較 exam_date 與實際成績輸入時間
 
     return {
       totalExams: totalExams || 0,
       notDue: notDue || 0,
       overdue: overdue || 0,
       coverage,
-      onTime,
+      onTime: null, // 待準時完成率計算系統實作
     };
   } catch (error) {
     console.error("Exception in getAdminKpis:", error);
-    return { totalExams: 0, notDue: 0, overdue: 0, coverage: 0, onTime: 0 };
+    return { totalExams: 0, notDue: 0, overdue: 0, coverage: 0, onTime: null };
   }
 }
 
@@ -342,8 +342,9 @@ export async function getAdminKpis(): Promise<AdminKpis> {
 export async function getClassDistribution(
   userRole: "admin" | "office_member" | "head" | "teacher" | "student",
   userId?: string,
-  grade?: number,
-  track?: "local" | "international"
+  gradeBand?: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  courseType?: "LT" | "IT" | "KCFS"
 ): Promise<ClassDistribution[]> {
   const supabase = createClient();
 
@@ -374,10 +375,21 @@ export async function getClassDistribution(
       .lte("score", 100);
 
     // Apply role-based filtering
-    if (userRole === "head" && grade && track) {
-      query = query
-        .eq("exams.classes.grade", grade)
-        .eq("exams.classes.track", track);
+    if (userRole === "head" && gradeBand) {
+      // Parse grade band to get grades
+      let grades: number[] = [];
+      if (gradeBand.includes("-")) {
+        const parts = gradeBand.split("-").map(Number);
+        const start = parts[0] ?? 1;
+        const end = parts[1] ?? start;
+        for (let i = start; i <= end; i++) {
+          grades.push(i);
+        }
+      } else {
+        grades = [Number(gradeBand)];
+      }
+      query = query.in("exams.classes.grade", grades);
+      // Note: course type filtering would need to be done at the course level, not class level
     } else if (userRole === "teacher" && userId) {
       // Get teacher's class IDs through courses
       const { data: teacherCourses } = await supabase
@@ -445,8 +457,9 @@ export async function getClassDistribution(
 export async function getUpcomingDeadlines(
   userRole: "admin" | "office_member" | "head" | "teacher" | "student",
   userId?: string,
-  grade?: number,
-  track?: "local" | "international"
+  gradeBand?: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  courseType?: "LT" | "IT" | "KCFS"
 ): Promise<UpcomingDeadline[]> {
   const supabase = createClient();
 
@@ -476,8 +489,20 @@ export async function getUpcomingDeadlines(
       .limit(5);
 
     // Apply role-based filtering
-    if (userRole === "head" && grade && track) {
-      query = query.eq("classes.grade", grade).eq("classes.track", track);
+    if (userRole === "head" && gradeBand) {
+      // Parse grade band to get grades
+      let grades: number[] = [];
+      if (gradeBand.includes("-")) {
+        const parts = gradeBand.split("-").map(Number);
+        const start = parts[0] ?? 1;
+        const end = parts[1] ?? start;
+        for (let i = start; i <= end; i++) {
+          grades.push(i);
+        }
+      } else {
+        grades = [Number(gradeBand)];
+      }
+      query = query.in("classes.grade", grades);
     } else if (userRole === "teacher" && userId) {
       const { data: teacherCourses } = await supabase
         .from("courses")
@@ -926,7 +951,7 @@ export interface HeadTeacherKpis {
   totalClasses: number;
   averageScore: number;
   coverageRate: number;
-  activeIssues: number;
+  activeIssues: number | null; // null = 待問題追蹤系統實作
   studentsCount: number;
   teachersCount: number;
 }
@@ -944,21 +969,36 @@ export interface GradeClassSummary {
 }
 
 /**
- * Get Head Teacher KPIs for their specific grade and track
+ * Get Head Teacher KPIs for their specific grade band and course type
+ * @param gradeBand - Grade band string: "1", "2", "3-4", "5-6", "1-2", "1-6"
+ * @param courseType - Course type: "LT", "IT", "KCFS"
  */
 export async function getHeadTeacherKpis(
-  grade: number,
-  track: "local" | "international"
+  gradeBand: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  courseType: "LT" | "IT" | "KCFS"
 ): Promise<HeadTeacherKpis> {
   const supabase = createClient();
 
   try {
-    // Get classes in this grade and track
+    // Parse grade band to get grade numbers
+    let grades: number[] = [];
+    if (gradeBand.includes("-")) {
+      const parts = gradeBand.split("-").map(Number);
+      const start = parts[0] ?? 1;
+      const end = parts[1] ?? start;
+      for (let i = start; i <= end; i++) {
+        grades.push(i);
+      }
+    } else {
+      grades = [Number(gradeBand)];
+    }
+
+    // Get classes in these grades (classes don't have track, course type is in courses table)
     const { data: classes, error: classesError } = await supabase
       .from("classes")
       .select("id, name")
-      .eq("grade", grade)
-      .eq("track", track)
+      .in("grade", grades)
       .eq("is_active", true);
 
     if (classesError) {
@@ -1046,14 +1086,13 @@ export async function getHeadTeacherKpis(
         ? Math.round((studentsWithScores / studentsCount) * 100)
         : 0;
 
-    // Mock active issues (could be implemented with real issue tracking)
-    const activeIssues = Math.floor(Math.random() * 5);
+    // activeIssues 需要問題追蹤系統實作，暫時返回 null
 
     return {
       totalClasses,
       averageScore,
       coverageRate,
-      activeIssues,
+      activeIssues: null, // 待問題追蹤系統實作
       studentsCount: studentsCount || 0,
       teachersCount,
     };
@@ -1063,7 +1102,7 @@ export async function getHeadTeacherKpis(
       totalClasses: 0,
       averageScore: 0,
       coverageRate: 0,
-      activeIssues: 0,
+      activeIssues: null,
       studentsCount: 0,
       teachersCount: 0,
     };

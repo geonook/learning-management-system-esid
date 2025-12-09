@@ -67,7 +67,8 @@ export async function getTeachersByType(teacherType: TeacherType) {
   return data
 }
 
-// Get heads by grade and track
+// Get heads by grade band and course type
+// @deprecated Use getHeadByGradeBand instead for grade band support
 export async function getHeadsByGradeTrack(grade: number, track: TrackType) {
   const { data, error } = await supabase
     .from('users')
@@ -81,6 +82,28 @@ export async function getHeadsByGradeTrack(grade: number, track: TrackType) {
   if (error) {
     console.error('Error fetching heads by grade/track:', error)
     throw new Error(`Failed to fetch heads: ${error.message}`)
+  }
+
+  return data
+}
+
+// Get head teacher by grade band and course type (new grade band system)
+export async function getHeadByGradeBand(gradeBand: string, courseType: TeacherType) {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('role', 'head')
+    .eq('grade_band', gradeBand)
+    .eq('track', courseType)
+    .eq('is_active', true)
+    .single()
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return null // Head not found
+    }
+    console.error('Error fetching head by grade band:', error)
+    throw new Error(`Failed to fetch head: ${error.message}`)
   }
 
   return data
@@ -219,18 +242,19 @@ export async function getUserStatistics() {
 }
 
 // Check if user has permission for specific grade/track
+// @deprecated Use checkUserPermissionByGradeBand for grade band support
 export async function checkUserPermission(
   userId: string,
   requiredGrade?: number,
   requiredTrack?: TrackType
 ): Promise<boolean> {
   const user = await getUser(userId)
-  
+
   // Admin has all permissions
   if (user.role === 'admin') {
     return true
   }
-  
+
   // Head teachers can only access their assigned grade and track
   if (user.role === 'head') {
     if (requiredGrade && user.grade !== requiredGrade) {
@@ -241,15 +265,206 @@ export async function checkUserPermission(
     }
     return true
   }
-  
+
   // Teachers have limited permissions (to be refined based on class assignments)
   if (user.role === 'teacher') {
     // For now, allow teachers to access based on their teacher_type
     // This should be refined to check actual class assignments
     return true
   }
-  
+
   return false
+}
+
+// Helper function to check if a grade falls within a grade band
+function gradeInBand(grade: number, gradeBand: string): boolean {
+  if (gradeBand.includes('-')) {
+    const parts = gradeBand.split('-').map(Number)
+    const start = parts[0] ?? 1
+    const end = parts[1] ?? start
+    return grade >= start && grade <= end
+  }
+  return grade === parseInt(gradeBand)
+}
+
+// Check if user has permission for specific grade and course type (new grade band system)
+export async function checkUserPermissionByGradeBand(
+  userId: string,
+  requiredGrade?: number,
+  requiredCourseType?: TeacherType
+): Promise<boolean> {
+  const user = await getUser(userId) as User & { grade_band?: string | null }
+
+  // Admin has all permissions
+  if (user.role === 'admin') {
+    return true
+  }
+
+  // Office member has read-only access to all
+  if (user.role === 'office_member') {
+    return true
+  }
+
+  // Head teachers can only access their assigned grade band and course type
+  if (user.role === 'head') {
+    if (requiredGrade && user.grade_band) {
+      if (!gradeInBand(requiredGrade, user.grade_band)) {
+        return false
+      }
+    }
+    if (requiredCourseType && user.track !== requiredCourseType) {
+      return false
+    }
+    return true
+  }
+
+  // Teachers have limited permissions (to be refined based on class assignments)
+  if (user.role === 'teacher') {
+    // For now, allow teachers to access based on their teacher_type
+    if (requiredCourseType && user.teacher_type !== requiredCourseType) {
+      return false
+    }
+    return true
+  }
+
+  return false
+}
+
+// Extended teacher type with course assignments for browse page
+export type TeacherWithCourses = User & {
+  course_count: number
+  assigned_classes: string[]  // Class names
+}
+
+// Get teachers with their course assignments for Browse page
+export async function getTeachersWithCourses(options?: {
+  teacherType?: TeacherType
+  search?: string
+}): Promise<TeacherWithCourses[]> {
+  // Build query for teachers (role = 'teacher' or 'head')
+  let query = supabase
+    .from('users')
+    .select('*')
+    .in('role', ['teacher', 'head'])
+    .eq('is_active', true)
+    .order('full_name')
+
+  // Apply teacher type filter
+  if (options?.teacherType) {
+    query = query.eq('teacher_type', options.teacherType)
+  }
+
+  // Apply search filter
+  if (options?.search) {
+    query = query.or(`full_name.ilike.%${options.search}%,email.ilike.%${options.search}%`)
+  }
+
+  const { data: teachers, error: teacherError } = await query
+
+  if (teacherError) {
+    console.error('Error fetching teachers:', teacherError)
+    throw new Error(`Failed to fetch teachers: ${teacherError.message}`)
+  }
+
+  if (!teachers || teachers.length === 0) {
+    return []
+  }
+
+  // Get course assignments for all teachers
+  const teacherIds = teachers.map(t => t.id)
+  const { data: courses, error: courseError } = await supabase
+    .from('courses')
+    .select(`
+      teacher_id,
+      classes:class_id (
+        name
+      )
+    `)
+    .in('teacher_id', teacherIds)
+    .eq('is_active', true)
+
+  if (courseError) {
+    console.error('Error fetching courses:', courseError)
+  }
+
+  // Create course count and class name map by teacher_id
+  const courseCountMap: Record<string, number> = {}
+  const classNamesMap: Record<string, Set<string>> = {}
+
+  courses?.forEach(course => {
+    if (course.teacher_id) {
+      courseCountMap[course.teacher_id] = (courseCountMap[course.teacher_id] || 0) + 1
+      if (!classNamesMap[course.teacher_id]) {
+        classNamesMap[course.teacher_id] = new Set()
+      }
+      // Handle the joined classes data - Supabase returns object for single FK join
+      const classesData = course.classes
+      let className: string | undefined
+      if (classesData && typeof classesData === 'object' && !Array.isArray(classesData)) {
+        className = (classesData as { name: string }).name
+      }
+      if (className) {
+        const teacherSet = classNamesMap[course.teacher_id]
+        if (teacherSet) {
+          teacherSet.add(className)
+        }
+      }
+    }
+  })
+
+  // Combine all data
+  const result: TeacherWithCourses[] = teachers.map(teacher => {
+    const teacherClasses = classNamesMap[teacher.id]
+    return {
+      ...teacher,
+      course_count: courseCountMap[teacher.id] || 0,
+      assigned_classes: teacherClasses ? Array.from(teacherClasses).sort() : []
+    }
+  })
+
+  return result
+}
+
+// Get teacher type statistics
+export async function getTeacherTypeStatistics(): Promise<{
+  total: number
+  lt: number
+  it: number
+  kcfs: number
+  head: number
+}> {
+  const { data, error } = await supabase
+    .from('users')
+    .select('role, teacher_type')
+    .in('role', ['teacher', 'head'])
+    .eq('is_active', true)
+
+  if (error) {
+    console.error('Error fetching teacher statistics:', error)
+    throw new Error(`Failed to fetch teacher statistics: ${error.message}`)
+  }
+
+  const stats = {
+    total: data.length,
+    lt: 0,
+    it: 0,
+    kcfs: 0,
+    head: 0
+  }
+
+  data.forEach(user => {
+    if (user.role === 'head') {
+      stats.head++
+    } else if (user.teacher_type === 'LT') {
+      stats.lt++
+    } else if (user.teacher_type === 'IT') {
+      stats.it++
+    } else if (user.teacher_type === 'KCFS') {
+      stats.kcfs++
+    }
+  })
+
+  return stats
 }
 
 // Get available teachers for class assignment

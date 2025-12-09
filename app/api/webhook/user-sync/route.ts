@@ -122,7 +122,8 @@ function mapRole(infohubRole: string): UserRole {
  */
 async function syncUserToSupabase(
   user: InfoHubUser,
-  eventType: WebhookEventType
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _eventType: WebhookEventType // Prefixed with _ to indicate intentionally unused
 ): Promise<string> {
   const supabase = createServiceRoleClient();
 
@@ -143,61 +144,164 @@ async function syncUserToSupabase(
     courseType = user.teacher_type as CourseType;
   }
 
-  // Check if user already exists
+  // Grade band for head teachers (Migration 023)
+  const gradeBand = user.grade_band || (user.grade ? String(user.grade) : null);
+
+  // First, get or create Auth user to get the canonical ID
+  let authUserId = "";
+
+  // Check if auth user already exists by listing users with pagination
+  // (default listUsers has a limit, so we need to paginate to find all users)
+  let existingAuthUser: { id: string; email?: string } | null | undefined = null;
+  let page = 1;
+  const perPage = 1000;
+
+  while (!existingAuthUser) {
+    const { data: usersData, error: listError } = await supabase.auth.admin.listUsers({
+      page,
+      perPage,
+    });
+
+    if (listError) {
+      console.error("[Webhook] Error listing users:", listError);
+      break;
+    }
+
+    existingAuthUser = usersData?.users.find(
+      (u) => u.email?.toLowerCase() === user.email.toLowerCase()
+    );
+
+    // If found, or if we've exhausted all users, break
+    if (existingAuthUser || !usersData?.users || usersData.users.length < perPage) {
+      break;
+    }
+
+    page++;
+    // Safety limit to prevent infinite loop
+    if (page > 10) {
+      console.warn("[Webhook] Reached page limit while searching for user");
+      break;
+    }
+  }
+
+  if (existingAuthUser) {
+    authUserId = existingAuthUser.id;
+    console.log(`[Webhook] Found existing Auth user: ${authUserId}`);
+
+    // Update auth user metadata (including full_name from Google/Info Hub)
+    const { error: updateAuthError } = await supabase.auth.admin.updateUserById(
+      authUserId,
+      {
+        user_metadata: {
+          full_name: user.full_name,
+          avatar_url: user.avatar_url,
+          infohub_user_id: user.infohub_user_id,
+        },
+      }
+    );
+
+    if (updateAuthError) {
+      console.warn("[Webhook] Failed to update auth user metadata:", updateAuthError);
+      // Non-fatal - continue with the sync
+    } else {
+      console.log(`[Webhook] Updated auth user metadata for: ${user.email}`);
+    }
+  } else {
+    // Create new auth user
+    const { data: newAuthUser, error: authError } = await supabase.auth.admin.createUser({
+      email: user.email,
+      email_confirm: true,
+      user_metadata: {
+        full_name: user.full_name,
+        avatar_url: user.avatar_url,
+        infohub_user_id: user.infohub_user_id,
+      },
+    });
+
+    if (authError) {
+      // Handle race condition: another process may have created the user
+      if (authError.code === 'email_exists') {
+        console.log("[Webhook] Race condition detected, retrying user lookup...");
+        // Retry lookup
+        const { data: retryData } = await supabase.auth.admin.listUsers({
+          page: 1,
+          perPage: 1000,
+        });
+        const retryUser = retryData?.users.find(
+          (u) => u.email?.toLowerCase() === user.email.toLowerCase()
+        );
+        if (retryUser) {
+          authUserId = retryUser.id;
+          console.log(`[Webhook] Found user on retry: ${authUserId}`);
+        } else {
+          throw new Error(`User exists but cannot be found: ${user.email}`);
+        }
+      } else {
+        console.error("[Webhook] Failed to create auth user:", authError);
+        throw authError;
+      }
+    } else if (newAuthUser?.user) {
+      authUserId = newAuthUser.user.id;
+      console.log(`[Webhook] Created new Auth user: ${authUserId}`);
+    } else {
+      throw new Error("Failed to create auth user: no user returned");
+    }
+  }
+
+  // Check if user exists in public.users table
   const { data: existingUser } = await supabase
     .from("users")
     .select("id")
     .eq("email", user.email)
     .single();
 
-  if (eventType === "user.created" || !existingUser) {
-    // Create new user in auth.users
-    const { data: authData, error: authError } =
-      await supabase.auth.admin.createUser({
+  if (existingUser) {
+    // User exists - check if ID matches Auth user ID
+    if (existingUser.id !== authUserId) {
+      // ID mismatch! Need to delete old row and create new one with correct ID
+      console.warn(`[Webhook] ID mismatch detected! public.users.id=${existingUser.id}, auth.id=${authUserId}`);
+      console.log("[Webhook] Deleting old user row and creating new one with correct ID...");
+
+      // Delete old row
+      const { error: deleteError } = await supabase
+        .from("users")
+        .delete()
+        .eq("id", existingUser.id);
+
+      if (deleteError) {
+        console.error("[Webhook] Failed to delete old user row:", deleteError);
+        throw deleteError;
+      }
+
+      // Create new row with correct ID
+      const { error: insertError } = await supabase.from("users").insert({
+        id: authUserId,
         email: user.email,
-        email_confirm: true,
-        user_metadata: {
-          full_name: user.full_name,
-          avatar_url: user.avatar_url,
-          infohub_user_id: user.infohub_user_id,
-        },
+        full_name: user.full_name,
+        role: lmsRole,
+        teacher_type: courseType,
+        grade_band: gradeBand,
+        grade: user.grade,
+        created_at: new Date().toISOString(),
       });
 
-    if (authError) {
-      console.error("[Webhook] Failed to create auth user:", authError);
-      throw authError;
+      if (insertError) {
+        console.error("[Webhook] Failed to create user with correct ID:", insertError);
+        throw insertError;
+      }
+
+      console.log(`[Webhook] Recreated user with correct ID: ${user.email} (${authUserId})`);
+      return authUserId;
     }
 
-    if (!authData.user) {
-      throw new Error("Failed to create auth user: no user returned");
-    }
-
-    // Create user in public.users table
-    const { error: userError } = await supabase.from("users").insert({
-      id: authData.user.id,
-      email: user.email,
-      full_name: user.full_name,
-      role: lmsRole,
-      track: courseType, // For head teachers, stores their course type responsibility
-      grade: user.grade,
-      created_at: new Date().toISOString(),
-    });
-
-    if (userError) {
-      console.error("[Webhook] Failed to create public user:", userError);
-      throw userError;
-    }
-
-    console.log(`[Webhook] Created user: ${user.email} (${authData.user.id})`);
-    return authData.user.id;
-  } else {
-    // Update existing user
+    // ID matches - just update existing user
     const { error: updateError } = await supabase
       .from("users")
       .update({
         full_name: user.full_name,
         role: lmsRole,
-        track: courseType,
+        teacher_type: courseType,
+        grade_band: gradeBand,
         grade: user.grade,
       })
       .eq("id", existingUser.id);
@@ -210,6 +314,26 @@ async function syncUserToSupabase(
     console.log(`[Webhook] Updated user: ${user.email} (${existingUser.id})`);
     return existingUser.id;
   }
+
+  // No existing user in public.users - create new row with Auth user ID
+  const { error: userError } = await supabase.from("users").insert({
+    id: authUserId,
+    email: user.email,
+    full_name: user.full_name,
+    role: lmsRole,
+    teacher_type: courseType,
+    grade_band: gradeBand,
+    grade: user.grade,
+    created_at: new Date().toISOString(),
+  });
+
+  if (userError) {
+    console.error("[Webhook] Failed to create public user:", userError);
+    throw userError;
+  }
+
+  console.log(`[Webhook] Created user: ${user.email} (${authUserId})`);
+  return authUserId;
 }
 
 /**

@@ -1,26 +1,35 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 2.6
-> **Last Updated**: 2025-12-02
+> **Documentation Version**: 3.3
+> **Last Updated**: 2025-12-09
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Both Systems Complete)**
-> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**
+> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**, **Teacher Course Assignment (v1.42.0 ✅)**, **Data Pages Sprint 1-2 (v1.43.0 ✅)**, **Browse Pages Loading Fix (v1.44.0 ✅)**, **Auth State Change Fix (v1.45.0 ✅)**, **Class Student Roster (v1.46.0 ✅)**, **Course Assignment UI (v1.47.0 ✅)**, **Gradebook Course Filter (v1.48.0 ✅)**, **Gradebook UI/UX Refactor (v1.49.0 ✅)**
 
 > **Current Status**:
 >
-> - ✅ **v1.41.0 TeacherOS UI Refinements** - Dark mode optimization, Calendar redesign, macOS style enhancements
+> - ✅ **v1.49.0 Gradebook UI/UX Refactor** - 統一工具欄、移除冗餘元素 (2025-12-09)
+>   - 簡化 PageHeader subtitle（移除課程類型和教師）
+>   - 重設計工具欄：課程選擇器 + 教師 + 學生數 + 儲存狀態
+>   - 移除底部狀態欄（資訊整合到工具欄）
+>   - 儲存狀態從 Spreadsheet 移至 GradebookClient
+> - ✅ **v1.48.0 Gradebook Course Filter** - 課程類型篩選與教師顯示 (2025-12-09)
+>   - 新增 LT/IT/KCFS 課程切換功能
+>   - 顯示當前課程的任課教師姓名
+>   - 動態更新教師資訊切換時
+> - ✅ **v1.47.0 Sprint 3.2 Course Assignment UI** - 課程指派管理介面 (2025-12-08)
+> - ✅ **v1.46.0 Sprint 3.1 Class Student Roster** - 班級學生名冊功能實作 (2025-12-08)
+> - ✅ **v1.45.0 Auth State Change Fix** - 修復 React 閉包與重複 fetch 問題 (2025-12-08)
+> - ✅ **v1.44.1 Browse Pages Loading Fix (Improved)** - 簡化 useEffect 模式 (2025-12-08)
+> - ✅ **v1.43.0 Data Pages Complete** - Sprint 1 & 2 功能完善計畫完成 (2025-12-04)
+> - ✅ **v1.42.0 Teacher Course Assignment** - 252 courses assigned to 80 teachers (2025-12-03)
+> - ✅ **Production Teacher Import** - 81 users imported (admin:1, head:8, teacher:54, office_member:17)
 > - ✅ **Phase 4.1 Complete** - One OS Interface Unification with Info Hub
-> - ✅ **Deployment Optimized** - Dockerfile standalone mode, multi-stage build
 > - ✅ **SSO Implementation** - Both LMS & Info Hub complete, alignment verified
-> - ✅ **Cache-Control Headers** - Auth pages no-cache to fix old page issue
-> - 🔴 **Production Database Empty** - All data tables (classes, courses, users) are empty
-> - ⏳ **Migration 022 Pending** - assessment_codes seed data not deployed to Production
-> - 📋 **Data Preparation Phase** - CSV templates ready, awaiting data import
-> - ✅ **E2E SSO Integration Testing** - Complete and verified (2025-12-02)
 > - 🎯 **Next Steps**:
->   1. Execute Migration 022 on Production (assessment_codes)
->   2. Import seed data for classes (84) and courses (252)
->   3. Create user accounts via SSO or seed scripts
+>   1. Phase D2: 淺色模式配色統一、Notion 風格設計系統
+>   2. Sprint 3.3: 我的課表（教師查看自己的課表）
+>   3. CSV Import: 成績資料批次匯入功能
 
 This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -91,14 +100,95 @@ This file provides essential guidance to Claude Code (claude.ai/code) when worki
 
 ### 安全與權限（RLS 核心）
 
-- **角色定義**：admin、head（HT）、teacher（LT/IT/KCFS）
+- **角色定義**：admin、head（HT）、teacher（LT/IT/KCFS）、office_member
 - **Teacher（教師）**：僅能存取自己任課班級的考試與成績
 - **Head Teacher（年段主任）**：
   - 權限範圍：Grade（年級）+ Course Type（課程類型）
   - 範例：G4 LT Head Teacher 可管理所有 G4 年級的 LT 課程（14 個班級的 LT 課程）
   - 檢視權限：可查看該年級所有班級
   - 管理權限：僅能管理自己 course_type 的課程
+- **Office Member（行政人員）**：
+  - 查看權限：可查看所有班級、學生、成績（唯讀）
+  - 編輯權限：若同時為授課教師，僅能編輯自己任課班級的成績
+  - 使用情境：同時是行政人員 + 授課教師的雙重身份
 - **Admin（系統管理員）**：全域存取權限
+
+### 🔐 Auth 標準模式（MANDATORY）
+
+**永遠使用 `useAuthReady` hook，不要直接使用 `useAuth`**
+
+```typescript
+// ✅ 正確模式
+import { useAuthReady } from "@/hooks/useAuthReady";
+
+const { userId, isReady, role } = useAuthReady();
+
+useEffect(() => {
+  if (!isReady) return;
+  fetchData();
+}, [userId]);  // primitive 依賴，穩定
+
+// ❌ 錯誤模式（會導致無限迴圈或載入問題）
+const { user, loading } = useAuth();
+
+useEffect(() => {
+  if (loading || !user) return;
+  fetchData();
+}, [user]);  // 物件依賴，每次都是新參照
+```
+
+**為什麼這很重要？**
+1. `user` 是物件，React 比較參照而非值，每次 auth 事件都會觸發 useEffect
+2. Supabase 會觸發多個 auth 事件（INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED）
+3. `useAuthReady` 提取 `userId` 作為穩定的 primitive 值
+
+**Hook 提供的欄位：**
+- `userId`: string | null（穩定，用於 useEffect 依賴）
+- `role`: string | null（admin/head/teacher/office_member）
+- `isReady`: boolean（用戶已登入且權限已載入）
+- `isLoading`: boolean（載入中狀態）
+- `permissions`: UserPermissions | null（完整權限物件）
+- `grade`, `track`, `teacherType`, `fullName`：常用權限欄位
+
+### 🔧 AuthContext useRef 修復（v1.45.0）
+
+**問題**：切換 macOS 桌面再切回來時，`onAuthStateChange` 會觸發 `SIGNED_IN` 事件，但 skip 邏輯無法正確判斷是否為同一用戶。
+
+**根本原因**：React 閉包捕獲舊值
+
+```typescript
+// ❌ 錯誤：userPermissions 是閉包捕獲的初始值（null）
+useEffect(() => {
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (userPermissions?.userId === session?.user?.id) {
+      return  // 這個條件永遠不成立！
+    }
+  })
+}, [])  // 空依賴，閉包永遠捕獲初始值
+```
+
+**解決方案**：使用 `useRef` 追蹤最新值
+
+```typescript
+// ✅ 正確：使用 ref 追蹤最新的 userPermissions
+const userPermissionsRef = useRef<UserPermissions | null>(null);
+
+// 同步 ref 與 state
+useEffect(() => {
+  userPermissionsRef.current = userPermissions;
+}, [userPermissions]);
+
+// 在回調中使用 ref
+supabase.auth.onAuthStateChange((event, session) => {
+  if (['TOKEN_REFRESHED', 'SIGNED_IN', 'INITIAL_SESSION'].includes(event)
+      && userPermissionsRef.current?.userId === session?.user?.id) {
+    console.log('[AuthContext] Same user auth event, skipping permission refetch:', event)
+    return
+  }
+})
+```
+
+**效果**：切換桌面回來時，console 會顯示 `[AuthContext] Same user auth event, skipping permission refetch: SIGNED_IN`，不會重新 fetch 所有頁面資料。
 
 ### 測試要求
 
@@ -397,17 +487,15 @@ npm run import:cli
   - ✅ Dashboard 400 錯誤已解決
 - **相關檔案**: `db/migrations/021_fix_courses_rls_recursion.sql`
 
-#### Migration 022: Fix Assessment Codes Schema (2025-11-28) ⏳ **待執行於 Production**
+#### Migration 022: Fix Assessment Codes Schema (2025-11-28) ✅ **已完成**
 
-- **目的**: 修復 `assessment_codes` 表缺少 `sequence_order` 欄位和種子資料的問題
+- **目的**: 修復 `assessment_codes` 表缺少種子資料的問題
 - **變更內容**:
-  - 添加 `sequence_order` 欄位（如不存在）
-  - 添加 `is_active` 欄位（如不存在）
   - 插入 13 個 assessment codes（FA1-FA8, SA1-SA4, FINAL）
+  - 設定權重: FA=0.0188, SA=0.05, FINAL=0.10 (總計 0.45)
 - **部署狀態**:
-  - ✅ **Staging** (`kqvpcoolgyhjqleekmee`): 已有資料，不需執行
-  - ⏳ **Production** (`piwbooidofbaqklhijup`): 待執行（表為空）
-- **執行方式**: 在 Supabase Dashboard SQL Editor 執行
+  - ✅ **Staging** (`kqvpcoolgyhjqleekmee`): 已有資料
+  - ✅ **Production** (`piwbooidofbaqklhijup`): 2025-12-08 已執行（13 筆記錄）
 - **相關檔案**: `db/migrations/022_fix_assessment_codes_schema.sql`
 
 ### 📊 真實資料部署狀態
@@ -585,12 +673,17 @@ student_id,full_name,grade,level,class_name
 - 完整文件撰寫
 - 驗證規則定義
 - 範例資料提供
+- **72 位教師資料已匯入 Info Hub** (2025-12-02)
+  - 8 Head Teachers (with grade_band)
+  - 46 Teachers (LT/IT/KCFS)
+  - 17 Office Members
+  - 1 Admin
 
 **待完成項目** ⏳:
 
-- 教師真實資料填寫（需使用者提供）
-- 資料驗證與匯入
-- 資料庫資料重建
+- **SSO 同步測試** - 教師透過 SSO 登入 LMS 時自動同步
+- **課程指派** - 透過 course_assignments.csv 指派教師到課程
+- **學生資料匯入** - 待學生資料提供後匯入
 
 ---
 
@@ -708,17 +801,29 @@ LMS (Token Exchange) → Supabase User Sync → Session Creation → Dashboard
 - ✅ Both systems aligned and ready
 - ✅ E2E integration testing verified
 - ✅ Production deployment complete
+- ✅ Info Hub grade_band support added (v1.39.2)
+- ✅ 72 teachers imported to Info Hub database
+- ✅ Multi-grade Head Teacher assignments aligned ("1", "2", "3-4", "5-6", "1-2", "1-6")
 
-### 🔗 Role Mapping
+### 🔗 Role Mapping (v1.39.2 - Grade Band Support)
 
-| Info Hub Role  | LMS Role  | Teacher Type | Grade | Track         |
-| -------------- | --------- | ------------ | ----- | ------------- |
-| admin          | admin     | null         | null  | null          |
-| office_member  | head      | null         | null  | null          |
-| teacher (IT)   | teacher   | IT           | null  | international |
-| teacher (LT)   | teacher   | LT           | null  | local         |
-| teacher (KCFS) | teacher   | KCFS         | null  | null          |
-| viewer         | ❌ Denied | -            | -     | -             |
+| Info Hub Role  | LMS Role  | Teacher Type | Grade Band | Track         |
+| -------------- | --------- | ------------ | ---------- | ------------- |
+| admin          | admin     | null         | null       | null          |
+| office_member  | office_member | null     | grade_band | null          |
+| head (LT)      | head      | null         | "1"/"2"/"3-4"/"5-6" | LT    |
+| head (IT)      | head      | null         | "1-2"/"3-4"/"5-6" | IT      |
+| head (KCFS)    | head      | null         | "1-6"      | KCFS          |
+| teacher (IT)   | teacher   | IT           | null       | international |
+| teacher (LT)   | teacher   | LT           | null       | local         |
+| teacher (KCFS) | teacher   | KCFS         | null       | null          |
+| viewer         | ❌ Denied | -            | -          | -             |
+
+**Info Hub Teacher Data (72 users imported)**:
+- 8 Head Teachers (with grade_band values)
+- 46 Teachers (LT/IT/KCFS)
+- 17 Office Members
+- 1 Admin
 
 ### 📊 Timeline
 
@@ -910,6 +1015,340 @@ COPY --from=builder /app/public ./public
 - `fix: refine Dockerfile static asset copy paths`
 - `fix: add Dockerfile with static asset copy for standalone mode`
 - `chore: add .dockerignore to prevent copying local artifacts`
+
+---
+
+## 🚀 LMS 功能完善計畫 (2025-12-04) ✅ **Sprint 1-2 完成**
+
+### 📊 數據真實性審計結果
+
+經過全面審計，以下頁面已從 placeholder/mock 數據升級為真實 Supabase 數據：
+
+| 頁面 | 之前狀態 | 現在狀態 | Commit |
+|------|----------|----------|--------|
+| Dashboard KPIs | 70% 真實（attendance/alerts mock） | 100%（N/A 取代 mock） | `2821cfd` |
+| Browse Stats | 0%（純 placeholder） | 100%（真實 Supabase） | `43756d9` |
+| Head Overview | 0%（硬編碼數字） | 100%（真實 Supabase） | `8244da7` |
+| Admin Classes | 0%（硬編碼 84/252） | 100%（真實 Supabase） | `43b2520` |
+| Head Teachers | 0%（mock teachers） | 100%（真實 Supabase） | `43b2520` |
+| Browse Gradebook | 0%（純 placeholder） | 100%（真實 Supabase） | `43b2520` |
+
+### ✅ Sprint 1：修復假數據（2025-12-04 完成）
+
+**1.1 Dashboard Mock 數據修復**
+- `lib/api/dashboard.ts`: `attendanceRate` 和 `activeAlerts` 改為 `null`
+- `app/(lms)/dashboard/page.tsx`: 顯示 "N/A" + "Coming soon"
+- 原因：無出席系統和警告系統，不應顯示隨機數字
+
+**1.2 Browse Stats 連接真實數據**
+- 使用 `getClassDistribution("admin")` 獲取圖表數據
+- 計算真實的 school-wide 平均分和完成率
+- 按年級統計學生數和平均分
+
+**1.3 Head Overview 連接真實數據**
+- 新增 `getHeadTeacherKpis(gradeBand, courseType)` 函數
+- 根據 Head Teacher 的 `grade_band` 過濾班級和學生
+- 計算年段內的真實統計數據
+
+### ✅ Sprint 2：功能完善（2025-12-04 完成）
+
+**2.1 Admin Classes 班級管理頁面**
+- 檔案：`app/(lms)/admin/classes/page.tsx`
+- 使用 `getClassesWithDetails()` API
+- 功能：搜尋、年級篩選、LT/IT/KCFS 教師指派狀態
+- 統計：真實班級數、課程數、學生數
+
+**2.2 Head Teachers 教師進度頁面**
+- 檔案：`app/(lms)/head/teachers/page.tsx`
+- 使用 `getTeachersWithCourses()` + grade_band 過濾
+- 功能：按課程類型分組（LT/IT/KCFS）
+- 顯示：教師列表、課程數、進度（placeholder）
+
+**2.3 Browse Gradebook 跨班成績頁面**
+- 檔案：`app/(lms)/browse/gradebook/page.tsx`
+- 直接 Supabase 查詢 exams + classes + courses
+- 功能：搜尋、年級篩選、課程類型篩選、評量類型篩選
+- 統計：考試數、完成率、逾期數
+
+### 📁 修改檔案清單（Sprint 1-2）
+
+| 檔案 | 變更類型 | 變更量 |
+|------|----------|--------|
+| `lib/api/dashboard.ts` | 修改 | mock → null |
+| `app/(lms)/dashboard/page.tsx` | 修改 | 處理 null 顯示 |
+| `app/(lms)/browse/stats/page.tsx` | 重寫 | +350 行 |
+| `app/(lms)/head/overview/page.tsx` | 重寫 | +388 行 |
+| `app/(lms)/admin/classes/page.tsx` | 重寫 | +275 行 |
+| `app/(lms)/head/teachers/page.tsx` | 重寫 | +431 行 |
+| `app/(lms)/browse/gradebook/page.tsx` | 重寫 | +527 行 |
+
+### 🎯 待辦：Sprint 3（功能擴展）
+
+| 任務 | 路由 | 優先級 | 狀態 |
+|------|------|--------|------|
+| 班級學生名冊 | `/(lms)/class/[classId]/students` | 🟢 | ✅ v1.46.0 |
+| 課程指派系統 | `/admin/courses` | 🟢 | ✅ v1.47.0 |
+| 我的課表 | `/(lms)/schedule` | 🟢 | ⏳ 待開發 |
+| Gradebook 課程篩選 | `/(lms)/class/[classId]/gradebook` | 🟢 | ✅ v1.48.0 |
+| Gradebook UI/UX 優化 | `/(lms)/class/[classId]/gradebook` | 🟢 | ✅ v1.49.0 |
+
+---
+
+## 📊 Gradebook 架構 (2025-12-09) ✅ **v1.48.0 + v1.49.0**
+
+### 功能概述
+
+Gradebook 頁面支援查看和編輯班級成績，具備以下核心功能：
+
+- **課程類型切換**：LT / IT / KCFS 三種課程
+- **教師顯示**：顯示當前課程的任課教師
+- **成績編輯**：即時儲存、Focus Mode 批量輸入
+- **自動計算**：Formative (15%)、Summative (20%)、Term 總分
+
+### 元件架構
+
+```
+app/(lms)/class/[classId]/gradebook/
+├── page.tsx              # Server Component - 資料載入
+├── GradebookHeader.tsx   # 頁面標題、麵包屑
+└── GradebookClient.tsx   # Client Component - 互動邏輯
+
+components/gradebook/
+├── Spreadsheet.tsx       # 成績表格（核心資料輸入）
+├── CourseTypeSelector.tsx # LT/IT/KCFS 選擇器
+└── FocusGradeInput.tsx   # Focus Mode 批量輸入
+```
+
+### API 架構
+
+**Server Actions** (`lib/actions/gradebook.ts`)：
+
+```typescript
+// 型別定義
+export type CourseType = "LT" | "IT" | "KCFS";
+export type TeacherInfo = { teacherName: string | null; teacherId: string | null };
+export type GradebookData = {
+  students: { id, student_id, full_name, scores }[];
+  assessmentCodes: string[];           // FA1-8, SA1-4, MID
+  availableCourseTypes: CourseType[];  // 該班級可用的課程類型
+  currentCourseType: CourseType | null;
+  teacherInfo: TeacherInfo | null;     // 當前課程教師
+};
+
+// 主要函數
+getGradebookData(classId, courseType?)  // 取得成績資料 + 教師資訊
+updateScore(classId, studentId, code, score)  // 更新單一成績
+```
+
+### UI/UX 設計原則 (v1.49.0)
+
+**統一工具欄**：所有控制項和狀態整合到單一工具欄
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ [LT] [IT] [KCFS]   👤 陳老師 John Chen   👥 20 Students ✓ Saved │
+│ ← 課程選擇器      ← 教師資訊           ← 學生數 + 儲存狀態    │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**設計決策**：
+- ❌ 移除：重複的課程類型 badge（選擇器已顯示）
+- ❌ 移除：底部狀態欄（資訊整合到工具欄）
+- ❌ 移除：Spreadsheet 內部狀態欄（上移到父元件）
+- ✅ 保留：PageHeader 顯示班級名稱和課程類型
+- ✅ 新增：教師和學生數顯示在工具欄
+
+### 成績計算公式
+
+```typescript
+// lib/gradebook/FormulaEngine.ts
+FormulaEngine.calculateTermGrade(scores);     // 總分
+FormulaEngine.getFormativeAverage(scores);    // FA 平均 (15%)
+FormulaEngine.getSummativeAverage(scores);    // SA 平均 (20%)
+```
+
+**權重配置**：
+- Formative (FA1-FA8): 15%
+- Summative (SA1-SA4): 20%
+- Midterm (MID): 10%
+- Final: 10% (未實作)
+
+---
+
+## 🔧 Phase F: Browse 頁面無限載入修復 (2025-12-08) ✅ **v1.44.1 改進版**
+
+### 📋 問題描述
+
+Browse 頁面從其他頁面導航進入時出現無限載入問題，必須重新整理才能正確顯示資料。
+
+### 🔍 根本原因分析
+
+**第一版問題**（`isInitialMount` ref 模式）：
+- Next.js client-side navigation 時，React 可能重用組件實例
+- `useRef` 值在導航之間保持不變，`isInitialMount.current` 不會重置
+- 導致 fetch 邏輯走錯分支
+
+**第二版問題**（`fetchVersion` + debounce effect 模式）：
+- Debounce effect 在初始掛載時也會執行
+- 300ms 後會增加 `fetchVersion`，觸發第二次 fetch
+- 造成**雙重 fetch** 問題
+
+### ✅ 最終解決方案
+
+**簡化模式**：`debouncedSearch` state + 單一 useEffect
+
+```typescript
+// 1. 只對搜尋輸入做 debounce（唯一需要 debounce 的輸入）
+const [debouncedSearch, setDebouncedSearch] = useState("");
+
+useEffect(() => {
+  const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+  return () => clearTimeout(timer);
+}, [searchQuery]);
+
+// 2. 單一 effect 處理所有資料抓取
+useEffect(() => {
+  if (authLoading || !user) return;
+
+  let isCancelled = false;
+
+  async function fetchData() {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await apiCall({
+        grade: selectedGrade === "All" ? undefined : selectedGrade,
+        search: debouncedSearch || undefined,
+      });
+      if (!isCancelled) {
+        setData(data);
+        setLoading(false);
+      }
+    } catch (err) {
+      if (!isCancelled) {
+        setError(err.message);
+        setLoading(false);
+      }
+    }
+  }
+
+  fetchData();
+  return () => { isCancelled = true; };
+}, [authLoading, user, selectedGrade, debouncedSearch]);
+```
+
+### 📊 模式比較
+
+| 項目 | 舊模式 (fetchVersion) | 新模式 (debouncedSearch) |
+|------|----------------------|-------------------------|
+| Effect 數量 | 3 個互相干擾 | 2 個獨立 |
+| 初始載入 | 可能雙重 fetch | 單次 fetch |
+| 複雜度 | 高（useCallback、useRef、fetchVersion） | 低（直接依賴） |
+| 可讀性 | 難以理解 | 一目了然 |
+| 篩選響應 | 全部 debounce 300ms | 搜尋 debounce，其他立即 |
+
+### 📁 已修復的檔案
+
+| 檔案 | 模式 | Commit |
+|------|------|--------|
+| `app/(lms)/browse/classes/page.tsx` | debouncedSearch | `45e8188` |
+| `app/(lms)/browse/teachers/page.tsx` | debouncedSearch | `45e8188` |
+| `app/(lms)/browse/students/page.tsx` | debouncedSearch | `45e8188` |
+| `app/(lms)/browse/comms/page.tsx` | 單一 effect（無搜尋 debounce） | `45e8188` |
+| `app/(lms)/browse/gradebook/page.tsx` | 已修復 | `3a85bbf` |
+| `app/(lms)/browse/stats/page.tsx` | 原本正確 | - |
+
+### 📋 待測試項目
+
+| 測試項目 | 狀態 |
+|----------|------|
+| 從 Dashboard 導航到 Browse Students | ⏳ 待測試 |
+| 從 Browse Students 導航到 Browse Teachers | ⏳ 待測試 |
+| 年級篩選（立即響應） | ⏳ 待測試 |
+| 搜尋輸入（300ms debounce） | ⏳ 待測試 |
+| 分頁切換 | ⏳ 待測試 |
+| 離開再返回頁面 | ⏳ 待測試 |
+
+### 💡 學習要點
+
+1. **避免複雜的 ref 模式**：`isInitialMount` ref 在 Next.js navigation 中不可靠
+2. **避免多個互相依賴的 effects**：容易造成競爭條件和無限迴圈
+3. **只 debounce 需要的輸入**：搜尋框需要 debounce，下拉選單不需要
+4. **使用 `isCancelled` flag**：比 `AbortController` 更簡單，足夠應付大多數情況
+5. **直接在依賴陣列列出狀態**：比用 `fetchVersion` 更直觀、更可靠
+
+---
+
+## 🔐 v1.45.0 Auth State Change 修復 (2025-12-08) ✅ **完成**
+
+### 📋 問題描述
+
+透過 Console Log 分析發現三個問題：
+
+1. **React Closure Bug**：切換 macOS 桌面後，`onAuthStateChange` 的 skip 邏輯失效
+2. **AdminClasses 雙重 fetch**：頁面載入時重複抓取兩次資料
+3. **Browse Stats 400 錯誤**：Supabase 查詢語法無效
+
+### 🔍 根本原因
+
+| 問題 | 原因 |
+|------|------|
+| Skip 邏輯失效 | `onAuthStateChange` 回調捕獲的是 `userPermissions` 初始值（null），不是最新 state |
+| 雙重 fetch | AdminClasses 還在用舊的 `useAuth` 模式 |
+| 400 錯誤 | `courses:exams(courses!inner(...))` 語法錯誤 — `exams` 表沒有 FK 連接到 `courses` |
+
+### ✅ 修復方案
+
+**1. AuthContext useRef 修復**
+
+```typescript
+// 使用 ref 追蹤最新值，解決閉包問題
+const userPermissionsRef = useRef<UserPermissions | null>(null);
+
+useEffect(() => {
+  userPermissionsRef.current = userPermissions;
+}, [userPermissions]);
+
+// 在回調中使用 ref
+if (userPermissionsRef.current?.userId === session?.user?.id) {
+  console.log('[AuthContext] Same user, skipping...')
+  return
+}
+```
+
+**2. AdminClasses 改用 useAuthReady**
+
+```typescript
+const { isReady } = useAuthReady();
+
+useEffect(() => {
+  if (!isReady) return;
+  fetchClasses();
+}, [isReady]);
+```
+
+**3. Browse Stats 移除無效 join**
+
+```typescript
+// 移除 courses:exams(courses!inner(course_type))
+// 改用正確的 scores → exams → classes 關聯
+```
+
+### 📁 修改檔案清單
+
+| 檔案 | 修復內容 | Commit |
+|------|----------|--------|
+| `lib/supabase/auth-context.tsx` | useRef 修復 React 閉包 | `2f4c86d` |
+| `app/(lms)/admin/classes/page.tsx` | 改用 useAuthReady | `2f4c86d` |
+| `app/(lms)/browse/stats/page.tsx` | 移除無效 Supabase join | `2f4c86d` |
+| `hooks/useAuthReady.ts` | 新建標準 auth hook | `6e85c59` |
+| `hooks/use-current-user.ts` | 標記 @deprecated | `6e85c59` |
+
+### 🎯 預期效果
+
+1. 切換桌面回來時，console 顯示 `[AuthContext] Same user auth event, skipping permission refetch`
+2. AdminClasses 只 fetch 一次
+3. Browse Stats 正常載入，無 400 錯誤
 
 ---
 

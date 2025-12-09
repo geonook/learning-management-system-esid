@@ -1,10 +1,34 @@
 # LMS Roadmap
 
-> **Last Updated**: 2025-12-01
+> **Last Updated**: 2025-12-03
 
 ## Active Development
 
-_Currently no active items_
+### Phase 4.3: Teacher Course Assignment
+**Priority**: High
+**Status**: In Progress
+**Target**: 2025-12-09
+
+#### Background
+72 teachers have been imported to Info Hub and are ready for SSO sync. Courses exist (252) but all have `teacher_id = NULL`. Need to assign teachers to their courses.
+
+**Important**: Teachers must SSO login first to create their `auth.users` record before course assignment. LMS uses `users.id` foreign key to `auth.users.id`.
+
+#### Tasks
+| Task | Status | Description |
+|------|--------|-------------|
+| Create assignment scripts | ✅ Complete | `scripts/import-teachers.ts` and `scripts/assign-teachers-to-courses.ts` |
+| Teachers SSO login | 🔄 Pending | Teachers must login via SSO to sync from Info Hub |
+| Run course assignments | 🔄 Pending | Execute assignment script after teachers exist in LMS |
+| Validate RLS permissions | 🔄 Pending | Ensure teachers only access their own courses |
+
+#### Workflow
+```
+1. Teachers login via Info Hub SSO
+2. Webhook syncs user to LMS public.users table
+3. Run: npx tsx scripts/assign-teachers-to-courses.ts
+4. Verify teacher can see only their assigned classes
+```
 
 ---
 
@@ -72,6 +96,14 @@ _Archive of completed features_
 
 | Feature | Completed Date |
 |---------|----------------|
+| Phase 4.2: Browse Pages Data Integration | 2025-12-03 |
+| E2E SSO Integration Testing | 2025-12-02 |
+| SSO User ID Mismatch Fix | 2025-12-02 |
+| Production & Staging Data Seeding (84 classes, 1,511 students, 252 courses) | 2025-12-02 |
+| Migration 022: Assessment Codes | 2025-12-02 |
+| Info Hub Teacher Import (72 teachers) | 2025-12-02 |
+| v1.41.0 TeacherOS UI Refinements | 2025-12-01 |
+| Dockerfile Optimization | 2025-11-28 |
 | Phase 4.1: One OS Interface | 2025-11-28 |
-| SSO Integration | 2025-11-19 |
+| SSO Implementation (LMS + Info Hub) | 2025-11-19 |
 | Phase 3A-1: Analytics Engine | 2025-08-23 |

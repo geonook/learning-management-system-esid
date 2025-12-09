@@ -1,89 +1,210 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { School, Search, Filter } from "lucide-react";
+import { useAuth } from "@/lib/supabase/auth-context";
+import { School, Search, Loader2, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { getClassesWithDetails, type ClassWithDetails } from "@/lib/api/classes";
+import { PageHeader } from "@/components/layout/PageHeader";
+
+type GradeFilter = "All" | 1 | 2 | 3 | 4 | 5 | 6;
 
 export default function BrowseClassesPage() {
+  const { user } = useAuth();
+  const userId = user?.id;
+  const [classes, setClasses] = useState<ClassWithDetails[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedGrade, setSelectedGrade] = useState<GradeFilter>("All");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Debounced search state - only search input needs debouncing
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Debounce search input only
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Single effect for all data fetching - follows Dashboard pattern
+  useEffect(() => {
+    // Wait for user to be available (don't depend on authLoading)
+    if (!userId) {
+      console.log("[BrowseClasses] No user, waiting...");
+      return;
+    }
+
+    console.log("[BrowseClasses] Fetching data...", { selectedGrade, debouncedSearch });
+
+    let isCancelled = false;
+
+    async function fetchData() {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await getClassesWithDetails({
+          grade: selectedGrade === "All" ? undefined : selectedGrade,
+          search: debouncedSearch || undefined,
+        });
+        if (!isCancelled) {
+          console.log("[BrowseClasses] Data received:", data?.length);
+          setClasses(data);
+          setLoading(false);
+        }
+      } catch (err) {
+        if (!isCancelled) {
+          console.error("[BrowseClasses] Failed to fetch classes:", err);
+          setError(err instanceof Error ? err.message : "Failed to fetch classes");
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchData();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [userId, selectedGrade, debouncedSearch]);
+
+  // Helper to get teacher name by course type
+  const getTeacherName = (courses: ClassWithDetails["courses"], type: "LT" | "IT" | "KCFS") => {
+    const course = courses.find((c) => c.course_type === type);
+    return course?.teacher?.full_name || "-";
+  };
+
   return (
     <AuthGuard requiredRoles={["admin", "head", "office_member"]}>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-500/20 rounded-lg">
-              <School className="w-6 h-6 text-blue-400" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">Browse Classes</h1>
-              <p className="text-sm text-white/60">View all classes across grades (read-only)</p>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          title="Browse Classes"
+          subtitle={`View all classes across grades (${classes.length} classes)`}
+          breadcrumbs={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Browse Data", href: "/browse/classes" },
+            { label: "All Classes" },
+          ]}
+          backHref="/dashboard"
+          backLabel="Dashboard"
+        />
 
-        {/* Search and Filters */}
+        {/* Search */}
         <div className="flex gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
             <Input
               placeholder="Search classes..."
-              className="pl-10 bg-white/5 border-white/10 text-white"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-surface-tertiary border-[rgb(var(--border-default))] text-text-primary placeholder:text-text-tertiary"
             />
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white/70 hover:bg-white/10 transition-colors">
-            <Filter className="w-4 h-4" />
-            <span>Filter</span>
-          </button>
         </div>
 
         {/* Grade Tabs */}
         <div className="flex gap-2">
-          {["All", "G1", "G2", "G3", "G4", "G5", "G6"].map((grade) => (
+          {(["All", 1, 2, 3, 4, 5, 6] as GradeFilter[]).map((grade) => (
             <button
               key={grade}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                grade === "All"
-                  ? "bg-blue-500 text-white"
-                  : "bg-white/5 text-white/60 hover:bg-white/10"
+              onClick={() => setSelectedGrade(grade)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-normal ease-apple ${
+                selectedGrade === grade
+                  ? "bg-accent-blue text-white dark:text-white"
+                  : "bg-surface-tertiary text-text-secondary hover:bg-surface-hover"
               }`}
             >
-              {grade}
+              {grade === "All" ? "All" : `G${grade}`}
             </button>
           ))}
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 text-accent-blue animate-spin" />
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+            <p className="text-red-600 dark:text-red-400">{error}</p>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && !error && classes.length === 0 && (
+          <div className="text-center py-12">
+            <School className="w-12 h-12 text-text-tertiary mx-auto mb-4" />
+            <p className="text-text-secondary">No classes found</p>
+          </div>
+        )}
+
         {/* Classes Grid */}
-        <div className="grid grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div
-              key={i}
-              className="bg-white/5 rounded-xl border border-white/10 p-6 hover:bg-white/[0.07] transition-colors"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">
-                  G{i}
-                </span>
-                <span className="text-xs text-white/40">14 students</span>
-              </div>
-              <h3 className="text-lg font-medium text-white mb-1">Class {i} Placeholder</h3>
-              <p className="text-sm text-white/50 mb-4">Level: E{(i % 3) + 1}</p>
-              <div className="flex items-center gap-2 text-xs text-white/40">
-                <span>LT: -</span>
-                <span>•</span>
-                <span>IT: -</span>
-                <span>•</span>
-                <span>KCFS: -</span>
-              </div>
-            </div>
-          ))}
-        </div>
+        {!loading && !error && classes.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {classes.map((cls) => (
+              <Link
+                key={cls.id}
+                href={`/class/${cls.id}`}
+                className="group block"
+              >
+                <div className="relative bg-surface-elevated rounded-xl border border-border-default p-6 h-[180px] flex flex-col hover:shadow-md hover:border-blue-500/30 dark:hover:border-blue-400/30 hover:-translate-y-0.5 transition-all duration-normal ease-apple shadow-sm">
+                  {/* Hover indicator */}
+                  <div className="absolute right-4 top-4 opacity-0 group-hover:opacity-100 transition-opacity duration-normal ease-apple">
+                    <ChevronRight className="w-5 h-5 text-text-tertiary" />
+                  </div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="px-2 py-1 bg-blue-500/20 dark:bg-blue-400/20 text-blue-600 dark:text-blue-400 text-xs font-medium rounded-full">
+                      G{cls.grade}
+                    </span>
+                    <span className="text-xs text-text-tertiary mr-6">
+                      {cls.student_count} student{cls.student_count !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-text-primary mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-normal ease-apple">{cls.name}</h3>
+                  <p className="text-sm text-text-secondary mb-auto">
+                    Level: {cls.level || "N/A"}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-text-tertiary pt-3 border-t border-border-subtle">
+                    <span className="flex items-center gap-1">
+                      <span className="text-green-600 dark:text-green-400">LT:</span>
+                      <span className="text-text-secondary truncate max-w-[80px]">
+                        {getTeacherName(cls.courses, "LT")}
+                      </span>
+                    </span>
+                    <span>•</span>
+                    <span className="flex items-center gap-1">
+                      <span className="text-blue-600 dark:text-blue-400">IT:</span>
+                      <span className="text-text-secondary truncate max-w-[80px]">
+                        {getTeacherName(cls.courses, "IT")}
+                      </span>
+                    </span>
+                    <span>•</span>
+                    <span className="flex items-center gap-1">
+                      <span className="text-purple-600 dark:text-purple-400">KCFS:</span>
+                      <span className="text-text-secondary truncate max-w-[80px]">
+                        {getTeacherName(cls.courses, "KCFS")}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
 
         {/* Info */}
-        <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
-          <h3 className="text-blue-400 font-medium mb-2">Read-Only Access</h3>
-          <p className="text-white/60 text-sm">
-            You have view-only access to class information. Contact an administrator
-            if you need to make changes.
+        <div className="bg-blue-500/10 dark:bg-blue-400/10 border border-blue-500/20 dark:border-blue-400/20 rounded-xl p-4">
+          <h3 className="text-blue-600 dark:text-blue-400 font-medium mb-2">Browse Mode</h3>
+          <p className="text-text-secondary text-sm">
+            Click on any class to view its details, gradebook, and student roster.
           </p>
         </div>
       </div>

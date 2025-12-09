@@ -1,11 +1,74 @@
 "use client";
 
+import { useState, useEffect, useMemo } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { School, Search, Plus, Filter } from "lucide-react";
+import { useAuthReady } from "@/hooks/useAuthReady";
+import { School, Search, Plus, Filter, Users, BookOpen, GraduationCap, ChevronDown, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getClassesWithDetails, type ClassWithDetails } from "@/lib/api/classes";
+import Link from "next/link";
 
 export default function ClassManagementPage() {
+  // ✅ 使用標準 useAuthReady hook
+  const { isReady } = useAuthReady();
+  const [loading, setLoading] = useState(true);
+  const [classes, setClasses] = useState<ClassWithDetails[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [gradeFilter, setGradeFilter] = useState<number | null>(null);
+  const [showGradeDropdown, setShowGradeDropdown] = useState(false);
+
+  useEffect(() => {
+    // 使用 isReady 判斷是否可以開始載入
+    if (!isReady) {
+      return;
+    }
+
+    async function fetchClasses() {
+      console.log('[AdminClasses] Starting to fetch classes...');
+      try {
+        const data = await getClassesWithDetails({
+          academicYear: "2025-2026",
+        });
+        console.log('[AdminClasses] Fetched classes:', data?.length ?? 0);
+        setClasses(data);
+      } catch (error) {
+        console.error("[AdminClasses] Failed to fetch classes:", error);
+      } finally {
+        console.log('[AdminClasses] Setting loading to false');
+        setLoading(false);
+      }
+    }
+    fetchClasses();
+  }, [isReady]);
+
+  // Filter classes based on search and grade
+  const filteredClasses = useMemo(() => {
+    return classes.filter((cls) => {
+      const matchesSearch = searchQuery
+        ? cls.name.toLowerCase().includes(searchQuery.toLowerCase())
+        : true;
+      const matchesGrade = gradeFilter !== null ? cls.grade === gradeFilter : true;
+      return matchesSearch && matchesGrade;
+    });
+  }, [classes, searchQuery, gradeFilter]);
+
+  // Calculate statistics
+  const stats = useMemo(() => {
+    const totalClasses = classes.length;
+    const totalCourses = classes.reduce((sum, cls) => sum + cls.courses.length, 0);
+    const totalStudents = classes.reduce((sum, cls) => sum + cls.student_count, 0);
+    const uniqueGrades = new Set(classes.map((cls) => cls.grade)).size;
+    return { totalClasses, totalCourses, totalStudents, uniqueGrades };
+  }, [classes]);
+
+  // Check if a course type has an assigned teacher
+  const hasTeacher = (courses: ClassWithDetails["courses"], type: "LT" | "IT" | "KCFS") => {
+    const course = courses.find((c) => c.course_type === type);
+    return course?.teacher !== null;
+  };
+
   return (
     <AuthGuard requiredRoles={["admin"]}>
       <div className="space-y-6">
@@ -13,11 +76,13 @@ export default function ClassManagementPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-purple-500/20 rounded-lg">
-              <School className="w-6 h-6 text-purple-400" />
+              <School className="w-6 h-6 text-purple-500 dark:text-purple-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Class Management</h1>
-              <p className="text-sm text-white/60">Manage classes and course assignments</p>
+              <h1 className="text-2xl font-bold text-text-primary">Class Management</h1>
+              <p className="text-sm text-text-secondary">
+                Manage classes and course assignments • 2025-2026
+              </p>
             </div>
           </div>
           <Button className="bg-purple-600 hover:bg-purple-700">
@@ -29,49 +94,220 @@ export default function ClassManagementPage() {
         {/* Search and Filters */}
         <div className="flex gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
             <Input
               placeholder="Search classes..."
-              className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-surface-secondary border-border-default text-text-primary placeholder:text-text-tertiary"
             />
           </div>
-          <Button variant="outline" className="border-white/10 text-white/70">
-            <Filter className="w-4 h-4 mr-2" />
-            Grade
-          </Button>
-          <Button variant="outline" className="border-white/10 text-white/70">
-            <Filter className="w-4 h-4 mr-2" />
-            Level
-          </Button>
+          <div className="relative">
+            <Button
+              variant="outline"
+              className="border-border-default text-text-secondary hover:text-text-primary"
+              onClick={() => setShowGradeDropdown(!showGradeDropdown)}
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              {gradeFilter !== null ? `Grade ${gradeFilter}` : "All Grades"}
+              <ChevronDown className="w-4 h-4 ml-2" />
+            </Button>
+            {showGradeDropdown && (
+              <div className="absolute top-full mt-2 right-0 bg-surface-elevated border border-border-default rounded-lg shadow-lg z-10 py-1 min-w-[120px]">
+                <button
+                  className="w-full px-4 py-2 text-left text-text-secondary hover:bg-surface-hover text-sm"
+                  onClick={() => {
+                    setGradeFilter(null);
+                    setShowGradeDropdown(false);
+                  }}
+                >
+                  All Grades
+                </button>
+                {[1, 2, 3, 4, 5, 6].map((grade) => (
+                  <button
+                    key={grade}
+                    className="w-full px-4 py-2 text-left text-text-secondary hover:bg-surface-hover text-sm"
+                    onClick={() => {
+                      setGradeFilter(grade);
+                      setShowGradeDropdown(false);
+                    }}
+                  >
+                    Grade {grade}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-4 gap-4">
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-            <div className="text-2xl font-bold text-white">84</div>
-            <div className="text-sm text-white/60">Total Classes</div>
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-text-secondary text-sm">Classes</span>
+              <School className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+            </div>
+            {loading ? (
+              <Skeleton className="h-8 w-12" />
+            ) : (
+              <div className="text-2xl font-bold text-text-primary">{stats.totalClasses}</div>
+            )}
+            <div className="text-xs text-text-tertiary">total active</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-            <div className="text-2xl font-bold text-white">252</div>
-            <div className="text-sm text-white/60">Total Courses</div>
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-text-secondary text-sm">Courses</span>
+              <BookOpen className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+            </div>
+            {loading ? (
+              <Skeleton className="h-8 w-12" />
+            ) : (
+              <div className="text-2xl font-bold text-text-primary">{stats.totalCourses}</div>
+            )}
+            <div className="text-xs text-text-tertiary">LT + IT + KCFS</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-            <div className="text-2xl font-bold text-white">6</div>
-            <div className="text-sm text-white/60">Grades (G1-G6)</div>
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-text-secondary text-sm">Students</span>
+              <Users className="w-4 h-4 text-green-500 dark:text-green-400" />
+            </div>
+            {loading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="text-2xl font-bold text-text-primary">
+                {stats.totalStudents.toLocaleString()}
+              </div>
+            )}
+            <div className="text-xs text-text-tertiary">enrolled</div>
           </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-            <div className="text-2xl font-bold text-white">3</div>
-            <div className="text-sm text-white/60">Course Types</div>
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-4 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-text-secondary text-sm">Grades</span>
+              <GraduationCap className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+            </div>
+            {loading ? (
+              <Skeleton className="h-8 w-8" />
+            ) : (
+              <div className="text-2xl font-bold text-text-primary">{stats.uniqueGrades}</div>
+            )}
+            <div className="text-xs text-text-tertiary">G1-G6</div>
           </div>
         </div>
 
-        {/* Placeholder Message */}
-        <div className="bg-white/5 rounded-xl border border-white/10 p-8 text-center">
-          <School className="w-12 h-12 text-white/20 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">Class Management Coming Soon</h3>
-          <p className="text-white/40 max-w-md mx-auto">
-            This page will allow you to view all classes, assign teachers to courses,
-            and manage the one-class-three-teachers structure (LT, IT, KCFS).
+        {/* Classes Table */}
+        <div className="bg-surface-secondary rounded-xl border border-border-default overflow-hidden shadow-sm">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border-default">
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Class</th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Grade</th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Level</th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Students</th>
+                <th className="text-center p-4 text-sm font-medium text-text-secondary">LT</th>
+                <th className="text-center p-4 text-sm font-medium text-text-secondary">IT</th>
+                <th className="text-center p-4 text-sm font-medium text-text-secondary">KCFS</th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                Array.from({ length: 8 }).map((_, i) => (
+                  <tr key={i} className="border-b border-border-subtle">
+                    <td className="p-4">
+                      <Skeleton className="h-4 w-24" />
+                    </td>
+                    <td className="p-4">
+                      <Skeleton className="h-4 w-8" />
+                    </td>
+                    <td className="p-4">
+                      <Skeleton className="h-4 w-12" />
+                    </td>
+                    <td className="p-4">
+                      <Skeleton className="h-4 w-8" />
+                    </td>
+                    <td className="p-4">
+                      <Skeleton className="h-4 w-6 mx-auto" />
+                    </td>
+                    <td className="p-4">
+                      <Skeleton className="h-4 w-6 mx-auto" />
+                    </td>
+                    <td className="p-4">
+                      <Skeleton className="h-4 w-6 mx-auto" />
+                    </td>
+                    <td className="p-4">
+                      <Skeleton className="h-4 w-16" />
+                    </td>
+                  </tr>
+                ))
+              ) : filteredClasses.length > 0 ? (
+                filteredClasses.map((cls) => (
+                  <tr key={cls.id} className="border-b border-border-subtle hover:bg-surface-hover">
+                    <td className="p-4 text-text-primary font-medium">{cls.name}</td>
+                    <td className="p-4 text-text-secondary">G{cls.grade}</td>
+                    <td className="p-4">
+                      <span className="px-2 py-1 bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs rounded-full">
+                        {cls.level || "N/A"}
+                      </span>
+                    </td>
+                    <td className="p-4 text-text-secondary">{cls.student_count}</td>
+                    <td className="p-4 text-center">
+                      {hasTeacher(cls.courses, "LT") ? (
+                        <Check className="w-4 h-4 text-green-400 mx-auto" />
+                      ) : (
+                        <X className="w-4 h-4 text-red-400/50 mx-auto" />
+                      )}
+                    </td>
+                    <td className="p-4 text-center">
+                      {hasTeacher(cls.courses, "IT") ? (
+                        <Check className="w-4 h-4 text-green-400 mx-auto" />
+                      ) : (
+                        <X className="w-4 h-4 text-red-400/50 mx-auto" />
+                      )}
+                    </td>
+                    <td className="p-4 text-center">
+                      {hasTeacher(cls.courses, "KCFS") ? (
+                        <Check className="w-4 h-4 text-green-400 mx-auto" />
+                      ) : (
+                        <X className="w-4 h-4 text-red-400/50 mx-auto" />
+                      )}
+                    </td>
+                    <td className="p-4">
+                      <Link
+                        href={`/class/${cls.id}/gradebook`}
+                        className="text-purple-400 hover:text-purple-300 text-sm"
+                      >
+                        View
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={8} className="p-8 text-center text-text-tertiary">
+                    {searchQuery || gradeFilter !== null
+                      ? "No classes match your filters"
+                      : "No classes found"}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Summary */}
+        {!loading && filteredClasses.length > 0 && (
+          <div className="text-sm text-text-tertiary text-center">
+            Showing {filteredClasses.length} of {classes.length} classes
+          </div>
+        )}
+
+        {/* Info */}
+        <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4">
+          <h3 className="text-purple-600 dark:text-purple-400 font-medium mb-2">One Class, Three Teachers</h3>
+          <p className="text-text-secondary text-sm">
+            Each class has three course slots: LT (Local Teacher), IT (International Teacher), and
+            KCFS (Kang Chiao Future Skill). A checkmark indicates a teacher has been assigned to
+            that course.
           </p>
         </div>
       </div>

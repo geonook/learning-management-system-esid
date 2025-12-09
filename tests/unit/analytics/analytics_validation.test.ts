@@ -493,13 +493,14 @@ export async function performanceTest() {
     },
     {
       name: 'Complex Join Query',
+      // Note: scores doesn't have direct FK to courses, use exams join instead
       query: () => supabase
         .from('scores')
         .select(`
           score,
           assessment_code,
           students!inner(full_name, grade),
-          courses!inner(course_type)
+          exams!inner(id, name, course_id)
         `)
         .limit(200)
     }

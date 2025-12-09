@@ -1,29 +1,41 @@
 import React from "react";
-import { Toolbar } from "@/components/gradebook/Toolbar";
-import { Spreadsheet } from "@/components/gradebook/Spreadsheet";
-import { getGradebookData } from "@/lib/actions/gradebook";
+import { getGradebookData, CourseType, TeacherInfo } from "@/lib/actions/gradebook";
 import { GradeRow } from "@/lib/gradebook/FormulaEngine";
+import { AuthGuard } from "@/components/auth/auth-guard";
+import { GradebookHeader } from "./GradebookHeader";
+import { GradebookClient } from "./GradebookClient";
 
 interface PageProps {
   params: {
     classId: string;
   };
+  searchParams: {
+    course?: string;
+  };
 }
 
-export default async function ClassGradebookPage({ params }: PageProps) {
+export default async function ClassGradebookPage({ params, searchParams }: PageProps) {
   const classId = params.classId;
+  const requestedCourseType = searchParams.course as CourseType | undefined;
+
   let initialData: GradeRow[] = [];
+  let availableCourseTypes: CourseType[] = [];
+  let currentCourseType: CourseType | null = null;
+  let teacherInfo: TeacherInfo | null = null;
   let error = null;
 
   if (classId) {
     try {
-      const result = await getGradebookData(classId);
+      const result = await getGradebookData(classId, requestedCourseType);
       initialData = result.students.map((s) => ({
         id: s.id,
         studentName: s.full_name,
         studentId: s.student_id,
         scores: s.scores,
       }));
+      availableCourseTypes = result.availableCourseTypes;
+      currentCourseType = result.currentCourseType;
+      teacherInfo = result.teacherInfo;
     } catch (e) {
       console.error("Failed to load gradebook data:", e);
       error = "Failed to load data. Please try again.";
@@ -31,23 +43,29 @@ export default async function ClassGradebookPage({ params }: PageProps) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-black/20 rounded-lg border border-white/10 shadow-sm overflow-hidden">
-      <Toolbar />
-      {error ? (
-        <div className="flex-1 flex items-center justify-center text-red-500">
-          {error}
-        </div>
-      ) : (
-        <div className="flex-1 overflow-hidden relative">
-          <Spreadsheet classId={classId} initialData={initialData} />
-        </div>
-      )}
+    <AuthGuard requiredRoles={["admin", "head", "teacher", "office_member"]}>
+      <div className="h-full flex flex-col">
+        <GradebookHeader
+          classId={classId}
+          courseType={currentCourseType}
+        />
 
-      {/* Status Bar */}
-      <div className="h-6 bg-[#f3f3f3] dark:bg-black/40 border-t border-[#d1d1d1] dark:border-white/10 flex items-center px-4 text-[10px] text-gray-600 dark:text-gray-400 justify-between">
-        <span>{classId ? "Ready" : "No Class Selected"}</span>
-        <span>Sum: 0</span>
+        {error ? (
+          <div className="flex-1 flex items-center justify-center text-red-600 dark:text-red-400 bg-surface-primary rounded-xl border border-border-default mt-4">
+            {error}
+          </div>
+        ) : (
+          <div className="flex-1 mt-4 relative">
+            <GradebookClient
+              classId={classId}
+              initialData={initialData}
+              availableCourseTypes={availableCourseTypes}
+              initialCourseType={currentCourseType}
+              initialTeacherName={teacherInfo?.teacherName}
+            />
+          </div>
+        )}
       </div>
-    </div>
+    </AuthGuard>
   );
 }

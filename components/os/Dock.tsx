@@ -12,30 +12,30 @@ interface DockProps {
 }
 
 const RemindersIcon = () => (
-  <div className="w-full h-full rounded-[16px] bg-[#1C1C1E] relative flex flex-col justify-center px-[18%] gap-[12%] shadow-md border border-white/10">
+  <div className="w-full h-full rounded-[16px] bg-surface-tertiary dark:bg-[#1C1C1E] relative flex flex-col justify-center px-[18%] gap-[12%] shadow-md border border-[rgb(var(--border-default))]">
     {/* Row 1: Blue */}
     <div className="flex items-center gap-2">
       <div className="w-[18%] aspect-square rounded-full bg-[#0A84FF] shadow-sm" />
-      <div className="h-[4px] w-full bg-[#3A3A3C] rounded-full" />
+      <div className="h-[4px] w-full bg-surface-secondary dark:bg-[#3A3A3C] rounded-full" />
     </div>
     {/* Row 2: Red */}
     <div className="flex items-center gap-2">
       <div className="w-[18%] aspect-square rounded-full bg-[#FF453A] shadow-sm" />
-      <div className="h-[4px] w-full bg-[#3A3A3C] rounded-full" />
+      <div className="h-[4px] w-full bg-surface-secondary dark:bg-[#3A3A3C] rounded-full" />
     </div>
     {/* Row 3: Orange */}
     <div className="flex items-center gap-2">
       <div className="w-[18%] aspect-square rounded-full bg-[#FF9F0A] shadow-sm" />
-      <div className="h-[4px] w-full bg-[#3A3A3C] rounded-full" />
+      <div className="h-[4px] w-full bg-surface-secondary dark:bg-[#3A3A3C] rounded-full" />
     </div>
   </div>
 );
 
 const LinksDockIcon = () => (
-  <div className="w-full h-full rounded-[16px] bg-[#1c1c1e] relative flex flex-col items-center p-[10%] shadow-md border border-white/10">
+  <div className="w-full h-full rounded-[16px] bg-surface-tertiary dark:bg-[#1c1c1e] relative flex flex-col items-center p-[10%] shadow-md border border-[rgb(var(--border-default))]">
     {/* Search Bar */}
-    <div className="w-full h-[20%] bg-white/20 rounded-full mb-[10%] flex items-center px-[10%]">
-      <div className="w-[15%] h-[15%] rounded-full border-[1.5px] border-white/50" />
+    <div className="w-full h-[20%] bg-text-secondary/20 rounded-full mb-[10%] flex items-center px-[10%]">
+      <div className="w-[15%] h-[15%] rounded-full border-[1.5px] border-text-secondary/50" />
     </div>
     {/* App Grid */}
     <div className="w-full flex-1 grid grid-cols-3 gap-[10%]">
@@ -83,7 +83,7 @@ export function Dock({ onAppClick }: DockProps) {
       <motion.div
         onMouseMove={(e) => mouseX.set(e.pageX)}
         onMouseLeave={() => mouseX.set(Infinity)}
-        className="flex h-[72px] items-end gap-3 rounded-2xl bg-white/20 px-3 pb-3 backdrop-blur-2xl border border-white/20 shadow-2xl"
+        className="flex h-[72px] items-end gap-3 rounded-2xl bg-surface-elevated/60 dark:bg-white/20 px-3 pb-3 backdrop-blur-2xl border border-[rgb(var(--border-default))] shadow-xl"
       >
         {/* Finder */}
         <DockIcon mouseX={mouseX} onClick={() => handleAppClick("documents")}>

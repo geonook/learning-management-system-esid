@@ -1,5 +1,22 @@
 /**
- * Client-side hook for getting current user profile
+ * @deprecated 請使用 useAuthReady hook 代替
+ *
+ * 這個 hook 已棄用，因為它有以下問題：
+ * 1. 直接呼叫 Supabase auth，繞過 AuthContext
+ * 2. 在 auth 事件時會重複 fetch
+ * 3. 返回的 user 物件會導致 useEffect 無限迴圈
+ *
+ * 正確用法：
+ * ```typescript
+ * import { useAuthReady } from "@/hooks/useAuthReady";
+ *
+ * const { userId, isReady, role } = useAuthReady();
+ *
+ * useEffect(() => {
+ *   if (!isReady) return;
+ *   // ...
+ * }, [userId]);
+ * ```
  */
 "use client"
 

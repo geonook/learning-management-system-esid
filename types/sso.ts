@@ -108,8 +108,10 @@ export interface InfoHubUser {
   teacher_type: TeacherType | null;
   /** Track (course_type: LT/IT/KCFS) - Aligned with Migration 014 */
   track: "LT" | "IT" | "KCFS" | null;
-  /** Grade level (1-6, for Head Teachers) */
+  /** Grade level (1-6, for Head Teachers) - DEPRECATED, use grade_band instead */
   grade: number | null;
+  /** Grade band for head teachers (e.g., "1", "2", "3-4", "5-6", "1-2", "1-6") */
+  grade_band?: string | null;
   /** Google OAuth profile picture URL */
   avatar_url?: string;
   /** LMS user ID (if already synced) */
@@ -297,8 +299,10 @@ export interface CreateSupabaseUserParams {
   role: Database["public"]["Enums"]["user_role"];
   /** Teacher type (LT/IT/KCFS) */
   teacherType?: TeacherType | null;
-  /** Grade level (1-6, for Head Teachers) */
+  /** Grade level (1-6, for Head Teachers) - DEPRECATED, use gradeBand instead */
   grade?: number | null;
+  /** Grade band for head teachers (e.g., "1", "2", "3-4", "5-6", "1-2", "1-6") */
+  gradeBand?: string | null;
   /** Track (course_type: LT/IT/KCFS) */
   track?: "LT" | "IT" | "KCFS" | null;
   /** Info Hub user ID */
