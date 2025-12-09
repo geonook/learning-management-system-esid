@@ -223,14 +223,14 @@ export async function getCourseStudentsWithScores(courseId: string) {
     return data.map(student => ({ ...student, scores: [] }))
   }
 
-  // Get exams for this course to then get scores
+  // Get exams for this course (exams.course_id → courseId)
   const { data: examsData } = await supabase
     .from('exams')
     .select('id')
-    .eq('class_id', courseId) // Assuming courseId maps to a class
-  
+    .eq('course_id', courseId)
+
   const examIds = examsData?.map(e => e.id) || []
-  
+
   const { data: scoresData, error: scoresError } = await supabase
     .from('scores')
     .select('*')
@@ -390,20 +390,32 @@ export async function getScoresByStudent(studentId: string) {
   return data as Score[]
 }
 
-// Get all scores for a class (simplified - via exam_id lookup needed)
+// Get all scores for a class (simplified - via course → exam lookup)
 export async function getScoresByClass(classId: string) {
-  // First get exam IDs for this class
+  // First get course IDs for this class
+  const { data: courses } = await supabase
+    .from('courses')
+    .select('id')
+    .eq('class_id', classId)
+
+  if (!courses || courses.length === 0) {
+    return []
+  }
+
+  const courseIds = courses.map(c => c.id)
+
+  // Then get exam IDs for these courses
   const { data: exams } = await supabase
     .from('exams')
     .select('id')
-    .eq('class_id', classId)
-  
+    .in('course_id', courseIds)
+
   if (!exams || exams.length === 0) {
     return []
   }
 
   const examIds = exams.map(exam => exam.id)
-  
+
   const { data, error } = await supabase
     .from('scores')
     .select('*')

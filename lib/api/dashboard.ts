@@ -221,12 +221,15 @@ export async function getTeacherKpis(teacherId: string): Promise<TeacherKpis> {
         exam_id,
         exams!inner(
           id,
-          class_id
+          course_id,
+          courses!inner(
+            class_id
+          )
         )
       `
       )
       .in("student_id", studentIds)
-      .in("exams.class_id", classIds)
+      .in("exams.courses.class_id", classIds)
       .gte(
         "entered_at",
         new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
@@ -355,11 +358,14 @@ export async function getClassDistribution(
         `
         score,
         exams!inner(
-          class_id,
-          classes!inner(
-            grade,
-            track,
-            is_active
+          course_id,
+          courses!inner(
+            class_id,
+            classes!inner(
+              grade,
+              track,
+              is_active
+            )
           )
         ),
         students!inner(
@@ -368,7 +374,7 @@ export async function getClassDistribution(
         )
       `
       )
-      .eq("exams.classes.is_active", true)
+      .eq("exams.courses.classes.is_active", true)
       .eq("students.is_active", true)
       .not("score", "is", null)
       .gte("score", 0)
@@ -388,21 +394,21 @@ export async function getClassDistribution(
       } else {
         grades = [Number(gradeBand)];
       }
-      query = query.in("exams.classes.grade", grades);
+      query = query.in("exams.courses.classes.grade", grades);
       // Note: course type filtering would need to be done at the course level, not class level
     } else if (userRole === "teacher" && userId) {
-      // Get teacher's class IDs through courses
+      // Get teacher's course IDs
       const { data: teacherCourses } = await supabase
         .from("courses")
-        .select("class_id")
+        .select("id")
         .eq("teacher_id", userId)
         .eq("is_active", true);
 
-      const classIds = (teacherCourses || []).map((course) => course.class_id);
-      if (classIds.length > 0) {
-        query = query.in("exams.class_id", classIds);
+      const courseIds = (teacherCourses || []).map((course) => course.id);
+      if (courseIds.length > 0) {
+        query = query.in("exams.course_id", courseIds);
       } else {
-        return []; // No classes assigned
+        return []; // No courses assigned
       }
     }
 
@@ -473,16 +479,19 @@ export async function getUpcomingDeadlines(
         id,
         name,
         exam_date,
-        class_id,
-        classes!inner(
-          name,
-          grade,
-          track,
-          is_active
+        course_id,
+        courses!inner(
+          class_id,
+          classes!inner(
+            name,
+            grade,
+            track,
+            is_active
+          )
         )
       `
       )
-      .eq("classes.is_active", true)
+      .eq("courses.classes.is_active", true)
       .gte("exam_date", new Date().toISOString().split("T")[0])
       .lte("exam_date", nextWeek.toISOString().split("T")[0])
       .order("exam_date", { ascending: true })
@@ -502,17 +511,17 @@ export async function getUpcomingDeadlines(
       } else {
         grades = [Number(gradeBand)];
       }
-      query = query.in("classes.grade", grades);
+      query = query.in("courses.classes.grade", grades);
     } else if (userRole === "teacher" && userId) {
       const { data: teacherCourses } = await supabase
         .from("courses")
-        .select("class_id")
+        .select("id")
         .eq("teacher_id", userId)
         .eq("is_active", true);
 
-      const classIds = (teacherCourses || []).map((course) => course.class_id);
-      if (classIds.length > 0) {
-        query = query.in("class_id", classIds);
+      const courseIds = (teacherCourses || []).map((course) => course.id);
+      if (courseIds.length > 0) {
+        query = query.in("course_id", courseIds);
       } else {
         return [];
       }
@@ -540,16 +549,19 @@ export async function getUpcomingDeadlines(
         dueText = `${diffDays} days`;
       }
 
-      const classData = exam.classes as unknown as {
-        name: string;
-        grade: number;
-        track: string | null;
-        is_active: boolean;
+      const courseData = exam.courses as unknown as {
+        class_id: string;
+        classes: {
+          name: string;
+          grade: number;
+          track: string | null;
+          is_active: boolean;
+        };
       };
 
       return {
         id: exam.id,
-        title: `${exam.name} (${classData.name})`,
+        title: `${exam.name} (${courseData.classes.name})`,
         due_at: dueText,
       };
     });
@@ -583,15 +595,19 @@ export async function getRecentAlerts(
         id,
         name,
         exam_date,
-        classes!inner(
-          id,
-          name,
-          grade,
-          track
+        course_id,
+        courses!inner(
+          class_id,
+          classes!inner(
+            id,
+            name,
+            grade,
+            track
+          )
         )
       `
       )
-      .eq("classes.is_active", true)
+      .eq("courses.classes.is_active", true)
       .gte(
         "exam_date",
         new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
@@ -601,12 +617,16 @@ export async function getRecentAlerts(
       .limit(5);
 
     for (const exam of recentExams || []) {
-      const classData = exam.classes as unknown as {
-        id: string;
-        name: string;
-        grade: number;
-        track: string | null;
+      const courseData = exam.courses as unknown as {
+        class_id: string;
+        classes: {
+          id: string;
+          name: string;
+          grade: number;
+          track: string | null;
+        };
       };
+      const classData = courseData.classes;
 
       const { count: totalStudents } = await supabase
         .from("students")
@@ -724,15 +744,19 @@ export async function getOverdueTable(): Promise<OverdueTableRow[]> {
         id,
         name,
         exam_date,
-        classes!inner(
-          id,
-          name,
-          grade,
-          track
+        course_id,
+        courses!inner(
+          class_id,
+          classes!inner(
+            id,
+            name,
+            grade,
+            track
+          )
         )
       `
       )
-      .eq("classes.is_active", true)
+      .eq("courses.classes.is_active", true)
       .lt("exam_date", today)
       .order("exam_date", { ascending: true })
       .limit(20);
@@ -745,12 +769,16 @@ export async function getOverdueTable(): Promise<OverdueTableRow[]> {
     const overdueData: OverdueTableRow[] = [];
 
     for (const exam of exams || []) {
-      const classData = exam.classes as unknown as {
-        id: string;
-        name: string;
-        grade: number;
-        track: string | null;
+      const courseData = exam.courses as unknown as {
+        class_id: string;
+        classes: {
+          id: string;
+          name: string;
+          grade: number;
+          track: string | null;
+        };
       };
+      const classData = courseData.classes;
 
       // Get total students in class
       const { count: totalStudents } = await supabase
@@ -834,11 +862,14 @@ export async function getClassPerformance(): Promise<ClassPerformanceRow[]> {
           `
           score,
           exams!inner(
-            class_id
+            course_id,
+            courses!inner(
+              class_id
+            )
           )
         `
         )
-        .eq("exams.class_id", cls.id)
+        .eq("exams.courses.class_id", cls.id)
         .gte(
           "entered_at",
           new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
@@ -1052,11 +1083,14 @@ export async function getHeadTeacherKpis(
         score,
         student_id,
         exams!inner(
-          class_id
+          course_id,
+          courses!inner(
+            class_id
+          )
         )
       `
       )
-      .in("exams.class_id", classIds)
+      .in("exams.courses.class_id", classIds)
       .gte(
         "entered_at",
         new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
@@ -1188,11 +1222,14 @@ export async function getGradeClassSummary(
           student_id,
           entered_at,
           exams!inner(
-            class_id
+            course_id,
+            courses!inner(
+              class_id
+            )
           )
         `
         )
-        .eq("exams.class_id", cls.id)
+        .eq("exams.courses.class_id", cls.id)
         .gte(
           "entered_at",
           new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()

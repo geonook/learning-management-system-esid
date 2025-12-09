@@ -72,11 +72,15 @@ export async function generateSystemNotifications(): Promise<Notification[]> {
         id,
         name,
         exam_date,
-        classes!inner(
-          id,
-          name,
-          grade,
-          track
+        course_id,
+        courses!inner(
+          class_id,
+          classes!inner(
+            id,
+            name,
+            grade,
+            track
+          )
         )
       `)
       .eq('is_active', true)
@@ -84,7 +88,8 @@ export async function generateSystemNotifications(): Promise<Notification[]> {
       .limit(20)
 
     for (const exam of overdueExams || []) {
-      const classData = exam.classes as unknown as { id: string; name: string; grade: number; track: string | null }
+      const courseData = exam.courses as unknown as { class_id: string; classes: { id: string; name: string; grade: number; track: string | null } }
+      const classData = courseData.classes
 
       // Check completion rate
       const { count: totalStudents } = await supabase
@@ -130,18 +135,22 @@ export async function generateSystemNotifications(): Promise<Notification[]> {
 
     // 2. Check for low completion rates in recent exams
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-    
+
     const { data: recentExams } = await supabase
       .from('exams')
       .select(`
         id,
         name,
         exam_date,
-        classes!inner(
-          id,
-          name,
-          grade,
-          track
+        course_id,
+        courses!inner(
+          class_id,
+          classes!inner(
+            id,
+            name,
+            grade,
+            track
+          )
         )
       `)
       .eq('is_active', true)
@@ -149,7 +158,8 @@ export async function generateSystemNotifications(): Promise<Notification[]> {
       .lte('exam_date', today)
 
     for (const exam of recentExams || []) {
-      const classData = exam.classes as unknown as { id: string; name: string; grade: number; track: string | null }
+      const courseData = exam.courses as unknown as { class_id: string; classes: { id: string; name: string; grade: number; track: string | null } }
+      const classData = courseData.classes
 
       const { count: totalStudents } = await supabase
         .from('students')
@@ -191,21 +201,23 @@ export async function generateSystemNotifications(): Promise<Notification[]> {
 
     // 3. Check for upcoming assessment deadlines (next 3 days)
     const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-    
+
     const { data: upcomingExams } = await supabase
       .from('exams')
       .select(`
         id,
         name,
         exam_date,
-        classes!inner(
-          id,
-          name,
-          grade,
-          track,
-          courses!inner(
-            teacher_id,
-            course_type
+        course_id,
+        courses!inner(
+          teacher_id,
+          course_type,
+          class_id,
+          classes!inner(
+            id,
+            name,
+            grade,
+            track
           )
         )
       `)
@@ -214,37 +226,40 @@ export async function generateSystemNotifications(): Promise<Notification[]> {
       .lte('exam_date', threeDaysFromNow)
 
     for (const exam of upcomingExams || []) {
-      const classData = exam.classes as unknown as {
-        id: string
-        name: string
-        grade: number
-        track: string | null
-        courses: Array<{ teacher_id: string | null; course_type: string }>
+      const courseData = exam.courses as unknown as {
+        teacher_id: string | null
+        course_type: string
+        class_id: string
+        classes: {
+          id: string
+          name: string
+          grade: number
+          track: string | null
+        }
       }
+      const classData = courseData.classes
 
       // Notify teachers about upcoming deadlines
-      for (const course of classData.courses || []) {
-        notifications.push({
-          id: `deadline-${exam.id}-${course.teacher_id}`,
-          type: 'assignment_due',
-          priority: 'medium',
-          title: 'Upcoming Assessment Deadline',
-          message: `${exam.name} is due on ${exam.exam_date} for ${classData.name}`,
-          metadata: {
-            examId: exam.id,
-            examName: exam.name,
-            examDate: exam.exam_date,
-            className: classData.name,
-            courseType: course.course_type
-          },
-          targetRole: 'teacher',
-          targetUserId: course.teacher_id || undefined,
-          isRead: false,
-          isActive: true,
-          createdAt: now.toISOString(),
-          expiresAt: exam.exam_date
-        })
-      }
+      notifications.push({
+        id: `deadline-${exam.id}-${courseData.teacher_id}`,
+        type: 'assignment_due',
+        priority: 'medium',
+        title: 'Upcoming Assessment Deadline',
+        message: `${exam.name} is due on ${exam.exam_date} for ${classData.name}`,
+        metadata: {
+          examId: exam.id,
+          examName: exam.name,
+          examDate: exam.exam_date,
+          className: classData.name,
+          courseType: courseData.course_type
+        },
+        targetRole: 'teacher',
+        targetUserId: courseData.teacher_id || undefined,
+        isRead: false,
+        isActive: true,
+        createdAt: now.toISOString(),
+        expiresAt: exam.exam_date
+      })
     }
 
     return notifications
