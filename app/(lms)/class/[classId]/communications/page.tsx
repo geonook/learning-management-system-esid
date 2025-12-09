@@ -100,6 +100,15 @@ export default function ClassCommunicationsPage() {
   const [students, setStudents] = useState<{ id: string; full_name: string; student_id: string }[]>([]);
 
   const isLTCourse = selectedCourse?.course_type === "LT";
+  const isAdmin = userPermissions?.role === "admin";
+  const isOffice = userPermissions?.role === "office_member";
+  const isHeadTeacher = userPermissions?.role === "head";
+  const isAdminOrOffice = isAdmin || isOffice;
+
+  // Check if current user is the teacher of the selected course
+  const isMyClass = selectedCourse?.teacher_id === userId;
+  // Office members can view all but only edit their own course
+  const canEdit = isAdmin || isMyClass;
 
   // Fetch class and courses info
   useEffect(() => {
@@ -129,14 +138,30 @@ export default function ClassCommunicationsPage() {
           .eq("class_id", classId);
 
         if (coursesError) throw coursesError;
-        setCourses(coursesData || []);
 
-        // Auto-select course based on user's teacher type
-        if (coursesData && coursesData.length > 0) {
-          const userCourse = coursesData.find(
-            (c) => c.course_type === userPermissions?.teacher_type
+        // Filter courses based on user role
+        let visibleCourses = coursesData || [];
+
+        // Teachers can only see their own course
+        if (!isAdminOrOffice && !isHeadTeacher) {
+          visibleCourses = visibleCourses.filter(c => c.teacher_id === userId);
+        }
+        // Head teachers can see courses of their track type
+        else if (isHeadTeacher && userPermissions?.track) {
+          visibleCourses = visibleCourses.filter(
+            c => c.course_type === userPermissions.track
           );
-          setSelectedCourse(userCourse ?? coursesData[0] ?? null);
+        }
+        // Admin/Office can see all courses
+
+        setCourses(visibleCourses);
+
+        // Auto-select course based on user's teacher type or first available
+        if (visibleCourses.length > 0) {
+          const userCourse = visibleCourses.find(
+            (c) => c.teacher_id === userId
+          );
+          setSelectedCourse(userCourse ?? visibleCourses[0] ?? null);
         }
 
         // Get students in this class
@@ -155,7 +180,7 @@ export default function ClassCommunicationsPage() {
     }
 
     fetchClassInfo();
-  }, [userId, classId, userPermissions?.teacher_type]);
+  }, [userId, classId, userPermissions?.teacher_type, userPermissions?.role, userPermissions?.track, isAdminOrOffice, isHeadTeacher]);
 
   // Fetch communications when course or semester changes
   const fetchCommunications = useCallback(async () => {
@@ -289,37 +314,56 @@ export default function ClassCommunicationsPage() {
               </p>
             </div>
           </div>
-          <Button
-            onClick={() => openNewDialog()}
-            className="bg-purple-500 hover:bg-purple-600"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            New {isLTCourse ? "Call" : "Note"}
-          </Button>
+          {canEdit && (
+            <Button
+              onClick={() => openNewDialog()}
+              className="bg-purple-500 hover:bg-purple-600"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              New {isLTCourse ? "Call" : "Note"}
+            </Button>
+          )}
         </div>
 
         {/* Course and Semester Selectors */}
         <div className="flex gap-4">
-          {/* Course Type Selector */}
-          <div className="flex gap-2">
-            {courses.map((course) => (
-              <button
-                key={course.id}
-                onClick={() => setSelectedCourse(course)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  selectedCourse?.id === course.id
-                    ? course.course_type === "LT"
-                      ? "bg-green-500 text-white dark:text-white"
-                      : course.course_type === "IT"
-                      ? "bg-blue-500 text-white dark:text-white"
-                      : "bg-purple-500 text-white dark:text-white"
-                    : "bg-surface-secondary text-text-secondary hover:bg-surface-hover"
-                }`}
-              >
-                {course.course_type}
-              </button>
-            ))}
-          </div>
+          {/* Course Type Selector - Only show if multiple courses available (Admin/Office) */}
+          {courses.length > 1 && (
+            <div className="flex gap-2">
+              {courses.map((course) => (
+                <button
+                  key={course.id}
+                  onClick={() => setSelectedCourse(course)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    selectedCourse?.id === course.id
+                      ? course.course_type === "LT"
+                        ? "bg-green-500 text-white dark:text-white"
+                        : course.course_type === "IT"
+                        ? "bg-blue-500 text-white dark:text-white"
+                        : "bg-purple-500 text-white dark:text-white"
+                      : "bg-surface-secondary text-text-secondary hover:bg-surface-hover"
+                  }`}
+                >
+                  {course.course_type}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Show single course badge for teachers */}
+          {courses.length === 1 && selectedCourse && (
+            <div
+              className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                selectedCourse.course_type === "LT"
+                  ? "bg-green-500/20 text-green-500 dark:text-green-400"
+                  : selectedCourse.course_type === "IT"
+                  ? "bg-blue-500/20 text-blue-500 dark:text-blue-400"
+                  : "bg-purple-500/20 text-purple-500 dark:text-purple-400"
+              }`}
+            >
+              {selectedCourse.course_type}
+            </div>
+          )}
 
           {/* Semester Selector */}
           <Select
@@ -342,6 +386,17 @@ export default function ClassCommunicationsPage() {
             </SelectContent>
           </Select>
         </div>
+
+        {/* No course assigned message */}
+        {courses.length === 0 && !loading && (
+          <div className="bg-surface-elevated rounded-xl p-6 border border-border-default">
+            <div className="flex flex-col items-center justify-center py-8 text-text-tertiary">
+              <MessageSquare className="w-12 h-12 mb-4 opacity-50" />
+              <p className="text-sm">You are not assigned to teach this class.</p>
+              <p className="text-xs mt-1">Contact an administrator to be assigned.</p>
+            </div>
+          </div>
+        )}
 
         {/* Loading State */}
         {loading && (
@@ -441,7 +496,7 @@ export default function ClassCommunicationsPage() {
                         <td className="p-4 text-center">
                           {status.semester_start ? (
                             <Check className="w-5 h-5 text-green-500 dark:text-green-400 mx-auto" />
-                          ) : (
+                          ) : canEdit ? (
                             <button
                               onClick={() =>
                                 openNewDialog(status.student_id, "semester_start")
@@ -450,12 +505,14 @@ export default function ClassCommunicationsPage() {
                             >
                               <X className="w-5 h-5 text-text-tertiary hover:text-red-500 dark:hover:text-red-400" />
                             </button>
+                          ) : (
+                            <X className="w-5 h-5 text-text-tertiary mx-auto opacity-50" />
                           )}
                         </td>
                         <td className="p-4 text-center">
                           {status.midterm ? (
                             <Check className="w-5 h-5 text-green-500 dark:text-green-400 mx-auto" />
-                          ) : (
+                          ) : canEdit ? (
                             <button
                               onClick={() =>
                                 openNewDialog(status.student_id, "midterm")
@@ -464,12 +521,14 @@ export default function ClassCommunicationsPage() {
                             >
                               <X className="w-5 h-5 text-text-tertiary hover:text-red-500 dark:hover:text-red-400" />
                             </button>
+                          ) : (
+                            <X className="w-5 h-5 text-text-tertiary mx-auto opacity-50" />
                           )}
                         </td>
                         <td className="p-4 text-center">
                           {status.final ? (
                             <Check className="w-5 h-5 text-green-500 dark:text-green-400 mx-auto" />
-                          ) : (
+                          ) : canEdit ? (
                             <button
                               onClick={() =>
                                 openNewDialog(status.student_id, "final")
@@ -478,6 +537,8 @@ export default function ClassCommunicationsPage() {
                             >
                               <X className="w-5 h-5 text-text-tertiary hover:text-red-500 dark:hover:text-red-400" />
                             </button>
+                          ) : (
+                            <X className="w-5 h-5 text-text-tertiary mx-auto opacity-50" />
                           )}
                         </td>
                         <td className="p-4 text-text-tertiary text-sm">
@@ -486,15 +547,17 @@ export default function ClassCommunicationsPage() {
                             : "-"}
                         </td>
                         <td className="p-4 text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openNewDialog(status.student_id)}
-                            className="text-purple-500 dark:text-purple-400 hover:text-purple-600 dark:hover:text-purple-300"
-                          >
-                            <Plus className="w-4 h-4 mr-1" />
-                            Add
-                          </Button>
+                          {canEdit && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openNewDialog(status.student_id)}
+                              className="text-purple-500 dark:text-purple-400 hover:text-purple-600 dark:hover:text-purple-300"
+                            >
+                              <Plus className="w-4 h-4 mr-1" />
+                              Add
+                            </Button>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -534,15 +597,17 @@ export default function ClassCommunicationsPage() {
                               {studentComms.length !== 1 ? "s" : ""}
                             </div>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openNewDialog(student.id)}
-                            className="text-purple-500 dark:text-purple-400 hover:text-purple-600 dark:hover:text-purple-300"
-                          >
-                            <Plus className="w-4 h-4 mr-1" />
-                            Add Note
-                          </Button>
+                          {canEdit && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openNewDialog(student.id)}
+                              className="text-purple-500 dark:text-purple-400 hover:text-purple-600 dark:hover:text-purple-300"
+                            >
+                              <Plus className="w-4 h-4 mr-1" />
+                              Add Note
+                            </Button>
+                          )}
                         </div>
                       );
                     })}
