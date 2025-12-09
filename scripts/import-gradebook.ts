@@ -30,6 +30,10 @@ const STAGING_KEY = "sb_secret_486qCO_C4zYGZZ7u_WXBUw_fZlUnt4N";
 const PROD_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://piwbooidofbaqklhijup.supabase.co";
 const PROD_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
+// System user IDs for created_by field
+const STAGING_SYSTEM_USER_ID = "8af71399-8cb4-4212-9799-2cbb238a1bd4"; // Staging admin
+const PROD_SYSTEM_USER_ID = "ecb4dc7d-c6d1-4466-b67a-35261340fef0"; // Production admin (陳則宏tsehungchen)
+
 // ============================================================
 // Types
 // ============================================================
@@ -556,23 +560,44 @@ async function importGradebook(
   console.log(`\n🏗️ Creating exams...`);
   const examIdMap = new Map<string, string>(); // examKey -> examId
 
-  // First, load all existing exams for the classes involved
-  const classIds = [...new Set([...examMap.values()].map((e) => e.classId))];
-  console.log(`   Loading existing exams for ${classIds.length} classes...`);
+  // First, load all existing exams for the courses involved
+  const courseIds = [...new Set([...examMap.values()].map((e) => e.courseId))];
+  console.log(`   Loading existing exams for ${courseIds.length} courses...`);
 
-  const { data: existingExams, error: loadExamsError } = await supabase
-    .from("exams")
-    .select("id, class_id, course_id, name")
-    .in("class_id", classIds);
+  // Load all exams with pagination (Supabase default limit is 1000)
+  let allExistingExams: { id: string; course_id: string; name: string }[] = [];
+  let page = 0;
+  const pageSize = 1000;
 
-  if (loadExamsError) {
-    throw new Error(`Failed to load existing exams: ${loadExamsError.message}`);
+  while (true) {
+    const { data: pageExams, error: loadExamsError } = await supabase
+      .from("exams")
+      .select("id, course_id, name")
+      .in("course_id", courseIds)
+      .range(page * pageSize, (page + 1) * pageSize - 1);
+
+    if (loadExamsError) {
+      throw new Error(`Failed to load existing exams: ${loadExamsError.message}`);
+    }
+
+    if (!pageExams || pageExams.length === 0) {
+      break;
+    }
+
+    allExistingExams = allExistingExams.concat(pageExams);
+
+    if (pageExams.length < pageSize) {
+      break;
+    }
+    page++;
   }
 
-  // Build a lookup for existing exams
+  const existingExams = allExistingExams;
+
+  // Build a lookup for existing exams (key: courseId:name)
   const existingExamLookup = new Map<string, string>();
   for (const exam of existingExams || []) {
-    const key = `${exam.class_id}:${exam.course_id}:${exam.name}`;
+    const key = `${exam.course_id}:${exam.name}`;
     existingExamLookup.set(key, exam.id);
   }
   console.log(`   Found ${existingExamLookup.size} existing exams`);
@@ -581,7 +606,7 @@ async function importGradebook(
   const examsToCreate: { key: string; exam: ExamEntry }[] = [];
 
   for (const [examKey, exam] of examMap) {
-    const lookupKey = `${exam.classId}:${exam.courseId}:${exam.name}`;
+    const lookupKey = `${exam.courseId}:${exam.name}`;
     const existingId = existingExamLookup.get(lookupKey);
 
     if (existingId) {
@@ -607,11 +632,10 @@ async function importGradebook(
     for (let batchIndex = 0; batchIndex < examBatches.length; batchIndex++) {
       const batch = examBatches[batchIndex];
 
-      // Note: Staging schema requires created_by (use a system UUID)
-      // Real admin user ID from staging database
-      const SYSTEM_USER_ID = "8af71399-8cb4-4212-9799-2cbb238a1bd4";
+      // Note: Production schema uses course_id (not class_id) for exams
+      // Select appropriate admin user ID based on environment
+      const SYSTEM_USER_ID = useStaging ? STAGING_SYSTEM_USER_ID : PROD_SYSTEM_USER_ID;
       const insertData = batch.map(({ exam }) => ({
-        class_id: exam.classId,
         course_id: exam.courseId,
         name: exam.name,
         exam_date: new Date().toISOString().split("T")[0],
@@ -621,7 +645,7 @@ async function importGradebook(
       const { data: newExams, error: createError } = await supabase
         .from("exams")
         .insert(insertData)
-        .select("id, class_id, course_id, name");
+        .select("id, course_id, name");
 
       if (createError) {
         stats.errors.push(`Exam batch ${batchIndex + 1} failed: ${createError.message}`);
@@ -630,7 +654,6 @@ async function importGradebook(
           const { data: singleExam, error: singleError } = await supabase
             .from("exams")
             .insert({
-              class_id: exam.classId,
               course_id: exam.courseId,
               name: exam.name,
               exam_date: new Date().toISOString().split("T")[0],
@@ -651,7 +674,6 @@ async function importGradebook(
         for (const newExam of newExams) {
           const matchingEntry = batch.find(
             ({ exam }) =>
-              exam.classId === newExam.class_id &&
               exam.courseId === newExam.course_id &&
               exam.name === newExam.name
           );
@@ -681,9 +703,9 @@ async function importGradebook(
   console.log(`\n📥 Importing scores...`);
 
   // Prepare all scores with resolved exam IDs
-  // Note: Staging schema requires assessment_code and entered_by
-  // Real admin user ID from staging database
-  const SYSTEM_USER_ID = "8af71399-8cb4-4212-9799-2cbb238a1bd4";
+  // Note: Schema requires assessment_code and entered_by
+  // Select appropriate admin user ID based on environment
+  const SCORES_SYSTEM_USER_ID = useStaging ? STAGING_SYSTEM_USER_ID : PROD_SYSTEM_USER_ID;
   const resolvedScores: {
     exam_id: string;
     student_id: string;
@@ -704,7 +726,7 @@ async function importGradebook(
       student_id: scoreEntry.studentDbId,
       assessment_code: scoreEntry.assessmentCode,
       score: scoreEntry.score,
-      entered_by: SYSTEM_USER_ID,
+      entered_by: SCORES_SYSTEM_USER_ID,
     });
   }
 
@@ -725,7 +747,7 @@ async function importGradebook(
     const { error: upsertError } = await supabase
       .from("scores")
       .upsert(batch, {
-        onConflict: "exam_id,student_id",
+        onConflict: "student_id,exam_id,assessment_code",
         ignoreDuplicates: false,
       });
 
