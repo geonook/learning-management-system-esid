@@ -1,4 +1,4 @@
--- Migration 024: Add MID assessment code
+-- Migration 026: Add MID assessment code
 -- Purpose: Add MID (Midterm) assessment code for Term 1 gradebook import
 --
 -- Created: 2025-12-08
@@ -33,7 +33,7 @@ BEGIN
   INTO total_codes;
 
   RAISE NOTICE '========================================';
-  RAISE NOTICE 'Migration 024 Verification:';
+  RAISE NOTICE 'Migration 026 Verification:';
   RAISE NOTICE '  MID code exists: %', CASE WHEN mid_exists THEN '✅' ELSE '❌' END;
   RAISE NOTICE '  Total active codes: %', total_codes;
   RAISE NOTICE '========================================';

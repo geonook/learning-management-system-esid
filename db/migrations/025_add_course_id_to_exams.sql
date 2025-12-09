@@ -1,4 +1,4 @@
--- Migration 023: Add course_id FK to exams table
+-- Migration 025: Add course_id FK to exams table
 -- Purpose: Allow exams to be associated with specific courses (LT/IT/KCFS)
 -- This enables importing gradebook data that distinguishes between course types
 --
@@ -91,7 +91,7 @@ BEGIN
   ) INTO constraint_exists;
 
   RAISE NOTICE '========================================';
-  RAISE NOTICE 'Migration 023 Verification:';
+  RAISE NOTICE 'Migration 025 Verification:';
   RAISE NOTICE '  course_id column: %', CASE WHEN col_exists THEN '✅' ELSE '❌' END;
   RAISE NOTICE '  idx_exams_course_id: %', CASE WHEN idx_exists THEN '✅' ELSE '❌' END;
   RAISE NOTICE '  exams_class_course_name_key: %', CASE WHEN constraint_exists THEN '✅' ELSE '❌' END;

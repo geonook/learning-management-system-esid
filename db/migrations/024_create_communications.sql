@@ -1,4 +1,4 @@
--- Migration 023: Create Communications Table
+-- Migration 024: Create Communications Table
 -- Purpose: Parent communication tracking for LT teachers (phone calls) and IT/KCFS teachers (memos)
 -- Created: 2025-12-04
 
