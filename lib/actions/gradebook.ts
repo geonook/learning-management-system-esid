@@ -5,6 +5,11 @@ import { revalidatePath } from "next/cache";
 
 export type CourseType = "LT" | "IT" | "KCFS";
 
+export type TeacherInfo = {
+  teacherName: string | null;
+  teacherId: string | null;
+};
+
 export type GradebookData = {
   students: {
     id: string;
@@ -15,6 +20,7 @@ export type GradebookData = {
   assessmentCodes: string[];
   availableCourseTypes: CourseType[];
   currentCourseType: CourseType | null;
+  teacherInfo: TeacherInfo | null;
 };
 
 /**
@@ -113,6 +119,31 @@ export async function getGradebookData(
     };
   });
 
+  // 5. Get teacher info for the selected course type
+  let teacherInfo: TeacherInfo | null = null;
+
+  if (selectedCourseType) {
+    const { data: course } = await supabase
+      .from("courses")
+      .select(`
+        teacher_id,
+        teacher:users(full_name)
+      `)
+      .eq("class_id", classId)
+      .eq("course_type", selectedCourseType)
+      .eq("is_active", true)
+      .single();
+
+    if (course) {
+      // Handle the nested teacher object - Supabase returns object for single FK relation
+      const teacher = course.teacher as unknown as { full_name: string } | null;
+      teacherInfo = {
+        teacherName: teacher?.full_name || null,
+        teacherId: course.teacher_id,
+      };
+    }
+  }
+
   return {
     students: studentsWithScores,
     assessmentCodes: [
@@ -132,6 +163,7 @@ export async function getGradebookData(
     ],
     availableCourseTypes,
     currentCourseType: selectedCourseType,
+    teacherInfo,
   };
 }
 

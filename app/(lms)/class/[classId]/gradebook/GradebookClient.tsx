@@ -13,6 +13,7 @@ interface GradebookClientProps {
   initialData: GradeRow[];
   availableCourseTypes: CourseType[];
   initialCourseType: CourseType | null;
+  initialTeacherName?: string | null;
 }
 
 export function GradebookClient({
@@ -20,10 +21,14 @@ export function GradebookClient({
   initialData,
   availableCourseTypes,
   initialCourseType,
+  initialTeacherName,
 }: GradebookClientProps) {
   const [data, setData] = useState<GradeRow[]>(initialData);
   const [currentCourseType, setCurrentCourseType] = useState<CourseType | null>(
     initialCourseType
+  );
+  const [teacherName, setTeacherName] = useState<string | null>(
+    initialTeacherName || null
   );
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +48,7 @@ export function GradebookClient({
         }));
         setData(newData);
         setCurrentCourseType(courseType);
+        setTeacherName(result.teacherInfo?.teacherName || null);
       } catch (e) {
         console.error("Failed to load gradebook data:", e);
         setError("Failed to load data. Please try again.");
@@ -66,27 +72,35 @@ export function GradebookClient({
           onChange={handleCourseTypeChange}
         />
 
-        {/* Current course type indicator */}
+        {/* Current course type and teacher indicator */}
         {currentCourseType && (
-          <div className="flex items-center gap-2 text-sm text-text-secondary">
-            <span>Viewing:</span>
-            <span
-              className={cn(
-                "px-2 py-0.5 rounded font-medium",
-                currentCourseType === "LT" &&
-                  "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
-                currentCourseType === "IT" &&
-                  "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
-                currentCourseType === "KCFS" &&
-                  "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
-              )}
-            >
-              {currentCourseType === "LT"
-                ? "LT English"
-                : currentCourseType === "IT"
-                ? "IT English"
-                : "KCFS"}
-            </span>
+          <div className="flex items-center gap-3 text-sm text-text-secondary">
+            <div className="flex items-center gap-2">
+              <span>Viewing:</span>
+              <span
+                className={cn(
+                  "px-2 py-0.5 rounded font-medium",
+                  currentCourseType === "LT" &&
+                    "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+                  currentCourseType === "IT" &&
+                    "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+                  currentCourseType === "KCFS" &&
+                    "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
+                )}
+              >
+                {currentCourseType === "LT"
+                  ? "LT English"
+                  : currentCourseType === "IT"
+                  ? "IT English"
+                  : "KCFS"}
+              </span>
+            </div>
+            {teacherName && (
+              <div className="flex items-center gap-2 border-l border-border-default pl-3">
+                <span className="text-text-tertiary">Teacher:</span>
+                <span className="font-medium text-text-primary">{teacherName}</span>
+              </div>
+            )}
           </div>
         )}
       </div>

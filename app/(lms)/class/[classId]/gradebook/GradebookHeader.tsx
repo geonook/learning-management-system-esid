@@ -14,6 +14,7 @@ interface ClassInfo {
 interface GradebookHeaderProps {
   classId: string;
   courseType?: string | null;
+  teacherName?: string | null;
 }
 
 const COURSE_TYPE_LABELS: Record<string, string> = {
@@ -22,7 +23,7 @@ const COURSE_TYPE_LABELS: Record<string, string> = {
   KCFS: "KCFS",
 };
 
-export function GradebookHeader({ classId, courseType }: GradebookHeaderProps) {
+export function GradebookHeader({ classId, courseType, teacherName }: GradebookHeaderProps) {
   const { user } = useAuth();
   const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
   const [isMyClass, setIsMyClass] = useState<boolean | null>(null);
@@ -84,10 +85,11 @@ export function GradebookHeader({ classId, courseType }: GradebookHeaderProps) {
   const backHref = isMyClass ? `/class/${classId}` : `/class/${classId}`;
   const backLabel = "Back to Class";
 
-  // Build subtitle with course type
+  // Build subtitle with course type and teacher name
+  const teacherDisplay = teacherName ? ` • Teacher: ${teacherName}` : "";
   const subtitle = classInfo
     ? courseType
-      ? `Grade ${classInfo.grade} • ${courseType} Course • Score Entry`
+      ? `Grade ${classInfo.grade} • ${courseType} Course • Score Entry${teacherDisplay}`
       : `Grade ${classInfo.grade} • Score Entry`
     : undefined;
 

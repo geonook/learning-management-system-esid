@@ -1,5 +1,5 @@
 import React from "react";
-import { getGradebookData, CourseType } from "@/lib/actions/gradebook";
+import { getGradebookData, CourseType, TeacherInfo } from "@/lib/actions/gradebook";
 import { GradeRow } from "@/lib/gradebook/FormulaEngine";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { GradebookHeader } from "./GradebookHeader";
@@ -21,6 +21,7 @@ export default async function ClassGradebookPage({ params, searchParams }: PageP
   let initialData: GradeRow[] = [];
   let availableCourseTypes: CourseType[] = [];
   let currentCourseType: CourseType | null = null;
+  let teacherInfo: TeacherInfo | null = null;
   let error = null;
 
   if (classId) {
@@ -34,6 +35,7 @@ export default async function ClassGradebookPage({ params, searchParams }: PageP
       }));
       availableCourseTypes = result.availableCourseTypes;
       currentCourseType = result.currentCourseType;
+      teacherInfo = result.teacherInfo;
     } catch (e) {
       console.error("Failed to load gradebook data:", e);
       error = "Failed to load data. Please try again.";
@@ -43,7 +45,11 @@ export default async function ClassGradebookPage({ params, searchParams }: PageP
   return (
     <AuthGuard requiredRoles={["admin", "head", "teacher", "office_member"]}>
       <div className="h-full flex flex-col">
-        <GradebookHeader classId={classId} courseType={currentCourseType} />
+        <GradebookHeader
+          classId={classId}
+          courseType={currentCourseType}
+          teacherName={teacherInfo?.teacherName}
+        />
 
         {error ? (
           <div className="flex-1 flex items-center justify-center text-red-600 dark:text-red-400 bg-surface-primary rounded-xl border border-border-default mt-4">
@@ -56,6 +62,7 @@ export default async function ClassGradebookPage({ params, searchParams }: PageP
               initialData={initialData}
               availableCourseTypes={availableCourseTypes}
               initialCourseType={currentCourseType}
+              initialTeacherName={teacherInfo?.teacherName}
             />
           </div>
         )}
