@@ -1,13 +1,17 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 3.3
+> **Documentation Version**: 3.4
 > **Last Updated**: 2025-12-09
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Both Systems Complete)**
-> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**, **Teacher Course Assignment (v1.42.0 ✅)**, **Data Pages Sprint 1-2 (v1.43.0 ✅)**, **Browse Pages Loading Fix (v1.44.0 ✅)**, **Auth State Change Fix (v1.45.0 ✅)**, **Class Student Roster (v1.46.0 ✅)**, **Course Assignment UI (v1.47.0 ✅)**, **Gradebook Course Filter (v1.48.0 ✅)**, **Gradebook UI/UX Refactor (v1.49.0 ✅)**
+> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**, **Teacher Course Assignment (v1.42.0 ✅)**, **Data Pages Sprint 1-2 (v1.43.0 ✅)**, **Browse Pages Loading Fix (v1.44.0 ✅)**, **Auth State Change Fix (v1.45.0 ✅)**, **Class Student Roster (v1.46.0 ✅)**, **Course Assignment UI (v1.47.0 ✅)**, **Gradebook Course Filter (v1.48.0 ✅)**, **Gradebook UI/UX Refactor (v1.49.0 ✅)**, **Production RLS Fix (v1.49.1 ✅)**
 
 > **Current Status**:
 >
+> - ✅ **v1.49.1 Production RLS & Server Component Fix** - 修復 Production 環境問題 (2025-12-09)
+>   - 修復 users 表 RLS 無限遞迴（Migration 028）
+>   - 刪除 24 個有遞迴問題的 RLS policies
+>   - 修復 class layout Server Component 使用錯誤的 Supabase client
 > - ✅ **v1.49.0 Gradebook UI/UX Refactor** - 統一工具欄、移除冗餘元素 (2025-12-09)
 >   - 簡化 PageHeader subtitle（移除課程類型和教師）
 >   - 重設計工具欄：課程選擇器 + 教師 + 學生數 + 儲存狀態
@@ -497,6 +501,22 @@ npm run import:cli
   - ✅ **Staging** (`kqvpcoolgyhjqleekmee`): 已有資料
   - ✅ **Production** (`piwbooidofbaqklhijup`): 2025-12-08 已執行（13 筆記錄）
 - **相關檔案**: `db/migrations/022_fix_assessment_codes_schema.sql`
+
+#### Migration 028: Fix Users Table RLS Recursion (2025-12-09) ✅ **已完成**
+
+- **目的**: 修復 `users` 表 RLS 無限遞迴問題
+- **問題根因**:
+  - `is_admin()` 和 `is_office_member()` 函數查詢 users 表
+  - RLS 政策調用這些函數 → 觸發 RLS → 無限遞迴
+  - 錯誤碼: 25P02（transaction aborted）
+- **解決方案**:
+  - 刪除使用 `is_admin()` / `is_office_member()` 的政策
+  - 建立簡單的 `authenticated_read_users` 政策（使用 `auth.role() = 'authenticated'`）
+  - 細粒度權限在應用層（AuthContext）處理
+- **影響範圍**: 刪除 24 個有遞迴問題的 RLS policies（跨 9 個表）
+- **部署狀態**:
+  - ✅ **Production** (`piwbooidofbaqklhijup`): 2025-12-09 已執行
+- **相關檔案**: `db/migrations/028_fix_users_rls_simple.sql`
 
 ### 📊 真實資料部署狀態
 
