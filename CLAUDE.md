@@ -1,13 +1,20 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 3.4
+> **Documentation Version**: 3.5
 > **Last Updated**: 2025-12-09
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Both Systems Complete)**
-> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**, **Teacher Course Assignment (v1.42.0 ✅)**, **Data Pages Sprint 1-2 (v1.43.0 ✅)**, **Browse Pages Loading Fix (v1.44.0 ✅)**, **Auth State Change Fix (v1.45.0 ✅)**, **Class Student Roster (v1.46.0 ✅)**, **Course Assignment UI (v1.47.0 ✅)**, **Gradebook Course Filter (v1.48.0 ✅)**, **Gradebook UI/UX Refactor (v1.49.0 ✅)**, **Production RLS Fix (v1.49.1 ✅)**
+> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**, **Teacher Course Assignment (v1.42.0 ✅)**, **Data Pages Sprint 1-2 (v1.43.0 ✅)**, **Browse Pages Loading Fix (v1.44.0 ✅)**, **Auth State Change Fix (v1.45.0 ✅)**, **Class Student Roster (v1.46.0 ✅)**, **Course Assignment UI (v1.47.0 ✅)**, **Gradebook Course Filter (v1.48.0 ✅)**, **Gradebook UI/UX Refactor (v1.49.0 ✅)**, **Production RLS Fix (v1.49.1 ✅)**, **Browse Gradebook Refactor (v1.50.0 ✅)**, **Course Kanban & Communications (v1.50.0 ✅)**
 
 > **Current Status**:
 >
+> - ✅ **v1.50.0 Browse Gradebook Refactor & Sprint 4 Features** - 完整重構 Browse Gradebook + 新增課程功能 (2025-12-09)
+>   - **Browse Gradebook 重構**：從 exam-based（1000 筆）改為 class-based（84 班）視圖
+>   - 新增 LT/IT/KCFS 三欄進度顯示，進度計算：`scores / (students × 13)`
+>   - 狀態判定：on_track (≥80%), behind (>0%), not_started (0%)
+>   - **Course Kanban**：課程層級任務看板，支援拖曳排序
+>   - **Communications**：LT 電話通訊追蹤 + IT/KCFS 備忘功能
+>   - 新增檔案：`types/browse-gradebook.ts`, `lib/api/browse-gradebook.ts`
 > - ✅ **v1.49.1 Production RLS & Server Component Fix** - 修復 Production 環境問題 (2025-12-09)
 >   - 修復 users 表 RLS 無限遞迴（Migration 028）
 >   - 刪除 24 個有遞迴問題的 RLS policies
@@ -1111,6 +1118,132 @@ COPY --from=builder /app/public ./public
 | 我的課表 | `/(lms)/schedule` | 🟢 | ⏳ 待開發 |
 | Gradebook 課程篩選 | `/(lms)/class/[classId]/gradebook` | 🟢 | ✅ v1.48.0 |
 | Gradebook UI/UX 優化 | `/(lms)/class/[classId]/gradebook` | 🟢 | ✅ v1.49.0 |
+
+### ✅ 完成：Sprint 4（課程層級功能）v1.50.0
+
+| 任務 | 路由/檔案 | 狀態 |
+|------|----------|------|
+| Browse Gradebook 重構 | `/(lms)/browse/gradebook` | ✅ class-based 視圖 |
+| Course Kanban | `/(lms)/class/[classId]` (Overview) | ✅ 任務看板 |
+| Communications Tab | `/(lms)/class/[classId]/communications` | ✅ 電話追蹤+備忘 |
+| Head Teacher 課程權限 | Communications 頁面 | ✅ track 過濾 |
+
+---
+
+## 📊 Browse Gradebook 架構 (2025-12-09) ✅ **v1.50.0**
+
+### 功能概述
+
+Browse Gradebook 頁面用於監控全校班級的成績輸入進度：
+
+- **Class-Based 視圖**：每班一行（84 班），取代舊版 exam-based（1000 筆）
+- **LT/IT/KCFS 進度欄**：顯示三種課程的成績輸入完成率
+- **狀態篩選**：On Track / Behind / Not Started
+- **年級篩選**：G1-G6
+
+### 資料結構
+
+```typescript
+interface ClassProgress {
+  class_id: string;
+  class_name: string;
+  grade: number;
+  student_count: number;
+  lt_progress: number;      // 0-100%
+  it_progress: number;      // 0-100%
+  kcfs_progress: number;    // 0-100%
+  lt_teacher: string | null;
+  it_teacher: string | null;
+  kcfs_teacher: string | null;
+  overall_status: 'on_track' | 'behind' | 'not_started';
+}
+```
+
+### 進度計算
+
+```typescript
+// 每個課程的進度 = 已輸入成績數 / (學生數 × 13)
+// 13 = FA1-FA8 (8) + SA1-SA4 (4) + MID (1)
+const progress = (scores_entered / (student_count * 13)) * 100;
+
+// 狀態判定
+if (lt >= 80 && it >= 80 && kcfs >= 80) return 'on_track';
+if (lt > 0 || it > 0 || kcfs > 0) return 'behind';
+return 'not_started';
+```
+
+### 相關檔案
+
+| 檔案 | 說明 |
+|------|------|
+| `types/browse-gradebook.ts` | TypeScript 型別定義 |
+| `lib/api/browse-gradebook.ts` | API：`getClassesProgress()` |
+| `app/(lms)/browse/gradebook/page.tsx` | UI 元件 |
+
+---
+
+## 📋 Course Kanban 架構 (2025-12-09) ✅ **v1.50.0**
+
+### 功能概述
+
+課程層級的任務看板，每位教師只能看到自己任課課程的任務：
+
+- **Kanban 三欄**：To Do / In Progress / Done
+- **拖曳排序**：使用 @dnd-kit/core
+- **課程隔離**：綁定 `course_id`，教師只看自己的任務
+
+### 資料表
+
+```sql
+CREATE TABLE course_tasks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  course_id UUID NOT NULL REFERENCES courses(id),
+  teacher_id UUID NOT NULL REFERENCES users(id),
+  title TEXT NOT NULL,
+  description TEXT,
+  status TEXT DEFAULT 'todo' CHECK (status IN ('todo', 'in_progress', 'done')),
+  due_date DATE,
+  position INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+### 相關檔案
+
+| 檔案 | 說明 |
+|------|------|
+| `types/course-tasks.ts` | TypeScript 型別定義 |
+| `lib/api/course-tasks.ts` | CRUD API |
+| `components/class/CourseKanban.tsx` | Kanban 元件 |
+| `db/migrations/029_create_course_tasks.sql` | Migration |
+
+---
+
+## 📞 Communications 架構 (2025-12-09) ✅ **v1.50.0**
+
+### 功能概述
+
+課程層級的家長通訊追蹤：
+
+- **LT 課程**：電話通訊追蹤（semester_start / midterm / final）
+- **IT/KCFS 課程**：學生備忘功能
+
+### 權限控制
+
+| 角色 | 可見課程 | 可編輯 |
+|------|----------|--------|
+| Teacher | 自己任課的課程 | ✅ |
+| Head Teacher | 自己 track 類型的課程 | ❌ 唯讀 |
+| Admin/Office | 所有課程 | ✅ (Admin) / ❌ (Office) |
+
+### 相關檔案
+
+| 檔案 | 說明 |
+|------|------|
+| `db/migrations/024_create_communications.sql` | 資料表 + RLS |
+| `app/(lms)/class/[classId]/communications/page.tsx` | UI 元件 |
+| `components/os/ClassContextTabs.tsx` | Tab 導航 |
 
 ---
 
