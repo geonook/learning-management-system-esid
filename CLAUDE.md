@@ -1,19 +1,23 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 3.2
-> **Last Updated**: 2025-12-08
+> **Documentation Version**: 3.3
+> **Last Updated**: 2025-12-09
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Both Systems Complete)**
-> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**, **Teacher Course Assignment (v1.42.0 ✅)**, **Data Pages Sprint 1-2 (v1.43.0 ✅)**, **Browse Pages Loading Fix (v1.44.0 ✅)**, **Auth State Change Fix (v1.45.0 ✅)**, **Class Student Roster (v1.46.0 ✅)**, **Course Assignment UI (v1.47.0 ✅)**
+> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**, **Teacher Course Assignment (v1.42.0 ✅)**, **Data Pages Sprint 1-2 (v1.43.0 ✅)**, **Browse Pages Loading Fix (v1.44.0 ✅)**, **Auth State Change Fix (v1.45.0 ✅)**, **Class Student Roster (v1.46.0 ✅)**, **Course Assignment UI (v1.47.0 ✅)**, **Gradebook Course Filter (v1.48.0 ✅)**, **Gradebook UI/UX Refactor (v1.49.0 ✅)**
 
 > **Current Status**:
 >
+> - ✅ **v1.49.0 Gradebook UI/UX Refactor** - 統一工具欄、移除冗餘元素 (2025-12-09)
+>   - 簡化 PageHeader subtitle（移除課程類型和教師）
+>   - 重設計工具欄：課程選擇器 + 教師 + 學生數 + 儲存狀態
+>   - 移除底部狀態欄（資訊整合到工具欄）
+>   - 儲存狀態從 Spreadsheet 移至 GradebookClient
+> - ✅ **v1.48.0 Gradebook Course Filter** - 課程類型篩選與教師顯示 (2025-12-09)
+>   - 新增 LT/IT/KCFS 課程切換功能
+>   - 顯示當前課程的任課教師姓名
+>   - 動態更新教師資訊切換時
 > - ✅ **v1.47.0 Sprint 3.2 Course Assignment UI** - 課程指派管理介面 (2025-12-08)
->   - 新增 `/admin/courses` 頁面
->   - 顯示所有課程與教師指派狀態
->   - 按年級、課程類型篩選
->   - Dialog 選擇教師（自動過濾匹配 teacher_type）
->   - 即時更新統計（已指派/未指派/指派率）
 > - ✅ **v1.46.0 Sprint 3.1 Class Student Roster** - 班級學生名冊功能實作 (2025-12-08)
 > - ✅ **v1.45.0 Auth State Change Fix** - 修復 React 閉包與重複 fetch 問題 (2025-12-08)
 > - ✅ **v1.44.1 Browse Pages Loading Fix (Improved)** - 簡化 useEffect 模式 (2025-12-08)
@@ -25,6 +29,7 @@
 > - 🎯 **Next Steps**:
 >   1. Phase D2: 淺色模式配色統一、Notion 風格設計系統
 >   2. Sprint 3.3: 我的課表（教師查看自己的課表）
+>   3. CSV Import: 成績資料批次匯入功能
 
 This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -1079,11 +1084,94 @@ COPY --from=builder /app/public ./public
 
 ### 🎯 待辦：Sprint 3（功能擴展）
 
-| 任務 | 路由 | 優先級 |
-|------|------|--------|
-| 班級學生名冊 | `/(lms)/class/[classId]/students` | 🟢 |
-| 課程指派系統 | 多個檔案 | 🟢 |
-| 我的課表 | `/(lms)/schedule` | 🟢 |
+| 任務 | 路由 | 優先級 | 狀態 |
+|------|------|--------|------|
+| 班級學生名冊 | `/(lms)/class/[classId]/students` | 🟢 | ✅ v1.46.0 |
+| 課程指派系統 | `/admin/courses` | 🟢 | ✅ v1.47.0 |
+| 我的課表 | `/(lms)/schedule` | 🟢 | ⏳ 待開發 |
+| Gradebook 課程篩選 | `/(lms)/class/[classId]/gradebook` | 🟢 | ✅ v1.48.0 |
+| Gradebook UI/UX 優化 | `/(lms)/class/[classId]/gradebook` | 🟢 | ✅ v1.49.0 |
+
+---
+
+## 📊 Gradebook 架構 (2025-12-09) ✅ **v1.48.0 + v1.49.0**
+
+### 功能概述
+
+Gradebook 頁面支援查看和編輯班級成績，具備以下核心功能：
+
+- **課程類型切換**：LT / IT / KCFS 三種課程
+- **教師顯示**：顯示當前課程的任課教師
+- **成績編輯**：即時儲存、Focus Mode 批量輸入
+- **自動計算**：Formative (15%)、Summative (20%)、Term 總分
+
+### 元件架構
+
+```
+app/(lms)/class/[classId]/gradebook/
+├── page.tsx              # Server Component - 資料載入
+├── GradebookHeader.tsx   # 頁面標題、麵包屑
+└── GradebookClient.tsx   # Client Component - 互動邏輯
+
+components/gradebook/
+├── Spreadsheet.tsx       # 成績表格（核心資料輸入）
+├── CourseTypeSelector.tsx # LT/IT/KCFS 選擇器
+└── FocusGradeInput.tsx   # Focus Mode 批量輸入
+```
+
+### API 架構
+
+**Server Actions** (`lib/actions/gradebook.ts`)：
+
+```typescript
+// 型別定義
+export type CourseType = "LT" | "IT" | "KCFS";
+export type TeacherInfo = { teacherName: string | null; teacherId: string | null };
+export type GradebookData = {
+  students: { id, student_id, full_name, scores }[];
+  assessmentCodes: string[];           // FA1-8, SA1-4, MID
+  availableCourseTypes: CourseType[];  // 該班級可用的課程類型
+  currentCourseType: CourseType | null;
+  teacherInfo: TeacherInfo | null;     // 當前課程教師
+};
+
+// 主要函數
+getGradebookData(classId, courseType?)  // 取得成績資料 + 教師資訊
+updateScore(classId, studentId, code, score)  // 更新單一成績
+```
+
+### UI/UX 設計原則 (v1.49.0)
+
+**統一工具欄**：所有控制項和狀態整合到單一工具欄
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ [LT] [IT] [KCFS]   👤 陳老師 John Chen   👥 20 Students ✓ Saved │
+│ ← 課程選擇器      ← 教師資訊           ← 學生數 + 儲存狀態    │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**設計決策**：
+- ❌ 移除：重複的課程類型 badge（選擇器已顯示）
+- ❌ 移除：底部狀態欄（資訊整合到工具欄）
+- ❌ 移除：Spreadsheet 內部狀態欄（上移到父元件）
+- ✅ 保留：PageHeader 顯示班級名稱和課程類型
+- ✅ 新增：教師和學生數顯示在工具欄
+
+### 成績計算公式
+
+```typescript
+// lib/gradebook/FormulaEngine.ts
+FormulaEngine.calculateTermGrade(scores);     // 總分
+FormulaEngine.getFormativeAverage(scores);    // FA 平均 (15%)
+FormulaEngine.getSummativeAverage(scores);    // SA 平均 (20%)
+```
+
+**權重配置**：
+- Formative (FA1-FA8): 15%
+- Summative (SA1-SA4): 20%
+- Midterm (MID): 10%
+- Final: 10% (未實作)
 
 ---
 
