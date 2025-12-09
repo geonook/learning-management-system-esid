@@ -11,7 +11,18 @@ interface ClassInfo {
   grade: number;
 }
 
-export function GradebookHeader({ classId }: { classId: string }) {
+interface GradebookHeaderProps {
+  classId: string;
+  courseType?: string | null;
+}
+
+const COURSE_TYPE_LABELS: Record<string, string> = {
+  LT: "LT English",
+  IT: "IT English",
+  KCFS: "KCFS",
+};
+
+export function GradebookHeader({ classId, courseType }: GradebookHeaderProps) {
   const { user } = useAuth();
   const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
   const [isMyClass, setIsMyClass] = useState<boolean | null>(null);
@@ -42,19 +53,27 @@ export function GradebookHeader({ classId }: { classId: string }) {
     fetchData();
   }, [classId, user?.id]);
 
+  // Build title with course type
+  const courseLabel = courseType ? COURSE_TYPE_LABELS[courseType] || courseType : null;
+  const title = classInfo
+    ? courseLabel
+      ? `${classInfo.name} - ${courseLabel} Gradebook`
+      : `${classInfo.name} - Gradebook`
+    : "Gradebook";
+
   // Determine breadcrumb path based on whether this is user's class
   const breadcrumbs = classInfo
     ? isMyClass
       ? [
           { label: "My Classes", href: "/dashboard" },
           { label: classInfo.name, href: `/class/${classId}` },
-          { label: "Gradebook" },
+          { label: courseLabel ? `${courseLabel} Gradebook` : "Gradebook" },
         ]
       : [
           { label: "Browse Data", href: "/dashboard" },
           { label: "All Classes", href: "/browse/classes" },
           { label: classInfo.name, href: `/class/${classId}` },
-          { label: "Gradebook" },
+          { label: courseLabel ? `${courseLabel} Gradebook` : "Gradebook" },
         ]
     : [
         { label: "Loading...", href: "/dashboard" },
@@ -65,10 +84,17 @@ export function GradebookHeader({ classId }: { classId: string }) {
   const backHref = isMyClass ? `/class/${classId}` : `/class/${classId}`;
   const backLabel = "Back to Class";
 
+  // Build subtitle with course type
+  const subtitle = classInfo
+    ? courseType
+      ? `Grade ${classInfo.grade} • ${courseType} Course • Score Entry`
+      : `Grade ${classInfo.grade} • Score Entry`
+    : undefined;
+
   return (
     <PageHeader
-      title={classInfo ? `${classInfo.name} - Gradebook` : "Gradebook"}
-      subtitle={classInfo ? `Grade ${classInfo.grade} • Score Entry` : undefined}
+      title={title}
+      subtitle={subtitle}
       breadcrumbs={breadcrumbs}
       backHref={backHref}
       backLabel={backLabel}

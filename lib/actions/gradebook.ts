@@ -3,6 +3,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+export type CourseType = "LT" | "IT" | "KCFS";
+
 export type GradebookData = {
   students: {
     id: string;
@@ -11,37 +13,92 @@ export type GradebookData = {
     scores: Record<string, number | null>; // code -> score
   }[];
   assessmentCodes: string[];
+  availableCourseTypes: CourseType[];
+  currentCourseType: CourseType | null;
 };
 
 /**
- * Fetch all students and their scores for a given class
+ * Get available course types for a class
+ */
+export async function getAvailableCourseTypes(
+  classId: string
+): Promise<CourseType[]> {
+  const supabase = createClient();
+
+  const { data: courses, error } = await supabase
+    .from("courses")
+    .select("course_type")
+    .eq("class_id", classId)
+    .eq("is_active", true);
+
+  if (error) {
+    console.error("Failed to fetch course types:", error.message);
+    return [];
+  }
+
+  const courseTypes = [...new Set(courses.map((c) => c.course_type as CourseType))];
+  // Sort in consistent order: LT, IT, KCFS
+  const order: CourseType[] = ["LT", "IT", "KCFS"];
+  return courseTypes.sort((a, b) => order.indexOf(a) - order.indexOf(b));
+}
+
+/**
+ * Fetch all students and their scores for a given class and course type
  */
 export async function getGradebookData(
-  classId: string
+  classId: string,
+  courseType?: CourseType | null
 ): Promise<GradebookData> {
   const supabase = createClient();
 
-  // 1. Get students in class
+  // 1. Get available course types for this class
+  const availableCourseTypes = await getAvailableCourseTypes(classId);
+
+  // Default to first available course type if not specified
+  const selectedCourseType = courseType || availableCourseTypes[0] || null;
+
+  // 2. Get students in class
   const { data: students, error: studentsError } = await supabase
     .from("students")
     .select("id, student_id, full_name")
     .eq("class_id", classId)
+    .eq("is_active", true)
     .order("student_id");
 
   if (studentsError)
     throw new Error(`Failed to fetch students: ${studentsError.message}`);
 
-  // 2. Get scores for these students
+  // 3. Get scores filtered by course type via exam -> course relationship
   const studentIds = students.map((s) => s.id);
-  const { data: scores, error: scoresError } = await supabase
+
+  let scoresQuery = supabase
     .from("scores")
-    .select("student_id, assessment_code, score")
+    .select(`
+      student_id,
+      assessment_code,
+      score,
+      exam:exams!inner(
+        course_id,
+        course:courses!inner(
+          course_type
+        )
+      )
+    `)
     .in("student_id", studentIds);
 
-  if (scoresError)
-    throw new Error(`Failed to fetch scores: ${scoresError.message}`);
+  // Filter by course type if specified
+  if (selectedCourseType) {
+    scoresQuery = scoresQuery.eq("exam.course.course_type", selectedCourseType);
+  }
 
-  // 3. Transform to GradebookData format
+  const { data: scores, error: scoresError } = await scoresQuery;
+
+  if (scoresError) {
+    console.error("Scores query error:", scoresError);
+    throw new Error(`Failed to fetch scores: ${scoresError.message}`);
+  }
+
+  // 4. Transform to GradebookData format
   const studentsWithScores = students.map((student) => {
     const studentScores: Record<string, number | null> = {};
     scores
@@ -73,6 +130,8 @@ export async function getGradebookData(
       "SA4",
       "MID",
     ],
+    availableCourseTypes,
+    currentCourseType: selectedCourseType,
   };
 }
 

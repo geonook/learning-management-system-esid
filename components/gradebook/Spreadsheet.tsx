@@ -36,13 +36,19 @@ function getScoreColor(score: number | null | undefined): string {
 interface SpreadsheetProps {
   classId: string;
   initialData: GradeRow[];
+  courseType?: string | null;
 }
 
-export function Spreadsheet({ classId, initialData }: SpreadsheetProps) {
+export function Spreadsheet({ classId, initialData, courseType }: SpreadsheetProps) {
   const [data, setData] = useState<GradeRow[]>(initialData);
   const [focusModeCode, setFocusModeCode] = useState<string | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isPending, startTransition] = useTransition();
+
+  // Update data when initialData changes (e.g., course type switch)
+  React.useEffect(() => {
+    setData(initialData);
+  }, [initialData]);
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "error">(
     "saved"
   );
