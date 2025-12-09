@@ -138,3 +138,5 @@ test-*.html
 * 2.jsx
 * 2.json
 * 2.md
+# Import data (sensitive)
+data/
