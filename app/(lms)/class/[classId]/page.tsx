@@ -85,8 +85,11 @@ export default function ClassOverviewPage() {
         <h2 className="text-lg font-semibold mb-4 text-text-primary">
           Class Memos
         </h2>
-        <div className="flex items-center justify-center h-32 border-2 border-dashed border-border-subtle rounded-lg text-text-tertiary">
-          No memos yet
+        <div className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-border-subtle rounded-lg">
+          <span className="text-text-tertiary">No memos yet</span>
+          <span className="mt-2 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-xs font-medium">
+            Coming Soon
+          </span>
         </div>
       </div>
 
@@ -95,15 +98,11 @@ export default function ClassOverviewPage() {
         <h2 className="text-lg font-semibold mb-4 text-text-primary">
           Recent Activity
         </h2>
-        <div className="space-y-4">
-          <div className="flex items-center gap-3 text-sm text-text-secondary">
-            <div className="w-2 h-2 rounded-full bg-blue-500 dark:bg-blue-400" />
-            <span>Gradebook updated for Math Quiz</span>
-          </div>
-          <div className="flex items-center gap-3 text-sm text-text-secondary">
-            <div className="w-2 h-2 rounded-full bg-green-500 dark:bg-green-400" />
-            <span>Attendance marked for today</span>
-          </div>
+        <div className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-border-subtle rounded-lg">
+          <span className="text-text-tertiary">No activity recorded</span>
+          <span className="mt-2 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-xs font-medium">
+            Coming Soon
+          </span>
         </div>
       </div>
     </div>
