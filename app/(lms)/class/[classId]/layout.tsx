@@ -1,5 +1,5 @@
 import { ClassContextTabs } from "@/components/os/ClassContextTabs";
-import { getClass } from "@/lib/api/classes";
+import { createClient } from "@/lib/supabase/server";
 
 interface ClassLayoutProps {
   children: React.ReactNode;
@@ -12,7 +12,18 @@ export default async function ClassLayout({
   children,
   params,
 }: ClassLayoutProps) {
-  const classData = await getClass(params.classId);
+  // Use Server Supabase client for Server Components
+  const supabase = createClient();
+  const { data: classData, error } = await supabase
+    .from("classes")
+    .select("*")
+    .eq("id", params.classId)
+    .single();
+
+  if (error || !classData) {
+    console.error("Error fetching class:", error);
+    throw new Error("Class not found");
+  }
 
   return (
     <div className="flex flex-col h-full">
