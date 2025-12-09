@@ -8,6 +8,7 @@ import {
   GraduationCap,
   CalendarCheck,
   Users,
+  MessageSquare,
 } from "lucide-react";
 
 interface ClassContextTabsProps {
@@ -41,6 +42,12 @@ export function ClassContextTabs({ classId }: ClassContextTabsProps) {
       href: `${baseUrl}/students`,
       label: "Students",
       icon: <Users className="w-4 h-4" />,
+      exact: false,
+    },
+    {
+      href: `${baseUrl}/communications`,
+      label: "Comms",
+      icon: <MessageSquare className="w-4 h-4" />,
       exact: false,
     },
   ];
