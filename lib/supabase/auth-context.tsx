@@ -33,6 +33,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Ref 用於在 onAuthStateChange 回調中追蹤最新的 userPermissions
   // 這解決了閉包捕獲舊值的問題
   const userPermissionsRef = useRef<UserPermissions | null>(null)
+  // 追蹤初始 session 載入是否完成
+  const initialLoadCompleteRef = useRef(false)
 
   const fetchUserPermissions = async (userId: string): Promise<UserPermissions | null> => {
     try {
@@ -155,6 +157,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('[AuthContext] No session found, user will be redirected to login')
       }
 
+      // 標記初始載入完成，讓 onAuthStateChange 知道可以開始處理事件
+      initialLoadCompleteRef.current = true
       console.log('[AuthContext] Initial load complete, setting loading=false')
       setLoading(false)
     }
@@ -171,6 +175,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // If mock auth is active, ignore real auth state changes
         if (useMockAuth && process.env.NODE_ENV === 'development' && isDevelopmentMockActive) {
           console.log('[AuthContext] Development mode: Ignoring auth state change')
+          return
+        }
+
+        // 在初始載入完成前，忽略所有 auth 事件（讓 getSession() 處理）
+        // 這避免了 onAuthStateChange 和 getSession() 的競爭條件
+        if (!initialLoadCompleteRef.current) {
+          console.log('[AuthContext] Initial load not complete, skipping auth event:', event)
           return
         }
 
