@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { useAuth } from "@/lib/supabase/auth-context";
@@ -8,13 +8,12 @@ import { createClient } from "@/lib/supabase/client";
 import {
   Users,
   Search,
-  ArrowLeft,
-  GraduationCap,
-  Mail,
-  Hash,
   Loader2,
+  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
+import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 interface ClassInfo {
   id: string;
@@ -36,28 +35,42 @@ interface StudentRow {
 const getStudentEmail = (studentId: string) =>
   `${studentId.toLowerCase()}@stu.kcislk.ntpc.edu.tw`;
 
+// Extract level display (e.g., "G5E2" -> "E2")
+const getLevelDisplay = (level: string | null | undefined) => {
+  if (!level) return "-";
+  const match = level.match(/E[1-3]/);
+  return match ? match[0] : level;
+};
+
 export default function ClassStudentsPage() {
   const params = useParams();
   const classId = params?.classId as string;
 
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
+  const userId = user?.id;
   const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
   const [students, setStudents] = useState<StudentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const isInitialMount = useRef(true);
+  // Debounced search
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   useEffect(() => {
-    if (authLoading || !user) return;
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (!userId) return;
     let isCancelled = false;
 
     async function fetchData() {
-      if (!isCancelled) {
-        setLoading(true);
-        setError(null);
-      }
+      setLoading(true);
+      setError(null);
 
       try {
         const supabase = createClient();
@@ -95,24 +108,17 @@ export default function ClassStudentsPage() {
       }
     }
 
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      fetchData();
-      return;
-    }
+    fetchData();
 
-    // Debounce for search
-    const timer = setTimeout(fetchData, 300);
     return () => {
       isCancelled = true;
-      clearTimeout(timer);
     };
-  }, [authLoading, user, classId]);
+  }, [userId, classId]);
 
   // Filter students by search query (client-side for responsiveness)
   const filteredStudents = students.filter((student) => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
+    if (!debouncedSearch) return true;
+    const query = debouncedSearch.toLowerCase();
     return (
       student.full_name.toLowerCase().includes(query) ||
       student.student_id.toLowerCase().includes(query) ||
@@ -122,169 +128,126 @@ export default function ClassStudentsPage() {
 
   return (
     <AuthGuard requiredRoles={["admin", "head", "teacher", "office_member"]}>
-      <div className="h-full flex flex-col bg-surface-default rounded-xl border border-border-default shadow-sm overflow-hidden">
+      <div className="space-y-6">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-border-default bg-surface-secondary">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Link
-                href={`/class/${classId}`}
-                className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-text-secondary" />
-              </Link>
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
-                <Users className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg font-semibold text-text-primary">
-                  {loading ? "Loading..." : classInfo?.name || "Class"} - Student Roster
-                </h1>
-                <p className="text-sm text-text-secondary">
-                  {loading
-                    ? "Loading students..."
-                    : `${students.length} student${students.length !== 1 ? "s" : ""} enrolled`}
-                </p>
-              </div>
-            </div>
+        <PageHeader
+          title={loading ? "Loading..." : `${classInfo?.name || "Class"} - Student Roster`}
+          subtitle={`${students.length} student${students.length !== 1 ? "s" : ""} enrolled`}
+          breadcrumbs={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: classInfo?.name || "Class", href: `/class/${classId}` },
+            { label: "Students" },
+          ]}
+          backHref={`/class/${classId}`}
+          backLabel="Back to Class"
+        />
 
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
-              <input
-                type="text"
-                placeholder="Search students..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-4 py-2 w-64 text-sm rounded-lg border border-border-default bg-surface-elevated text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-              />
-            </div>
+        {/* Search */}
+        <div className="flex gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
+            <Input
+              placeholder="Search by name, student ID, or email..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-surface-secondary border-border-default text-text-primary placeholder:text-text-tertiary"
+            />
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-auto">
-          {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="w-8 h-8 animate-spin text-text-tertiary" />
-            </div>
-          ) : error ? (
-            <div className="flex flex-col items-center justify-center h-64 text-red-600 dark:text-red-500">
-              <p>{error}</p>
-            </div>
-          ) : filteredStudents.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64">
-              <Users className="w-12 h-12 text-text-tertiary/50 mb-4" />
-              <h3 className="text-lg font-medium text-text-secondary mb-2">
-                {searchQuery ? "No Students Found" : "No Students Enrolled"}
-              </h3>
-              <p className="text-sm text-text-tertiary text-center max-w-md">
-                {searchQuery
-                  ? `No students match "${searchQuery}"`
-                  : "This class doesn't have any students yet."}
-              </p>
-            </div>
-          ) : (
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 text-purple-600 dark:text-purple-400 animate-spin" />
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+            <p className="text-red-600 dark:text-red-400">{error}</p>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && !error && filteredStudents.length === 0 && (
+          <div className="text-center py-12">
+            <Users className="w-12 h-12 text-text-tertiary mx-auto mb-4" />
+            <p className="text-text-secondary">
+              {debouncedSearch ? `No students match "${debouncedSearch}"` : "No students enrolled"}
+            </p>
+          </div>
+        )}
+
+        {/* Students Table */}
+        {!loading && !error && filteredStudents.length > 0 && (
+          <div className="bg-surface-elevated rounded-xl border border-border-default overflow-hidden shadow-sm">
             <table className="w-full">
-              <thead className="sticky top-0 bg-surface-secondary">
+              <thead>
                 <tr className="border-b border-border-default">
-                  <th className="text-left px-6 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">
-                    <div className="flex items-center gap-1">
-                      <Hash className="w-3.5 h-3.5" />
-                      Student ID
-                    </div>
-                  </th>
-                  <th className="text-left px-6 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">
-                    <div className="flex items-center gap-1">
-                      <Users className="w-3.5 h-3.5" />
-                      Name
-                    </div>
-                  </th>
-                  <th className="text-left px-6 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">
-                    <div className="flex items-center gap-1">
-                      <GraduationCap className="w-3.5 h-3.5" />
-                      Level
-                    </div>
-                  </th>
-                  <th className="text-left px-6 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">
-                    <div className="flex items-center gap-1">
-                      <Mail className="w-3.5 h-3.5" />
-                      Email
-                    </div>
-                  </th>
+                  <th className="text-left p-4 text-sm font-medium text-text-secondary">Student ID</th>
+                  <th className="text-left p-4 text-sm font-medium text-text-secondary">Name</th>
+                  <th className="text-left p-4 text-sm font-medium text-text-secondary">Level</th>
+                  <th className="text-left p-4 text-sm font-medium text-text-secondary">Email</th>
+                  <th className="text-right p-4 text-sm font-medium text-text-secondary w-16"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border-subtle">
+              <tbody>
                 {filteredStudents.map((student) => (
-                  <tr
+                  <Link
                     key={student.id}
-                    className="hover:bg-surface-hover transition-colors"
+                    href={`/student/${student.id}`}
+                    className="contents group"
                   >
-                    <td className="px-6 py-4">
-                      <span className="text-sm font-mono text-text-secondary">
-                        {student.student_id}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-xs font-medium">
-                          {student.full_name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .slice(0, 2)
-                            .toUpperCase()}
-                        </div>
-                        <span className="text-sm font-medium text-text-primary">
-                          {student.full_name}
+                    <tr className="border-b border-border-subtle hover:bg-surface-hover cursor-pointer transition-colors duration-normal ease-apple">
+                      <td className="p-4 text-text-primary font-mono text-sm">{student.student_id}</td>
+                      <td className="p-4 text-text-primary group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                        {student.full_name}
+                      </td>
+                      <td className="p-4">
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          student.level?.includes("E1")
+                            ? "bg-green-500/20 text-green-600 dark:text-green-400"
+                            : student.level?.includes("E2")
+                            ? "bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                            : student.level?.includes("E3")
+                            ? "bg-red-500/20 text-red-600 dark:text-red-400"
+                            : "bg-surface-tertiary text-text-tertiary"
+                        }`}>
+                          {getLevelDisplay(student.level)}
                         </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      {student.level ? (
-                        <span
-                          className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
-                            student.level.includes("E1")
-                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
-                              : student.level.includes("E2")
-                                ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300"
-                                : "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300"
-                          }`}
+                      </td>
+                      <td className="p-4">
+                        <a
+                          href={`mailto:${getStudentEmail(student.student_id)}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
                         >
-                          {student.level}
-                        </span>
-                      ) : (
-                        <span className="text-sm text-text-tertiary">-</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <a
-                        href={`mailto:${getStudentEmail(student.student_id)}`}
-                        className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                      >
-                        {getStudentEmail(student.student_id)}
-                      </a>
-                    </td>
-                  </tr>
+                          {getStudentEmail(student.student_id)}
+                        </a>
+                      </td>
+                      <td className="p-4 text-right">
+                        <ChevronRight className="w-4 h-4 text-text-tertiary group-hover:text-text-secondary transition-colors inline-block" />
+                      </td>
+                    </tr>
+                  </Link>
                 ))}
               </tbody>
             </table>
-          )}
-        </div>
 
-        {/* Status Bar */}
-        <div className="h-7 bg-surface-secondary border-t border-border-default flex items-center px-4 text-[11px] text-text-tertiary justify-between">
-          <span>
-            {loading
-              ? "Loading..."
-              : searchQuery
-                ? `Showing ${filteredStudents.length} of ${students.length} students`
-                : `${students.length} student${students.length !== 1 ? "s" : ""}`}
-          </span>
-          <span>
-            {classInfo ? `G${classInfo.grade} • ${classInfo.name}` : ""}
-          </span>
-        </div>
+            {/* Footer */}
+            <div className="flex items-center justify-between p-4 border-t border-border-default">
+              <div className="text-sm text-text-tertiary">
+                {debouncedSearch
+                  ? `Showing ${filteredStudents.length} of ${students.length} students`
+                  : `${students.length} student${students.length !== 1 ? "s" : ""}`}
+              </div>
+              <div className="text-sm text-text-tertiary">
+                {classInfo ? `G${classInfo.grade} • ${classInfo.name}` : ""}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AuthGuard>
   );
