@@ -117,18 +117,42 @@ export async function getClassStatistics(
     throw new Error(`Failed to fetch students: ${studentError.message}`);
   }
 
-  // 4. Fetch scores for relevant courses
+  // 4. Fetch scores for relevant courses (via exam -> course relationship)
   const courseIds = courses?.map(c => c.id) || [];
 
-  const { data: scores, error: scoreError } = await supabase
+  // scores table doesn't have course_id directly - need to join through exams table
+  const { data: rawScores, error: scoreError } = await supabase
     .from('scores')
-    .select('student_id, course_id, assessment_code, score')
-    .in('course_id', courseIds)
+    .select(`
+      student_id,
+      assessment_code,
+      score,
+      exam:exams!inner(
+        course_id
+      )
+    `)
     .not('score', 'is', null);
 
   if (scoreError) {
     console.error('Error fetching scores:', scoreError);
   }
+
+  // Transform nested structure and filter by course IDs
+  const courseIdSet = new Set(courseIds);
+  const scores = (rawScores || [])
+    .filter(s => {
+      const examData = s.exam as unknown as { course_id: string } | null;
+      return examData?.course_id && courseIdSet.has(examData.course_id);
+    })
+    .map(s => {
+      const examData = s.exam as unknown as { course_id: string };
+      return {
+        student_id: s.student_id,
+        course_id: examData.course_id,
+        assessment_code: s.assessment_code,
+        score: s.score,
+      };
+    });
 
   // 5. Build statistics for each class-course combination
   const results: ClassStatistics[] = [];
@@ -139,7 +163,7 @@ export async function getClassStatistics(
     const studentCount = classStudents.length;
 
     for (const course of classCourses) {
-      const courseScores = scores?.filter(s => s.course_id === course.id) || [];
+      const courseScores = scores.filter(s => s.course_id === course.id);
 
       // Group scores by student, then calculate term grades
       const studentScoreMap = new Map<string, Record<string, number | null>>();
@@ -449,31 +473,47 @@ export async function getStudentGrades(
     throw new Error(`Failed to fetch courses: ${courseError.message}`);
   }
 
-  // 3. Fetch all scores for relevant courses (batch to avoid URL length limits)
+  // 3. Fetch all scores for relevant courses (via exam -> course relationship)
+  // scores table doesn't have course_id directly - need to join through exams table
   const courseIds = courses?.map(c => c.id) || [];
   const studentIdSet = new Set(studentIds);
+  const courseIdSet = new Set(courseIds);
 
   let allScores: { student_id: string; course_id: string; assessment_code: string; score: number | null }[] = [];
 
   if (courseIds.length > 0) {
-    const BATCH_SIZE = 50; // Batch course IDs to avoid URL too long
+    // Fetch scores via exam relationship (scores -> exam -> course)
+    const { data: rawScores, error: scoreError } = await supabase
+      .from('scores')
+      .select(`
+        student_id,
+        assessment_code,
+        score,
+        exam:exams!inner(
+          course_id
+        )
+      `);
 
-    for (let i = 0; i < courseIds.length; i += BATCH_SIZE) {
-      const batchCourseIds = courseIds.slice(i, i + BATCH_SIZE);
-
-      const { data: batchScores, error: scoreError } = await supabase
-        .from('scores')
-        .select('student_id, course_id, assessment_code, score')
-        .in('course_id', batchCourseIds);
-
-      if (scoreError) {
-        console.error('Error fetching scores batch:', scoreError);
-        continue;
-      }
-
-      // Filter to only include students we care about (client-side filtering)
-      const filteredScores = (batchScores || []).filter(s => studentIdSet.has(s.student_id));
-      allScores = allScores.concat(filteredScores);
+    if (scoreError) {
+      console.error('Error fetching scores:', scoreError);
+    } else {
+      // Transform nested structure and filter by student IDs and course IDs
+      allScores = (rawScores || [])
+        .filter(s => {
+          const examData = s.exam as unknown as { course_id: string } | null;
+          return studentIdSet.has(s.student_id) &&
+                 examData?.course_id &&
+                 courseIdSet.has(examData.course_id);
+        })
+        .map(s => {
+          const examData = s.exam as unknown as { course_id: string };
+          return {
+            student_id: s.student_id,
+            course_id: examData.course_id,
+            assessment_code: s.assessment_code,
+            score: s.score,
+          };
+        });
     }
   }
 
