@@ -9,6 +9,14 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# Debug: verify critical files exist before build
+RUN echo "=== Verifying critical files ===" && \
+    ls -la components/auth/ && \
+    ls -la components/ui/ && \
+    ls -la hooks/ && \
+    echo "=== All critical files verified ==="
+
 RUN npm run build
 
 FROM base AS runner
