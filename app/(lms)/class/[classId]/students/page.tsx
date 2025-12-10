@@ -29,9 +29,12 @@ interface StudentRow {
   full_name: string;
   grade: number;
   level: string | null;
-  email: string | null;
   is_active: boolean;
 }
+
+// 動態生成學生 email：{student_id}@stu.kcislk.ntpc.edu.tw
+const getStudentEmail = (studentId: string) =>
+  `${studentId.toLowerCase()}@stu.kcislk.ntpc.edu.tw`;
 
 export default function ClassStudentsPage() {
   const params = useParams();
@@ -71,7 +74,7 @@ export default function ClassStudentsPage() {
         // Fetch students in this class
         const { data: studentsData, error: studentsError } = await supabase
           .from("students")
-          .select("id, student_id, full_name, grade, level, email, is_active")
+          .select("id, student_id, full_name, grade, level, is_active")
           .eq("class_id", classId)
           .eq("is_active", true)
           .order("full_name");
@@ -113,7 +116,7 @@ export default function ClassStudentsPage() {
     return (
       student.full_name.toLowerCase().includes(query) ||
       student.student_id.toLowerCase().includes(query) ||
-      student.email?.toLowerCase().includes(query)
+      getStudentEmail(student.student_id).includes(query)
     );
   });
 
@@ -255,16 +258,12 @@ export default function ClassStudentsPage() {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      {student.email ? (
-                        <a
-                          href={`mailto:${student.email}`}
-                          className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                        >
-                          {student.email}
-                        </a>
-                      ) : (
-                        <span className="text-sm text-text-tertiary">-</span>
-                      )}
+                      <a
+                        href={`mailto:${getStudentEmail(student.student_id)}`}
+                        className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        {getStudentEmail(student.student_id)}
+                      </a>
                     </td>
                   </tr>
                 ))}
