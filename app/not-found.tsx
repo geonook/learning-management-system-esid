@@ -41,7 +41,7 @@ export default function NotFound() {
               {[
                 { label: "Dashboard", href: "/dashboard" },
                 { label: "Finder", href: "/finder" },
-                { label: "Settings", href: "/settings" }
+                { label: "Settings", href: "/admin/settings" }
               ].map((link) => (
                 <Link
                   key={link.href}

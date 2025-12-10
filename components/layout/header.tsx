@@ -18,7 +18,7 @@ const pageTitles: Record<string, string> = {
   "/attendance/today": "Today's Attendance",
   "/attendance/weekly": "Weekly Attendance",
   "/reports": "Reports & Analytics",
-  "/settings": "System Settings",
+  "/admin/settings": "System Settings",
   "/auth/login": "Login",
   "/auth/role-select": "Role Selection",
 };

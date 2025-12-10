@@ -72,8 +72,8 @@ const sidebarItems = [
     roles: ["admin", "teacher", "head"]
   },
   {
-    label: "Settings", 
-    href: "/settings",
+    label: "Settings",
+    href: "/admin/settings",
     icon: Settings,
     roles: ["admin", "teacher", "head"]
   }

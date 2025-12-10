@@ -71,7 +71,7 @@ export function Dock({ onAppClick }: DockProps) {
         window.open("https://info-hub.zeabur.app", "_blank");
         break;
       case "settings":
-        router.push("/settings");
+        router.push("/admin/settings");
         break;
       default:
         console.log("App clicked:", appId);
