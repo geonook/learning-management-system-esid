@@ -357,43 +357,73 @@ export async function getClassRanking(
 export async function getStudentGrades(
   filters?: StatisticsFilters
 ): Promise<StudentGradeRow[]> {
-  // 1. Fetch students with their classes
-  let studentQuery = supabase
-    .from('students')
-    .select(`
-      id,
-      student_id,
-      full_name,
-      class_id,
-      classes!inner (
+  // 1. Fetch students with their classes (with pagination to bypass 1000 limit)
+  const allStudents: {
+    id: string;
+    student_id: string;
+    full_name: string;
+    class_id: string;
+    classes: { id: string; name: string; level: string; grade: number };
+  }[] = [];
+
+  const PAGE_SIZE = 1000;
+  let offset = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    let studentQuery = supabase
+      .from('students')
+      .select(`
         id,
-        name,
-        level,
-        grade
-      )
-    `)
-    .order('student_id');
+        student_id,
+        full_name,
+        class_id,
+        classes!inner (
+          id,
+          name,
+          level,
+          grade
+        )
+      `)
+      .order('student_id')
+      .range(offset, offset + PAGE_SIZE - 1);
 
-  if (filters?.grade) {
-    studentQuery = studentQuery.eq('classes.grade', filters.grade);
+    if (filters?.grade) {
+      studentQuery = studentQuery.eq('classes.grade', filters.grade);
+    }
+
+    if (filters?.class_id) {
+      studentQuery = studentQuery.eq('class_id', filters.class_id);
+    }
+
+    if (filters?.search) {
+      studentQuery = studentQuery.or(
+        `full_name.ilike.%${filters.search}%,student_id.ilike.%${filters.search}%`
+      );
+    }
+
+    const { data: pageStudents, error: studentError } = await studentQuery;
+
+    if (studentError) {
+      console.error('Error fetching students:', studentError);
+      throw new Error(`Failed to fetch students: ${studentError.message}`);
+    }
+
+    if (pageStudents && pageStudents.length > 0) {
+      // Map the nested array to single object (Supabase returns array for !inner join)
+      const mapped = pageStudents.map(s => ({
+        ...s,
+        classes: Array.isArray(s.classes) ? s.classes[0] : s.classes
+      })) as typeof allStudents;
+      allStudents.push(...mapped);
+      offset += PAGE_SIZE;
+      hasMore = pageStudents.length === PAGE_SIZE;
+    } else {
+      hasMore = false;
+    }
   }
 
-  if (filters?.class_id) {
-    studentQuery = studentQuery.eq('class_id', filters.class_id);
-  }
-
-  if (filters?.search) {
-    studentQuery = studentQuery.or(
-      `full_name.ilike.%${filters.search}%,student_id.ilike.%${filters.search}%`
-    );
-  }
-
-  const { data: students, error: studentError } = await studentQuery;
-
-  if (studentError) {
-    console.error('Error fetching students:', studentError);
-    throw new Error(`Failed to fetch students: ${studentError.message}`);
-  }
+  const students = allStudents;
 
   if (!students || students.length === 0) {
     return [];
@@ -419,18 +449,35 @@ export async function getStudentGrades(
     throw new Error(`Failed to fetch courses: ${courseError.message}`);
   }
 
-  // 3. Fetch all scores for these students and courses
+  // 3. Fetch all scores for relevant courses (batch to avoid URL length limits)
   const courseIds = courses?.map(c => c.id) || [];
+  const studentIdSet = new Set(studentIds);
 
-  const { data: scores, error: scoreError } = await supabase
-    .from('scores')
-    .select('student_id, course_id, assessment_code, score')
-    .in('student_id', studentIds)
-    .in('course_id', courseIds);
+  let allScores: { student_id: string; course_id: string; assessment_code: string; score: number | null }[] = [];
 
-  if (scoreError) {
-    console.error('Error fetching scores:', scoreError);
+  if (courseIds.length > 0) {
+    const BATCH_SIZE = 50; // Batch course IDs to avoid URL too long
+
+    for (let i = 0; i < courseIds.length; i += BATCH_SIZE) {
+      const batchCourseIds = courseIds.slice(i, i + BATCH_SIZE);
+
+      const { data: batchScores, error: scoreError } = await supabase
+        .from('scores')
+        .select('student_id, course_id, assessment_code, score')
+        .in('course_id', batchCourseIds);
+
+      if (scoreError) {
+        console.error('Error fetching scores batch:', scoreError);
+        continue;
+      }
+
+      // Filter to only include students we care about (client-side filtering)
+      const filteredScores = (batchScores || []).filter(s => studentIdSet.has(s.student_id));
+      allScores = allScores.concat(filteredScores);
+    }
   }
+
+  const scores = allScores;
 
   // Build lookup maps
   const courseByClassId = new Map<string, typeof courses>();
@@ -449,9 +496,9 @@ export async function getStudentGrades(
     const classCourses = courseByClassId.get(student.class_id) || [];
 
     for (const course of classCourses) {
-      const studentScores = scores?.filter(
+      const studentScores = scores.filter(
         s => s.student_id === student.id && s.course_id === course.id
-      ) || [];
+      );
 
       // Build score map
       const scoreMap: Record<string, number | null> = {};
