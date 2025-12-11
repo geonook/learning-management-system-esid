@@ -2,13 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { School, ArrowLeft, Search, Download } from "lucide-react";
+import { School, ArrowLeft, Search } from "lucide-react";
 import Link from "next/link";
 import { getClassStatistics } from "@/lib/api/statistics";
 import { formatNumber, formatPercentage } from "@/lib/statistics/calculations";
 import type { ClassStatistics, CourseType } from "@/types/statistics";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { StatisticsActionButtons } from "@/components/statistics/ActionButtons";
+import { ClassDistributionChart, RankingBarChart, RadarComparisonChart } from "@/components/statistics/charts";
+import type { ColumnDefinition } from "@/lib/utils/clipboard";
 
 export default function ClassStatisticsPage() {
   const [loading, setLoading] = useState(true);
@@ -66,6 +69,32 @@ export default function ClassStatisticsPage() {
   const grades: number[] = [1, 2, 3, 4, 5, 6];
   const courseTypes: CourseType[] = ["LT", "IT", "KCFS"];
 
+  // Column definitions for copy/export
+  const columns: ColumnDefinition<ClassStatistics>[] = [
+    { key: "class_name", header: "Class" },
+    { key: "subject_type", header: "Course" },
+    { key: "grade_level", header: "Level" },
+    { key: "student_count", header: "Students" },
+    { key: "term_grade_avg", header: "Term Avg", format: (v) => formatNumber(v as number | null) },
+    { key: "max", header: "Max", format: (v) => formatNumber(v as number | null) },
+    { key: "min", header: "Min", format: (v) => formatNumber(v as number | null) },
+    { key: "std_dev", header: "Std Dev", format: (v) => formatNumber(v as number | null) },
+    { key: "fa_avg", header: "F.A. Avg", format: (v) => formatNumber(v as number | null) },
+    { key: "sa_avg", header: "S.A. Avg", format: (v) => formatNumber(v as number | null) },
+    { key: "pass_rate", header: "Pass Rate", format: (v) => formatPercentage(v as number | null) },
+    { key: "excellent_rate", header: "Excellent", format: (v) => formatPercentage(v as number | null) },
+  ];
+
+  // Prepare data for radar chart (need to add missing properties)
+  const radarData = filteredStats.slice(0, 3).map(s => ({
+    class_name: s.class_name,
+    term_grade_avg: s.term_grade_avg,
+    fa_avg: s.fa_avg,
+    sa_avg: s.sa_avg,
+    pass_rate: s.pass_rate,
+    excellent_rate: s.excellent_rate,
+  }));
+
   return (
     <AuthGuard requiredRoles={["admin", "head", "office_member"]}>
       <div className="space-y-6">
@@ -92,10 +121,15 @@ export default function ClassStatisticsPage() {
               </div>
             </div>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-surface-secondary border border-border-default rounded-lg text-text-secondary hover:bg-surface-hover transition-colors">
-            <Download className="w-4 h-4" />
-            <span>Export</span>
-          </button>
+          <StatisticsActionButtons
+            data={filteredStats}
+            loading={loading}
+            columns={columns}
+            exportOptions={{
+              filename: `class-statistics-${selectedCourseType.toLowerCase()}-g${selectedGrade}`,
+              sheetName: `G${selectedGrade} ${selectedCourseType} Classes`
+            }}
+          />
         </div>
 
         {/* Search */}
@@ -151,6 +185,28 @@ export default function ClassStatisticsPage() {
             ))}
           </div>
         </div>
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ClassDistributionChart
+            data={filteredStats}
+            loading={loading}
+            title={`G${selectedGrade} ${selectedCourseType} Score Distribution`}
+            color={selectedCourseType === "LT" ? "#06b6d4" : selectedCourseType === "IT" ? "#6366f1" : "#ec4899"}
+          />
+          <RankingBarChart
+            data={filteredStats}
+            loading={loading}
+            title={`G${selectedGrade} ${selectedCourseType} Top Classes`}
+            topN={5}
+          />
+        </div>
+
+        <RadarComparisonChart
+          data={radarData}
+          loading={loading}
+          title="Top 3 Classes Comparison"
+        />
 
         {/* Results Count */}
         <div className="text-sm text-text-secondary">

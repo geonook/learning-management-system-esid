@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { TrendingUp, ArrowLeft, Download } from "lucide-react";
+import { TrendingUp, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { getGradeLevelStatistics } from "@/lib/api/statistics";
 import { formatNumber, formatPercentage } from "@/lib/statistics/calculations";
 import type { GradeLevelStatistics, CourseType } from "@/types/statistics";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StatisticsActionButtons } from "@/components/statistics/ActionButtons";
+import { GradeComparisonChart } from "@/components/statistics/charts";
+import type { ColumnDefinition } from "@/lib/utils/clipboard";
 
 export default function GradeLevelComparisonPage() {
   const [loading, setLoading] = useState(true);
@@ -31,6 +34,29 @@ export default function GradeLevelComparisonPage() {
   }, [selectedCourseType]);
 
   const courseTypes: CourseType[] = ["LT", "IT", "KCFS"];
+
+  const getCourseColor = (ct: CourseType) => {
+    switch (ct) {
+      case "LT": return "#06b6d4";
+      case "IT": return "#6366f1";
+      case "KCFS": return "#ec4899";
+    }
+  };
+
+  // Column definitions for copy/export
+  const columns: ColumnDefinition<GradeLevelStatistics>[] = [
+    { key: "grade_level", header: "Grade Level" },
+    { key: "class_count", header: "Classes" },
+    { key: "student_count", header: "Students" },
+    { key: "term_grade_avg", header: "Term Grade Avg", format: (v) => formatNumber(v as number | null) },
+    { key: "max", header: "Max", format: (v) => formatNumber(v as number | null) },
+    { key: "min", header: "Min", format: (v) => formatNumber(v as number | null) },
+    { key: "std_dev", header: "Std Dev", format: (v) => formatNumber(v as number | null) },
+    { key: "fa_avg", header: "F.A. Avg", format: (v) => formatNumber(v as number | null) },
+    { key: "sa_avg", header: "S.A. Avg", format: (v) => formatNumber(v as number | null) },
+    { key: "pass_rate", header: "Pass Rate", format: (v) => formatPercentage(v as number | null) },
+    { key: "excellent_rate", header: "Excellent Rate", format: (v) => formatPercentage(v as number | null) },
+  ];
 
   return (
     <AuthGuard requiredRoles={["admin", "head", "office_member"]}>
@@ -58,10 +84,15 @@ export default function GradeLevelComparisonPage() {
               </div>
             </div>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-surface-secondary border border-border-default rounded-lg text-text-secondary hover:bg-surface-hover transition-colors">
-            <Download className="w-4 h-4" />
-            <span>Export</span>
-          </button>
+          <StatisticsActionButtons
+            data={statistics}
+            loading={loading}
+            columns={columns}
+            exportOptions={{
+              filename: `grade-comparison-${selectedCourseType.toLowerCase()}`,
+              sheetName: `${selectedCourseType} Grade Comparison`
+            }}
+          />
         </div>
 
         {/* Course Type Tabs */}
@@ -84,6 +115,14 @@ export default function GradeLevelComparisonPage() {
             </button>
           ))}
         </div>
+
+        {/* Chart Section */}
+        <GradeComparisonChart
+          data={statistics}
+          loading={loading}
+          title={`${selectedCourseType} Grade Level Performance`}
+          barColor={getCourseColor(selectedCourseType)}
+        />
 
         {/* Results Count */}
         <div className="text-sm text-text-secondary">

@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { Users, ArrowLeft, Download, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Users, ArrowLeft, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { getStudentGrades } from "@/lib/api/statistics";
 import { formatNumber } from "@/lib/statistics/calculations";
 import type { StudentGradeRow, CourseType } from "@/types/statistics";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { StatisticsActionButtons } from "@/components/statistics/ActionButtons";
+import type { ColumnDefinition } from "@/lib/utils/clipboard";
 
 export default function AllStudentGradesPage() {
   const [loading, setLoading] = useState(true);
@@ -76,6 +78,18 @@ export default function AllStudentGradesPage() {
   const courseTypes: CourseType[] = ["LT", "IT", "KCFS"];
   const gradeOptions: number[] = [1, 2, 3, 4, 5, 6];
 
+  // Column definitions for export (no copy - data is paginated)
+  const columns: ColumnDefinition<StudentGradeRow>[] = [
+    { key: "student_number", header: "Student ID" },
+    { key: "full_name", header: "Name" },
+    { key: "class_name", header: "Class" },
+    { key: "course_type", header: "Course" },
+    { key: "fa_avg", header: "F.A. Avg", format: (v) => formatNumber(v as number | null) },
+    { key: "sa_avg", header: "S.A. Avg", format: (v) => formatNumber(v as number | null) },
+    { key: "midterm", header: "Midterm", format: (v) => formatNumber(v as number | null) },
+    { key: "term_grade", header: "Term Grade", format: (v) => formatNumber(v as number | null) },
+  ];
+
   return (
     <AuthGuard requiredRoles={["admin", "head", "office_member"]}>
       <div className="space-y-6">
@@ -102,10 +116,16 @@ export default function AllStudentGradesPage() {
               </div>
             </div>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-surface-secondary border border-border-default rounded-lg text-text-secondary hover:bg-surface-hover transition-colors">
-            <Download className="w-4 h-4" />
-            <span>Export</span>
-          </button>
+          <StatisticsActionButtons
+            data={filteredGrades}
+            loading={loading}
+            columns={columns}
+            showCopy={false}
+            exportOptions={{
+              filename: `student-grades-${selectedCourseType.toLowerCase()}-g${selectedGrade}`,
+              sheetName: `G${selectedGrade} ${selectedCourseType} Students`
+            }}
+          />
         </div>
 
         {/* Search */}
