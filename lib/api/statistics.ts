@@ -576,86 +576,79 @@ export async function getStudentGrades(
     throw new Error(`Failed to fetch courses: ${courseError.message}`);
   }
 
-  // 3. Fetch all scores using nested join pattern (same as gradebook)
-  // IMPORTANT: Supabase's courses!inner joins via course_id FK, NOT class_id
-  // We get class_id from course.class_id instead
+  // 3. Fetch all scores using single pagination loop (optimized)
+  // Removed double-loop (batch × page) for better performance
   const classIdSet = new Set(classIds);
 
-  let allScores: { student_id: string; course_id: string; course_type: string; assessment_code: string; score: number | null }[] = [];
+  type ScoreRow = { student_id: string; course_id: string; course_type: string; assessment_code: string; score: number | null };
+  const allScores: ScoreRow[] = [];
 
   if (studentIds.length > 0) {
-    // Batch student IDs - reduced to 200 for serverless stability
-    const BATCH_SIZE = 200;
-    const studentIdBatches: string[][] = [];
-    for (let i = 0; i < studentIds.length; i += BATCH_SIZE) {
-      studentIdBatches.push(studentIds.slice(i, i + BATCH_SIZE));
-    }
+    const SCORE_PAGE_SIZE = 1000;
+    let scoreOffset = 0;
+    let hasMoreScores = true;
 
-    // Fetch scores for each batch with pagination to bypass 1000 row limit
-    for (const batchIds of studentIdBatches) {
-      const SCORE_PAGE_SIZE = 1000;
-      let scoreOffset = 0;
-      let hasMoreScores = true;
-
-      while (hasMoreScores) {
-        const result = await fetchWithRetry(() =>
-          supabase
-            .from('scores')
-            .select(`
-              student_id,
-              assessment_code,
-              score,
-              exam:exams!inner(
-                course_id,
-                course:courses!inner(
-                  id,
-                  class_id,
-                  course_type
-                )
+    // Single pagination loop - query all studentIds at once
+    while (hasMoreScores) {
+      const result = await fetchWithRetry(() =>
+        supabase
+          .from('scores')
+          .select(`
+            student_id,
+            assessment_code,
+            score,
+            exam:exams!inner(
+              course_id,
+              course:courses!inner(
+                id,
+                class_id,
+                course_type
               )
-            `)
-            .in('student_id', batchIds)
-            .range(scoreOffset, scoreOffset + SCORE_PAGE_SIZE - 1)
-        );
+            )
+          `)
+          .in('student_id', studentIds)
+          .range(scoreOffset, scoreOffset + SCORE_PAGE_SIZE - 1)
+      );
 
-        if (result.error) {
-          console.error('Error fetching scores:', result.error);
-          break;
-        }
-
-        const pageScores = result.data || [];
-
-        // Transform nested structure and filter by class IDs
-        const batchScores = pageScores
-          .filter(s => {
-            const examData = s.exam as unknown as { course_id: string; course: { id: string; class_id: string; course_type: string } } | null;
-            if (!examData?.course_id || !examData?.course) return false;
-            // Filter by class (using course.class_id)
-            if (!classIdSet.has(examData.course.class_id)) return false;
-            // Filter by course type if specified
-            if (filters?.course_type && examData.course.course_type !== filters.course_type) return false;
-            return true;
-          })
-          .map(s => {
-            const examData = s.exam as unknown as { course_id: string; course: { id: string; class_id: string; course_type: string } };
-            return {
-              student_id: s.student_id,
-              course_id: examData.course.id,
-              course_type: examData.course.course_type,
-              assessment_code: s.assessment_code,
-              score: s.score,
-            };
-          });
-
-        allScores.push(...batchScores);
-
-        scoreOffset += SCORE_PAGE_SIZE;
-        hasMoreScores = pageScores.length === SCORE_PAGE_SIZE;
+      if (result.error) {
+        console.error('Error fetching scores:', result.error);
+        break;
       }
+
+      const pageScores = result.data || [];
+
+      // Transform nested structure and filter by class IDs
+      for (const s of pageScores) {
+        const examData = s.exam as unknown as { course_id: string; course: { id: string; class_id: string; course_type: string } } | null;
+        if (!examData?.course_id || !examData?.course) continue;
+        // Filter by class (using course.class_id)
+        if (!classIdSet.has(examData.course.class_id)) continue;
+        // Filter by course type if specified
+        if (filters?.course_type && examData.course.course_type !== filters.course_type) continue;
+
+        allScores.push({
+          student_id: s.student_id,
+          course_id: examData.course.id,
+          course_type: examData.course.course_type,
+          assessment_code: s.assessment_code,
+          score: s.score,
+        });
+      }
+
+      scoreOffset += SCORE_PAGE_SIZE;
+      hasMoreScores = pageScores.length === SCORE_PAGE_SIZE;
     }
   }
 
-  const scores = allScores;
+  // Build score lookup map for O(1) access (instead of O(n) filter)
+  const scoreLookup = new Map<string, ScoreRow[]>();
+  for (const score of allScores) {
+    const key = `${score.student_id}:${score.course_id}`;
+    if (!scoreLookup.has(key)) {
+      scoreLookup.set(key, []);
+    }
+    scoreLookup.get(key)!.push(score);
+  }
 
   // Build lookup maps
   const courseByClassId = new Map<string, typeof courses>();
@@ -674,9 +667,9 @@ export async function getStudentGrades(
     const classCourses = courseByClassId.get(student.class_id) || [];
 
     for (const course of classCourses) {
-      const studentScores = scores.filter(
-        s => s.student_id === student.id && s.course_id === course.id
-      );
+      // Use O(1) Map lookup instead of O(n) filter
+      const lookupKey = `${student.id}:${course.id}`;
+      const studentScores = scoreLookup.get(lookupKey) || [];
 
       // Build score map
       const scoreMap: Record<string, number | null> = {};
