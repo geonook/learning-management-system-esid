@@ -513,29 +513,39 @@ export async function getStudentGrades(
   let allScores: { student_id: string; course_id: string; course_type: string; assessment_code: string; score: number | null }[] = [];
 
   if (studentIds.length > 0) {
-    // Fetch scores via exam -> courses nested join
-    const { data: rawScores, error: scoreError } = await supabase
-      .from('scores')
-      .select(`
-        student_id,
-        assessment_code,
-        score,
-        exam:exams!inner(
-          course_id,
-          course:courses!inner(
-            id,
-            class_id,
-            course_type
-          )
-        )
-      `)
-      .in('student_id', studentIds);
+    // Batch student IDs to avoid Supabase limits (max ~500 per .in() query)
+    const BATCH_SIZE = 500;
+    const studentIdBatches: string[][] = [];
+    for (let i = 0; i < studentIds.length; i += BATCH_SIZE) {
+      studentIdBatches.push(studentIds.slice(i, i + BATCH_SIZE));
+    }
 
-    if (scoreError) {
-      console.error('Error fetching scores:', scoreError);
-    } else {
+    // Fetch scores for each batch
+    for (const batchIds of studentIdBatches) {
+      const { data: rawScores, error: scoreError } = await supabase
+        .from('scores')
+        .select(`
+          student_id,
+          assessment_code,
+          score,
+          exam:exams!inner(
+            course_id,
+            course:courses!inner(
+              id,
+              class_id,
+              course_type
+            )
+          )
+        `)
+        .in('student_id', batchIds);
+
+      if (scoreError) {
+        console.error('Error fetching scores:', scoreError);
+        continue;
+      }
+
       // Transform nested structure and filter by class IDs
-      allScores = (rawScores || [])
+      const batchScores = (rawScores || [])
         .filter(s => {
           const examData = s.exam as unknown as { course_id: string; course: { id: string; class_id: string; course_type: string } } | null;
           if (!examData?.course_id || !examData?.course) return false;
@@ -555,6 +565,8 @@ export async function getStudentGrades(
             score: s.score,
           };
         });
+
+      allScores.push(...batchScores);
     }
   }
 
