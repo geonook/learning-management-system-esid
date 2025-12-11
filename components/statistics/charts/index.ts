@@ -5,4 +5,4 @@ export { StackedGradeChart } from "./StackedGradeChart";
 export { GradeComparisonChart } from "./GradeComparisonChart";
 export { ClassDistributionChart } from "./ClassDistributionChart";
 export { RankingBarChart } from "./RankingBarChart";
-export { RadarComparisonChart } from "./RadarComparisonChart";
+// RadarComparisonChart temporarily disabled - comparison effect not obvious

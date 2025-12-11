@@ -31,11 +31,12 @@ export function StackedGradeChart({
   title = "Grade Distribution by Level",
 }: StackedGradeChartProps) {
   // Calculate stacked data: Excellent, Good, Fail
+  // API returns rates as 0-100 percentages, convert to 0-1 for calculation
   const chartData = data
     .filter((d) => d.total_students > 0)
     .map((d) => {
-      const excellentRate = d.excellent_rate ?? 0;
-      const passRate = d.pass_rate ?? 0;
+      const excellentRate = (d.excellent_rate ?? 0) / 100;
+      const passRate = (d.pass_rate ?? 0) / 100;
       const goodRate = passRate - excellentRate;
       const failRate = 1 - passRate;
 

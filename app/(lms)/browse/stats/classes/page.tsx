@@ -10,7 +10,7 @@ import type { ClassStatistics, CourseType } from "@/types/statistics";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { StatisticsActionButtons } from "@/components/statistics/ActionButtons";
-import { ClassDistributionChart, RankingBarChart, RadarComparisonChart } from "@/components/statistics/charts";
+import { ClassDistributionChart, RankingBarChart } from "@/components/statistics/charts";
 import type { ColumnDefinition } from "@/lib/utils/clipboard";
 
 export default function ClassStatisticsPage() {
@@ -84,16 +84,6 @@ export default function ClassStatisticsPage() {
     { key: "pass_rate", header: "Pass Rate", format: (v) => formatPercentage(v as number | null) },
     { key: "excellent_rate", header: "Excellent", format: (v) => formatPercentage(v as number | null) },
   ];
-
-  // Prepare data for radar chart (need to add missing properties)
-  const radarData = filteredStats.slice(0, 3).map(s => ({
-    class_name: s.class_name,
-    term_grade_avg: s.term_grade_avg,
-    fa_avg: s.fa_avg,
-    sa_avg: s.sa_avg,
-    pass_rate: s.pass_rate,
-    excellent_rate: s.excellent_rate,
-  }));
 
   return (
     <AuthGuard requiredRoles={["admin", "head", "office_member"]}>
@@ -201,12 +191,6 @@ export default function ClassStatisticsPage() {
             topN={5}
           />
         </div>
-
-        <RadarComparisonChart
-          data={radarData}
-          loading={loading}
-          title="Top 3 Classes Comparison"
-        />
 
         {/* Results Count */}
         <div className="text-sm text-text-secondary">

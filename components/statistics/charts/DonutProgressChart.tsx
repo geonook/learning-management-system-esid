@@ -24,8 +24,9 @@ export function DonutProgressChart({
   title = "Pass Rate Overview",
   color = "#06b6d4",
 }: DonutProgressChartProps) {
-  const passRatePercent = passRate !== null ? passRate * 100 : 0;
-  const excellentRatePercent = excellentRate !== null ? excellentRate * 100 : 0;
+  // API returns values as 0-100 percentages, use directly
+  const passRatePercent = passRate ?? 0;
+  const excellentRatePercent = excellentRate ?? 0;
 
   // Calculate segments: Excellent (subset of Pass), Pass-only, Fail
   const excellentPercent = excellentRatePercent;

@@ -37,8 +37,8 @@ export function TrendLineChart({
     .map((d) => ({
       name: d.grade_level,
       average: d.grade_avg,
-      passRate: d.pass_rate !== null ? d.pass_rate * 100 : null,
-      excellentRate: d.excellent_rate !== null ? d.excellent_rate * 100 : null,
+      passRate: d.pass_rate,
+      excellentRate: d.excellent_rate,
     }));
 
   return (
