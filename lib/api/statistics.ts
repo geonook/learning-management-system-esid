@@ -1,11 +1,13 @@
+"use server";
+
 /**
- * Statistics API
+ * Statistics API (Server Action)
  *
  * Data fetching functions for the Statistics & Analytics module.
- * All queries respect RLS policies through the Supabase client.
+ * Uses server-side Supabase client to bypass RLS restrictions for admin/office users.
  */
 
-import { supabase } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/server';
 import {
   calculateAverage,
   calculateMax,
@@ -56,6 +58,8 @@ interface RawClassData {
 export async function getClassStatistics(
   filters?: StatisticsFilters
 ): Promise<ClassStatistics[]> {
+  const supabase = createClient();
+
   // 1. Fetch all classes
   let classQuery = supabase
     .from('classes')
@@ -381,6 +385,8 @@ export async function getClassRanking(
 export async function getStudentGrades(
   filters?: StatisticsFilters
 ): Promise<StudentGradeRow[]> {
+  const supabase = createClient();
+
   // 1. Fetch students with their classes (with pagination to bypass 1000 limit)
   const allStudents: {
     id: string;
@@ -600,6 +606,8 @@ export interface QuickStats {
  * Get quick overview statistics for the stats home page
  */
 export async function getQuickStats(): Promise<QuickStats> {
+  const supabase = createClient();
+
   // Get total counts
   const { count: totalStudents } = await supabase
     .from('students')
@@ -646,6 +654,8 @@ export async function getQuickStats(): Promise<QuickStats> {
  * Get all available grade levels in the system
  */
 export async function getAvailableGradeLevels(): Promise<string[]> {
+  const supabase = createClient();
+
   const { data, error } = await supabase
     .from('classes')
     .select('level')
