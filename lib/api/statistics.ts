@@ -14,22 +14,39 @@ import { createClient } from '@/lib/supabase/server';
 // ============================================================
 
 /**
- * Fetch with retry mechanism for handling network errors
- * Retries up to 3 times with exponential backoff for 'fetch failed' errors
+ * Fetch with retry mechanism for handling network errors in serverless environment
+ * - Retries up to 5 times with longer exponential backoff
+ * - Handles Zeabur/serverless cold start issues
+ * - Adds delay between requests to prevent connection exhaustion
  */
 async function fetchWithRetry<T>(
   fn: () => PromiseLike<{ data: T | null; error: { message: string } | null }>,
-  retries = 3
+  retries = 5
 ): Promise<{ data: T | null; error: { message: string } | null }> {
   for (let i = 0; i < retries; i++) {
-    const result = await fn();
-    if (!result.error) return result;
-    if (result.error.message?.includes('fetch failed')) {
-      console.log(`[fetchWithRetry] Retry ${i + 1}/${retries} after fetch failed`);
-      await new Promise(r => setTimeout(r, 1000 * (i + 1))); // Exponential backoff
-      continue;
+    try {
+      const result = await fn();
+      if (!result.error) {
+        // Add small delay between successful requests to prevent connection exhaustion
+        await new Promise(r => setTimeout(r, 100));
+        return result;
+      }
+      if (result.error.message?.includes('fetch failed') ||
+          result.error.message?.includes('ECONNRESET') ||
+          result.error.message?.includes('ETIMEDOUT')) {
+        const delay = Math.min(2000 * Math.pow(2, i), 10000); // 2s, 4s, 8s, 10s, 10s
+        console.log(`[fetchWithRetry] Retry ${i + 1}/${retries} after ${result.error.message}, waiting ${delay}ms`);
+        await new Promise(r => setTimeout(r, delay));
+        continue;
+      }
+      return result; // Non-retryable error
+    } catch (err) {
+      // Handle thrown errors (not just returned errors)
+      const delay = Math.min(2000 * Math.pow(2, i), 10000);
+      console.log(`[fetchWithRetry] Caught error on attempt ${i + 1}/${retries}, waiting ${delay}ms`);
+      await new Promise(r => setTimeout(r, delay));
+      if (i === retries - 1) throw err;
     }
-    return result; // Non-retryable error
   }
   return await fn(); // Final attempt
 }
@@ -567,8 +584,8 @@ export async function getStudentGrades(
   let allScores: { student_id: string; course_id: string; course_type: string; assessment_code: string; score: number | null }[] = [];
 
   if (studentIds.length > 0) {
-    // Batch student IDs to avoid Supabase limits (max ~500 per .in() query)
-    const BATCH_SIZE = 500;
+    // Batch student IDs - reduced to 200 for serverless stability
+    const BATCH_SIZE = 200;
     const studentIdBatches: string[][] = [];
     for (let i = 0; i < studentIds.length; i += BATCH_SIZE) {
       studentIdBatches.push(studentIds.slice(i, i + BATCH_SIZE));
