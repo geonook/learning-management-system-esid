@@ -8,6 +8,32 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
+
+// ============================================================
+// Helper Functions
+// ============================================================
+
+/**
+ * Fetch with retry mechanism for handling network errors
+ * Retries up to 3 times with exponential backoff for 'fetch failed' errors
+ */
+async function fetchWithRetry<T>(
+  fn: () => PromiseLike<{ data: T | null; error: { message: string } | null }>,
+  retries = 3
+): Promise<{ data: T | null; error: { message: string } | null }> {
+  for (let i = 0; i < retries; i++) {
+    const result = await fn();
+    if (!result.error) return result;
+    if (result.error.message?.includes('fetch failed')) {
+      console.log(`[fetchWithRetry] Retry ${i + 1}/${retries} after fetch failed`);
+      await new Promise(r => setTimeout(r, 1000 * (i + 1))); // Exponential backoff
+      continue;
+    }
+    return result; // Non-retryable error
+  }
+  return await fn(); // Final attempt
+}
+
 import {
   calculateAverage,
   calculateMax,
@@ -137,26 +163,54 @@ export async function getClassStatistics(
   let scoreError: { message: string } | null = null;
 
   if (studentIdList.length > 0) {
-    const result = await supabase
-      .from('scores')
-      .select(`
-        student_id,
-        assessment_code,
-        score,
-        exam:exams!inner(
-          course_id,
-          course:courses!inner(
-            id,
-            class_id,
-            course_type
-          )
-        )
-      `)
-      .in('student_id', studentIdList)
-      .not('score', 'is', null);
+    // Paginate scores query to bypass Supabase 1000 row limit
+    const SCORE_PAGE_SIZE = 1000;
+    let scoreOffset = 0;
+    let hasMoreScores = true;
+    const allRawScores: Array<{
+      student_id: string;
+      assessment_code: string;
+      score: number | null;
+      exam: unknown;
+    }> = [];
 
-    rawScores = result.data;
-    scoreError = result.error;
+    while (hasMoreScores) {
+      const result = await fetchWithRetry(() =>
+        supabase
+          .from('scores')
+          .select(`
+            student_id,
+            assessment_code,
+            score,
+            exam:exams!inner(
+              course_id,
+              course:courses!inner(
+                id,
+                class_id,
+                course_type
+              )
+            )
+          `)
+          .in('student_id', studentIdList)
+          .not('score', 'is', null)
+          .range(scoreOffset, scoreOffset + SCORE_PAGE_SIZE - 1)
+      );
+
+      if (result.error) {
+        console.error('Error fetching scores:', result.error);
+        scoreError = result.error;
+        break;
+      }
+
+      if (result.data && result.data.length > 0) {
+        allRawScores.push(...result.data);
+      }
+
+      scoreOffset += SCORE_PAGE_SIZE;
+      hasMoreScores = (result.data?.length || 0) === SCORE_PAGE_SIZE;
+    }
+
+    rawScores = allRawScores;
   }
 
   if (scoreError) {
@@ -520,53 +574,67 @@ export async function getStudentGrades(
       studentIdBatches.push(studentIds.slice(i, i + BATCH_SIZE));
     }
 
-    // Fetch scores for each batch
+    // Fetch scores for each batch with pagination to bypass 1000 row limit
     for (const batchIds of studentIdBatches) {
-      const { data: rawScores, error: scoreError } = await supabase
-        .from('scores')
-        .select(`
-          student_id,
-          assessment_code,
-          score,
-          exam:exams!inner(
-            course_id,
-            course:courses!inner(
-              id,
-              class_id,
-              course_type
-            )
-          )
-        `)
-        .in('student_id', batchIds);
+      const SCORE_PAGE_SIZE = 1000;
+      let scoreOffset = 0;
+      let hasMoreScores = true;
 
-      if (scoreError) {
-        console.error('Error fetching scores:', scoreError);
-        continue;
+      while (hasMoreScores) {
+        const result = await fetchWithRetry(() =>
+          supabase
+            .from('scores')
+            .select(`
+              student_id,
+              assessment_code,
+              score,
+              exam:exams!inner(
+                course_id,
+                course:courses!inner(
+                  id,
+                  class_id,
+                  course_type
+                )
+              )
+            `)
+            .in('student_id', batchIds)
+            .range(scoreOffset, scoreOffset + SCORE_PAGE_SIZE - 1)
+        );
+
+        if (result.error) {
+          console.error('Error fetching scores:', result.error);
+          break;
+        }
+
+        const pageScores = result.data || [];
+
+        // Transform nested structure and filter by class IDs
+        const batchScores = pageScores
+          .filter(s => {
+            const examData = s.exam as unknown as { course_id: string; course: { id: string; class_id: string; course_type: string } } | null;
+            if (!examData?.course_id || !examData?.course) return false;
+            // Filter by class (using course.class_id)
+            if (!classIdSet.has(examData.course.class_id)) return false;
+            // Filter by course type if specified
+            if (filters?.course_type && examData.course.course_type !== filters.course_type) return false;
+            return true;
+          })
+          .map(s => {
+            const examData = s.exam as unknown as { course_id: string; course: { id: string; class_id: string; course_type: string } };
+            return {
+              student_id: s.student_id,
+              course_id: examData.course.id,
+              course_type: examData.course.course_type,
+              assessment_code: s.assessment_code,
+              score: s.score,
+            };
+          });
+
+        allScores.push(...batchScores);
+
+        scoreOffset += SCORE_PAGE_SIZE;
+        hasMoreScores = pageScores.length === SCORE_PAGE_SIZE;
       }
-
-      // Transform nested structure and filter by class IDs
-      const batchScores = (rawScores || [])
-        .filter(s => {
-          const examData = s.exam as unknown as { course_id: string; course: { id: string; class_id: string; course_type: string } } | null;
-          if (!examData?.course_id || !examData?.course) return false;
-          // Filter by class (using course.class_id)
-          if (!classIdSet.has(examData.course.class_id)) return false;
-          // Filter by course type if specified
-          if (filters?.course_type && examData.course.course_type !== filters.course_type) return false;
-          return true;
-        })
-        .map(s => {
-          const examData = s.exam as unknown as { course_id: string; course: { id: string; class_id: string; course_type: string } };
-          return {
-            student_id: s.student_id,
-            course_id: examData.course.id,
-            course_type: examData.course.course_type,
-            assessment_code: s.assessment_code,
-            score: s.score,
-          };
-        });
-
-      allScores.push(...batchScores);
     }
   }
 
