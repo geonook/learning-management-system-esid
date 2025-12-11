@@ -122,8 +122,10 @@ export async function getClassStatistics(
   }
 
   // 4. Fetch scores using nested join pattern (same as gradebook)
-  // Use exam.class_id and nested courses join instead of relying on exam.course_id (which may be NULL)
+  // IMPORTANT: Supabase's courses!inner joins via course_id FK, NOT class_id
+  // We get class_id from course.class_id instead
   const classIdSet = new Set(classIds);
+  const studentIdList = students?.map(s => s.id) || [];
 
   const { data: rawScores, error: scoreError } = await supabase
     .from('scores')
@@ -132,13 +134,15 @@ export async function getClassStatistics(
       assessment_code,
       score,
       exam:exams!inner(
-        class_id,
+        course_id,
         course:courses!inner(
           id,
+          class_id,
           course_type
         )
       )
     `)
+    .in('student_id', studentIdList)
     .not('score', 'is', null);
 
   if (scoreError) {
@@ -148,15 +152,15 @@ export async function getClassStatistics(
   // Transform nested structure and filter by class IDs and course type
   const scores = (rawScores || [])
     .filter(s => {
-      const examData = s.exam as unknown as { class_id: string; course: { id: string; course_type: string } } | null;
-      if (!examData?.class_id || !examData?.course) return false;
-      // Filter by class and optionally by course type
-      if (!classIdSet.has(examData.class_id)) return false;
+      const examData = s.exam as unknown as { course_id: string; course: { id: string; class_id: string; course_type: string } } | null;
+      if (!examData?.course_id || !examData?.course) return false;
+      // Filter by class (using course.class_id) and optionally by course type
+      if (!classIdSet.has(examData.course.class_id)) return false;
       if (filters?.course_type && examData.course.course_type !== filters.course_type) return false;
       return true;
     })
     .map(s => {
-      const examData = s.exam as unknown as { class_id: string; course: { id: string; course_type: string } };
+      const examData = s.exam as unknown as { course_id: string; course: { id: string; class_id: string; course_type: string } };
       return {
         student_id: s.student_id,
         course_id: examData.course.id,
@@ -488,13 +492,13 @@ export async function getStudentGrades(
   }
 
   // 3. Fetch all scores using nested join pattern (same as gradebook)
-  // Use exam.class_id and nested courses join instead of relying on exam.course_id (which may be NULL)
-  const studentIdSet = new Set(studentIds);
+  // IMPORTANT: Supabase's courses!inner joins via course_id FK, NOT class_id
+  // We get class_id from course.class_id instead
   const classIdSet = new Set(classIds);
 
   let allScores: { student_id: string; course_id: string; course_type: string; assessment_code: string; score: number | null }[] = [];
 
-  if (classIds.length > 0) {
+  if (studentIds.length > 0) {
     // Fetch scores via exam -> courses nested join
     const { data: rawScores, error: scoreError } = await supabase
       .from('scores')
@@ -503,30 +507,32 @@ export async function getStudentGrades(
         assessment_code,
         score,
         exam:exams!inner(
-          class_id,
+          course_id,
           course:courses!inner(
             id,
+            class_id,
             course_type
           )
         )
-      `);
+      `)
+      .in('student_id', studentIds);
 
     if (scoreError) {
       console.error('Error fetching scores:', scoreError);
     } else {
-      // Transform nested structure and filter by student IDs and class IDs
+      // Transform nested structure and filter by class IDs
       allScores = (rawScores || [])
         .filter(s => {
-          const examData = s.exam as unknown as { class_id: string; course: { id: string; course_type: string } } | null;
-          if (!examData?.class_id || !examData?.course) return false;
-          if (!studentIdSet.has(s.student_id)) return false;
-          if (!classIdSet.has(examData.class_id)) return false;
+          const examData = s.exam as unknown as { course_id: string; course: { id: string; class_id: string; course_type: string } } | null;
+          if (!examData?.course_id || !examData?.course) return false;
+          // Filter by class (using course.class_id)
+          if (!classIdSet.has(examData.course.class_id)) return false;
           // Filter by course type if specified
           if (filters?.course_type && examData.course.course_type !== filters.course_type) return false;
           return true;
         })
         .map(s => {
-          const examData = s.exam as unknown as { class_id: string; course: { id: string; course_type: string } };
+          const examData = s.exam as unknown as { course_id: string; course: { id: string; class_id: string; course_type: string } };
           return {
             student_id: s.student_id,
             course_id: examData.course.id,
