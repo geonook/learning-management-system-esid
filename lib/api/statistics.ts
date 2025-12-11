@@ -235,9 +235,12 @@ export async function getClassStatistics(
   }
 
   // Transform nested structure and filter by class IDs and course type
+  // Handle case where exam might be an array (Supabase nested join behavior)
   const scores = (rawScores || [])
     .filter(s => {
-      const examData = s.exam as unknown as { course_id: string; course: { id: string; class_id: string; course_type: string } } | null;
+      const examRaw = s.exam;
+      const examData = (Array.isArray(examRaw) ? examRaw[0] : examRaw) as
+        { course_id: string; course: { id: string; class_id: string; course_type: string } } | null;
       if (!examData?.course_id || !examData?.course) return false;
       // Filter by class (using course.class_id) and optionally by course type
       if (!classIdSet.has(examData.course.class_id)) return false;
@@ -245,7 +248,9 @@ export async function getClassStatistics(
       return true;
     })
     .map(s => {
-      const examData = s.exam as unknown as { course_id: string; course: { id: string; class_id: string; course_type: string } };
+      const examRaw = s.exam;
+      const examData = (Array.isArray(examRaw) ? examRaw[0] : examRaw) as
+        { course_id: string; course: { id: string; class_id: string; course_type: string } };
       return {
         student_id: s.student_id,
         course_id: examData.course.id,
