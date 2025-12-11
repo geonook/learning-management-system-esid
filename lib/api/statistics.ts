@@ -329,15 +329,26 @@ export async function getClassStatistics(
 
 /**
  * Get statistics aggregated by grade level
+ * Fetches data grade-by-grade to avoid querying too many students at once
  */
 export async function getGradeLevelStatistics(
   courseType: CourseType
 ): Promise<GradeLevelStatistics[]> {
-  // Get class statistics first
-  const classStats = await getClassStatistics({ course_type: courseType });
+  // Fetch grade-by-grade to avoid querying all 84 classes at once
+  // which can cause issues with large student counts (~1680 students)
+  const grades = [1, 2, 3, 4, 5, 6];
+  const allClassStats: ClassStatistics[] = [];
+
+  for (const grade of grades) {
+    const gradeStats = await getClassStatistics({
+      grade,
+      course_type: courseType
+    });
+    allClassStats.push(...gradeStats);
+  }
 
   // Group by grade level
-  const byGradeLevel = groupBy(classStats, 'grade_level');
+  const byGradeLevel = groupBy(allClassStats, 'grade_level');
 
   const results: GradeLevelStatistics[] = [];
 
