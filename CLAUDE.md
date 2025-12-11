@@ -109,6 +109,61 @@ This file provides essential guidance to Claude Code (claude.ai/code) when worki
   - 資料庫欄位類型：TEXT（非 ENUM），帶格式驗證
 - **班級命名**：G[1-6] [StandardName] 格式（例如：G4 Seekers, G6 Navigators）
 
+### 🔍 Supabase Nested Join 查詢模式（重要）
+
+**核心規則**：Supabase 的 `table!inner` 語法是透過 **外鍵（FK）** 連接，不是透過查詢中選取的欄位。
+
+**資料庫關聯**：
+```
+scores → exam_id (FK) → exams → course_id (FK) → courses → class_id (FK) → classes
+```
+
+**正確模式**（參考 `lib/actions/gradebook.ts`）：
+```typescript
+const { data } = await supabase
+  .from('scores')
+  .select(`
+    student_id,
+    assessment_code,
+    score,
+    exam:exams!inner(
+      course_id,                    // ← 取得 FK 欄位
+      course:courses!inner(
+        id,
+        class_id,                   // ← 從 course 取得 class_id
+        course_type
+      )
+    )
+  `)
+  .in('student_id', studentIds)   // ← 限制查詢範圍
+  .not('score', 'is', null);
+
+// 過濾時使用 course.class_id，不是 exam.class_id
+const filtered = data.filter(s => {
+  const examData = s.exam as { course_id: string; course: { class_id: string; ... } };
+  return classIdSet.has(examData.course.class_id);  // ✅ 正確
+});
+```
+
+**錯誤模式**（會導致所有資料被過濾掉）：
+```typescript
+exam:exams!inner(
+  class_id,                       // ← 這個欄位與 courses!inner 無關
+  course:courses!inner(...)       // ← join 是用 course_id FK
+)
+// 然後過濾 exam.class_id → 永遠不匹配！
+```
+
+**為什麼這很重要**：
+- `exams` 表同時有 `class_id` 和 `course_id` 欄位
+- Supabase 的 `courses!inner` 只看 FK 關係（`course_id`）
+- 選取 `exam.class_id` 不會影響 join 行為
+- 如果需要 class_id，應該從 `course.class_id` 取得
+
+**效能最佳實踐**：
+- 永遠加上 `.in('student_id', studentIds)` 限制查詢範圍
+- 避免全表掃描導致超時
+
 ### 安全與權限（RLS 核心）
 
 - **角色定義**：admin、head（HT）、teacher（LT/IT/KCFS）、office_member
@@ -1688,6 +1743,36 @@ UI Component → API Layer → Analytics Engine → Supabase (with RLS)
 
 - Migration 檔案: `db/migrations/019e_remove_heads_view_jurisdiction.sql`
 - 測試報告: `docs/sso/SSO_INTEGRATION_TESTING_GUIDE.md`
+
+---
+
+### 📊 Statistics 頁面成績不顯示 (2025-12-11) ✅ **已解決**
+
+**問題描述**：
+
+- `/browse/stats/students`、`/browse/stats/classes`、`/browse/stats/grades` 頁面顯示 1514 學生但成績全為 "-"
+- Gradebook 頁面正常顯示成績
+
+**根本原因**：Supabase nested join 語法理解錯誤
+
+- 錯誤使用 `exam.class_id` 配合 `course:courses!inner`
+- Supabase 的 `courses!inner` 透過 `course_id` FK 連接，不是 `class_id`
+- 過濾邏輯應使用 `examData.course.class_id` 而非 `examData.class_id`
+
+**解決方案**（commit `e9a8954`）：
+
+1. 改用正確的 FK 欄位：`exam.course_id`
+2. 從 course 物件取得 class_id：`course.class_id`
+3. 新增 `.in('student_id', studentIds)` 限制查詢範圍
+
+**修改檔案**：`lib/api/statistics.ts`
+
+- `getClassStatistics`
+- `getStudentGrades`
+
+**驗證**：TypeScript 編譯通過，成績正確顯示
+
+**相關文件**：詳見 CLAUDE.md 中的「Supabase Nested Join 查詢模式」章節
 
 ---
 
