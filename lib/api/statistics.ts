@@ -127,23 +127,37 @@ export async function getClassStatistics(
   const classIdSet = new Set(classIds);
   const studentIdList = students?.map(s => s.id) || [];
 
-  const { data: rawScores, error: scoreError } = await supabase
-    .from('scores')
-    .select(`
-      student_id,
-      assessment_code,
-      score,
-      exam:exams!inner(
-        course_id,
-        course:courses!inner(
-          id,
-          class_id,
-          course_type
+  // Skip query if no students (empty array causes Bad Request with !inner joins)
+  let rawScores: Array<{
+    student_id: string;
+    assessment_code: string;
+    score: number | null;
+    exam: unknown;
+  }> | null = null;
+  let scoreError: { message: string } | null = null;
+
+  if (studentIdList.length > 0) {
+    const result = await supabase
+      .from('scores')
+      .select(`
+        student_id,
+        assessment_code,
+        score,
+        exam:exams!inner(
+          course_id,
+          course:courses!inner(
+            id,
+            class_id,
+            course_type
+          )
         )
-      )
-    `)
-    .in('student_id', studentIdList)
-    .not('score', 'is', null);
+      `)
+      .in('student_id', studentIdList)
+      .not('score', 'is', null);
+
+    rawScores = result.data;
+    scoreError = result.error;
+  }
 
   if (scoreError) {
     console.error('Error fetching scores:', scoreError);
