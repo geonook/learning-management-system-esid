@@ -340,6 +340,7 @@ export type TeacherWithCourses = User & {
 export async function getTeachersWithCourses(options?: {
   teacherType?: TeacherType
   search?: string
+  academicYear?: string
 }): Promise<TeacherWithCourses[]> {
   // Build query for teachers (role = 'teacher' or 'head')
   let query = supabase
@@ -372,7 +373,7 @@ export async function getTeachersWithCourses(options?: {
 
   // Get course assignments for all teachers
   const teacherIds = teachers.map(t => t.id)
-  const { data: courses, error: courseError } = await supabase
+  let coursesQuery = supabase
     .from('courses')
     .select(`
       teacher_id,
@@ -382,6 +383,13 @@ export async function getTeachersWithCourses(options?: {
     `)
     .in('teacher_id', teacherIds)
     .eq('is_active', true)
+
+  // Apply academic year filter if provided
+  if (options?.academicYear) {
+    coursesQuery = coursesQuery.eq('academic_year', options.academicYear)
+  }
+
+  const { data: courses, error: courseError } = await coursesQuery
 
   if (courseError) {
     console.error('Error fetching courses:', courseError)
