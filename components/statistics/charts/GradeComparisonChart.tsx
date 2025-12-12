@@ -10,8 +10,31 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  TooltipProps,
 } from "recharts";
 import { ChartWrapper } from "./ChartWrapper";
+
+// Custom tooltip that adapts to light/dark mode
+function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
+  if (!active || !payload || payload.length === 0) return null;
+
+  return (
+    <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 shadow-lg">
+      <p className="text-gray-900 dark:text-slate-200 font-medium text-sm mb-1">{label}</p>
+      {payload.map((entry, index) => {
+        const name = entry.dataKey as string;
+        const displayName = name === "average" ? "Grade Avg" : name === "passRate" ? "Pass Rate" : "Students";
+        const value = entry.value as number;
+        const suffix = name === "passRate" ? "%" : "";
+        return (
+          <p key={index} className="text-sm" style={{ color: entry.color }}>
+            {displayName}: {value?.toFixed(1)}{suffix}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
 
 interface GradeLevelStatistics {
   grade_level: string;
@@ -35,12 +58,13 @@ export function GradeComparisonChart({
   title = "Grade Level Comparison",
   barColor = "#8b5cf6",
 }: GradeComparisonChartProps) {
+  // API returns pass_rate as 0-100, use directly
   const chartData = data
     .filter((d) => d.term_grade_avg !== null)
     .map((d) => ({
       name: d.grade_level,
       average: d.term_grade_avg,
-      passRate: d.pass_rate !== null ? d.pass_rate * 100 : 0,
+      passRate: d.pass_rate ?? 0,
       students: d.student_count,
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -94,20 +118,7 @@ export function GradeComparisonChart({
               fontSize: 12,
             }}
           />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "rgba(15, 23, 42, 0.9)",
-              border: "1px solid rgba(148, 163, 184, 0.2)",
-              borderRadius: "8px",
-              color: "#f1f5f9",
-            }}
-            formatter={(value: number, name: string) => {
-              if (name === "average") return [`${value.toFixed(1)}`, "Average"];
-              if (name === "passRate")
-                return [`${value.toFixed(1)}%`, "Pass Rate"];
-              return [`${value}`, "Students"];
-            }}
-          />
+          <Tooltip content={<CustomTooltip />} />
           <Legend
             wrapperStyle={{ paddingTop: 10 }}
             formatter={(value) => (

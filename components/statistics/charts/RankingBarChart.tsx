@@ -28,9 +28,9 @@ function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
   if (!data) return null;
 
   return (
-    <div className="bg-slate-900/90 border border-slate-700 rounded-lg px-3 py-2">
-      <p className="text-slate-200 font-medium">{data.fullName}</p>
-      <p className="text-slate-400 text-sm">
+    <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 shadow-lg">
+      <p className="text-gray-900 dark:text-slate-200 font-medium">{data.fullName}</p>
+      <p className="text-gray-600 dark:text-slate-400 text-sm">
         {data.average?.toFixed(1)} (Rank #{data.rank})
       </p>
     </div>

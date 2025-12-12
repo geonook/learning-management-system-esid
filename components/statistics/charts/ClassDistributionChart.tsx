@@ -8,8 +8,25 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  TooltipProps,
 } from "recharts";
 import { ChartWrapper } from "./ChartWrapper";
+
+// Custom tooltip that adapts to light/dark mode
+function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
+  if (!active || !payload || payload.length === 0) return null;
+
+  const value = payload[0]?.value as number;
+
+  return (
+    <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 shadow-lg">
+      <p className="text-gray-900 dark:text-slate-200 font-medium text-sm">{label}</p>
+      <p className="text-gray-600 dark:text-slate-400 text-sm">
+        {value} classes
+      </p>
+    </div>
+  );
+}
 
 interface ClassStatistics {
   class_name: string;
@@ -89,15 +106,7 @@ export function ClassDistributionChart({
             axisLine={{ stroke: "rgba(148, 163, 184, 0.3)" }}
             allowDecimals={false}
           />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "rgba(15, 23, 42, 0.9)",
-              border: "1px solid rgba(148, 163, 184, 0.2)",
-              borderRadius: "8px",
-              color: "#f1f5f9",
-            }}
-            formatter={(value: number) => [`${value} classes`, "Count"]}
-          />
+          <Tooltip content={<CustomTooltip />} />
           <Area
             type="monotone"
             dataKey="count"

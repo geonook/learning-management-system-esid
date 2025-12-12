@@ -9,8 +9,38 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  TooltipProps,
 } from "recharts";
 import { ChartWrapper } from "./ChartWrapper";
+
+// Custom tooltip that adapts to light/dark mode
+interface ChartDataEntry {
+  name: string;
+  average: number | null;
+  passRate: number | null;
+  excellentRate: number | null;
+}
+
+function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
+  if (!active || !payload || payload.length === 0) return null;
+
+  return (
+    <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 shadow-lg">
+      <p className="text-gray-900 dark:text-slate-200 font-medium text-sm mb-1">{label}</p>
+      {payload.map((entry, index) => {
+        const name = entry.dataKey as string;
+        const label = name === "average" ? "Average" : name === "passRate" ? "Pass Rate" : "Excellent Rate";
+        const value = entry.value as number;
+        const suffix = name !== "average" ? "%" : "";
+        return (
+          <p key={index} className="text-gray-600 dark:text-slate-400 text-sm" style={{ color: entry.color }}>
+            {label}: {value?.toFixed(1)}{suffix}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
 
 interface TrendLineChartProps {
   data: Array<{
@@ -69,26 +99,7 @@ export function TrendLineChart({
             tick={{ fill: "#94a3b8", fontSize: 12 }}
             axisLine={{ stroke: "rgba(148, 163, 184, 0.3)" }}
           />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "rgba(15, 23, 42, 0.9)",
-              border: "1px solid rgba(148, 163, 184, 0.2)",
-              borderRadius: "8px",
-              color: "#f1f5f9",
-            }}
-            formatter={(value: number, name: string) => {
-              const label =
-                name === "average"
-                  ? "Average"
-                  : name === "passRate"
-                  ? "Pass Rate"
-                  : "Excellent Rate";
-              return [
-                `${value.toFixed(1)}${name !== "average" ? "%" : ""}`,
-                label,
-              ];
-            }}
-          />
+          <Tooltip content={<CustomTooltip />} />
           <Legend
             wrapperStyle={{ paddingTop: 10 }}
             formatter={(value) => (

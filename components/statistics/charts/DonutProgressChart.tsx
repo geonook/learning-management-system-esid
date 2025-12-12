@@ -6,8 +6,32 @@ import {
   Cell,
   ResponsiveContainer,
   Tooltip,
+  TooltipProps,
 } from "recharts";
 import { ChartWrapper } from "./ChartWrapper";
+
+// Custom tooltip that adapts to light/dark mode
+interface ChartDataEntry {
+  name: string;
+  value: number;
+  color: string;
+}
+
+function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
+  if (!active || !payload || payload.length === 0) return null;
+
+  const data = payload[0]?.payload as ChartDataEntry | undefined;
+  if (!data) return null;
+
+  return (
+    <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 shadow-lg">
+      <p className="text-gray-900 dark:text-slate-200 font-medium text-sm">{data.name}</p>
+      <p className="text-gray-600 dark:text-slate-400 text-sm">
+        {data.value.toFixed(1)}%
+      </p>
+    </div>
+  );
+}
 
 interface DonutProgressChartProps {
   passRate: number | null;
@@ -65,15 +89,7 @@ export function DonutProgressChart({
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
             </Pie>
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "rgba(15, 23, 42, 0.9)",
-                border: "1px solid rgba(148, 163, 184, 0.2)",
-                borderRadius: "8px",
-                color: "#f1f5f9",
-              }}
-              formatter={(value: number) => [`${value.toFixed(1)}%`, ""]}
-            />
+            <Tooltip content={<CustomTooltip />} />
           </PieChart>
         </ResponsiveContainer>
         {/* Center label */}

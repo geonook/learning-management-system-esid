@@ -9,8 +9,30 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  TooltipProps,
 } from "recharts";
 import { ChartWrapper } from "./ChartWrapper";
+
+// Custom tooltip that adapts to light/dark mode
+function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
+  if (!active || !payload || payload.length === 0) return null;
+
+  return (
+    <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 shadow-lg">
+      <p className="text-gray-900 dark:text-slate-200 font-medium text-sm mb-1">{label}</p>
+      {payload.map((entry, index) => {
+        const name = entry.dataKey as string;
+        const displayName = name === "excellent" ? "Excellent (>=90)" : name === "good" ? "Good (60-89)" : "Fail (<60)";
+        const value = entry.value as number;
+        return (
+          <p key={index} className="text-sm" style={{ color: entry.color }}>
+            {displayName}: {value} students
+          </p>
+        );
+      })}
+    </div>
+  );
+}
 
 interface GradeLevelData {
   grade_level: string;
@@ -76,22 +98,7 @@ export function StackedGradeChart({
             tick={{ fill: "#94a3b8", fontSize: 12 }}
             axisLine={{ stroke: "rgba(148, 163, 184, 0.3)" }}
           />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "rgba(15, 23, 42, 0.9)",
-              border: "1px solid rgba(148, 163, 184, 0.2)",
-              borderRadius: "8px",
-              color: "#f1f5f9",
-            }}
-            formatter={(value: number, name: string) => [
-              `${value} students`,
-              name === "excellent"
-                ? "Excellent (>=90)"
-                : name === "good"
-                ? "Good (60-89)"
-                : "Fail (<60)",
-            ]}
-          />
+          <Tooltip content={<CustomTooltip />} />
           <Legend
             wrapperStyle={{ paddingTop: 10 }}
             formatter={(value) => (
