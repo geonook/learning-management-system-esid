@@ -9,6 +9,7 @@ interface ClassInfo {
   id: string;
   name: string;
   grade: number;
+  academic_year: string | null;
 }
 
 interface GradebookHeaderProps {
@@ -32,7 +33,7 @@ export function GradebookHeader({ classId, courseType }: GradebookHeaderProps) {
       // Fetch class info
       const { data: classData } = await supabase
         .from("classes")
-        .select("id, name, grade")
+        .select("id, name, grade, academic_year")
         .eq("id", classId)
         .single();
       if (classData) setClassInfo(classData);
@@ -86,7 +87,7 @@ export function GradebookHeader({ classId, courseType }: GradebookHeaderProps) {
 
   // Build simplified subtitle (course type and teacher shown in toolbar instead)
   const subtitle = classInfo
-    ? `Grade ${classInfo.grade} • 2025-2026`
+    ? `Grade ${classInfo.grade}${classInfo.academic_year ? ` • ${classInfo.academic_year}` : ""}`
     : undefined;
 
   return (
