@@ -12,7 +12,7 @@ import {
   Globe,
   Star,
   GraduationCap,
-  UserCheck,
+  Layers,
 } from "lucide-react";
 import { StatNavCard, QuickStatCard } from "@/components/statistics/StatNavCard";
 import { getQuickStats, type QuickStats } from "@/lib/api/statistics";
@@ -143,11 +143,11 @@ export default function BrowseStatsPage() {
                 subtitle="LT/IT/KCFS"
               />
               <QuickStatCard
-                label="Teachers Assigned"
-                value={`${stats?.assignedCourses ?? 0}/${stats?.totalCourses ?? 0}`}
-                icon={UserCheck}
+                label="Grade Levels"
+                value="G1-G6"
+                icon={Layers}
                 color="text-amber-500"
-                subtitle="course coverage"
+                subtitle="6 levels"
               />
             </>
           )}
