@@ -803,9 +803,22 @@ export interface QuickStats {
 /**
  * Get quick overview statistics for the stats home page
  * Returns counts that are always available (no grades dependency)
+ * @param filters - Optional filters including academic_year
  */
-export async function getQuickStats(): Promise<QuickStats> {
+export async function getQuickStats(filters?: { academic_year?: string }): Promise<QuickStats> {
   const supabase = createClient();
+
+  // Build class query with academic_year filter
+  let classQuery = supabase.from('classes').select('*', { count: 'exact', head: true });
+  let courseQuery = supabase.from('courses').select('*', { count: 'exact', head: true });
+  let assignedCourseQuery = supabase.from('courses').select('*', { count: 'exact', head: true })
+    .not('teacher_id', 'is', null);
+
+  if (filters?.academic_year) {
+    classQuery = classQuery.eq('academic_year', filters.academic_year);
+    courseQuery = courseQuery.eq('academic_year', filters.academic_year);
+    assignedCourseQuery = assignedCourseQuery.eq('academic_year', filters.academic_year);
+  }
 
   // Fetch all counts in parallel for better performance
   const [
@@ -815,10 +828,9 @@ export async function getQuickStats(): Promise<QuickStats> {
     { count: assignedCourses }
   ] = await Promise.all([
     supabase.from('students').select('*', { count: 'exact', head: true }),
-    supabase.from('classes').select('*', { count: 'exact', head: true }),
-    supabase.from('courses').select('*', { count: 'exact', head: true }),
-    supabase.from('courses').select('*', { count: 'exact', head: true })
-      .not('teacher_id', 'is', null)
+    classQuery,
+    courseQuery,
+    assignedCourseQuery,
   ]);
 
   return {

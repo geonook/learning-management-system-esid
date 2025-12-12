@@ -17,6 +17,7 @@ import {
 import { StatNavCard, QuickStatCard } from "@/components/statistics/StatNavCard";
 import { getQuickStats, type QuickStats } from "@/lib/api/statistics";
 import { Skeleton } from "@/components/ui/skeleton";
+import { GlobalFilterBar, useGlobalFilters } from "@/components/filters";
 
 // Navigation card definitions
 const statNavCards = [
@@ -74,11 +75,13 @@ const statNavCards = [
 export default function BrowseStatsPage() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<QuickStats | null>(null);
+  const { academicYear } = useGlobalFilters();
 
   useEffect(() => {
     async function fetchStats() {
+      setLoading(true);
       try {
-        const data = await getQuickStats();
+        const data = await getQuickStats({ academic_year: academicYear });
         setStats(data);
       } catch (error) {
         console.error("Failed to fetch quick stats:", error);
@@ -88,7 +91,7 @@ export default function BrowseStatsPage() {
     }
 
     fetchStats();
-  }, []);
+  }, [academicYear]);
 
   return (
     <AuthGuard requiredRoles={["admin", "head", "office_member"]}>
@@ -107,6 +110,9 @@ export default function BrowseStatsPage() {
             Comprehensive grade analysis and performance tracking
           </p>
         </div>
+
+        {/* Global Filters */}
+        <GlobalFilterBar showYear showTerm={false} />
 
         {/* Quick Stats Summary */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

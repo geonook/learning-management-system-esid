@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { StatisticsActionButtons } from "@/components/statistics/ActionButtons";
 import type { ColumnDefinition } from "@/lib/utils/clipboard";
+import { GlobalFilterBar, useGlobalFilters } from "@/components/filters";
 
 export default function AllStudentGradesPage() {
   const [loading, setLoading] = useState(true);
@@ -20,6 +21,7 @@ export default function AllStudentGradesPage() {
   const [selectedGrade, setSelectedGrade] = useState<number>(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const { academicYear, termForApi } = useGlobalFilters();
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -41,6 +43,8 @@ export default function AllStudentGradesPage() {
         const data = await getStudentGrades({
           course_type: selectedCourseType,
           grade: selectedGrade,
+          academic_year: academicYear,
+          term: termForApi,
         });
         setGrades(data);
       } catch (error) {
@@ -51,7 +55,7 @@ export default function AllStudentGradesPage() {
     }
 
     fetchData();
-  }, [selectedCourseType, selectedGrade]);
+  }, [selectedCourseType, selectedGrade, academicYear, termForApi]);
 
   // Filter by search
   useEffect(() => {
@@ -127,6 +131,9 @@ export default function AllStudentGradesPage() {
             }}
           />
         </div>
+
+        {/* Global Filters (Year + Term) */}
+        <GlobalFilterBar showYear showTerm />
 
         {/* Search */}
         <div className="relative max-w-md">

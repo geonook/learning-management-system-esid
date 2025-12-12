@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { StatisticsActionButtons } from "@/components/statistics/ActionButtons";
 import { ClassDistributionChart, RankingBarChart } from "@/components/statistics/charts";
 import type { ColumnDefinition } from "@/lib/utils/clipboard";
+import { GlobalFilterBar, useGlobalFilters } from "@/components/filters";
 
 export default function ClassStatisticsPage() {
   const [loading, setLoading] = useState(true);
@@ -21,6 +22,7 @@ export default function ClassStatisticsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedGrade, setSelectedGrade] = useState<number>(1);
   const [selectedCourseType, setSelectedCourseType] = useState<CourseType>("LT");
+  const { academicYear, termForApi } = useGlobalFilters();
 
   // Debounce search
   useEffect(() => {
@@ -38,6 +40,8 @@ export default function ClassStatisticsPage() {
         const data = await getClassStatistics({
           grade: selectedGrade,
           course_type: selectedCourseType,
+          academic_year: academicYear,
+          term: termForApi,
         });
         setStatistics(data);
       } catch (error) {
@@ -48,7 +52,7 @@ export default function ClassStatisticsPage() {
     }
 
     fetchData();
-  }, [selectedGrade, selectedCourseType]);
+  }, [selectedGrade, selectedCourseType, academicYear, termForApi]);
 
   // Filter by search (client-side only for search)
   useEffect(() => {
@@ -121,6 +125,9 @@ export default function ClassStatisticsPage() {
             }}
           />
         </div>
+
+        {/* Global Filters (Year + Term) */}
+        <GlobalFilterBar showYear showTerm />
 
         {/* Search */}
         <div className="relative max-w-md">

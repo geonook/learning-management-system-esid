@@ -11,15 +11,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatisticsActionButtons } from "@/components/statistics/ActionButtons";
 import { TrendLineChart, DonutProgressChart, StackedGradeChart } from "@/components/statistics/charts";
 import type { ColumnDefinition } from "@/lib/utils/clipboard";
+import { GlobalFilterBar, useGlobalFilters } from "@/components/filters";
 
 export default function KCFSAnalysisPage() {
   const [loading, setLoading] = useState(true);
   const [statistics, setStatistics] = useState<GradeLevelSummary[]>([]);
+  const { academicYear, termForApi } = useGlobalFilters();
 
   useEffect(() => {
     async function fetchData() {
+      setLoading(true);
       try {
-        const data = await getGradeLevelSummary("KCFS");
+        const data = await getGradeLevelSummary("KCFS", {
+          academic_year: academicYear,
+          term: termForApi,
+        });
         setStatistics(data);
       } catch (error) {
         console.error("Failed to fetch KCFS statistics:", error);
@@ -29,7 +35,7 @@ export default function KCFSAnalysisPage() {
     }
 
     fetchData();
-  }, []);
+  }, [academicYear, termForApi]);
 
   // Calculate totals
   const totals = statistics.reduce(
@@ -97,6 +103,9 @@ export default function KCFSAnalysisPage() {
             exportOptions={{ filename: "kcfs-analysis", sheetName: "KCFS Statistics" }}
           />
         </div>
+
+        {/* Global Filters (Year + Term) */}
+        <GlobalFilterBar showYear showTerm />
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

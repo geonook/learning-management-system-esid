@@ -11,17 +11,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatisticsActionButtons } from "@/components/statistics/ActionButtons";
 import { GradeComparisonChart } from "@/components/statistics/charts";
 import type { ColumnDefinition } from "@/lib/utils/clipboard";
+import { GlobalFilterBar, useGlobalFilters } from "@/components/filters";
 
 export default function GradeLevelComparisonPage() {
   const [loading, setLoading] = useState(true);
   const [statistics, setStatistics] = useState<GradeLevelStatistics[]>([]);
   const [selectedCourseType, setSelectedCourseType] = useState<CourseType>("LT");
+  const { academicYear, termForApi } = useGlobalFilters();
 
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
       try {
-        const data = await getGradeLevelStatistics(selectedCourseType);
+        const data = await getGradeLevelStatistics(selectedCourseType, {
+          academic_year: academicYear,
+          term: termForApi,
+        });
         setStatistics(data);
       } catch (error) {
         console.error("Failed to fetch grade level statistics:", error);
@@ -31,7 +36,7 @@ export default function GradeLevelComparisonPage() {
     }
 
     fetchData();
-  }, [selectedCourseType]);
+  }, [selectedCourseType, academicYear, termForApi]);
 
   const courseTypes: CourseType[] = ["LT", "IT", "KCFS"];
 
@@ -94,6 +99,9 @@ export default function GradeLevelComparisonPage() {
             }}
           />
         </div>
+
+        {/* Global Filters (Year + Term) */}
+        <GlobalFilterBar showYear showTerm />
 
         {/* Course Type Tabs */}
         <div className="flex gap-2">

@@ -11,15 +11,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatisticsActionButtons } from "@/components/statistics/ActionButtons";
 import { TrendLineChart, DonutProgressChart, StackedGradeChart } from "@/components/statistics/charts";
 import type { ColumnDefinition } from "@/lib/utils/clipboard";
+import { GlobalFilterBar, useGlobalFilters } from "@/components/filters";
 
 export default function ITAnalysisPage() {
   const [loading, setLoading] = useState(true);
   const [statistics, setStatistics] = useState<GradeLevelSummary[]>([]);
+  const { academicYear, termForApi } = useGlobalFilters();
 
   useEffect(() => {
     async function fetchData() {
+      setLoading(true);
       try {
-        const data = await getGradeLevelSummary("IT");
+        const data = await getGradeLevelSummary("IT", {
+          academic_year: academicYear,
+          term: termForApi,
+        });
         setStatistics(data);
       } catch (error) {
         console.error("Failed to fetch IT statistics:", error);
@@ -29,7 +35,7 @@ export default function ITAnalysisPage() {
     }
 
     fetchData();
-  }, []);
+  }, [academicYear, termForApi]);
 
   // Calculate totals
   const totals = statistics.reduce(

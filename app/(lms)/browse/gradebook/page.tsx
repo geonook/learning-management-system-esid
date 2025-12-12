@@ -19,10 +19,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { getClassesProgress } from "@/lib/api/browse-gradebook";
 import type { ClassProgress, BrowseGradebookStats, ProgressStatus } from "@/types/browse-gradebook";
+import { GlobalFilterBar, useGlobalFilters } from "@/components/filters";
 
 export default function BrowseGradebookPage() {
   const { user } = useAuth();
   const userId = user?.id;
+  const { academicYear, termForApi } = useGlobalFilters();
   const [loading, setLoading] = useState(true);
   const [classes, setClasses] = useState<ClassProgress[]>([]);
   const [stats, setStats] = useState<BrowseGradebookStats>({
@@ -57,6 +59,8 @@ export default function BrowseGradebookPage() {
           grade: gradeFilter || undefined,
           status: statusFilter || undefined,
           search: debouncedSearch || undefined,
+          academic_year: academicYear,
+          term: termForApi,
         });
 
         if (!isCancelled) {
@@ -76,7 +80,7 @@ export default function BrowseGradebookPage() {
     return () => {
       isCancelled = true;
     };
-  }, [userId, gradeFilter, statusFilter, debouncedSearch]);
+  }, [userId, gradeFilter, statusFilter, debouncedSearch, academicYear, termForApi]);
 
   // Progress bar component
   const ProgressBar = ({
@@ -165,6 +169,9 @@ export default function BrowseGradebookPage() {
             <span>Export</span>
           </button>
         </div>
+
+        {/* Global Filters (Year + Term) */}
+        <GlobalFilterBar showYear showTerm />
 
         {/* Stats */}
         <div className="grid grid-cols-4 gap-4">
