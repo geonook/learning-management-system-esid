@@ -106,7 +106,7 @@ export async function getClassStatistics(
   // 1. Fetch all classes
   let classQuery = supabase
     .from('classes')
-    .select('id, name, grade, level')
+    .select('id, name, grade, level, academic_year')
     .order('grade')
     .order('level')
     .order('name');
@@ -121,6 +121,11 @@ export async function getClassStatistics(
 
   if (filters?.search) {
     classQuery = classQuery.ilike('name', `%${filters.search}%`);
+  }
+
+  // Filter by academic year
+  if (filters?.academic_year) {
+    classQuery = classQuery.eq('academic_year', filters.academic_year);
   }
 
   const { data: classes, error: classError } = await classQuery;
@@ -192,25 +197,33 @@ export async function getClassStatistics(
     }> = [];
 
     while (hasMoreScores) {
-      const result = await fetchWithRetry(() =>
-        supabase
-          .from('scores')
-          .select(`
-            student_id,
-            assessment_code,
-            score,
-            exam:exams!inner(
-              course_id,
-              course:courses!inner(
-                id,
-                class_id,
-                course_type
-              )
+      // Build the query with optional term filter
+      let scoresQuery = supabase
+        .from('scores')
+        .select(`
+          student_id,
+          assessment_code,
+          score,
+          exam:exams!inner(
+            course_id,
+            term,
+            course:courses!inner(
+              id,
+              class_id,
+              course_type
             )
-          `)
-          .in('student_id', studentIdList)
-          .not('score', 'is', null)
-          .range(scoreOffset, scoreOffset + SCORE_PAGE_SIZE - 1)
+          )
+        `)
+        .in('student_id', studentIdList)
+        .not('score', 'is', null);
+
+      // Filter by term if specified
+      if (filters?.term) {
+        scoresQuery = scoresQuery.eq('exam.term', filters.term);
+      }
+
+      const result = await fetchWithRetry(() =>
+        scoresQuery.range(scoreOffset, scoreOffset + SCORE_PAGE_SIZE - 1)
       );
 
       if (result.error) {
@@ -355,7 +368,8 @@ export async function getClassStatistics(
  * Fetches data grade-by-grade to avoid querying too many students at once
  */
 export async function getGradeLevelStatistics(
-  courseType: CourseType
+  courseType: CourseType,
+  filters?: { academic_year?: string; term?: 1 | 2 | 3 | 4 }
 ): Promise<GradeLevelStatistics[]> {
   // Fetch all grades in PARALLEL using Promise.all for 3-5x speedup
   // Instead of sequential 6 queries, we run them concurrently
@@ -363,7 +377,12 @@ export async function getGradeLevelStatistics(
 
   const gradeResults = await Promise.all(
     grades.map(grade =>
-      getClassStatistics({ grade, course_type: courseType })
+      getClassStatistics({
+        grade,
+        course_type: courseType,
+        academic_year: filters?.academic_year,
+        term: filters?.term,
+      })
     )
   );
   const allClassStats = gradeResults.flat();
@@ -421,9 +440,10 @@ export async function getGradeLevelStatistics(
  * Get grade level summary (simplified view)
  */
 export async function getGradeLevelSummary(
-  courseType: CourseType
+  courseType: CourseType,
+  filters?: { academic_year?: string; term?: 1 | 2 | 3 | 4 }
 ): Promise<GradeLevelSummary[]> {
-  const stats = await getGradeLevelStatistics(courseType);
+  const stats = await getGradeLevelStatistics(courseType, filters);
 
   return stats.map(s => ({
     grade_level: s.grade_level,
@@ -445,12 +465,14 @@ export async function getGradeLevelSummary(
 export async function getClassRanking(
   filters: RankingFilters
 ): Promise<{ rankings: ClassRanking[]; gradeAverage: GradeLevelAverage }> {
-  const { grade_level, course_type, metric = 'term_avg' } = filters;
+  const { grade_level, course_type, metric = 'term_avg', academic_year, term } = filters;
 
   // Get class statistics for this grade level and course type
   const classStats = await getClassStatistics({
     grade_level,
     course_type,
+    academic_year,
+    term,
   });
 
   if (classStats.length === 0) {
@@ -546,7 +568,8 @@ export async function getStudentGrades(
           id,
           name,
           level,
-          grade
+          grade,
+          academic_year
         )
       `)
       .order('student_id')
@@ -564,6 +587,11 @@ export async function getStudentGrades(
       studentQuery = studentQuery.or(
         `full_name.ilike.%${filters.search}%,student_id.ilike.%${filters.search}%`
       );
+    }
+
+    // Filter by academic year via class
+    if (filters?.academic_year) {
+      studentQuery = studentQuery.eq('classes.academic_year', filters.academic_year);
     }
 
     const { data: pageStudents, error: studentError } = await studentQuery;
@@ -627,24 +655,32 @@ export async function getStudentGrades(
 
     // Single pagination loop - query all studentIds at once
     while (hasMoreScores) {
-      const result = await fetchWithRetry(() =>
-        supabase
-          .from('scores')
-          .select(`
-            student_id,
-            assessment_code,
-            score,
-            exam:exams!inner(
-              course_id,
-              course:courses!inner(
-                id,
-                class_id,
-                course_type
-              )
+      // Build query with optional term filter
+      let scoresQuery = supabase
+        .from('scores')
+        .select(`
+          student_id,
+          assessment_code,
+          score,
+          exam:exams!inner(
+            course_id,
+            term,
+            course:courses!inner(
+              id,
+              class_id,
+              course_type
             )
-          `)
-          .in('student_id', studentIds)
-          .range(scoreOffset, scoreOffset + SCORE_PAGE_SIZE - 1)
+          )
+        `)
+        .in('student_id', studentIds);
+
+      // Filter by term if specified
+      if (filters?.term) {
+        scoresQuery = scoresQuery.eq('exam.term', filters.term);
+      }
+
+      const result = await fetchWithRetry(() =>
+        scoresQuery.range(scoreOffset, scoreOffset + SCORE_PAGE_SIZE - 1)
       );
 
       if (result.error) {
