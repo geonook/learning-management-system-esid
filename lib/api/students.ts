@@ -429,15 +429,63 @@ export async function getStudentStatistics() {
   return stats
 }
 
-// Promote students to next grade (for new academic year)
+/**
+ * Promote students to next grade (for new academic year)
+ *
+ * This function:
+ * 1. Gets all students in the fromGrade
+ * 2. Cleans up their student_courses records (removes course enrollments)
+ * 3. Updates their grade and clears class_id
+ *
+ * Note: For primary school (G1-G6), students graduating from G6 should not be promoted.
+ */
 export async function promoteStudents(fromGrade: number, toGrade: number) {
-  // Don't promote Grade 12 students
+  // Don't promote Grade 6 students (primary school graduation)
+  if (fromGrade === 6) {
+    throw new Error('Grade 6 students cannot be promoted (primary school graduation)')
+  }
+
+  // Don't promote Grade 12 students (legacy check for secondary school)
   if (fromGrade === 12) {
     throw new Error('Grade 12 students cannot be promoted')
   }
 
   const supabase = createClient()
-  
+
+  // Step 1: Get all student IDs that will be promoted
+  const { data: studentsToPromote, error: fetchError } = await supabase
+    .from('students')
+    .select('id')
+    .eq('grade', fromGrade)
+    .eq('is_active', true)
+
+  if (fetchError) {
+    console.error('Error fetching students to promote:', fetchError)
+    throw new Error(`Failed to fetch students: ${fetchError.message}`)
+  }
+
+  const studentIds = studentsToPromote?.map(s => s.id) || []
+
+  if (studentIds.length === 0) {
+    console.log(`No students found in grade ${fromGrade} to promote`)
+    return 0
+  }
+
+  // Step 2: Clean up student_courses records
+  // This removes the students from their current course enrollments
+  const { error: cleanupError } = await supabase
+    .from('student_courses')
+    .delete()
+    .in('student_id', studentIds)
+
+  if (cleanupError) {
+    console.error('Error cleaning up student_courses:', cleanupError)
+    // Don't throw here - continue with promotion even if cleanup fails
+    // The records will become orphaned but won't cause functional issues
+    console.warn('Warning: student_courses cleanup failed, continuing with promotion')
+  }
+
+  // Step 3: Update student grades and clear class assignments
   const { data, error } = await supabase
     .from('students')
     .update({
@@ -454,6 +502,7 @@ export async function promoteStudents(fromGrade: number, toGrade: number) {
     throw new Error(`Failed to promote students: ${error.message}`)
   }
 
+  console.log(`Successfully promoted ${data.length} students from G${fromGrade} to G${toGrade}`)
   return data.length
 }
 
