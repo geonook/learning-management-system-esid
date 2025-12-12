@@ -11,6 +11,8 @@ import {
   BookOpen,
   Globe,
   Star,
+  GraduationCap,
+  UserCheck,
 } from "lucide-react";
 import { StatNavCard, QuickStatCard } from "@/components/statistics/StatNavCard";
 import { getQuickStats, type QuickStats } from "@/lib/api/statistics";
@@ -121,31 +123,31 @@ export default function BrowseStatsPage() {
             <>
               <QuickStatCard
                 label="Total Students"
-                value={stats?.totalStudents?.toLocaleString() ?? "N/A"}
+                value={stats?.totalStudents?.toLocaleString() ?? "0"}
                 icon={Users}
                 color="text-blue-500"
                 subtitle="across all grades"
               />
               <QuickStatCard
                 label="Total Classes"
-                value={stats?.totalClasses?.toLocaleString() ?? "N/A"}
+                value={stats?.totalClasses?.toLocaleString() ?? "0"}
                 icon={School}
                 color="text-green-500"
                 subtitle="active classes"
               />
               <QuickStatCard
-                label="School Average"
-                value={stats?.schoolAverage != null ? stats.schoolAverage.toFixed(1) : "N/A"}
-                icon={TrendingUp}
+                label="Total Courses"
+                value={stats?.totalCourses?.toLocaleString() ?? "0"}
+                icon={GraduationCap}
                 color="text-purple-500"
-                subtitle="term grade"
+                subtitle="LT/IT/KCFS"
               />
               <QuickStatCard
-                label="Pass Rate"
-                value={stats?.passRate != null ? `${stats.passRate.toFixed(1)}%` : "N/A"}
-                icon={Trophy}
+                label="Teachers Assigned"
+                value={`${stats?.assignedCourses ?? 0}/${stats?.totalCourses ?? 0}`}
+                icon={UserCheck}
                 color="text-amber-500"
-                subtitle="≥60 score"
+                subtitle="course coverage"
               />
             </>
           )}

@@ -760,51 +760,36 @@ export async function getStudentGrades(
 export interface QuickStats {
   totalStudents: number;
   totalClasses: number;
-  schoolAverage: number | null;
-  passRate: number | null;
+  totalCourses: number;
+  assignedCourses: number;
 }
 
 /**
  * Get quick overview statistics for the stats home page
+ * Returns counts that are always available (no grades dependency)
  */
 export async function getQuickStats(): Promise<QuickStats> {
   const supabase = createClient();
 
-  // Get total counts
-  const { count: totalStudents } = await supabase
-    .from('students')
-    .select('*', { count: 'exact', head: true });
-
-  const { count: totalClasses } = await supabase
-    .from('classes')
-    .select('*', { count: 'exact', head: true });
-
-  // Get sample of class statistics for school-wide metrics
-  const classStats = await getClassStatistics();
-
-  const termGrades = filterValidScores(classStats.map(s => s.term_grade_avg));
-  const schoolAverage = calculateAverage(termGrades);
-
-  // Calculate overall pass rate (weighted by student count)
-  let totalPassed = 0;
-  let totalStudentsWithGrades = 0;
-
-  for (const stat of classStats) {
-    if (stat.pass_rate !== null && stat.term_grade_avg !== null) {
-      totalPassed += (stat.pass_rate / 100) * stat.student_count;
-      totalStudentsWithGrades += stat.student_count;
-    }
-  }
-
-  const passRate = totalStudentsWithGrades > 0
-    ? (totalPassed / totalStudentsWithGrades) * 100
-    : null;
+  // Fetch all counts in parallel for better performance
+  const [
+    { count: totalStudents },
+    { count: totalClasses },
+    { count: totalCourses },
+    { count: assignedCourses }
+  ] = await Promise.all([
+    supabase.from('students').select('*', { count: 'exact', head: true }),
+    supabase.from('classes').select('*', { count: 'exact', head: true }),
+    supabase.from('courses').select('*', { count: 'exact', head: true }),
+    supabase.from('courses').select('*', { count: 'exact', head: true })
+      .not('teacher_id', 'is', null)
+  ]);
 
   return {
     totalStudents: totalStudents ?? 0,
     totalClasses: totalClasses ?? 0,
-    schoolAverage,
-    passRate,
+    totalCourses: totalCourses ?? 0,
+    assignedCourses: assignedCourses ?? 0,
   };
 }
 
