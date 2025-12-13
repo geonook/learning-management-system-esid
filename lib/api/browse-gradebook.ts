@@ -49,7 +49,7 @@ export async function getClassesProgress(
   // 1. Fetch all classes
   let classesQuery = supabase
     .from('classes')
-    .select('id, name, grade')
+    .select('id, name, grade, academic_year')
     .order('grade', { ascending: true })
     .order('name');
 
@@ -59,6 +59,11 @@ export async function getClassesProgress(
 
   if (filters?.search) {
     classesQuery = classesQuery.ilike('name', `%${filters.search}%`);
+  }
+
+  // Filter by academic year
+  if (filters?.academic_year) {
+    classesQuery = classesQuery.eq('academic_year', filters.academic_year);
   }
 
   const { data: classes, error: classesError } = await classesQuery;
@@ -113,21 +118,51 @@ export async function getClassesProgress(
   });
 
   // 4. Fetch score counts per course
+  // To filter by term, we need to join scores with exams (which has the term column)
   const courseIds = courses?.map(c => c.id) || [];
 
   let scoreCounts: { course_id: string }[] = [];
   if (courseIds.length > 0) {
-    const { data: scores, error: scoresError } = await supabase
-      .from('scores')
-      .select('course_id')
-      .in('course_id', courseIds)
-      .not('score', 'is', null);
+    // Build query - if term filter is provided, join with exams table
+    if (filters?.term) {
+      // Join scores with exams to filter by term
+      const { data: scoresWithExams, error: scoresError } = await supabase
+        .from('scores')
+        .select('exam:exams!inner(course_id, term)')
+        .not('score', 'is', null)
+        .eq('exam.term', filters.term);
 
-    if (scoresError) {
-      console.error('Error fetching scores:', scoresError);
-      // Don't throw, just use empty scores
+      if (scoresError) {
+        console.error('Error fetching scores with term filter:', scoresError);
+        // Don't throw, just use empty scores
+      } else {
+        // Extract course_id from nested exam object and filter by courseIds
+        // Supabase returns exam as an object (not array) due to !inner join
+        type ExamData = { course_id: string; term: number };
+        scoreCounts = (scoresWithExams || [])
+          .filter(s => {
+            const examData = s.exam as unknown as ExamData | null;
+            return examData && courseIds.includes(examData.course_id);
+          })
+          .map(s => {
+            const examData = s.exam as unknown as ExamData;
+            return { course_id: examData.course_id };
+          });
+      }
     } else {
-      scoreCounts = scores || [];
+      // No term filter - use simple query
+      const { data: scores, error: scoresError } = await supabase
+        .from('scores')
+        .select('course_id')
+        .in('course_id', courseIds)
+        .not('score', 'is', null);
+
+      if (scoresError) {
+        console.error('Error fetching scores:', scoresError);
+        // Don't throw, just use empty scores
+      } else {
+        scoreCounts = scores || [];
+      }
     }
   }
 

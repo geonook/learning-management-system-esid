@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { useAuth } from "@/lib/supabase/auth-context";
+import { useAuthReady } from "@/hooks/useAuthReady";
+import { useGlobalFilters, GlobalFilterBar } from "@/components/filters/GlobalFilterBar";
 import { Users, Search, Loader2, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,8 +18,8 @@ import { PageHeader } from "@/components/layout/PageHeader";
 type TypeFilter = "All" | "LT" | "IT" | "KCFS";
 
 export default function BrowseTeachersPage() {
-  const { user } = useAuth();
-  const userId = user?.id;
+  const { userId, isReady } = useAuthReady();
+  const { academicYear } = useGlobalFilters();
   const [teachers, setTeachers] = useState<TeacherWithCourses[]>([]);
   const [stats, setStats] = useState<{ total: number; lt: number; it: number; kcfs: number; head: number } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,13 +40,13 @@ export default function BrowseTeachersPage() {
 
   // Single effect for all data fetching - follows Dashboard pattern
   useEffect(() => {
-    // Wait for user to be available (don't depend on authLoading)
-    if (!userId) {
-      console.log("[BrowseTeachers] No user, waiting...");
+    // Wait for auth to be ready
+    if (!isReady || !userId) {
+      console.log("[BrowseTeachers] Auth not ready, waiting...");
       return;
     }
 
-    console.log("[BrowseTeachers] Fetching data...", { selectedType, debouncedSearch });
+    console.log("[BrowseTeachers] Fetching data...", { selectedType, debouncedSearch, academicYear });
 
     let isCancelled = false;
 
@@ -56,6 +57,7 @@ export default function BrowseTeachersPage() {
         const data = await getTeachersWithCourses({
           teacherType: selectedType === "All" ? undefined : selectedType as TeacherType,
           search: debouncedSearch || undefined,
+          academicYear: academicYear,
         });
         if (!isCancelled) {
           console.log("[BrowseTeachers] Data received:", data?.length);
@@ -76,7 +78,7 @@ export default function BrowseTeachersPage() {
     return () => {
       isCancelled = true;
     };
-  }, [userId, selectedType, debouncedSearch]);
+  }, [isReady, userId, selectedType, debouncedSearch, academicYear]);
 
   // Fetch stats only once when user is available
   useEffect(() => {
@@ -123,6 +125,9 @@ export default function BrowseTeachersPage() {
           backHref="/dashboard"
           backLabel="Dashboard"
         />
+
+        {/* Academic Year Filter */}
+        <GlobalFilterBar showYear compact className="mb-2" />
 
         {/* Search */}
         <div className="flex gap-4">

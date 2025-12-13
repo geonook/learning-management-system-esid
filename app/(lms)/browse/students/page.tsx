@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { useAuth } from "@/lib/supabase/auth-context";
+import { useAuthReady } from "@/hooks/useAuthReady";
+import { useGlobalFilters, GlobalFilterBar } from "@/components/filters/GlobalFilterBar";
 import { GraduationCap, Search, Loader2, ChevronLeft, ChevronRight as ChevronRightIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,8 +18,8 @@ type GradeFilter = "All" | 1 | 2 | 3 | 4 | 5 | 6;
 type LevelFilter = "All" | "E1" | "E2" | "E3";
 
 export default function BrowseStudentsPage() {
-  const { user } = useAuth();
-  const userId = user?.id;
+  const { userId, isReady } = useAuthReady();
+  const { academicYear } = useGlobalFilters();
   const [data, setData] = useState<PaginatedStudents | null>(null);
   const [stats, setStats] = useState<{ total: number; e1: number; e2: number; e3: number } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,13 +43,13 @@ export default function BrowseStudentsPage() {
 
   // Single effect for all data fetching - follows Dashboard pattern
   useEffect(() => {
-    // Wait for user to be available (don't depend on authLoading)
-    if (!userId) {
-      console.log("[BrowseStudents] No user, waiting...");
+    // Wait for auth to be ready
+    if (!isReady || !userId) {
+      console.log("[BrowseStudents] Auth not ready, waiting...");
       return;
     }
 
-    console.log("[BrowseStudents] Fetching data...", { selectedGrade, selectedLevel, debouncedSearch, page });
+    console.log("[BrowseStudents] Fetching data...", { selectedGrade, selectedLevel, debouncedSearch, page, academicYear });
 
     let isCancelled = false;
 
@@ -82,7 +83,7 @@ export default function BrowseStudentsPage() {
     return () => {
       isCancelled = true;
     };
-  }, [userId, selectedGrade, selectedLevel, debouncedSearch, page, pageSize]);
+  }, [isReady, userId, selectedGrade, selectedLevel, debouncedSearch, page, pageSize, academicYear]);
 
   // Fetch stats only once when user is available
   useEffect(() => {
@@ -121,6 +122,9 @@ export default function BrowseStudentsPage() {
           backHref="/dashboard"
           backLabel="Dashboard"
         />
+
+        {/* Academic Year Filter */}
+        <GlobalFilterBar showYear compact className="mb-2" />
 
         {/* Search */}
         <div className="flex gap-4">

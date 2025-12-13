@@ -2,28 +2,48 @@
 
 import { useState, useEffect } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { School, ArrowLeft, Search, Download } from "lucide-react";
+import { School, ArrowLeft, Search } from "lucide-react";
 import Link from "next/link";
 import { getClassStatistics } from "@/lib/api/statistics";
 import { formatNumber, formatPercentage } from "@/lib/statistics/calculations";
 import type { ClassStatistics, CourseType } from "@/types/statistics";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { StatisticsActionButtons } from "@/components/statistics/ActionButtons";
+import { ClassDistributionChart, RankingBarChart } from "@/components/statistics/charts";
+import type { ColumnDefinition } from "@/lib/utils/clipboard";
+import { GlobalFilterBar, useGlobalFilters } from "@/components/filters";
 
 export default function ClassStatisticsPage() {
   const [loading, setLoading] = useState(true);
   const [statistics, setStatistics] = useState<ClassStatistics[]>([]);
   const [filteredStats, setFilteredStats] = useState<ClassStatistics[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
-  const [selectedCourseType, setSelectedCourseType] = useState<CourseType | null>(null);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [selectedGrade, setSelectedGrade] = useState<number>(1);
+  const [selectedCourseType, setSelectedCourseType] = useState<CourseType>("LT");
+  const { academicYear, termForApi } = useGlobalFilters();
 
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Fetch data with filters
   useEffect(() => {
     async function fetchData() {
+      setLoading(true);
       try {
-        const data = await getClassStatistics();
+        const data = await getClassStatistics({
+          grade: selectedGrade,
+          course_type: selectedCourseType,
+          academic_year: academicYear,
+          term: termForApi,
+        });
         setStatistics(data);
-        setFilteredStats(data);
       } catch (error) {
         console.error("Failed to fetch class statistics:", error);
       } finally {
@@ -32,38 +52,42 @@ export default function ClassStatisticsPage() {
     }
 
     fetchData();
-  }, []);
+  }, [selectedGrade, selectedCourseType, academicYear, termForApi]);
 
-  // Filter effect
+  // Filter by search (client-side only for search)
   useEffect(() => {
-    let result = statistics;
-
-    if (selectedGrade !== null) {
-      result = result.filter((s) => {
-        // Extract grade number from grade_level (e.g., "G1E1" -> 1)
-        const match = s.grade_level.match(/G(\d)/);
-        return match && match[1] && parseInt(match[1]) === selectedGrade;
-      });
-    }
-
-    if (selectedCourseType !== null) {
-      result = result.filter((s) => s.subject_type === selectedCourseType);
-    }
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (s) =>
-          s.class_name.toLowerCase().includes(query) ||
-          s.grade_level.toLowerCase().includes(query)
+    if (!debouncedSearch) {
+      setFilteredStats(statistics);
+    } else {
+      const query = debouncedSearch.toLowerCase();
+      setFilteredStats(
+        statistics.filter(
+          (s) =>
+            s.class_name.toLowerCase().includes(query) ||
+            s.grade_level.toLowerCase().includes(query)
+        )
       );
     }
+  }, [statistics, debouncedSearch]);
 
-    setFilteredStats(result);
-  }, [statistics, selectedGrade, selectedCourseType, searchQuery]);
-
-  const grades = [1, 2, 3, 4, 5, 6];
+  const grades: number[] = [1, 2, 3, 4, 5, 6];
   const courseTypes: CourseType[] = ["LT", "IT", "KCFS"];
+
+  // Column definitions for copy/export
+  const columns: ColumnDefinition<ClassStatistics>[] = [
+    { key: "class_name", header: "Class" },
+    { key: "subject_type", header: "Course" },
+    { key: "grade_level", header: "Level" },
+    { key: "student_count", header: "Students" },
+    { key: "term_grade_avg", header: "Term Avg", format: (v) => formatNumber(v as number | null) },
+    { key: "max", header: "Max", format: (v) => formatNumber(v as number | null) },
+    { key: "min", header: "Min", format: (v) => formatNumber(v as number | null) },
+    { key: "std_dev", header: "Std Dev", format: (v) => formatNumber(v as number | null) },
+    { key: "fa_avg", header: "F.A. Avg", format: (v) => formatNumber(v as number | null) },
+    { key: "sa_avg", header: "S.A. Avg", format: (v) => formatNumber(v as number | null) },
+    { key: "pass_rate", header: "Pass Rate", format: (v) => formatPercentage(v as number | null) },
+    { key: "excellent_rate", header: "Excellent", format: (v) => formatPercentage(v as number | null) },
+  ];
 
   return (
     <AuthGuard requiredRoles={["admin", "head", "office_member"]}>
@@ -91,58 +115,94 @@ export default function ClassStatisticsPage() {
               </div>
             </div>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-surface-secondary border border-border-default rounded-lg text-text-secondary hover:bg-surface-hover transition-colors">
-            <Download className="w-4 h-4" />
-            <span>Export</span>
-          </button>
+          <StatisticsActionButtons
+            data={filteredStats}
+            loading={loading}
+            columns={columns}
+            exportOptions={{
+              filename: `class-statistics-${selectedCourseType.toLowerCase()}-g${selectedGrade}`,
+              sheetName: `G${selectedGrade} ${selectedCourseType} Classes`
+            }}
+          />
+        </div>
+
+        {/* Global Filters (Year + Term) */}
+        <GlobalFilterBar showYear showTerm />
+
+        {/* Search */}
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
+          <Input
+            placeholder="Search by class name or grade level..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 bg-surface-secondary border-border-default text-text-primary placeholder:text-text-tertiary"
+          />
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-4">
-          <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
-            <Input
-              placeholder="Search class..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+        <div className="flex flex-wrap gap-6">
+          {/* Course Type Filter */}
+          <div className="flex gap-2 items-center">
+            <span className="text-sm text-text-tertiary">Course:</span>
+            {courseTypes.map((ct) => (
+              <button
+                key={ct}
+                onClick={() => setSelectedCourseType(ct)}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  selectedCourseType === ct
+                    ? ct === "LT"
+                      ? "bg-cyan-500/20 text-cyan-600 dark:text-cyan-400"
+                      : ct === "IT"
+                      ? "bg-indigo-500/20 text-indigo-600 dark:text-indigo-400"
+                      : "bg-pink-500/20 text-pink-600 dark:text-pink-400"
+                    : "bg-surface-secondary text-text-secondary hover:bg-surface-hover"
+                }`}
+              >
+                {ct}
+              </button>
+            ))}
           </div>
 
-          <select
-            value={selectedGrade ?? ""}
-            onChange={(e) =>
-              setSelectedGrade(e.target.value ? parseInt(e.target.value) : null)
-            }
-            className="px-4 py-2 bg-surface-secondary border border-border-default rounded-lg text-text-primary"
-          >
-            <option value="">All Grades</option>
-            {grades.map((g) => (
-              <option key={g} value={g}>
-                Grade {g}
-              </option>
+          {/* Grade Filter */}
+          <div className="flex gap-2 items-center">
+            <span className="text-sm text-text-tertiary">Grade:</span>
+            {grades.map((grade) => (
+              <button
+                key={grade}
+                onClick={() => setSelectedGrade(grade)}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  selectedGrade === grade
+                    ? "bg-purple-600 dark:bg-purple-500 text-white"
+                    : "bg-surface-secondary text-text-secondary hover:bg-surface-hover"
+                }`}
+              >
+                {`G${grade}`}
+              </button>
             ))}
-          </select>
+          </div>
+        </div>
 
-          <select
-            value={selectedCourseType ?? ""}
-            onChange={(e) =>
-              setSelectedCourseType((e.target.value as CourseType) || null)
-            }
-            className="px-4 py-2 bg-surface-secondary border border-border-default rounded-lg text-text-primary"
-          >
-            <option value="">All Course Types</option>
-            {courseTypes.map((ct) => (
-              <option key={ct} value={ct}>
-                {ct}
-              </option>
-            ))}
-          </select>
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ClassDistributionChart
+            data={filteredStats}
+            loading={loading}
+            title={`G${selectedGrade} ${selectedCourseType} Score Distribution`}
+            color={selectedCourseType === "LT" ? "#06b6d4" : selectedCourseType === "IT" ? "#6366f1" : "#ec4899"}
+          />
+          <RankingBarChart
+            data={filteredStats}
+            loading={loading}
+            title={`G${selectedGrade} ${selectedCourseType} Top Classes`}
+            topN={5}
+          />
         </div>
 
         {/* Results Count */}
         <div className="text-sm text-text-secondary">
-          Showing {filteredStats.length} of {statistics.length} records
+          Showing {filteredStats.length} class records
+          {` for ${selectedCourseType} courses in Grade ${selectedGrade}`}
         </div>
 
         {/* Statistics Table */}
@@ -155,16 +215,16 @@ export default function ClassStatisticsPage() {
                     Class
                   </th>
                   <th className="text-left p-4 text-sm font-medium text-text-secondary">
-                    Subject Type
+                    Course
                   </th>
                   <th className="text-left p-4 text-sm font-medium text-text-secondary">
-                    Grade Level
+                    Level
                   </th>
                   <th className="text-right p-4 text-sm font-medium text-text-secondary">
                     Students
                   </th>
                   <th className="text-right p-4 text-sm font-medium text-text-secondary">
-                    Term Grade Avg
+                    Term Avg
                   </th>
                   <th className="text-right p-4 text-sm font-medium text-text-secondary">
                     Max
@@ -185,7 +245,7 @@ export default function ClassStatisticsPage() {
                     Pass Rate
                   </th>
                   <th className="text-right p-4 text-sm font-medium text-text-secondary">
-                    Excellent Rate
+                    Excellent
                   </th>
                 </tr>
               </thead>
@@ -224,10 +284,10 @@ export default function ClassStatisticsPage() {
                         <Skeleton className="h-4 w-12 ml-auto" />
                       </td>
                       <td className="p-4 text-right">
-                        <Skeleton className="h-4 w-16 ml-auto" />
+                        <Skeleton className="h-4 w-14 ml-auto" />
                       </td>
                       <td className="p-4 text-right">
-                        <Skeleton className="h-4 w-16 ml-auto" />
+                        <Skeleton className="h-4 w-14 ml-auto" />
                       </td>
                     </tr>
                   ))
@@ -237,7 +297,9 @@ export default function ClassStatisticsPage() {
                       colSpan={12}
                       className="p-8 text-center text-text-tertiary"
                     >
-                      No statistics available
+                      {debouncedSearch
+                        ? `No classes match "${debouncedSearch}"`
+                        : "No statistics available"}
                     </td>
                   </tr>
                 ) : (
@@ -317,10 +379,10 @@ export default function ClassStatisticsPage() {
         {/* Info Box */}
         <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
           <p className="text-text-secondary text-sm">
-            <strong>Column Definitions:</strong> Term Grade Avg = weighted average
+            <strong>Column Definitions:</strong> Term Avg = weighted average
             (FA 15% + SA 20% + Midterm 10%). F.A. Avg = Formative Assessment average
             (FA1-FA8). S.A. Avg = Summative Assessment average (SA1-SA4). Pass Rate
-            = students with ≥60. Excellent Rate = students with ≥90.
+            = students with ≥60. Excellent = students with ≥90.
           </p>
         </div>
       </div>

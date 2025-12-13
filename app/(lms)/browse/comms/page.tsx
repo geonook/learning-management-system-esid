@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { useAuth } from "@/lib/supabase/auth-context";
+import { useAuthReady } from "@/hooks/useAuthReady";
+import { useGlobalFilters, GlobalFilterBar } from "@/components/filters/GlobalFilterBar";
 import {
   MessageSquare,
   Search,
@@ -34,9 +35,7 @@ import type {
   Semester,
 } from "@/types/communications";
 import {
-  getCurrentAcademicYear,
   getCurrentSemester,
-  getSemesterOptions,
   formatContactPeriod,
   formatCommunicationType,
 } from "@/types/communications";
@@ -44,8 +43,8 @@ import {
 type CourseTypeFilter = "All" | "LT" | "IT" | "KCFS";
 
 export default function BrowseCommsPage() {
-  const { user } = useAuth();
-  const userId = user?.id;
+  const { userId, isReady } = useAuthReady();
+  const { academicYear } = useGlobalFilters();
   const [data, setData] = useState<PaginatedCommunications | null>(null);
   const [stats, setStats] = useState<CommunicationStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,19 +52,16 @@ export default function BrowseCommsPage() {
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
-  const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
   const [semester, setSemester] = useState<Semester>(getCurrentSemester());
   const [courseType, setCourseType] = useState<CourseTypeFilter>("All");
   const [page, setPage] = useState(1);
   const pageSize = 50;
 
-  const semesterOptions = getSemesterOptions();
-
   // Single effect for all data fetching - follows Dashboard pattern
   useEffect(() => {
-    // Wait for user to be available (don't depend on authLoading)
-    if (!userId) {
-      console.log("[BrowseComms] No user, waiting...");
+    // Wait for auth to be ready
+    if (!isReady || !userId) {
+      console.log("[BrowseComms] Auth not ready, waiting...");
       return;
     }
 
@@ -107,7 +103,7 @@ export default function BrowseCommsPage() {
     return () => {
       isCancelled = true;
     };
-  }, [userId, academicYear, semester, courseType, page, pageSize]);
+  }, [isReady, userId, academicYear, semester, courseType, page, pageSize]);
 
   // Get communication type icon
   const getTypeIcon = (type: CommunicationType) => {
@@ -155,6 +151,9 @@ export default function BrowseCommsPage() {
           </div>
         </div>
 
+        {/* Academic Year Filter */}
+        <GlobalFilterBar showYear compact className="mb-2" />
+
         {/* Search and Filters */}
         <div className="flex gap-4">
           <div className="relative flex-1">
@@ -169,22 +168,15 @@ export default function BrowseCommsPage() {
 
           {/* Semester Selector */}
           <Select
-            value={`${academicYear}_${semester}`}
-            onValueChange={(value) => {
-              const parts = value.split("_");
-              if (parts[0]) setAcademicYear(parts[0]);
-              if (parts[1]) setSemester(parts[1] as Semester);
-            }}
+            value={semester}
+            onValueChange={(value) => setSemester(value as Semester)}
           >
-            <SelectTrigger className="w-[200px] bg-surface-secondary border-border-default text-text-primary">
+            <SelectTrigger className="w-[140px] bg-surface-secondary border-border-default text-text-primary">
               <SelectValue placeholder="Select semester" />
             </SelectTrigger>
             <SelectContent>
-              {semesterOptions.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
+              <SelectItem value="Fall">Fall</SelectItem>
+              <SelectItem value="Spring">Spring</SelectItem>
             </SelectContent>
           </Select>
         </div>

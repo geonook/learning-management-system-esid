@@ -11,10 +11,13 @@ import {
   BookOpen,
   Globe,
   Star,
+  GraduationCap,
+  Layers,
 } from "lucide-react";
 import { StatNavCard, QuickStatCard } from "@/components/statistics/StatNavCard";
 import { getQuickStats, type QuickStats } from "@/lib/api/statistics";
 import { Skeleton } from "@/components/ui/skeleton";
+import { GlobalFilterBar, useGlobalFilters } from "@/components/filters";
 
 // Navigation card definitions
 const statNavCards = [
@@ -72,11 +75,13 @@ const statNavCards = [
 export default function BrowseStatsPage() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<QuickStats | null>(null);
+  const { academicYear } = useGlobalFilters();
 
   useEffect(() => {
     async function fetchStats() {
+      setLoading(true);
       try {
-        const data = await getQuickStats();
+        const data = await getQuickStats({ academic_year: academicYear });
         setStats(data);
       } catch (error) {
         console.error("Failed to fetch quick stats:", error);
@@ -86,7 +91,7 @@ export default function BrowseStatsPage() {
     }
 
     fetchStats();
-  }, []);
+  }, [academicYear]);
 
   return (
     <AuthGuard requiredRoles={["admin", "head", "office_member"]}>
@@ -106,6 +111,9 @@ export default function BrowseStatsPage() {
           </p>
         </div>
 
+        {/* Global Filters */}
+        <GlobalFilterBar showYear showTerm={false} />
+
         {/* Quick Stats Summary */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {loading ? (
@@ -121,31 +129,31 @@ export default function BrowseStatsPage() {
             <>
               <QuickStatCard
                 label="Total Students"
-                value={stats?.totalStudents?.toLocaleString() ?? "N/A"}
+                value={stats?.totalStudents?.toLocaleString() ?? "0"}
                 icon={Users}
                 color="text-blue-500"
                 subtitle="across all grades"
               />
               <QuickStatCard
                 label="Total Classes"
-                value={stats?.totalClasses?.toLocaleString() ?? "N/A"}
+                value={stats?.totalClasses?.toLocaleString() ?? "0"}
                 icon={School}
                 color="text-green-500"
                 subtitle="active classes"
               />
               <QuickStatCard
-                label="School Average"
-                value={stats?.schoolAverage != null ? stats.schoolAverage.toFixed(1) : "N/A"}
-                icon={TrendingUp}
+                label="Total Courses"
+                value={stats?.totalCourses?.toLocaleString() ?? "0"}
+                icon={GraduationCap}
                 color="text-purple-500"
-                subtitle="term grade"
+                subtitle="LT/IT/KCFS"
               />
               <QuickStatCard
-                label="Pass Rate"
-                value={stats?.passRate != null ? `${stats.passRate.toFixed(1)}%` : "N/A"}
-                icon={Trophy}
+                label="Grade Levels"
+                value="G1-G6"
+                icon={Layers}
                 color="text-amber-500"
-                subtitle="≥60 score"
+                subtitle="6 levels"
               />
             </>
           )}

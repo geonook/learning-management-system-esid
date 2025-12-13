@@ -173,12 +173,16 @@ export interface StatisticsFilters {
   course_type?: CourseType;
   class_id?: string;
   search?: string;
+  academic_year?: string;       // e.g., "2025-2026"
+  term?: 1 | 2 | 3 | 4;         // Term 1-4 (four-term system)
 }
 
 export interface RankingFilters {
   grade_level: string;          // Required: e.g., "G1E1"
   course_type: CourseType;      // Required: LT, IT, or KCFS
   metric?: 'term_avg' | 'pass_rate' | 'excellent_rate'; // Default: 'term_avg'
+  academic_year?: string;       // e.g., "2025-2026"
+  term?: 1 | 2 | 3 | 4;         // Term 1-4 (four-term system)
 }
 
 // ============================================================

@@ -2,6 +2,8 @@
 
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
+import type { Term } from "@/types/academic-year"
+import { getCurrentAcademicYear, getCurrentTerm } from "@/types/academic-year"
 
 type Role = "admin" | "head" | "teacher"
 type Track = "local" | "international"
@@ -29,12 +31,18 @@ type State = {
   selections: Selections
   passThreshold: number
   assessmentTitles: AssessmentTitles
+  // Academic Year + Term state
+  selectedAcademicYear: string
+  selectedTerm: Term | "all"
   setRole: (r: Role) => void
   setSelections: (p: Partial<Selections>) => void
   setPassThreshold: (v: number) => void
   setAssessmentTitle: (t: "FA" | "SA" | "Final", index: number, label: string) => void
   setAssessmentTitles: (titles: AssessmentTitles) => void
   resetAssessmentTitles: () => void
+  // Academic Year + Term setters
+  setSelectedAcademicYear: (year: string) => void
+  setSelectedTerm: (term: Term | "all") => void
 }
 
 export const useAppStore = create<State>()(
@@ -45,6 +53,9 @@ export const useAppStore = create<State>()(
       selections: { grade: "1", klass: "Trailblazers", track: "local" },
       passThreshold: 60,
       assessmentTitles: defaultAssessmentTitles,
+      // Academic Year + Term: default to current values
+      selectedAcademicYear: getCurrentAcademicYear(),
+      selectedTerm: getCurrentTerm(),
       setRole: (role) => set({ role }),
       setSelections: (p) => set((s) => ({ selections: { ...s.selections, ...p } })),
       setPassThreshold: (v) => set({ passThreshold: v }),
@@ -58,11 +69,26 @@ export const useAppStore = create<State>()(
         }),
       setAssessmentTitles: (titles) => set({ assessmentTitles: titles }),
       resetAssessmentTitles: () => set({ assessmentTitles: defaultAssessmentTitles }),
+      // Academic Year + Term setters
+      setSelectedAcademicYear: (year) => set({ selectedAcademicYear: year }),
+      setSelectedTerm: (term) => set({ selectedTerm: term }),
     }),
     {
       name: "lms-esid-store",
       storage: createJSONStorage(() => localStorage),
-      version: 1,
+      version: 2, // Bumped for academicYear + term state
+      migrate: (persistedState, version) => {
+        const state = persistedState as State
+        if (version < 2) {
+          // Add default values for new fields
+          return {
+            ...state,
+            selectedAcademicYear: getCurrentAcademicYear(),
+            selectedTerm: getCurrentTerm(),
+          }
+        }
+        return state
+      },
     },
   ),
 )

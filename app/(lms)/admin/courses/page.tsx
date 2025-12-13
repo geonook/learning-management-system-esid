@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { useAuthReady } from "@/hooks/useAuthReady";
+import { useGlobalFilters, GlobalFilterBar } from "@/components/filters/GlobalFilterBar";
 import {
   BookOpen,
   Search,
@@ -53,6 +54,7 @@ interface TeacherOption {
 
 export default function CourseAssignmentPage() {
   const { isReady } = useAuthReady();
+  const { academicYear } = useGlobalFilters();
   const [loading, setLoading] = useState(true);
   const [courses, setCourses] = useState<CourseRow[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -101,7 +103,7 @@ export default function CourseAssignmentPage() {
             )
           `)
           .eq("is_active", true)
-          .eq("academic_year", "2025-2026")
+          .eq("academic_year", academicYear)
           .order("course_type");
 
         if (error) throw error;
@@ -130,7 +132,7 @@ export default function CourseAssignmentPage() {
         setCourses(mapped);
 
         // Fetch statistics
-        const statsData = await getCourseStatistics("2025-2026");
+        const statsData = await getCourseStatistics(academicYear);
         setStats(statsData);
       } catch (err) {
         console.error("Failed to fetch courses:", err);
@@ -140,7 +142,7 @@ export default function CourseAssignmentPage() {
     }
 
     fetchCourses();
-  }, [isReady]);
+  }, [isReady, academicYear]);
 
   // Fetch teachers when opening dialog
   useEffect(() => {
@@ -310,6 +312,9 @@ export default function CourseAssignmentPage() {
             </div>
           </div>
         </div>
+
+        {/* Academic Year Filter */}
+        <GlobalFilterBar showYear compact className="mb-2" />
 
         {/* Search and Filters */}
         <div className="flex gap-4">

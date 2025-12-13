@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { useAuth } from "@/lib/supabase/auth-context";
+import { useAuthReady } from "@/hooks/useAuthReady";
+import { useGlobalFilters, GlobalFilterBar } from "@/components/filters/GlobalFilterBar";
 import { School, Search, Loader2, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { getClassesWithDetails, type ClassWithDetails } from "@/lib/api/classes";
@@ -12,8 +13,8 @@ import { PageHeader } from "@/components/layout/PageHeader";
 type GradeFilter = "All" | 1 | 2 | 3 | 4 | 5 | 6;
 
 export default function BrowseClassesPage() {
-  const { user } = useAuth();
-  const userId = user?.id;
+  const { userId, isReady } = useAuthReady();
+  const { academicYear } = useGlobalFilters();
   const [classes, setClasses] = useState<ClassWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,13 +34,13 @@ export default function BrowseClassesPage() {
 
   // Single effect for all data fetching - follows Dashboard pattern
   useEffect(() => {
-    // Wait for user to be available (don't depend on authLoading)
-    if (!userId) {
-      console.log("[BrowseClasses] No user, waiting...");
+    // Wait for auth to be ready
+    if (!isReady || !userId) {
+      console.log("[BrowseClasses] Auth not ready, waiting...");
       return;
     }
 
-    console.log("[BrowseClasses] Fetching data...", { selectedGrade, debouncedSearch });
+    console.log("[BrowseClasses] Fetching data...", { selectedGrade, debouncedSearch, academicYear });
 
     let isCancelled = false;
 
@@ -50,6 +51,7 @@ export default function BrowseClassesPage() {
         const data = await getClassesWithDetails({
           grade: selectedGrade === "All" ? undefined : selectedGrade,
           search: debouncedSearch || undefined,
+          academicYear: academicYear,
         });
         if (!isCancelled) {
           console.log("[BrowseClasses] Data received:", data?.length);
@@ -70,7 +72,7 @@ export default function BrowseClassesPage() {
     return () => {
       isCancelled = true;
     };
-  }, [userId, selectedGrade, debouncedSearch]);
+  }, [isReady, userId, selectedGrade, debouncedSearch, academicYear]);
 
   // Helper to get teacher name by course type
   const getTeacherName = (courses: ClassWithDetails["courses"], type: "LT" | "IT" | "KCFS") => {
@@ -93,6 +95,9 @@ export default function BrowseClassesPage() {
           backHref="/dashboard"
           backLabel="Dashboard"
         />
+
+        {/* Academic Year Filter */}
+        <GlobalFilterBar showYear compact className="mb-2" />
 
         {/* Search */}
         <div className="flex gap-4">

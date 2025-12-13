@@ -13,6 +13,7 @@ import {
 } from "@/lib/statistics/calculations";
 import type { ClassRanking, GradeLevelAverage, CourseType } from "@/types/statistics";
 import { Skeleton } from "@/components/ui/skeleton";
+import { GlobalFilterBar, useGlobalFilters } from "@/components/filters";
 
 export default function ClassRankingPage() {
   const [loading, setLoading] = useState(true);
@@ -22,6 +23,7 @@ export default function ClassRankingPage() {
   const [gradeLevels, setGradeLevels] = useState<string[]>([]);
   const [selectedGradeLevel, setSelectedGradeLevel] = useState<string>("");
   const [selectedCourseType, setSelectedCourseType] = useState<CourseType>("LT");
+  const { academicYear, termForApi } = useGlobalFilters();
 
   // Fetch available grade levels on mount
   useEffect(() => {
@@ -53,6 +55,8 @@ export default function ClassRankingPage() {
           grade_level: selectedGradeLevel,
           course_type: selectedCourseType,
           metric: "term_avg",
+          academic_year: academicYear,
+          term: termForApi,
         });
         setRankings(result.rankings);
         setGradeAverage(result.gradeAverage);
@@ -64,7 +68,7 @@ export default function ClassRankingPage() {
     }
 
     fetchData();
-  }, [selectedGradeLevel, selectedCourseType]);
+  }, [selectedGradeLevel, selectedCourseType, academicYear, termForApi]);
 
   const courseTypes: CourseType[] = ["LT", "IT", "KCFS"];
 
@@ -99,6 +103,9 @@ export default function ClassRankingPage() {
             <span>Export</span>
           </button>
         </div>
+
+        {/* Global Filters (Year + Term) */}
+        <GlobalFilterBar showYear showTerm />
 
         {/* Filters */}
         <div className="flex flex-wrap gap-4">

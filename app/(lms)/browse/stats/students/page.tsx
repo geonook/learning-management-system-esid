@@ -2,22 +2,26 @@
 
 import { useState, useEffect } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { Users, ArrowLeft, Download, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Users, ArrowLeft, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { getStudentGrades } from "@/lib/api/statistics";
 import { formatNumber } from "@/lib/statistics/calculations";
 import type { StudentGradeRow, CourseType } from "@/types/statistics";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { StatisticsActionButtons } from "@/components/statistics/ActionButtons";
+import type { ColumnDefinition } from "@/lib/utils/clipboard";
+import { GlobalFilterBar, useGlobalFilters } from "@/components/filters";
 
 export default function AllStudentGradesPage() {
   const [loading, setLoading] = useState(true);
   const [grades, setGrades] = useState<StudentGradeRow[]>([]);
   const [filteredGrades, setFilteredGrades] = useState<StudentGradeRow[]>([]);
-  const [selectedCourseType, setSelectedCourseType] = useState<CourseType | "All">("All");
-  const [selectedGrade, setSelectedGrade] = useState<number | "All">("All");
+  const [selectedCourseType, setSelectedCourseType] = useState<CourseType>("LT");
+  const [selectedGrade, setSelectedGrade] = useState<number>(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const { academicYear, termForApi } = useGlobalFilters();
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -37,8 +41,10 @@ export default function AllStudentGradesPage() {
       setLoading(true);
       try {
         const data = await getStudentGrades({
-          course_type: selectedCourseType === "All" ? undefined : selectedCourseType,
-          grade: selectedGrade === "All" ? undefined : selectedGrade,
+          course_type: selectedCourseType,
+          grade: selectedGrade,
+          academic_year: academicYear,
+          term: termForApi,
         });
         setGrades(data);
       } catch (error) {
@@ -49,7 +55,7 @@ export default function AllStudentGradesPage() {
     }
 
     fetchData();
-  }, [selectedCourseType, selectedGrade]);
+  }, [selectedCourseType, selectedGrade, academicYear, termForApi]);
 
   // Filter by search
   useEffect(() => {
@@ -73,8 +79,20 @@ export default function AllStudentGradesPage() {
   const totalPages = Math.ceil(filteredGrades.length / pageSize);
   const paginatedGrades = filteredGrades.slice((page - 1) * pageSize, page * pageSize);
 
-  const courseTypes: (CourseType | "All")[] = ["All", "LT", "IT", "KCFS"];
-  const gradeOptions: (number | "All")[] = ["All", 1, 2, 3, 4, 5, 6];
+  const courseTypes: CourseType[] = ["LT", "IT", "KCFS"];
+  const gradeOptions: number[] = [1, 2, 3, 4, 5, 6];
+
+  // Column definitions for export (no copy - data is paginated)
+  const columns: ColumnDefinition<StudentGradeRow>[] = [
+    { key: "student_number", header: "Student ID" },
+    { key: "full_name", header: "Name" },
+    { key: "class_name", header: "Class" },
+    { key: "course_type", header: "Course" },
+    { key: "fa_avg", header: "F.A. Avg", format: (v) => formatNumber(v as number | null) },
+    { key: "sa_avg", header: "S.A. Avg", format: (v) => formatNumber(v as number | null) },
+    { key: "midterm", header: "Midterm", format: (v) => formatNumber(v as number | null) },
+    { key: "term_grade", header: "Term Grade", format: (v) => formatNumber(v as number | null) },
+  ];
 
   return (
     <AuthGuard requiredRoles={["admin", "head", "office_member"]}>
@@ -102,11 +120,20 @@ export default function AllStudentGradesPage() {
               </div>
             </div>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-surface-secondary border border-border-default rounded-lg text-text-secondary hover:bg-surface-hover transition-colors">
-            <Download className="w-4 h-4" />
-            <span>Export</span>
-          </button>
+          <StatisticsActionButtons
+            data={filteredGrades}
+            loading={loading}
+            columns={columns}
+            showCopy={false}
+            exportOptions={{
+              filename: `student-grades-${selectedCourseType.toLowerCase()}-g${selectedGrade}`,
+              sheetName: `G${selectedGrade} ${selectedCourseType} Students`
+            }}
+          />
         </div>
+
+        {/* Global Filters (Year + Term) */}
+        <GlobalFilterBar showYear showTerm />
 
         {/* Search */}
         <div className="relative max-w-md">
@@ -134,9 +161,7 @@ export default function AllStudentGradesPage() {
                       ? "bg-cyan-500/20 text-cyan-600 dark:text-cyan-400"
                       : ct === "IT"
                       ? "bg-indigo-500/20 text-indigo-600 dark:text-indigo-400"
-                      : ct === "KCFS"
-                      ? "bg-pink-500/20 text-pink-600 dark:text-pink-400"
-                      : "bg-purple-500/20 text-purple-600 dark:text-purple-400"
+                      : "bg-pink-500/20 text-pink-600 dark:text-pink-400"
                     : "bg-surface-secondary text-text-secondary hover:bg-surface-hover"
                 }`}
               >
@@ -158,7 +183,7 @@ export default function AllStudentGradesPage() {
                     : "bg-surface-secondary text-text-secondary hover:bg-surface-hover"
                 }`}
               >
-                {grade === "All" ? "All" : `G${grade}`}
+                {`G${grade}`}
               </button>
             ))}
           </div>
@@ -167,8 +192,7 @@ export default function AllStudentGradesPage() {
         {/* Results Count */}
         <div className="text-sm text-text-secondary">
           Showing {paginatedGrades.length} of {filteredGrades.length} student records
-          {selectedCourseType !== "All" && ` for ${selectedCourseType} courses`}
-          {selectedGrade !== "All" && ` in Grade ${selectedGrade}`}
+          {` for ${selectedCourseType} courses in Grade ${selectedGrade}`}
         </div>
 
         {/* Statistics Table */}

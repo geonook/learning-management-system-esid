@@ -42,6 +42,8 @@ export interface BrowseGradebookFilters {
   grade?: number;
   status?: ProgressStatus;
   search?: string;
+  academic_year?: string;
+  term?: number;
 }
 
 // Number of assessment items per course

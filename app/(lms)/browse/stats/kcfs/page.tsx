@@ -2,21 +2,30 @@
 
 import { useState, useEffect } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { Star, ArrowLeft, Download } from "lucide-react";
+import { Star, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { getGradeLevelSummary } from "@/lib/api/statistics";
 import { formatNumber, formatPercentage } from "@/lib/statistics/calculations";
 import type { GradeLevelSummary } from "@/types/statistics";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StatisticsActionButtons } from "@/components/statistics/ActionButtons";
+import { TrendLineChart, DonutProgressChart, StackedGradeChart } from "@/components/statistics/charts";
+import type { ColumnDefinition } from "@/lib/utils/clipboard";
+import { GlobalFilterBar, useGlobalFilters } from "@/components/filters";
 
 export default function KCFSAnalysisPage() {
   const [loading, setLoading] = useState(true);
   const [statistics, setStatistics] = useState<GradeLevelSummary[]>([]);
+  const { academicYear, termForApi } = useGlobalFilters();
 
   useEffect(() => {
     async function fetchData() {
+      setLoading(true);
       try {
-        const data = await getGradeLevelSummary("KCFS");
+        const data = await getGradeLevelSummary("KCFS", {
+          academic_year: academicYear,
+          term: termForApi,
+        });
         setStatistics(data);
       } catch (error) {
         console.error("Failed to fetch KCFS statistics:", error);
@@ -26,20 +35,40 @@ export default function KCFSAnalysisPage() {
     }
 
     fetchData();
-  }, []);
+  }, [academicYear, termForApi]);
 
   // Calculate totals
   const totals = statistics.reduce(
     (acc, stat) => ({
       students: acc.students + stat.total_students,
       grades: [...acc.grades, stat.grade_avg].filter((g): g is number => g !== null),
+      passRates: [...acc.passRates, stat.pass_rate].filter((p): p is number => p !== null),
+      excellentRates: [...acc.excellentRates, stat.excellent_rate].filter((e): e is number => e !== null),
     }),
-    { students: 0, grades: [] as number[] }
+    { students: 0, grades: [] as number[], passRates: [] as number[], excellentRates: [] as number[] }
   );
 
   const overallAvg = totals.grades.length > 0
     ? totals.grades.reduce((a, b) => a + b, 0) / totals.grades.length
     : null;
+
+  const overallPassRate = totals.passRates.length > 0
+    ? totals.passRates.reduce((a, b) => a + b, 0) / totals.passRates.length
+    : null;
+
+  const overallExcellentRate = totals.excellentRates.length > 0
+    ? totals.excellentRates.reduce((a, b) => a + b, 0) / totals.excellentRates.length
+    : null;
+
+  // Column definitions for copy/export
+  const columns: ColumnDefinition<GradeLevelSummary>[] = [
+    { key: "grade_level", header: "Grade Level" },
+    { key: "total_students", header: "Total Students" },
+    { key: "grade_avg", header: "Grade Avg", format: (v) => formatNumber(v as number | null) },
+    { key: "pass_rate", header: "Pass Rate", format: (v) => formatPercentage(v as number | null) },
+    { key: "excellent_rate", header: "Excellent Rate", format: (v) => formatPercentage(v as number | null) },
+    { key: "std_dev", header: "Std Dev", format: (v) => formatNumber(v as number | null) },
+  ];
 
   return (
     <AuthGuard requiredRoles={["admin", "head", "office_member"]}>
@@ -67,11 +96,16 @@ export default function KCFSAnalysisPage() {
               </div>
             </div>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-surface-secondary border border-border-default rounded-lg text-text-secondary hover:bg-surface-hover transition-colors">
-            <Download className="w-4 h-4" />
-            <span>Export</span>
-          </button>
+          <StatisticsActionButtons
+            data={statistics}
+            loading={loading}
+            columns={columns}
+            exportOptions={{ filename: "kcfs-analysis", sheetName: "KCFS Statistics" }}
+          />
         </div>
+
+        {/* Global Filters (Year + Term) */}
+        <GlobalFilterBar showYear showTerm />
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -94,6 +128,29 @@ export default function KCFSAnalysisPage() {
             </div>
           </div>
         </div>
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TrendLineChart
+            data={statistics}
+            loading={loading}
+            title="KCFS Grade Trends"
+            color="#ec4899"
+          />
+          <DonutProgressChart
+            passRate={overallPassRate}
+            excellentRate={overallExcellentRate}
+            loading={loading}
+            title="KCFS Pass Rate Overview"
+            color="#ec4899"
+          />
+        </div>
+
+        <StackedGradeChart
+          data={statistics}
+          loading={loading}
+          title="KCFS Student Distribution by Level"
+        />
 
         {/* Statistics Table */}
         <div className="bg-surface-secondary rounded-xl border border-border-default overflow-hidden">

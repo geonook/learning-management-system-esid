@@ -2,6 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import type { Term } from "@/types/academic-year";
+import { TERM_ASSESSMENT_CODES } from "@/types/academic-year";
 
 export type CourseType = "LT" | "IT" | "KCFS";
 
@@ -20,6 +22,7 @@ export type GradebookData = {
   assessmentCodes: string[];
   availableCourseTypes: CourseType[];
   currentCourseType: CourseType | null;
+  currentTerm: Term | null;
   teacherInfo: TeacherInfo | null;
 };
 
@@ -49,11 +52,15 @@ export async function getAvailableCourseTypes(
 }
 
 /**
- * Fetch all students and their scores for a given class and course type
+ * Fetch all students and their scores for a given class, course type, and term
+ * @param classId - The class ID
+ * @param courseType - Optional course type filter (LT/IT/KCFS)
+ * @param term - Optional term filter (1-4). When specified, only shows assessments for that term.
  */
 export async function getGradebookData(
   classId: string,
-  courseType?: CourseType | null
+  courseType?: CourseType | null,
+  term?: Term | null
 ): Promise<GradebookData> {
   const supabase = createClient();
 
@@ -62,6 +69,9 @@ export async function getGradebookData(
 
   // Default to first available course type if not specified
   const selectedCourseType = courseType || availableCourseTypes[0] || null;
+
+  // Default term: null means show all terms
+  const selectedTerm = term ?? null;
 
   // 2. Get students in class
   const { data: students, error: studentsError } = await supabase
@@ -74,7 +84,7 @@ export async function getGradebookData(
   if (studentsError)
     throw new Error(`Failed to fetch students: ${studentsError.message}`);
 
-  // 3. Get scores filtered by course type via exam -> course relationship
+  // 3. Get scores filtered by course type and term via exam -> course relationship
   const studentIds = students.map((s) => s.id);
 
   let scoresQuery = supabase
@@ -85,6 +95,7 @@ export async function getGradebookData(
       score,
       exam:exams!inner(
         course_id,
+        term,
         course:courses!inner(
           course_type
         )
@@ -95,6 +106,11 @@ export async function getGradebookData(
   // Filter by course type if specified
   if (selectedCourseType) {
     scoresQuery = scoresQuery.eq("exam.course.course_type", selectedCourseType);
+  }
+
+  // Filter by term if specified
+  if (selectedTerm) {
+    scoresQuery = scoresQuery.eq("exam.term", selectedTerm);
   }
 
   const { data: scores, error: scoresError } = await scoresQuery;
@@ -144,25 +160,35 @@ export async function getGradebookData(
     }
   }
 
+  // Determine assessment codes based on term
+  // If term is specified, show only that term's assessment codes
+  // Otherwise, show all assessment codes
+  const assessmentCodes = selectedTerm
+    ? TERM_ASSESSMENT_CODES[selectedTerm]
+    : [
+        // All assessment codes (Term 1/3: FA1-4, SA1-2, MID; Term 2/4: FA5-8, SA3-4, FINAL)
+        "FA1",
+        "FA2",
+        "FA3",
+        "FA4",
+        "FA5",
+        "FA6",
+        "FA7",
+        "FA8",
+        "SA1",
+        "SA2",
+        "SA3",
+        "SA4",
+        "MID",
+        "FINAL",
+      ];
+
   return {
     students: studentsWithScores,
-    assessmentCodes: [
-      "FA1",
-      "FA2",
-      "FA3",
-      "FA4",
-      "FA5",
-      "FA6",
-      "FA7",
-      "FA8",
-      "SA1",
-      "SA2",
-      "SA3",
-      "SA4",
-      "MID",
-    ],
+    assessmentCodes,
     availableCourseTypes,
     currentCourseType: selectedCourseType,
+    currentTerm: selectedTerm,
     teacherInfo,
   };
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { useAuthReady } from "@/hooks/useAuthReady";
+import { useGlobalFilters, GlobalFilterBar } from "@/components/filters/GlobalFilterBar";
 import { School, Search, Plus, Filter, Users, BookOpen, GraduationCap, ChevronDown, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import Link from "next/link";
 export default function ClassManagementPage() {
   // ✅ 使用標準 useAuthReady hook
   const { isReady } = useAuthReady();
+  const { academicYear } = useGlobalFilters();
   const [loading, setLoading] = useState(true);
   const [classes, setClasses] = useState<ClassWithDetails[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -29,7 +31,7 @@ export default function ClassManagementPage() {
       console.log('[AdminClasses] Starting to fetch classes...');
       try {
         const data = await getClassesWithDetails({
-          academicYear: "2025-2026",
+          academicYear: academicYear,
         });
         console.log('[AdminClasses] Fetched classes:', data?.length ?? 0);
         setClasses(data);
@@ -41,7 +43,7 @@ export default function ClassManagementPage() {
       }
     }
     fetchClasses();
-  }, [isReady]);
+  }, [isReady, academicYear]);
 
   // Filter classes based on search and grade
   const filteredClasses = useMemo(() => {
@@ -81,7 +83,7 @@ export default function ClassManagementPage() {
             <div>
               <h1 className="text-2xl font-bold text-text-primary">Class Management</h1>
               <p className="text-sm text-text-secondary">
-                Manage classes and course assignments • 2025-2026
+                Manage classes and course assignments
               </p>
             </div>
           </div>
@@ -90,6 +92,9 @@ export default function ClassManagementPage() {
             Add Class
           </Button>
         </div>
+
+        {/* Academic Year Filter */}
+        <GlobalFilterBar showYear compact className="mb-2" />
 
         {/* Search and Filters */}
         <div className="flex gap-4">

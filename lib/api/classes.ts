@@ -6,6 +6,7 @@
 
 import { supabase } from '@/lib/supabase/client'
 import { Database } from '@/types/database'
+import { getCurrentAcademicYear } from '@/types/academic-year'
 
 export type Class = Database['public']['Tables']['classes']['Row']
 export type ClassInsert = Database['public']['Tables']['classes']['Insert']
@@ -258,7 +259,7 @@ export async function getClassesWithDetails(options?: {
   grade?: number
   search?: string
 }): Promise<ClassWithDetails[]> {
-  const academicYear = options?.academicYear || '2025-2026'
+  const academicYear = options?.academicYear || getCurrentAcademicYear()
 
   // Build query for classes
   let query = supabase

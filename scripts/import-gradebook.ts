@@ -1,7 +1,13 @@
 #!/usr/bin/env npx tsx
 /**
  * Gradebook Import Script for LMS-ESID
- * Import Term 1 (Midterm) or Term 2 (Final) gradebook data from CSV
+ * Import gradebook data from CSV with four-term system support
+ *
+ * Four-Term System:
+ *   Term 1: 2025 Fall Midterm (FA1-FA4, SA1-SA2, MID)
+ *   Term 2: 2025 Fall Final (FA5-FA8, SA3-SA4, FINAL)
+ *   Term 3: 2026 Spring Midterm (FA1-FA4, SA1-SA2, MID)
+ *   Term 4: 2026 Spring Final (FA5-FA8, SA3-SA4, FINAL)
  *
  * CSV Structure (22 columns):
  * Grade Level | Subject Type | Class | Student ID | Student No | Student Name |
@@ -13,6 +19,7 @@
  *   npx tsx scripts/import-gradebook.ts --file=gradebook.csv --dry-run
  *
  * @created 2025-12-08
+ * @updated 2025-12-12 - Added four-term system support
  */
 
 import * as fs from "fs";
@@ -117,9 +124,13 @@ const SCORE_COLUMNS = [
 // CLI Argument Parsing
 // ============================================================
 
+// Four-term system type (matches types/academic-year.ts)
+type Term = 1 | 2 | 3 | 4;
+
 interface Args {
   file: string;
-  term?: 1 | 2;
+  term?: Term;
+  semester?: "fall" | "spring"; // Used with term to determine full term (1-4)
   grade?: number; // Filter by grade (1-6)
   dryRun: boolean;
   verbose: boolean;
@@ -131,6 +142,7 @@ function parseArgs(): Args {
   const args: Args = {
     file: "",
     term: undefined,
+    semester: undefined,
     grade: undefined,
     dryRun: false,
     verbose: false,
@@ -155,8 +167,13 @@ function parseArgs(): Args {
       args.file = arg.substring(7);
     } else if (arg.startsWith("--term=")) {
       const termValue = parseInt(arg.substring(7), 10);
-      if (termValue === 1 || termValue === 2) {
-        args.term = termValue;
+      if (termValue >= 1 && termValue <= 4) {
+        args.term = termValue as Term;
+      }
+    } else if (arg.startsWith("--semester=")) {
+      const semValue = arg.substring(11).toLowerCase();
+      if (semValue === "fall" || semValue === "spring") {
+        args.semester = semValue;
       }
     } else if (arg.startsWith("--grade=")) {
       const gradeValue = parseInt(arg.substring(8), 10);
@@ -171,34 +188,47 @@ function parseArgs(): Args {
 
 function printHelp(): void {
   console.log(`
-📚 Gradebook Import Script for LMS-ESID
+📚 Gradebook Import Script for LMS-ESID (Four-Term System)
 
 Usage:
   npx tsx scripts/import-gradebook.ts --file=<csv_path> [options]
 
+Four-Term System:
+  Term 1: Fall Midterm    (FA1-FA4, SA1-SA2, MID)
+  Term 2: Fall Final      (FA5-FA8, SA3-SA4, FINAL)
+  Term 3: Spring Midterm  (FA1-FA4, SA1-SA2, MID)
+  Term 4: Spring Final    (FA5-FA8, SA3-SA4, FINAL)
+
 Options:
-  --file=<path>    Path to the CSV file (required)
-  --term=<1|2>     Term number: 1 for Midterm, 2 for Final (auto-detected if not specified)
-  --grade=<1-6>    Filter by grade (G1-G6). Useful for batch importing by grade.
-  --staging        Use staging environment instead of production
-  --dry-run        Validate only, don't import data
-  --verbose, -v    Show detailed output
-  --help, -h       Show this help message
+  --file=<path>         Path to the CSV file (required)
+  --term=<1-4>          Term number (1-4). If not specified, auto-detected from CSV + semester.
+  --semester=<fall|spring>  Semester for term detection (default: fall)
+  --grade=<1-6>         Filter by grade (G1-G6). Useful for batch importing by grade.
+  --staging             Use staging environment instead of production
+  --dry-run             Validate only, don't import data
+  --verbose, -v         Show detailed output
+  --help, -h            Show this help message
 
 CSV Format (22 columns):
   Grade Level | Subject Type | Class | Student ID | Student No | Student Name |
   Term Grade | F.A. Avg | S.A. Avg | Midterm/Final | F.A.1-8 | S.A.1-4 | Teacher's email
 
 Examples:
-  # Import all grades to staging
+  # Import Fall Midterm data (Term 1)
+  npx tsx scripts/import-gradebook.ts --file=midterm.csv --term=1
+
+  # Import Fall Final data (Term 2)
+  npx tsx scripts/import-gradebook.ts --file=final.csv --term=2
+
+  # Import Spring Midterm data (Term 3)
+  npx tsx scripts/import-gradebook.ts --file=spring-midterm.csv --term=3 --semester=spring
+
+  # Auto-detect term from CSV (default: Fall semester)
   npx tsx scripts/import-gradebook.ts --file=gradebook.csv --staging
 
-  # Import only G5 to staging (for batch importing)
-  npx tsx scripts/import-gradebook.ts --file=gradebook.csv --staging --grade=5
-
-  # Import G1-G6 one by one (recommended for large datasets)
+  # Import by grade (recommended for large datasets)
   for g in 1 2 3 4 5 6; do
-    npx tsx scripts/import-gradebook.ts --file=gradebook.csv --staging --grade=$g
+    npx tsx scripts/import-gradebook.ts --file=gradebook.csv --staging --grade=$g --term=1
   done
 
   # Dry run for G3
@@ -267,30 +297,68 @@ function parseCSVLine(line: string): string[] {
 }
 
 // ============================================================
-// Term Detection
+// Term Detection (Four-Term System)
 // ============================================================
 
-function detectTerm(headers: string[]): 1 | 2 {
+/**
+ * Detect term from CSV headers with optional semester context
+ *
+ * Four-Term System:
+ *   Term 1: Fall Midterm
+ *   Term 2: Fall Final
+ *   Term 3: Spring Midterm
+ *   Term 4: Spring Final
+ *
+ * @param headers CSV headers
+ * @param semester Optional semester context ("fall" or "spring")
+ * @returns Term number (1-4)
+ */
+function detectTerm(headers: string[], semester: "fall" | "spring" = "fall"): Term {
   // Column 9 (0-indexed) should be either "Midterm" or "Final"
   const col9Header = headers[COL.MIDTERM_OR_FINAL]?.toLowerCase().trim();
 
+  let isMidterm = false;
+  let isFinal = false;
+
   if (col9Header === "midterm") {
-    return 1;
+    isMidterm = true;
   } else if (col9Header === "final") {
-    return 2;
+    isFinal = true;
+  } else {
+    // Fallback: check if any header contains "midterm" or "final"
+    const headersLower = headers.map((h) => h.toLowerCase());
+    if (headersLower.some((h) => h.includes("midterm"))) {
+      isMidterm = true;
+    } else if (headersLower.some((h) => h.includes("final"))) {
+      isFinal = true;
+    }
   }
 
-  // Fallback: check if any header contains "midterm" or "final"
-  const headersLower = headers.map((h) => h.toLowerCase());
-  if (headersLower.some((h) => h.includes("midterm"))) {
-    return 1;
-  } else if (headersLower.some((h) => h.includes("final"))) {
-    return 2;
+  if (!isMidterm && !isFinal) {
+    throw new Error(
+      'Cannot detect term from CSV headers. Column 10 should be "Midterm" or "Final".'
+    );
   }
 
-  throw new Error(
-    'Cannot detect term from CSV headers. Column 10 should be "Midterm" or "Final".'
-  );
+  // Map to four-term system based on semester
+  if (semester === "fall") {
+    return isMidterm ? 1 : 2; // Term 1 (Fall Midterm) or Term 2 (Fall Final)
+  } else {
+    return isMidterm ? 3 : 4; // Term 3 (Spring Midterm) or Term 4 (Spring Final)
+  }
+}
+
+/**
+ * Get term display name
+ */
+function getTermName(term: Term): string {
+  const names: Record<Term, string> = {
+    1: "Fall Midterm",
+    2: "Fall Final",
+    3: "Spring Midterm",
+    4: "Spring Final",
+  };
+  return names[term];
 }
 
 // ============================================================
@@ -368,7 +436,7 @@ async function loadLookupData(supabase: SupabaseClient): Promise<{
 async function importGradebook(
   supabase: SupabaseClient,
   csvPath: string,
-  term: 1 | 2,
+  term: Term,
   gradeFilter: number | undefined,
   dryRun: boolean,
   verbose: boolean
@@ -385,15 +453,17 @@ async function importGradebook(
     warnings: [],
   };
 
-  const termName = term === 1 ? "Midterm" : "Final";
+  const termName = getTermName(term);
   const gradeFilterStr = gradeFilter ? `G${gradeFilter}` : "All";
-  const midtermFinalCode = term === 1 ? "MID" : "FINAL";
-  const semester = "25Fall";
+  // MID for Term 1/3 (Midterm), FINAL for Term 2/4 (Final)
+  const midtermFinalCode = (term === 1 || term === 3) ? "MID" : "FINAL";
+  // Semester label for exam names
+  const semesterLabel = (term === 1 || term === 2) ? "25Fall" : "26Spring";
 
   console.log(`\n📋 Import Configuration:`);
   console.log(`   Term: ${term} (${termName})`);
   console.log(`   Grade Filter: ${gradeFilterStr}`);
-  console.log(`   Semester: ${semester}`);
+  console.log(`   Semester Label: ${semesterLabel}`);
   console.log(`   Dry Run: ${dryRun}`);
 
   // Load lookup data
@@ -505,7 +575,7 @@ async function importGradebook(
       if (isNaN(score) || score <= 0) continue;
 
       // Create exam entry
-      const examName = `${subjectType} ${actualCode} ${termName} ${semester}`;
+      const examName = `${subjectType} ${actualCode} ${termName} ${semesterLabel}`;
       const examKey = `${classInfo.id}:${courseId}:${actualCode}`;
 
       if (!examMap.has(examKey)) {
@@ -638,6 +708,7 @@ async function importGradebook(
       const insertData = batch.map(({ exam }) => ({
         course_id: exam.courseId,
         name: exam.name,
+        term: term, // Four-term system (1-4)
         exam_date: new Date().toISOString().split("T")[0],
         created_by: SYSTEM_USER_ID,
       }));
@@ -656,6 +727,7 @@ async function importGradebook(
             .insert({
               course_id: exam.courseId,
               name: exam.name,
+              term: term, // Four-term system (1-4)
               exam_date: new Date().toISOString().split("T")[0],
               created_by: SYSTEM_USER_ID,
             })
@@ -826,12 +898,16 @@ async function main(): Promise<void> {
   try {
     // Detect term from CSV if not specified
     let term = args.term;
+    const semester = args.semester || "fall"; // Default to fall semester
+
     if (!term) {
       console.log("\n🔍 Detecting term from CSV headers...");
       const content = fs.readFileSync(csvPath, "utf-8");
       const { headers } = parseCSV(content);
-      term = detectTerm(headers);
-      console.log(`   Detected: Term ${term} (${term === 1 ? "Midterm" : "Final"})`);
+      term = detectTerm(headers, semester);
+      console.log(`   Detected: Term ${term} (${getTermName(term)})`);
+    } else {
+      console.log(`\n📅 Using specified term: ${term} (${getTermName(term)})`);
     }
 
     // Run import

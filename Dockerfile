@@ -3,7 +3,8 @@ FROM node:22-slim AS base
 FROM base AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm install --include=dev
+# Use --ignore-scripts to skip supabase CLI binary download (not needed for production build)
+RUN npm install --include=dev --ignore-scripts
 
 FROM base AS builder
 WORKDIR /app
