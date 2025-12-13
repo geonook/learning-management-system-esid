@@ -1,13 +1,21 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 3.5
-> **Last Updated**: 2025-12-09
+> **Documentation Version**: 3.6
+> **Last Updated**: 2025-12-13
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Both Systems Complete)**
-> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**, **Teacher Course Assignment (v1.42.0 ✅)**, **Data Pages Sprint 1-2 (v1.43.0 ✅)**, **Browse Pages Loading Fix (v1.44.0 ✅)**, **Auth State Change Fix (v1.45.0 ✅)**, **Class Student Roster (v1.46.0 ✅)**, **Course Assignment UI (v1.47.0 ✅)**, **Gradebook Course Filter (v1.48.0 ✅)**, **Gradebook UI/UX Refactor (v1.49.0 ✅)**, **Production RLS Fix (v1.49.1 ✅)**, **Browse Gradebook Refactor (v1.50.0 ✅)**, **Course Kanban & Communications (v1.50.0 ✅)**
+> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**, **Teacher Course Assignment (v1.42.0 ✅)**, **Data Pages Sprint 1-2 (v1.43.0 ✅)**, **Browse Pages Loading Fix (v1.44.0 ✅)**, **Auth State Change Fix (v1.45.0 ✅)**, **Class Student Roster (v1.46.0 ✅)**, **Course Assignment UI (v1.47.0 ✅)**, **Gradebook Course Filter (v1.48.0 ✅)**, **Gradebook UI/UX Refactor (v1.49.0 ✅)**, **Production RLS Fix (v1.49.1 ✅)**, **Browse Gradebook Refactor (v1.50.0 ✅)**, **Course Kanban & Communications (v1.50.0 ✅)**, **Statistics Module Phase 2 (v1.51.0 ✅)**, **Academic Year + Term System (v1.51.0 ✅)**, **2026-2027 Academic Year (v1.51.0 ✅)**
 
 > **Current Status**:
 >
+> - ✅ **v1.51.0 Statistics & Analytics + Academic Year System** - Sprint 6 完整功能 (2025-12-13)
+>   - **Statistics Module Phase 2**：8 個統計頁面 + 圖表 + XLSX 匯出
+>   - **GlobalFilterBar**：學年 + Term 全域篩選系統
+>   - **Four-Term System**：Term 1-4 (Fall Midterm/Final, Spring Midterm/Final)
+>   - **2026-2027 Academic Year**：84 班級、252 課程（Migration 031）
+>   - **Migration 029**：課程任務 Kanban 表 + RLS
+>   - **Migration 030**：exams.term/semester 欄位 + 自動計算 trigger
+>   - **Gradebook 406 修復**：移除 RLS 衝突查詢
 > - ✅ **v1.50.0 Browse Gradebook Refactor & Sprint 4 Features** - 完整重構 Browse Gradebook + 新增課程功能 (2025-12-09)
 >   - **Browse Gradebook 重構**：從 exam-based（1000 筆）改為 class-based（84 班）視圖
 >   - 新增 LT/IT/KCFS 三欄進度顯示，進度計算：`scores / (students × 13)`
@@ -38,9 +46,10 @@
 > - ✅ **Phase 4.1 Complete** - One OS Interface Unification with Info Hub
 > - ✅ **SSO Implementation** - Both LMS & Info Hub complete, alignment verified
 > - 🎯 **Next Steps**:
->   1. Phase D2: 淺色模式配色統一、Notion 風格設計系統
->   2. Sprint 3.3: 我的課表（教師查看自己的課表）
->   3. CSV Import: 成績資料批次匯入功能
+>   1. Sprint 7: 學生歷年成績報表（跨年成績總覽）
+>   2. Phase D2: 淺色模式配色統一、Notion 風格設計系統
+>   3. Sprint 3.3: 我的課表（教師查看自己的課表）
+>   4. CSV Import: 成績資料批次匯入功能（Term 2 資料）
 
 This file provides essential guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -580,7 +589,61 @@ npm run import:cli
   - ✅ **Production** (`piwbooidofbaqklhijup`): 2025-12-09 已執行
 - **相關檔案**: `db/migrations/028_fix_users_rls_simple.sql`
 
+#### Migration 029: Course Tasks Kanban (2025-12-12) ✅ **已完成**
+
+- **目的**: 建立課程層級任務看板功能
+- **變更內容**:
+  - 建立 `course_tasks` 表（Kanban 任務資料）
+  - 欄位：id, course_id, teacher_id, title, description, status, due_date, position
+  - status: 'todo' | 'in_progress' | 'done'
+  - RLS 政策：教師只能看到自己課程的任務
+- **部署狀態**:
+  - ✅ **Staging** (`kqvpcoolgyhjqleekmee`): 已執行
+  - ✅ **Production** (`piwbooidofbaqklhijup`): 已執行
+- **相關檔案**: `db/migrations/029_create_course_tasks.sql`
+
+#### Migration 030: Four-Term Academic System (2025-12-12) ✅ **已完成**
+
+- **目的**: 新增四學期制支援（Term 1-4）
+- **變更內容**:
+  - 新增 `exams.term` 欄位（INTEGER, 1-4）
+  - 新增 `exams.semester` 欄位（INTEGER, 1-2，由 term 推導）
+  - 建立 trigger `exams_calculate_semester` 自動計算 semester
+  - 建立索引：`idx_exams_term`, `idx_exams_semester`, `idx_exams_course_term`
+- **Term 定義**:
+  - Term 1: Fall Midterm（秋季期中）
+  - Term 2: Fall Final（秋季期末）
+  - Term 3: Spring Midterm（春季期中）
+  - Term 4: Spring Final（春季期末）
+- **Semester 推導**: term 1-2 → semester 1 (Fall), term 3-4 → semester 2 (Spring)
+- **現有資料更新**: 1481 筆 exams 更新為 term=1（目前都是 Fall Midterm 資料）
+- **部署狀態**:
+  - ✅ **Staging** (`kqvpcoolgyhjqleekmee`): 已執行
+  - ✅ **Production** (`piwbooidofbaqklhijup`): 2025-12-13 已執行
+- **相關檔案**: `db/migrations/030_add_term_to_exams.sql`
+
+#### Migration 031: 2026-2027 Academic Year (2025-12-12) ✅ **已完成**
+
+- **目的**: 建立 2026-2027 學年班級和課程
+- **變更內容**:
+  - 複製 84 個班級從 2025-2026 到 2026-2027
+  - 建立 252 個課程（84 班 × 3 課程類型，teacher_id = NULL）
+- **部署狀態**:
+  - ✅ **Staging** (`kqvpcoolgyhjqleekmee`): 已執行
+  - ✅ **Production** (`piwbooidofbaqklhijup`): 已執行
+- **驗證結果**:
+  - 2025-2026: 84 班級, 252 課程
+  - 2026-2027: 84 班級, 252 課程
+- **相關檔案**: `db/migrations/031_create_2026_2027_academic_year.sql`
+
 ### 📊 真實資料部署狀態
+
+#### 學年資料總覽 ✅ (2025-12-13 更新)
+
+| 學年 | 班級數 | 課程數 | 教師指派 |
+|------|--------|--------|----------|
+| **2025-2026** | 84 | 252 | ✅ 已指派 |
+| **2026-2027** | 84 | 252 | ⏳ 待指派 |
 
 #### 2025-2026 學年班級資料 ✅
 
@@ -594,11 +657,19 @@ npm run import:cli
   - G5: 3×E1, 7×E2, 4×E3
   - G6: 4×E1, 7×E2, 3×E3
 
+#### 2026-2027 學年班級資料 ✅ (新增)
+
+- **班級數量**: 84 個班級（從 2025-2026 複製）
+- **課程數量**: 252 筆（84 班 × 3 課程類型）
+- **教師指派狀態**: 全部 teacher_id = NULL（待新學年指派）
+- **學生分配**: 待新學年開始後分配
+
 #### 課程資料建立 ✅
 
-- **課程總數**: 252 筆（84 classes × 3 course types）
-- **課程類型**: LT（84）+ IT（84）+ KCFS（84）
-- **教師指派狀態**: 全部 teacher_id = NULL（待指派）
+- **課程總數**: 504 筆（2 學年 × 84 classes × 3 course types）
+- **課程類型**: LT（168）+ IT（168）+ KCFS（168）
+- **2025-2026 教師指派**: ✅ 已完成（80 位教師）
+- **2026-2027 教師指派**: ⏳ 待新學年開始
 
 ### 🎯 驗證結果
 
@@ -1182,6 +1253,35 @@ COPY --from=builder /app/public ./public
 | Course Kanban | `/(lms)/class/[classId]` (Overview) | ✅ 任務看板 |
 | Communications Tab | `/(lms)/class/[classId]/communications` | ✅ 電話追蹤+備忘 |
 | Head Teacher 課程權限 | Communications 頁面 | ✅ track 過濾 |
+
+### ✅ 完成：Sprint 5（效能優化）v1.50.x
+
+| 任務 | 檔案 | 狀態 |
+|------|------|------|
+| Gradebook 406 修復 | `GradebookHeader.tsx` | ✅ 移除 RLS 衝突查詢 |
+| 統計查詢優化 | `lib/api/statistics.ts` | ✅ Promise.all 並行 |
+| Retry 機制增強 | API layer | ✅ 指數退避 |
+
+### ✅ 完成：Sprint 6（Statistics + Academic Year）v1.51.0
+
+| 任務 | 路由/檔案 | 狀態 |
+|------|----------|------|
+| Statistics Module Phase 2 | `/browse/stats/*` | ✅ 8 個頁面 + 圖表 |
+| GlobalFilterBar | `components/filters/` | ✅ 學年 + Term 篩選 |
+| Four-Term System | Migration 030 | ✅ term/semester 欄位 |
+| 2026-2027 Academic Year | Migration 031 | ✅ 84 班 + 252 課程 |
+| Course Tasks Kanban DB | Migration 029 | ✅ course_tasks 表 |
+| XLSX Export | Statistics pages | ✅ 匯出功能 |
+| Interactive Charts | Recharts | ✅ 6 種圖表類型 |
+
+### 🎯 待辦：Sprint 7（歷年成績與學生管理）
+
+| 任務 | 路由 | 優先級 | 狀態 |
+|------|------|--------|------|
+| 學生歷年成績報表 | `/(lms)/student/[id]/history` | 🟢 | ⏳ 待開發 |
+| 學年切換功能 | 全系統 | 🟢 | ⏳ 待開發 |
+| Term 2 資料匯入 | CSV Import | 🟡 | ⏳ 待資料 |
+| 我的課表 | `/(lms)/schedule` | 🟢 | ⏳ 待開發 |
 
 ---
 
