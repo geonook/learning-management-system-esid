@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { useAuth } from "@/lib/supabase/auth-context";
 import { PageHeader } from "@/components/layout/PageHeader";
 
 interface ClassInfo {
@@ -24,35 +23,20 @@ const COURSE_TYPE_LABELS: Record<string, string> = {
 };
 
 export function GradebookHeader({ classId, courseType }: GradebookHeaderProps) {
-  const { user } = useAuth();
   const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
-  const [isMyClass, setIsMyClass] = useState<boolean | null>(null);
 
   useEffect(() => {
     async function fetchData() {
-      // Fetch class info
+      // Fetch class info only - removed courses query that caused 406 error
       const { data: classData } = await supabase
         .from("classes")
         .select("id, name, grade, academic_year")
         .eq("id", classId)
         .single();
       if (classData) setClassInfo(classData);
-
-      // Check if this is user's class (via courses table)
-      if (user?.id) {
-        const { data: courseData } = await supabase
-          .from("courses")
-          .select("id")
-          .eq("class_id", classId)
-          .eq("teacher_id", user.id)
-          .limit(1);
-        setIsMyClass(courseData && courseData.length > 0);
-      } else {
-        setIsMyClass(false);
-      }
     }
     fetchData();
-  }, [classId, user?.id]);
+  }, [classId]);
 
   // Build title with course type
   const courseLabel = courseType ? COURSE_TYPE_LABELS[courseType] || courseType : null;
@@ -62,27 +46,22 @@ export function GradebookHeader({ classId, courseType }: GradebookHeaderProps) {
       : `${classInfo.name} - Gradebook`
     : "Gradebook";
 
-  // Determine breadcrumb path based on whether this is user's class
+  // Simplified breadcrumb path - always use Browse Data path
+  // (Server Component page.tsx already handles permission validation)
   const breadcrumbs = classInfo
-    ? isMyClass
-      ? [
-          { label: "My Classes", href: "/dashboard" },
-          { label: classInfo.name, href: `/class/${classId}` },
-          { label: courseLabel ? `${courseLabel} Gradebook` : "Gradebook" },
-        ]
-      : [
-          { label: "Browse Data", href: "/dashboard" },
-          { label: "All Classes", href: "/browse/classes" },
-          { label: classInfo.name, href: `/class/${classId}` },
-          { label: courseLabel ? `${courseLabel} Gradebook` : "Gradebook" },
-        ]
+    ? [
+        { label: "Browse Data", href: "/dashboard" },
+        { label: "All Classes", href: "/browse/classes" },
+        { label: classInfo.name, href: `/class/${classId}` },
+        { label: courseLabel ? `${courseLabel} Gradebook` : "Gradebook" },
+      ]
     : [
         { label: "Loading...", href: "/dashboard" },
         { label: "Gradebook" },
       ];
 
-  // Determine back navigation
-  const backHref = isMyClass ? `/class/${classId}` : `/class/${classId}`;
+  // Back navigation
+  const backHref = `/class/${classId}`;
   const backLabel = "Back to Class";
 
   // Build simplified subtitle (course type and teacher shown in toolbar instead)
