@@ -503,5 +503,7 @@ export async function getAllAcademicYears(): Promise<string[]> {
     if (course.academic_year) years.add(course.academic_year);
   });
 
-  return Array.from(years).sort().reverse();
+  const result = Array.from(years).sort().reverse();
+  console.log('[getAllAcademicYears] Found years:', result, 'from', data?.length, 'courses');
+  return result;
 }

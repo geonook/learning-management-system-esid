@@ -43,10 +43,12 @@ export function AcademicYearSelector({
     async function fetchYears() {
       try {
         const fetchedYears = await getAllAcademicYears();
+        console.log("[AcademicYearSelector] Fetched years:", fetchedYears);
         if (fetchedYears.length > 0) {
           setYears(fetchedYears);
         } else {
           // Fallback to current year if no data
+          console.log("[AcademicYearSelector] No years found, using current year");
           setYears([getCurrentAcademicYear()]);
         }
       } catch (error) {
