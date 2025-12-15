@@ -194,11 +194,12 @@ export default function GradeOverviewPage() {
             .limit(10000);  // Override default 1000 row limit
           scoresData = data || [];
 
-          // DEBUG: Log scores data
-          console.log('[HeadOverview] Step 8 - scoresData:', {
+          // DEBUG: Log scores data (v2 - with limit fix verification)
+          console.log('[HeadOverview] Step 8 - scoresData (LIMIT=10000):', {
             scoresCount: scoresData.length,
             examIdsCount: examIds.length,
             error: scoresError?.message,
+            expectedMin: 3500,  // G5-6 IT should have 3500+ scores
           });
         }
 
