@@ -14,13 +14,6 @@ import {
 import { ChartWrapper } from "./ChartWrapper";
 
 // Custom tooltip that adapts to light/dark mode
-interface ChartDataEntry {
-  name: string;
-  average: number | null;
-  passRate: number | null;
-  excellentRate: number | null;
-}
-
 function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
   if (!active || !payload || payload.length === 0) return null;
 

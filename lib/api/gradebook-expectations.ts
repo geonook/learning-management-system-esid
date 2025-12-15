@@ -20,7 +20,7 @@ import type {
 } from "@/types/gradebook-expectations";
 import {
   DEFAULT_EXPECTATION,
-  calculateExpectedTotal,
+  // calculateExpectedTotal - available for future use
 } from "@/types/gradebook-expectations";
 
 // ============================================

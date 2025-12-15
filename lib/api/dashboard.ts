@@ -346,7 +346,6 @@ export async function getClassDistribution(
   userRole: "admin" | "office_member" | "head" | "teacher" | "student",
   userId?: string,
   gradeBand?: string,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   courseType?: "LT" | "IT" | "KCFS"
 ): Promise<ClassDistribution[]> {
   const supabase = createClient();
@@ -361,6 +360,7 @@ export async function getClassDistribution(
           course_id,
           courses!inner(
             class_id,
+            course_type,
             classes!inner(
               grade,
               track,
@@ -395,7 +395,10 @@ export async function getClassDistribution(
         grades = [Number(gradeBand)];
       }
       query = query.in("exams.courses.classes.grade", grades);
-      // Note: course type filtering would need to be done at the course level, not class level
+      // Filter by course type for head teachers
+      if (courseType) {
+        query = query.eq("exams.courses.course_type", courseType);
+      }
     } else if (userRole === "teacher" && userId) {
       // Get teacher's course IDs
       const { data: teacherCourses } = await supabase
@@ -1006,7 +1009,6 @@ export interface GradeClassSummary {
  */
 export async function getHeadTeacherKpis(
   gradeBand: string,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   courseType: "LT" | "IT" | "KCFS"
 ): Promise<HeadTeacherKpis> {
   const supabase = createClient();
@@ -1067,18 +1069,41 @@ export async function getHeadTeacherKpis(
       .in("class_id", classIds)
       .eq("is_active", true);
 
-    // Get teachers count (unique teachers teaching in these classes)
+    // Get teachers count (unique teachers teaching in these classes for this course type)
     const { data: courses } = await supabase
       .from("courses")
       .select("teacher_id")
       .in("class_id", classIds)
       .eq("is_active", true)
-      .eq("academic_year", "2025-2026");
+      .eq("academic_year", "2025-2026")
+      .eq("course_type", courseType);  // Filter by course type
 
-    const uniqueTeachers = new Set((courses || []).map((c) => c.teacher_id));
+    const uniqueTeachers = new Set((courses || []).map((c) => c.teacher_id).filter(Boolean));
     const teachersCount = uniqueTeachers.size;
 
-    // Get recent scores for average calculation
+    // Get course IDs for this course type
+    const { data: coursesForScores } = await supabase
+      .from("courses")
+      .select("id")
+      .in("class_id", classIds)
+      .eq("is_active", true)
+      .eq("academic_year", "2025-2026")
+      .eq("course_type", courseType);  // Filter by course type
+
+    const courseIds = (coursesForScores || []).map((c) => c.id);
+
+    if (courseIds.length === 0) {
+      return {
+        totalClasses,
+        averageScore: 0,
+        coverageRate: 0,
+        activeIssues: null,
+        studentsCount: studentsCount || 0,
+        teachersCount,
+      };
+    }
+
+    // Get recent scores for average calculation (filtered by course type via course IDs)
     const { data: scores } = await supabase
       .from("scores")
       .select(
@@ -1086,14 +1111,11 @@ export async function getHeadTeacherKpis(
         score,
         student_id,
         exams!inner(
-          course_id,
-          courses!inner(
-            class_id
-          )
+          course_id
         )
       `
       )
-      .in("exams.courses.class_id", classIds)
+      .in("exams.course_id", courseIds)  // Filter by courses of this type
       .gte(
         "entered_at",
         new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()

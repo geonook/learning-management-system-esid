@@ -129,13 +129,14 @@ export default function GradeOverviewPage() {
           studentCountByClass.set(s.class_id, count + 1);
         });
 
-        // 6. BATCH QUERY: Get courses for these classes
+        // 6. BATCH QUERY: Get courses for these classes (filtered by course type)
         const { data: coursesData } = await supabase
           .from("courses")
           .select("id, class_id")
           .in("class_id", classIds)
           .eq("is_active", true)
-          .eq("academic_year", academicYear);
+          .eq("academic_year", academicYear)
+          .eq("course_type", courseType);  // Filter by head teacher's course type
 
         const courseIds = coursesData?.map((c) => c.id) || [];
         const courseToClass = new Map<string, string>();
