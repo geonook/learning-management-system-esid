@@ -1,13 +1,19 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 3.6
-> **Last Updated**: 2025-12-13
+> **Documentation Version**: 3.7
+> **Last Updated**: 2025-12-15
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School Learning Management System with Next.js + TypeScript + Supabase Cloud + Advanced Analytics + **SSO Integration (Both Systems Complete)**
-> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**, **Teacher Course Assignment (v1.42.0 ✅)**, **Data Pages Sprint 1-2 (v1.43.0 ✅)**, **Browse Pages Loading Fix (v1.44.0 ✅)**, **Auth State Change Fix (v1.45.0 ✅)**, **Class Student Roster (v1.46.0 ✅)**, **Course Assignment UI (v1.47.0 ✅)**, **Gradebook Course Filter (v1.48.0 ✅)**, **Gradebook UI/UX Refactor (v1.49.0 ✅)**, **Production RLS Fix (v1.49.1 ✅)**, **Browse Gradebook Refactor (v1.50.0 ✅)**, **Course Kanban & Communications (v1.50.0 ✅)**, **Statistics Module Phase 2 (v1.51.0 ✅)**, **Academic Year + Term System (v1.51.0 ✅)**, **2026-2027 Academic Year (v1.51.0 ✅)**
+> **Features**: ELA Course Architecture, Assessment Title Management, Real-time Notifications, Student Course Management, **CSV Import System (✅)**, RLS Security, Grade Calculations, **Analytics Engine (Phase 3A-1 ✅)**, **Database Analytics Views (✅)**, **Testing Framework (✅)**, **Supabase Cloud Migration (✅)**, **RLS Performance Optimization (✅)**, **Info Hub SSO Integration (✅ 100% Complete)**, **ESLint Configuration (✅)**, **Build Optimization (✅)**, **One OS Interface (Phase 4.1 ✅)**, **Dockerfile Optimization (✅)**, **TeacherOS UI Refinements (v1.41.0 ✅)**, **Teacher Course Assignment (v1.42.0 ✅)**, **Data Pages Sprint 1-2 (v1.43.0 ✅)**, **Browse Pages Loading Fix (v1.44.0 ✅)**, **Auth State Change Fix (v1.45.0 ✅)**, **Class Student Roster (v1.46.0 ✅)**, **Course Assignment UI (v1.47.0 ✅)**, **Gradebook Course Filter (v1.48.0 ✅)**, **Gradebook UI/UX Refactor (v1.49.0 ✅)**, **Production RLS Fix (v1.49.1 ✅)**, **Browse Gradebook Refactor (v1.50.0 ✅)**, **Course Kanban & Communications (v1.50.0 ✅)**, **Statistics Module Phase 2 (v1.51.0 ✅)**, **Academic Year + Term System (v1.51.0 ✅)**, **2026-2027 Academic Year (v1.51.0 ✅)**, **Gradebook Expectations (v1.52.0 ✅)**
 
 > **Current Status**:
 >
+> - ✅ **v1.52.0 Gradebook Expectations System** - Head Teacher 成績輸入期望管理 (2025-12-15)
+>   - **Expectations 管理頁面**：`/head/expectations` - Head Teacher 設定各班成績輸入期望
+>   - **Migration 032**：`gradebook_expectations` 資料表 + RLS 政策
+>   - **動態進度計算**：Browse Gradebook 整合 expectations，顯示動態狀態
+>   - **權限控制**：Head Teacher 依 grade_band + track 過濾可管理的班級
+>   - **新增檔案**：`types/gradebook-expectations.ts`, `lib/api/gradebook-expectations.ts`
 > - ✅ **v1.51.0 Statistics & Analytics + Academic Year System** - Sprint 6 完整功能 (2025-12-13)
 >   - **Statistics Module Phase 2**：8 個統計頁面 + 圖表 + XLSX 匯出
 >   - **GlobalFilterBar**：學年 + Term 全域篩選系統
@@ -24,18 +30,8 @@
 >   - **Communications**：LT 電話通訊追蹤 + IT/KCFS 備忘功能
 >   - 新增檔案：`types/browse-gradebook.ts`, `lib/api/browse-gradebook.ts`
 > - ✅ **v1.49.1 Production RLS & Server Component Fix** - 修復 Production 環境問題 (2025-12-09)
->   - 修復 users 表 RLS 無限遞迴（Migration 028）
->   - 刪除 24 個有遞迴問題的 RLS policies
->   - 修復 class layout Server Component 使用錯誤的 Supabase client
 > - ✅ **v1.49.0 Gradebook UI/UX Refactor** - 統一工具欄、移除冗餘元素 (2025-12-09)
->   - 簡化 PageHeader subtitle（移除課程類型和教師）
->   - 重設計工具欄：課程選擇器 + 教師 + 學生數 + 儲存狀態
->   - 移除底部狀態欄（資訊整合到工具欄）
->   - 儲存狀態從 Spreadsheet 移至 GradebookClient
 > - ✅ **v1.48.0 Gradebook Course Filter** - 課程類型篩選與教師顯示 (2025-12-09)
->   - 新增 LT/IT/KCFS 課程切換功能
->   - 顯示當前課程的任課教師姓名
->   - 動態更新教師資訊切換時
 > - ✅ **v1.47.0 Sprint 3.2 Course Assignment UI** - 課程指派管理介面 (2025-12-08)
 > - ✅ **v1.46.0 Sprint 3.1 Class Student Roster** - 班級學生名冊功能實作 (2025-12-08)
 > - ✅ **v1.45.0 Auth State Change Fix** - 修復 React 閉包與重複 fetch 問題 (2025-12-08)
@@ -635,6 +631,23 @@ npm run import:cli
   - 2025-2026: 84 班級, 252 課程
   - 2026-2027: 84 班級, 252 課程
 - **相關檔案**: `db/migrations/031_create_2026_2027_academic_year.sql`
+
+#### Migration 032: Gradebook Expectations (2025-12-15) ✅ **已完成**
+
+- **目的**: 建立 Head Teacher 成績輸入期望管理系統
+- **變更內容**:
+  - 建立 `gradebook_expectations` 資料表
+  - 欄位：class_id, course_type, term, expected_progress (0-100), set_by, notes
+  - RLS 政策：Head Teacher 可管理自己年段+track 的班級
+  - 索引：class_id + course_type + term 複合唯一約束
+- **部署狀態**:
+  - ⏳ **Staging** (`kqvpcoolgyhjqleekmee`): 待執行
+  - ⏳ **Production** (`piwbooidofbaqklhijup`): 待執行
+- **相關檔案**:
+  - `db/migrations/032_create_gradebook_expectations.sql`
+  - `types/gradebook-expectations.ts`
+  - `lib/api/gradebook-expectations.ts`
+  - `app/(lms)/head/expectations/page.tsx`
 
 ### 📊 真實資料部署狀態
 
@@ -1282,6 +1295,59 @@ COPY --from=builder /app/public ./public
 | 學年切換功能 | 全系統 | 🟢 | ⏳ 待開發 |
 | Term 2 資料匯入 | CSV Import | 🟡 | ⏳ 待資料 |
 | 我的課表 | `/(lms)/schedule` | 🟢 | ⏳ 待開發 |
+
+---
+
+## 📋 Gradebook Expectations 架構 (2025-12-15) ✅ **v1.52.0**
+
+### 功能概述
+
+Head Teacher 可設定各班級的成績輸入期望進度，Browse Gradebook 頁面會依據這些期望動態計算狀態：
+
+- **Expectations 管理頁面**：`/head/expectations` - 設定各班成績輸入期望
+- **動態狀態計算**：Browse Gradebook 整合 expectations 資料
+- **權限控制**：Head Teacher 依 grade_band + track 過濾可管理的班級
+
+### 資料結構
+
+```typescript
+interface GradebookExpectation {
+  id: string;
+  class_id: string;
+  course_type: 'LT' | 'IT' | 'KCFS';
+  term: number;                    // 1-4
+  expected_progress: number;       // 0-100%
+  set_by: string;                  // user_id
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+```
+
+### 狀態計算邏輯
+
+```typescript
+// 如果有設定 expectation
+if (expectation) {
+  if (actual_progress >= expectation.expected_progress) return 'on_track';
+  if (actual_progress > 0) return 'behind';
+  return 'not_started';
+}
+// 沒有 expectation 時使用預設邏輯（80% 標準）
+if (progress >= 80) return 'on_track';
+if (progress > 0) return 'behind';
+return 'not_started';
+```
+
+### 相關檔案
+
+| 檔案 | 說明 |
+|------|------|
+| `types/gradebook-expectations.ts` | TypeScript 型別定義 |
+| `lib/api/gradebook-expectations.ts` | CRUD API |
+| `app/(lms)/head/expectations/page.tsx` | UI 頁面 |
+| `db/migrations/032_create_gradebook_expectations.sql` | Migration |
+| `lib/api/browse-gradebook.ts` | 整合 expectations 進度計算 |
 
 ---
 
