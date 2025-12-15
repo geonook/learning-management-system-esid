@@ -184,19 +184,20 @@ export default function GradeOverviewPage() {
         // For G5-6 IT courses, there can be 3500+ scores, so we need to fetch in batches
         let scoresData: { exam_id: string; score: number | null }[] = [];
         if (examIds.length > 0) {
-          // Fetch scores with a higher limit (10000 should cover most cases)
-          // If more than 10000 scores needed, implement pagination
-          const { data, error: scoresError } = await supabase
+          // Fetch scores using range() instead of limit() to ensure we get all rows
+          // range(0, 9999) = first 10000 rows (0-indexed, inclusive)
+          const { data, error: scoresError, count } = await supabase
             .from("scores")
-            .select("exam_id, score")
+            .select("exam_id, score", { count: "exact" })
             .in("exam_id", examIds)
             .not("score", "is", null)
-            .limit(10000);  // Override default 1000 row limit
+            .range(0, 9999);  // Fetch rows 0-9999 (10000 total)
           scoresData = data || [];
 
-          // DEBUG: Log scores data (v2 - with limit fix verification)
-          console.log('[HeadOverview] Step 8 - scoresData (LIMIT=10000):', {
+          // DEBUG: Log scores data (v3 - using range() instead of limit())
+          console.log('[HeadOverview] Step 8 - scoresData (RANGE=0-9999):', {
             scoresCount: scoresData.length,
+            totalCount: count,  // This shows the actual total in database
             examIdsCount: examIds.length,
             error: scoresError?.message,
             expectedMin: 3500,  // G5-6 IT should have 3500+ scores
