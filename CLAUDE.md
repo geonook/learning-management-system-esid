@@ -2169,110 +2169,83 @@ git push origin <current-branch>
 
 ## 🌍 MULTI-ENVIRONMENT & GIT BRANCH MANAGEMENT | 多環境與 Git 分支管理規範
 
-### 🏗️ **THREE-ENVIRONMENT ARCHITECTURE | 三環境架構**
+### 🏗️ **TWO-BRANCH ARCHITECTURE | 雙分支架構**
 
 #### **Environment Mapping | 環境對應關係**
 
 ```
-📦 三環境架構（標準 GitFlow）
-├── 🖥️ Development (本地開發)
-│   ├── 分支: feature/* (功能開發分支)
-│   ├── 地址: http://localhost:3000
-│   ├── 用途: 日常開發與功能測試
-│   └── 環境變數: .env.local
-│
-├── 🧪 Staging (測試環境)
-│   ├── 分支: develop (整合測試分支)
-│   ├── 地址: https://kcislk-lms.zeabur.app
-│   ├── 用途: 整合測試與預發布驗證
-│   └── 環境變數: Zeabur 控制台配置
+📦 雙分支架構（簡化 GitFlow）
+├── 🖥️ Development + Staging (開發 + 測試)
+│   ├── 分支: develop (主要開發分支)
+│   ├── 本地: http://localhost:3000
+│   ├── 遠端: Zeabur 自動部署（監聽 develop 分支）
+│   ├── 用途: 日常開發、功能測試、整合驗證
+│   └── 環境變數: .env.local (本地) / Zeabur 控制台 (遠端)
 │
 └── 🌟 Production (生產環境)
     ├── 分支: main (穩定發布分支)
-    ├── 地址: https://kcislk-lms.zeabur.app (same as Staging for now)
+    ├── 地址: 手動從 develop 合併後部署
     ├── 用途: 正式營運服務
     └── 環境變數: Zeabur 控制台配置
 ```
 
 #### **Branch Usage Rules | 分支使用規則**
 
-- **main**: 僅存放生產就緒的穩定版本 | Only production-ready stable versions
-- **develop**: 開發主線，所有功能整合與測試 | Development mainline for feature integration and testing
-- **feature/\***: 功能開發分支，完成後合併到 develop | Feature development branches, merged to develop when complete
-- **hotfix/\***: 緊急修復分支，可同時合併到 main 和 develop | Emergency fix branches, can be merged to both main and develop
+- **develop**: 主要開發分支，所有日常開發都在此進行，推送後 Zeabur 自動部署
+- **main**: 僅存放生產就緒的穩定版本，從 develop 手動合併
+- **hotfix/\***: 緊急修復分支（僅在需要時使用），可同時合併到 main 和 develop
 
 ### 🔄 **STANDARD DEVELOPMENT WORKFLOW | 標準開發流程**
 
-#### **Daily Feature Development | 日常功能開發**
+#### **Daily Development | 日常開發**
 
 ```bash
-# 1. Create feature branch from develop | 從 develop 創建功能分支
+# 1. 確保在 develop 分支並拉取最新代碼
 git checkout develop
 git pull origin develop
-git checkout -b feature/新功能描述
 
-# 2. Local development and testing on feature branch | 在功能分支進行本地開發與測試
-npm run dev  # Development on localhost:3000 (feature branch)
+# 2. 本地開發與測試
+npm run dev  # Development on localhost:3000
 
-# 3. Commit completed work | 開發完成後提交
+# 3. 開發完成後提交並推送
 git add .
 git commit -m "feat: 新功能描述"
-git push origin feature/新功能描述
+git push origin develop  # ⚡ Zeabur 自動部署
 
-# 4. Create Pull Request and merge to develop | 創建 PR 並合併到 develop (觸發 Staging 自動部署)
-# 在 GitHub 創建 PR: feature/新功能描述 → develop
-# 合併後自動觸發 Staging 環境部署
+# 4. 在 Zeabur 部署的環境測試
+# 確保功能正常運作
 
-# 5. Test in Staging environment | 在 Staging 環境測試
-# URL: https://kcislk-lms.zeabur.app
-# 確保功能在接近生產的環境中正常運作
-
-# 6. After Staging testing passes, prepare Production release | Staging 環境測試通過後，準備發布到 Production
-# ⚠️ MANUAL CONTROL: Only YOU decide when to update Production | 手動控制：只有您決定何時更新 Production
+# 5. 測試通過後，合併到 main（準備 Production 發布）
 git checkout main
+git pull origin main
 git merge develop
-git push origin main  # Triggers Production auto-deployment | 觸發 Production 自動部署
+git push origin main  # 🌟 Production 發布
+git checkout develop  # 切回 develop 繼續開發
 ```
 
-#### **Quick Development on develop branch | 快速開發模式（直接在 develop 分支）**
+#### **Environment Flow | 環境流程**
 
-```bash
-# For small changes, you can work directly on develop | 小型變更可直接在 develop 分支開發
-git checkout develop
-git pull origin develop
-
-# Make changes and commit | 進行修改並提交
-git add .
-git commit -m "fix: 小型修復描述"
-git push origin develop  # 自動觸發 Staging 部署
-
-# After testing, merge to main | 測試通過後合併到 main
-git checkout main
-git merge develop
-git push origin main
 ```
-
-#### **Environment Isolation Principle | 環境隔離原則**
-
-> **🛡️ KEY PRINCIPLE | 關鍵原則**: 每個環境使用不同的分支，確保完全隔離
-> **Each environment uses different branches to ensure complete isolation**
-
-- **Development**: 在 `feature/*` 或 `develop` 分支開發，避免與其他環境程式碼衝突
-- **Staging**: 只部署 `develop` 分支，確保整合測試的穩定性
-- **Production**: 只部署 `main` 分支，您完全控制發布時機
+本地開發 (localhost:3000)
+    ↓ git push origin develop
+Zeabur 自動部署 (Staging 測試)
+    ↓ git merge develop → main
+Production 發布 (手動控制)
+```
 
 ### 🚨 **EMERGENCY HOTFIX WORKFLOW | 緊急修復流程**
 
 ```bash
-# 1. Create hotfix branch from main | 從 main 創建 hotfix 分支
+# 僅在 Production 出現緊急問題時使用
+# 1. 從 main 創建 hotfix 分支
 git checkout main
 git pull origin main
 git checkout -b hotfix/緊急問題描述
 
-# 2. Fix issue and test | 修復問題並測試
+# 2. 修復問題並測試
 # ... fix the critical issue ...
 
-# 3. Merge to both main and develop | 同時合併到 main 和 develop
+# 3. 同時合併到 main 和 develop
 git checkout main
 git merge hotfix/緊急問題描述
 git push origin main
@@ -2281,9 +2254,8 @@ git checkout develop
 git merge hotfix/緊急問題描述
 git push origin develop
 
-# 4. Clean up hotfix branch | 刪除 hotfix 分支
+# 4. 刪除 hotfix 分支
 git branch -d hotfix/緊急問題描述
-git push origin --delete hotfix/緊急問題描述
 ```
 
 ### ✅ **BEST PRACTICES | 最佳實務**
@@ -2310,27 +2282,23 @@ git commit -m "refactor: 重構認證中介軟體"
 #### **Branch Naming Standards | 分支命名規範**
 
 ```bash
-# Feature branches | 功能分支
-feature/gradebook-expectations
-feature/user-authentication
-feature/student-progress-chart
+# 主要分支 | Main branches
+develop    # 日常開發分支
+main       # 生產環境分支
 
-# Hotfix branches | 修復分支
+# Hotfix branches (僅緊急情況使用)
 hotfix/rls-recursion-fix
 hotfix/database-connection-issue
-
-# Release branches (if needed) | 發布分支 (如需要)
-release/v1.52.0
 ```
 
 ### 🚨 **IMPORTANT CONSIDERATIONS | 重要注意事項**
 
 #### **Operations to Avoid | 避免的操作**
 
-- ❌ **Direct development on main branch** | **直接在 main 分支開發**: All development should be in develop or feature branches
-- ❌ **Skip Staging testing** | **跳過 Staging 測試**: Important changes must be validated in Staging environment
-- ❌ **Use --force push** | **使用 --force push**: Avoid force pushing unless absolutely necessary
-- ❌ **Merge untested code** | **合併未測試的代碼**: Ensure functionality is fully tested locally before merging
+- ❌ **Direct development on main branch** | **直接在 main 分支開發**: 所有開發都應在 develop 分支進行
+- ❌ **Skip testing before merge** | **跳過測試就合併**: 重要變更必須在 Zeabur 部署後驗證
+- ❌ **Use --force push** | **使用 --force push**: 除非絕對必要，避免強制推送
+- ❌ **Merge untested code to main** | **合併未測試的代碼到 main**: 確保功能在 develop 測試通過後才合併到 main
 
 #### **Must Follow Rules | 必須遵循的規則**
 
