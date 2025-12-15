@@ -406,7 +406,9 @@ export async function getClassDistribution(
       }
     }
 
-    const { data: scores, error } = await query;
+    // IMPORTANT: Override Supabase default 1000 row limit
+    // Score distribution needs all scores in the grade band
+    const { data: scores, error } = await query.limit(10000);
 
     if (error) {
       console.error("Error fetching score distribution:", error);
@@ -1076,6 +1078,7 @@ export async function getHeadTeacherKpis(
     }
 
     // Get recent scores for average calculation (filtered by course type via course IDs)
+    // IMPORTANT: Override Supabase default 1000 row limit
     const { data: scores } = await supabase
       .from("scores")
       .select(
@@ -1092,7 +1095,8 @@ export async function getHeadTeacherKpis(
         "entered_at",
         new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
       ) // Last 30 days
-      .not("score", "is", null);
+      .not("score", "is", null)
+      .limit(10000);  // Override default 1000 row limit
 
     const validScores = (scores || [])
       .map((s) => s.score || 0)

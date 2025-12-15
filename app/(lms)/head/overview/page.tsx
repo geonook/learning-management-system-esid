@@ -144,6 +144,17 @@ export default function GradeOverviewPage() {
           courseToClass.set(c.id, c.class_id);
         });
 
+        // DEBUG: Log course data
+        const courseClassIdSet = new Set(coursesData?.map(c => c.class_id) || []);
+        const classesWithoutCourse = classesData.filter(c => !courseClassIdSet.has(c.id));
+        console.log('[HeadOverview] Step 6 - coursesData:', {
+          count: coursesData?.length || 0,
+          courseType,
+          classIdsCount: classIds.length,
+          courseClassIds: coursesData?.map(c => c.class_id),
+          classesWithoutCourse: classesWithoutCourse.map(c => c.name),
+        });
+
         // 7. BATCH QUERY: Get exams for these courses (filtered by term if needed)
         let examsQuery = supabase
           .from("exams")
@@ -161,29 +172,65 @@ export default function GradeOverviewPage() {
           examToCourse.set(e.id, e.course_id);
         });
 
+        // DEBUG: Log exam data
+        console.log('[HeadOverview] Step 7 - examsData:', {
+          examCount: examIds.length,
+          courseIdsCount: courseIds.length,
+          termFilter: termForApi,
+        });
+
         // 8. BATCH QUERY: Get scores for these exams
+        // IMPORTANT: Supabase has a default limit of 1000 rows
+        // For G5-6 IT courses, there can be 3500+ scores, so we need to fetch in batches
         let scoresData: { exam_id: string; score: number | null }[] = [];
         if (examIds.length > 0) {
-          const { data } = await supabase
+          // Fetch scores with a higher limit (10000 should cover most cases)
+          // If more than 10000 scores needed, implement pagination
+          const { data, error: scoresError } = await supabase
             .from("scores")
             .select("exam_id, score")
             .in("exam_id", examIds)
-            .not("score", "is", null);
+            .not("score", "is", null)
+            .limit(10000);  // Override default 1000 row limit
           scoresData = data || [];
+
+          // DEBUG: Log scores data
+          console.log('[HeadOverview] Step 8 - scoresData:', {
+            scoresCount: scoresData.length,
+            examIdsCount: examIds.length,
+            error: scoresError?.message,
+          });
         }
 
         // Group scores by class
         const scoresByClass = new Map<string, number[]>();
+        let unmappedExamIds = 0;
+        let unmappedCourseIds = 0;
         scoresData.forEach((s) => {
           if (s.score === null || s.score <= 0) return;
           const courseId = examToCourse.get(s.exam_id);
-          if (!courseId) return;
+          if (!courseId) {
+            unmappedExamIds++;
+            return;
+          }
           const classId = courseToClass.get(courseId);
-          if (!classId) return;
+          if (!classId) {
+            unmappedCourseIds++;
+            return;
+          }
 
           const scores = scoresByClass.get(classId) || [];
           scores.push(s.score);
           scoresByClass.set(classId, scores);
+        });
+
+        // DEBUG: Log grouped scores
+        console.log('[HeadOverview] Step 9 - scoresByClass:', {
+          classesWithScores: scoresByClass.size,
+          totalClasses: classesData.length,
+          unmappedExamIds,
+          unmappedCourseIds,
+          classIdsWithScores: Array.from(scoresByClass.keys()),
         });
 
         // 9. Build class summaries
