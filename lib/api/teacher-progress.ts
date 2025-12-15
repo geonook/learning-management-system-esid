@@ -141,17 +141,36 @@ export async function getTeachersProgress(
     return { data: [], stats: { total_teachers: 0, completed: 0, in_progress: 0, needs_attention: 0 } };
   }
 
-  // 4. 取得每個班級的學生數
-  const { data: studentCounts, error: studentCountError } = await supabase
-    .from("student_courses")
-    .select("course_id")
-    .in(
-      "course_id",
-      courses?.map((c) => c.id) || []
-    );
+  // 4. 並行查詢：學生數 + 考試（都只需要 courseIds）
+  const courseIds = courses?.map((c) => c.id) || [];
+
+  // 建立 exams 查詢
+  let examsQuery = supabase
+    .from("exams")
+    .select("id, course_id, term")
+    .in("course_id", courseIds);
+
+  if (filters.term) {
+    examsQuery = examsQuery.eq("term", filters.term);
+  }
+
+  // 並行執行 student_courses 和 exams 查詢
+  const [studentCountsResult, examsResult] = await Promise.all([
+    supabase
+      .from("student_courses")
+      .select("course_id")
+      .in("course_id", courseIds),
+    examsQuery,
+  ]);
+
+  const { data: studentCounts, error: studentCountError } = studentCountsResult;
+  const { data: exams, error: examsError } = examsResult;
 
   if (studentCountError) {
     console.error("[getTeachersProgress] Student count error:", studentCountError);
+  }
+  if (examsError) {
+    console.error("[getTeachersProgress] Exams query error:", examsError);
   }
 
   // 計算每個課程的學生數
@@ -161,30 +180,10 @@ export async function getTeachersProgress(
     courseStudentCount.set(sc.course_id, count + 1);
   });
 
-  // 5. 取得成績數（可選按 term 過濾）
-  // 先取得 exams
-  let examsQuery = supabase
-    .from("exams")
-    .select("id, course_id, term")
-    .in(
-      "course_id",
-      courses?.map((c) => c.id) || []
-    );
-
-  if (filters.term) {
-    examsQuery = examsQuery.eq("term", filters.term);
-  }
-
-  const { data: exams, error: examsError } = await examsQuery;
-
-  if (examsError) {
-    console.error("[getTeachersProgress] Exams query error:", examsError);
-  }
-
   const examIds = exams?.map((e) => e.id) || [];
   const examToCourse = new Map(exams?.map((e) => [e.id, e.course_id]) || []);
 
-  // 取得成績
+  // 5. 取得成績
   let scoresData: { exam_id: string }[] = [];
   if (examIds.length > 0) {
     const { data: scores, error: scoresError } = await supabase
