@@ -72,8 +72,8 @@ export default function GradeOverviewPage() {
       const supabase = createClient();
 
       try {
-        // 1. Fetch Head Teacher KPIs
-        const kpiData = await getHeadTeacherKpis(gradeBand, courseType);
+        // 1. Fetch Head Teacher KPIs (pass academicYear to avoid hardcoded year)
+        const kpiData = await getHeadTeacherKpis(gradeBand, courseType, academicYear);
         setKpis(kpiData);
 
         // 2. Fetch score distribution for this grade band

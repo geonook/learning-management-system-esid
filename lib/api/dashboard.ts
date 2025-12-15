@@ -20,6 +20,7 @@ import {
   calcSemesterGrade,
   isValidScore,
 } from "@/lib/grade/calculations";
+import { parseGradeBand } from "@/lib/utils/gradeband";
 
 // Types for dashboard data structures
 export interface DashboardStudent {
@@ -382,18 +383,8 @@ export async function getClassDistribution(
 
     // Apply role-based filtering
     if (userRole === "head" && gradeBand) {
-      // Parse grade band to get grades
-      let grades: number[] = [];
-      if (gradeBand.includes("-")) {
-        const parts = gradeBand.split("-").map(Number);
-        const start = parts[0] ?? 1;
-        const end = parts[1] ?? start;
-        for (let i = start; i <= end; i++) {
-          grades.push(i);
-        }
-      } else {
-        grades = [Number(gradeBand)];
-      }
+      // Parse grade band to get grades (use unified parseGradeBand function)
+      const grades = parseGradeBand(gradeBand);
       query = query.in("exams.courses.classes.grade", grades);
       // Filter by course type for head teachers
       if (courseType) {
@@ -502,18 +493,8 @@ export async function getUpcomingDeadlines(
 
     // Apply role-based filtering
     if (userRole === "head" && gradeBand) {
-      // Parse grade band to get grades
-      let grades: number[] = [];
-      if (gradeBand.includes("-")) {
-        const parts = gradeBand.split("-").map(Number);
-        const start = parts[0] ?? 1;
-        const end = parts[1] ?? start;
-        for (let i = start; i <= end; i++) {
-          grades.push(i);
-        }
-      } else {
-        grades = [Number(gradeBand)];
-      }
+      // Parse grade band to get grades (use unified parseGradeBand function)
+      const grades = parseGradeBand(gradeBand);
       query = query.in("courses.classes.grade", grades);
     } else if (userRole === "teacher" && userId) {
       const { data: teacherCourses } = await supabase
@@ -1006,35 +987,26 @@ export interface GradeClassSummary {
  * Get Head Teacher KPIs for their specific grade band and course type
  * @param gradeBand - Grade band string: "1", "2", "3-4", "5-6", "1-2", "1-6"
  * @param courseType - Course type: "LT", "IT", "KCFS"
+ * @param academicYear - Academic year string: "2025-2026", "2026-2027"
  */
 export async function getHeadTeacherKpis(
   gradeBand: string,
-  courseType: "LT" | "IT" | "KCFS"
+  courseType: "LT" | "IT" | "KCFS",
+  academicYear: string = "2025-2026"
 ): Promise<HeadTeacherKpis> {
   const supabase = createClient();
 
   try {
-    // Parse grade band to get grade numbers
-    let grades: number[] = [];
-    if (gradeBand.includes("-")) {
-      const parts = gradeBand.split("-").map(Number);
-      const start = parts[0] ?? 1;
-      const end = parts[1] ?? start;
-      for (let i = start; i <= end; i++) {
-        grades.push(i);
-      }
-    } else {
-      grades = [Number(gradeBand)];
-    }
+    // Parse grade band to get grade numbers (use unified parseGradeBand function)
+    const grades = parseGradeBand(gradeBand);
 
-    // Get classes in these grades (classes don't have track, course type is in courses table)
-    // Only get current academic year to avoid duplicates from 2026-2027
+    // Get classes in these grades for the specified academic year
     const { data: classes, error: classesError } = await supabase
       .from("classes")
       .select("id, name")
       .in("grade", grades)
       .eq("is_active", true)
-      .eq("academic_year", "2025-2026");
+      .eq("academic_year", academicYear);
 
     if (classesError) {
       console.error("Error fetching head teacher classes:", classesError);
@@ -1075,7 +1047,7 @@ export async function getHeadTeacherKpis(
       .select("teacher_id")
       .in("class_id", classIds)
       .eq("is_active", true)
-      .eq("academic_year", "2025-2026")
+      .eq("academic_year", academicYear)
       .eq("course_type", courseType);  // Filter by course type
 
     const uniqueTeachers = new Set((courses || []).map((c) => c.teacher_id).filter(Boolean));
@@ -1087,7 +1059,7 @@ export async function getHeadTeacherKpis(
       .select("id")
       .in("class_id", classIds)
       .eq("is_active", true)
-      .eq("academic_year", "2025-2026")
+      .eq("academic_year", academicYear)
       .eq("course_type", courseType);  // Filter by course type
 
     const courseIds = (coursesForScores || []).map((c) => c.id);
