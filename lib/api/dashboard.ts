@@ -1026,11 +1026,13 @@ export async function getHeadTeacherKpis(
     }
 
     // Get classes in these grades (classes don't have track, course type is in courses table)
+    // Only get current academic year to avoid duplicates from 2026-2027
     const { data: classes, error: classesError } = await supabase
       .from("classes")
       .select("id, name")
       .in("grade", grades)
-      .eq("is_active", true);
+      .eq("is_active", true)
+      .eq("academic_year", "2025-2026");
 
     if (classesError) {
       console.error("Error fetching head teacher classes:", classesError);
@@ -1070,7 +1072,8 @@ export async function getHeadTeacherKpis(
       .from("courses")
       .select("teacher_id")
       .in("class_id", classIds)
-      .eq("is_active", true);
+      .eq("is_active", true)
+      .eq("academic_year", "2025-2026");
 
     const uniqueTeachers = new Set((courses || []).map((c) => c.teacher_id));
     const teachersCount = uniqueTeachers.size;

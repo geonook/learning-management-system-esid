@@ -96,12 +96,13 @@ export default function GradeOverviewPage() {
           grades = [Number(gradeBand)];
         }
 
-        // 4. Fetch classes in this grade band
+        // 4. Fetch classes in this grade band (current academic year only)
         const { data: classesData } = await supabase
           .from("classes")
           .select("id, name, grade")
           .in("grade", grades)
           .eq("is_active", true)
+          .eq("academic_year", "2025-2026")  // Only current academic year
           .order("grade", { ascending: true })
           .order("name", { ascending: true });
 
