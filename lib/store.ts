@@ -3,7 +3,7 @@
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 import type { Term } from "@/types/academic-year"
-import { getCurrentAcademicYear, getCurrentTerm } from "@/types/academic-year"
+import { getCurrentAcademicYear } from "@/types/academic-year"
 
 type Role = "admin" | "head" | "teacher"
 type Track = "local" | "international"
@@ -54,8 +54,12 @@ export const useAppStore = create<State>()(
       passThreshold: 60,
       assessmentTitles: defaultAssessmentTitles,
       // Academic Year + Term: default to current values
+      // Note: Default term to "all" instead of getCurrentTerm() because:
+      // 1. Database may only have data for specific terms (e.g., Term 1 only)
+      // 2. getCurrentTerm() returns Term 2 in Dec-Jan, but data may not exist yet
+      // 3. Head Overview page relies on fetching exam data by term
       selectedAcademicYear: getCurrentAcademicYear(),
-      selectedTerm: getCurrentTerm(),
+      selectedTerm: "all" as Term | "all",
       setRole: (role) => set({ role }),
       setSelections: (p) => set((s) => ({ selections: { ...s.selections, ...p } })),
       setPassThreshold: (v) => set({ passThreshold: v }),
@@ -84,7 +88,7 @@ export const useAppStore = create<State>()(
           return {
             ...state,
             selectedAcademicYear: getCurrentAcademicYear(),
-            selectedTerm: getCurrentTerm(),
+            selectedTerm: "all" as Term | "all",
           }
         }
         return state
