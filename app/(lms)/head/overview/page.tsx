@@ -108,69 +108,98 @@ export default function GradeOverviewPage() {
           .order("grade", { ascending: true })
           .order("name", { ascending: true });
 
-        // 5. For each class, get student count and average score
-        const classSummaries: ClassSummary[] = [];
+        if (!classesData || classesData.length === 0) {
+          setClasses([]);
+          return;
+        }
 
-        for (const cls of classesData || []) {
-          // Get student count
-          const { count: studentCount } = await supabase
-            .from("students")
-            .select("*", { count: "exact" })
-            .eq("class_id", cls.id)
-            .eq("is_active", true);
+        const classIds = classesData.map((c) => c.id);
 
-          // Get average score for this class (filtered by term if selected)
-          // Note: exams table has course_id, not class_id directly
-          // We need to go through courses to get class_id
-          let scoresQuery = supabase
+        // 5. BATCH QUERY: Get all students for these classes at once
+        const { data: studentsData } = await supabase
+          .from("students")
+          .select("class_id")
+          .in("class_id", classIds)
+          .eq("is_active", true);
+
+        // Count students per class
+        const studentCountByClass = new Map<string, number>();
+        (studentsData || []).forEach((s) => {
+          const count = studentCountByClass.get(s.class_id) || 0;
+          studentCountByClass.set(s.class_id, count + 1);
+        });
+
+        // 6. BATCH QUERY: Get courses for these classes
+        const { data: coursesData } = await supabase
+          .from("courses")
+          .select("id, class_id")
+          .in("class_id", classIds)
+          .eq("is_active", true)
+          .eq("academic_year", academicYear);
+
+        const courseIds = coursesData?.map((c) => c.id) || [];
+        const courseToClass = new Map<string, string>();
+        (coursesData || []).forEach((c) => {
+          courseToClass.set(c.id, c.class_id);
+        });
+
+        // 7. BATCH QUERY: Get exams for these courses (filtered by term if needed)
+        let examsQuery = supabase
+          .from("exams")
+          .select("id, course_id, term")
+          .in("course_id", courseIds);
+
+        if (termForApi) {
+          examsQuery = examsQuery.eq("term", termForApi);
+        }
+
+        const { data: examsData } = await examsQuery;
+        const examIds = examsData?.map((e) => e.id) || [];
+        const examToCourse = new Map<string, string>();
+        (examsData || []).forEach((e) => {
+          examToCourse.set(e.id, e.course_id);
+        });
+
+        // 8. BATCH QUERY: Get scores for these exams
+        let scoresData: { exam_id: string; score: number | null }[] = [];
+        if (examIds.length > 0) {
+          const { data } = await supabase
             .from("scores")
-            .select(`
-              score,
-              exam:exams!inner(
-                id,
-                term,
-                course:courses!inner(
-                  class_id
-                )
-              )
-            `)
+            .select("exam_id, score")
+            .in("exam_id", examIds)
             .not("score", "is", null);
+          scoresData = data || [];
+        }
 
-          const { data: scores } = await scoresQuery;
+        // Group scores by class
+        const scoresByClass = new Map<string, number[]>();
+        scoresData.forEach((s) => {
+          if (s.score === null || s.score <= 0) return;
+          const courseId = examToCourse.get(s.exam_id);
+          if (!courseId) return;
+          const classId = courseToClass.get(courseId);
+          if (!classId) return;
 
-          // Filter scores by class_id and optionally by term
-          const filteredScores = (scores || []).filter((s) => {
-            // Supabase FK relations can return array or single object
-            const examData = s.exam;
-            const exam = Array.isArray(examData) ? examData[0] : examData;
-            if (!exam) return false;
+          const scores = scoresByClass.get(classId) || [];
+          scores.push(s.score);
+          scoresByClass.set(classId, scores);
+        });
 
-            const courseData = exam.course;
-            const course = Array.isArray(courseData) ? courseData[0] : courseData;
-            if (!course) return false;
-
-            // Filter by class_id
-            if (course.class_id !== cls.id) return false;
-            // Filter by term if selected
-            if (termForApi && exam.term !== termForApi) return false;
-            return true;
-          });
-
-          const validScores = filteredScores
-            .map((s) => s.score)
-            .filter((s): s is number => s !== null && s > 0);
-
-          const avgScore = validScores.length > 0
-            ? Math.round((validScores.reduce((sum, s) => sum + s, 0) / validScores.length) * 10) / 10
+        // 9. Build class summaries
+        const classSummaries: ClassSummary[] = classesData.map((cls) => {
+          const studentCount = studentCountByClass.get(cls.id) || 0;
+          const classScores = scoresByClass.get(cls.id) || [];
+          const avgScore = classScores.length > 0
+            ? Math.round((classScores.reduce((sum, s) => sum + s, 0) / classScores.length) * 10) / 10
             : null;
 
-          classSummaries.push({
+          return {
             id: cls.id,
             name: cls.name,
-            studentCount: studentCount || 0,
+            studentCount,
             avgScore,
-          });
-        }
+          };
+        });
 
         setClasses(classSummaries);
 
