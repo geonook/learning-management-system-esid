@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { useAuth } from "@/lib/supabase/auth-context";
 import { Target, Save, RotateCcw, Loader2, Check, Info } from "lucide-react";
@@ -49,8 +49,8 @@ export default function ExpectationsPage() {
   const courseType = (userPermissions?.track as CourseType) || "LT";
   const isKCFS = courseType === "KCFS";
 
-  // Parse grades from grade band
-  const grades = parseGradeBand(gradeBand);
+  // Parse grades from grade band - memoized to prevent infinite re-renders
+  const grades = useMemo(() => parseGradeBand(gradeBand), [gradeBand]);
 
   // Fetch expectations on mount and when term changes
   const fetchExpectations = useCallback(async () => {
