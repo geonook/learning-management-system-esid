@@ -2,40 +2,87 @@
 
 import { useState, useEffect } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { Globe, ArrowLeft } from "lucide-react";
+import { useAuthReady } from "@/hooks/useAuthReady";
+import { BookOpen, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { getGradeLevelSummary } from "@/lib/api/statistics";
+import { getGradeBandGradeLevelSummary } from "@/lib/api/gradeband-statistics";
+import { getGradeBandDisplay } from "@/lib/utils/gradeband";
 import { formatNumber, formatPercentage } from "@/lib/statistics/calculations";
-import type { GradeLevelSummary } from "@/types/statistics";
+import type { GradeLevelSummary, CourseType } from "@/types/statistics";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatisticsActionButtons } from "@/components/statistics/ActionButtons";
 import { TrendLineChart, DonutProgressChart, StackedGradeChart } from "@/components/statistics/charts";
 import type { ColumnDefinition } from "@/lib/utils/clipboard";
-import { useGlobalFilters } from "@/components/filters";
+import { GlobalFilterBar, useGlobalFilters } from "@/components/filters";
 
-export default function ITAnalysisPage() {
+const courseTypeConfig = {
+  LT: {
+    name: "Local Teacher (LT)",
+    description: "Local Teacher course statistics",
+    color: "#06b6d4",
+    bgClass: "bg-cyan-500/20",
+    textClass: "text-cyan-500 dark:text-cyan-400",
+    selectedClass: "bg-cyan-500/20 text-cyan-600 dark:text-cyan-400",
+    infoBoxClass: "bg-cyan-500/10 border-cyan-500/20",
+  },
+  IT: {
+    name: "International Teacher (IT)",
+    description: "International Teacher course statistics",
+    color: "#6366f1",
+    bgClass: "bg-indigo-500/20",
+    textClass: "text-indigo-500 dark:text-indigo-400",
+    selectedClass: "bg-indigo-500/20 text-indigo-600 dark:text-indigo-400",
+    infoBoxClass: "bg-indigo-500/10 border-indigo-500/20",
+  },
+  KCFS: {
+    name: "KCFS",
+    description: "Kang Chiao Future Skills course statistics",
+    color: "#ec4899",
+    bgClass: "bg-pink-500/20",
+    textClass: "text-pink-500 dark:text-pink-400",
+    selectedClass: "bg-pink-500/20 text-pink-600 dark:text-pink-400",
+    infoBoxClass: "bg-pink-500/10 border-pink-500/20",
+  },
+};
+
+export default function GradeBandCourseAnalysisPage() {
   const [loading, setLoading] = useState(true);
   const [statistics, setStatistics] = useState<GradeLevelSummary[]>([]);
+  const [selectedCourseType, setSelectedCourseType] = useState<CourseType>("LT");
   const { academicYear, termForApi } = useGlobalFilters();
+  const { isReady, permissions } = useAuthReady();
+
+  // Get grade_band from user permissions
+  const gradeBand = permissions?.grade ?? null;
+  const gradeBandDisplay = gradeBand ? getGradeBandDisplay(gradeBand) : "";
+
+  const courseTypes: CourseType[] = ["LT", "IT", "KCFS"];
+  const config = courseTypeConfig[selectedCourseType];
 
   useEffect(() => {
+    if (!isReady || !gradeBand) return;
+
     async function fetchData() {
       setLoading(true);
       try {
-        const data = await getGradeLevelSummary("IT", {
-          academic_year: academicYear,
-          term: termForApi,
-        });
+        const data = await getGradeBandGradeLevelSummary(
+          {
+            grade_band: gradeBand!,
+            academic_year: academicYear,
+            term: termForApi,
+          },
+          selectedCourseType
+        );
         setStatistics(data);
       } catch (error) {
-        console.error("Failed to fetch IT statistics:", error);
+        console.error(`Failed to fetch ${selectedCourseType} statistics:`, error);
       } finally {
         setLoading(false);
       }
     }
 
     fetchData();
-  }, [academicYear, termForApi]);
+  }, [isReady, gradeBand, selectedCourseType, academicYear, termForApi]);
 
   // Calculate totals
   const totals = statistics.reduce(
@@ -70,28 +117,52 @@ export default function ITAnalysisPage() {
     { key: "std_dev", header: "Std Dev", format: (v) => formatNumber(v as number | null) },
   ];
 
+  // Show message if no grade band assigned
+  if (isReady && !gradeBand) {
+    return (
+      <AuthGuard requiredRoles={["admin", "head"]}>
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/head/gradeband"
+              className="p-2 hover:bg-surface-hover rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-text-secondary" />
+            </Link>
+            <h1 className="text-2xl font-bold text-text-primary">Course Analysis</h1>
+          </div>
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-6">
+            <p className="text-text-secondary">
+              No grade band assigned. Please contact an administrator.
+            </p>
+          </div>
+        </div>
+      </AuthGuard>
+    );
+  }
+
   return (
-    <AuthGuard requiredRoles={["admin", "head", "office_member"]}>
+    <AuthGuard requiredRoles={["admin", "head"]}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link
-              href="/browse/stats"
+              href="/head/gradeband"
               className="p-2 hover:bg-surface-hover rounded-lg transition-colors"
             >
               <ArrowLeft className="w-5 h-5 text-text-secondary" />
             </Link>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-indigo-500/20 rounded-lg">
-                <Globe className="w-6 h-6 text-indigo-500 dark:text-indigo-400" />
+              <div className={`p-2 ${config.bgClass} rounded-lg`}>
+                <BookOpen className={`w-6 h-6 ${config.textClass}`} />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-text-primary">
-                  IT Course Analysis
+                  Course Analysis
                 </h1>
                 <p className="text-sm text-text-secondary">
-                  International Teacher (IT) course statistics by grade level
+                  {config.description} for {gradeBandDisplay}
                 </p>
               </div>
             </div>
@@ -100,8 +171,31 @@ export default function ITAnalysisPage() {
             data={statistics}
             loading={loading}
             columns={columns}
-            exportOptions={{ filename: "it-analysis", sheetName: "IT Statistics" }}
+            exportOptions={{
+              filename: `gradeband-${selectedCourseType.toLowerCase()}-analysis`,
+              sheetName: `${gradeBandDisplay} ${selectedCourseType} Statistics`
+            }}
           />
+        </div>
+
+        {/* Global Filters (Year + Term) */}
+        <GlobalFilterBar showYear showTerm />
+
+        {/* Course Type Tabs */}
+        <div className="flex gap-2">
+          {courseTypes.map((ct) => (
+            <button
+              key={ct}
+              onClick={() => setSelectedCourseType(ct)}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                selectedCourseType === ct
+                  ? courseTypeConfig[ct].selectedClass
+                  : "bg-surface-secondary text-text-secondary hover:bg-surface-hover"
+              }`}
+            >
+              {ct}
+            </button>
+          ))}
         </div>
 
         {/* Summary Cards */}
@@ -120,7 +214,7 @@ export default function ITAnalysisPage() {
           </div>
           <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="text-sm text-text-secondary mb-1">Overall Average</div>
-            <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+            <div className={`text-2xl font-bold ${config.textClass}`}>
               {loading ? <Skeleton className="h-8 w-16" /> : formatNumber(overallAvg)}
             </div>
           </div>
@@ -131,22 +225,22 @@ export default function ITAnalysisPage() {
           <TrendLineChart
             data={statistics}
             loading={loading}
-            title="IT Grade Trends"
-            color="#6366f1"
+            title={`${gradeBandDisplay} ${selectedCourseType} Grade Trends`}
+            color={config.color}
           />
           <DonutProgressChart
             passRate={overallPassRate}
             excellentRate={overallExcellentRate}
             loading={loading}
-            title="IT Pass Rate Overview"
-            color="#6366f1"
+            title={`${selectedCourseType} Pass Rate Overview`}
+            color={config.color}
           />
         </div>
 
         <StackedGradeChart
           data={statistics}
           loading={loading}
-          title="IT Student Distribution by Level"
+          title={`${selectedCourseType} Student Distribution by Level`}
         />
 
         {/* Statistics Table */}
@@ -177,7 +271,7 @@ export default function ITAnalysisPage() {
               </thead>
               <tbody>
                 {loading ? (
-                  Array.from({ length: 8 }).map((_, i) => (
+                  Array.from({ length: 4 }).map((_, i) => (
                     <tr key={i} className="border-b border-border-subtle">
                       <td className="p-4">
                         <Skeleton className="h-4 w-16" />
@@ -205,7 +299,7 @@ export default function ITAnalysisPage() {
                       colSpan={6}
                       className="p-8 text-center text-text-tertiary"
                     >
-                      No IT course statistics available
+                      No {selectedCourseType} course statistics available for {gradeBandDisplay}
                     </td>
                   </tr>
                 ) : (
@@ -255,12 +349,12 @@ export default function ITAnalysisPage() {
         </div>
 
         {/* Info Box */}
-        <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-4">
+        <div className={`${config.infoBoxClass} border rounded-xl p-4`}>
           <p className="text-text-secondary text-sm">
-            <strong>IT (International Teacher) Courses:</strong> These courses are
-            taught by international teachers following an English-based curriculum.
-            Note: LT and IT courses follow different curricula and standards.
-            Direct comparisons between LT and IT scores should be avoided.
+            <strong>{config.name} Courses:</strong> Statistics are aggregated
+            for your grade band ({gradeBandDisplay}). Pass rate indicates students
+            scoring ≥60, excellent rate indicates students scoring ≥90. Standard
+            deviation shows the spread of scores within each grade level.
           </p>
         </div>
       </div>

@@ -14,7 +14,6 @@ import {
   School,
   Settings,
   Shield,
-  GitCompare,
   GraduationCap,
   MessageSquare,
   BarChart3,
@@ -207,10 +206,10 @@ export function Sidebar() {
               active={pathname === "/head/teachers"}
             />
             <SidebarItem
-              href="/head/comparison"
-              icon={<GitCompare className="w-4 h-4" />}
-              label="Class Comparison"
-              active={pathname === "/head/comparison"}
+              href="/head/gradeband"
+              icon={<BarChart3 className="w-4 h-4" />}
+              label="GradeBand"
+              active={pathname?.startsWith("/head/gradeband") ?? false}
             />
             <SidebarItem
               href="/head/expectations"
