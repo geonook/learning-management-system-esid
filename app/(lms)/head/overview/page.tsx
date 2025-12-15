@@ -180,26 +180,50 @@ export default function GradeOverviewPage() {
         });
 
         // 8. BATCH QUERY: Get scores for these exams
-        // IMPORTANT: Supabase has a default limit of 1000 rows
-        // For G5-6 IT courses, there can be 3500+ scores, so we need to fetch in batches
+        // IMPORTANT: Supabase has a hard limit of 1000 rows per request (cannot be overridden)
+        // We need to fetch in batches of 1000 to get all scores
         let scoresData: { exam_id: string; score: number | null }[] = [];
         if (examIds.length > 0) {
-          // Fetch scores using range() instead of limit() to ensure we get all rows
-          // range(0, 9999) = first 10000 rows (0-indexed, inclusive)
-          const { data, error: scoresError, count } = await supabase
-            .from("scores")
-            .select("exam_id, score", { count: "exact" })
-            .in("exam_id", examIds)
-            .not("score", "is", null)
-            .range(0, 9999);  // Fetch rows 0-9999 (10000 total)
-          scoresData = data || [];
+          const BATCH_SIZE = 1000;
+          let offset = 0;
+          let hasMore = true;
 
-          // DEBUG: Log scores data (v3 - using range() instead of limit())
-          console.log('[HeadOverview] Step 8 - scoresData (RANGE=0-9999):', {
+          // First, get the total count
+          const { count: totalCount } = await supabase
+            .from("scores")
+            .select("*", { count: "exact", head: true })
+            .in("exam_id", examIds)
+            .not("score", "is", null);
+
+          // Fetch in batches until we have all data
+          while (hasMore) {
+            const { data: batch, error: batchError } = await supabase
+              .from("scores")
+              .select("exam_id, score")
+              .in("exam_id", examIds)
+              .not("score", "is", null)
+              .range(offset, offset + BATCH_SIZE - 1);
+
+            if (batchError) {
+              console.error('[HeadOverview] Batch fetch error:', batchError.message);
+              break;
+            }
+
+            if (batch && batch.length > 0) {
+              scoresData = [...scoresData, ...batch];
+              offset += batch.length;
+              hasMore = batch.length === BATCH_SIZE;
+            } else {
+              hasMore = false;
+            }
+          }
+
+          // DEBUG: Log scores data (v4 - using pagination to bypass 1000 limit)
+          console.log('[HeadOverview] Step 8 - scoresData (PAGINATED):', {
             scoresCount: scoresData.length,
-            totalCount: count,  // This shows the actual total in database
+            totalCount: totalCount,  // Expected total from count query
             examIdsCount: examIds.length,
-            error: scoresError?.message,
+            batchesFetched: Math.ceil(scoresData.length / BATCH_SIZE),
             expectedMin: 3500,  // G5-6 IT should have 3500+ scores
           });
         }
