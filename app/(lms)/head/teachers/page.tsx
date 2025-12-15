@@ -6,23 +6,25 @@ import { useAuth } from "@/lib/supabase/auth-context";
 import { Users, CheckCircle, Clock, AlertCircle, BookOpen, GraduationCap, Search } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { getTeachersWithCourses, type TeacherWithCourses } from "@/lib/api/users";
-import { createClient } from "@/lib/supabase/client";
-
-interface TeacherWithProgress extends TeacherWithCourses {
-  completion_rate: number;
-  status: "completed" | "in_progress" | "needs_attention";
-}
+import { GlobalFilterBar, useGlobalFilters } from "@/components/filters";
+import { getTeachersProgress, type TeacherProgress, type TeacherProgressStats } from "@/lib/api/teacher-progress";
 
 export default function TeacherProgressPage() {
   const { userPermissions, user } = useAuth();
+  const { academicYear, termForApi } = useGlobalFilters();
   const userId = user?.id;
   const [loading, setLoading] = useState(true);
-  const [teachers, setTeachers] = useState<TeacherWithProgress[]>([]);
+  const [teachers, setTeachers] = useState<TeacherProgress[]>([]);
+  const [stats, setStats] = useState<TeacherProgressStats>({
+    total_teachers: 0,
+    completed: 0,
+    in_progress: 0,
+    needs_attention: 0,
+  });
   const [searchQuery, setSearchQuery] = useState("");
 
   const gradeBand = userPermissions?.grade || "1";
-  const courseType = userPermissions?.track as "LT" | "IT" | "KCFS" || null;
+  const courseType = (userPermissions?.track as "LT" | "IT" | "KCFS") || undefined;
 
   // Parse grade band to display string
   const getGradeDisplay = (band: string) => {
@@ -32,21 +34,6 @@ export default function TeacherProgressPage() {
     return `G${band}`;
   };
 
-  // Parse grade band to array of numbers
-  const parseGradeBand = (band: string): number[] => {
-    if (band.includes("-")) {
-      const parts = band.split("-").map(Number);
-      const start = parts[0] ?? 1;
-      const end = parts[1] ?? start;
-      const grades: number[] = [];
-      for (let i = start; i <= end; i++) {
-        grades.push(i);
-      }
-      return grades;
-    }
-    return [Number(band)];
-  };
-
   useEffect(() => {
     // Wait for user to be available
     if (!userId) {
@@ -54,65 +41,17 @@ export default function TeacherProgressPage() {
     }
 
     async function fetchTeachers() {
+      setLoading(true);
       try {
-        const supabase = createClient();
-
-        // Get all teachers with their courses
-        const allTeachers = await getTeachersWithCourses();
-
-        // Get grades in this grade band
-        const grades = parseGradeBand(gradeBand);
-
-        // Get classes in this grade band
-        const { data: classesInBand } = await supabase
-          .from("classes")
-          .select("id, name, grade")
-          .in("grade", grades)
-          .eq("is_active", true);
-
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const classIds = (classesInBand || []).map(c => c.id);
-        const classNames = new Set((classesInBand || []).map(c => c.name));
-
-        // Filter teachers:
-        // 1. Only those assigned to classes in this grade band
-        // 2. If head has a course type, filter by that type
-        const filteredTeachers = allTeachers.filter(teacher => {
-          // Check if teacher has classes in this grade band
-          const hasClassInBand = teacher.assigned_classes.some(className => classNames.has(className));
-
-          // If course type filter is set, also filter by teacher type
-          if (courseType && teacher.teacher_type !== courseType) {
-            return false;
-          }
-
-          return hasClassInBand || teacher.assigned_classes.length === 0;
+        const result = await getTeachersProgress({
+          academic_year: academicYear,
+          term: termForApi,
+          grade_band: gradeBand,
+          course_type: courseType,
         });
 
-        // Calculate completion rate for each teacher (mock for now since we don't have score completion data)
-        // In a real implementation, this would query the scores table
-        const teachersWithProgress: TeacherWithProgress[] = filteredTeachers.map(teacher => {
-          // For now, use a simple heuristic based on course assignments
-          const hasClasses = teacher.course_count > 0;
-          const completion_rate = hasClasses ? Math.round(Math.random() * 30 + 70) : 0; // Placeholder
-
-          let status: "completed" | "in_progress" | "needs_attention";
-          if (completion_rate >= 90) {
-            status = "completed";
-          } else if (completion_rate >= 50) {
-            status = "in_progress";
-          } else {
-            status = "needs_attention";
-          }
-
-          return {
-            ...teacher,
-            completion_rate: hasClasses ? completion_rate : 0,
-            status: hasClasses ? status : "needs_attention",
-          };
-        });
-
-        setTeachers(teachersWithProgress);
+        setTeachers(result.data);
+        setStats(result.stats);
       } catch (error) {
         console.error("Failed to fetch teachers:", error);
       } finally {
@@ -121,38 +60,29 @@ export default function TeacherProgressPage() {
     }
 
     fetchTeachers();
-  }, [userId, gradeBand, courseType]);
+  }, [userId, gradeBand, courseType, academicYear, termForApi]);
 
   // Filter teachers based on search
   const filteredTeachers = useMemo(() => {
     return teachers.filter((teacher) => {
       if (!searchQuery) return true;
       return (
-        teacher.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        teacher.teacher_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         teacher.email.toLowerCase().includes(searchQuery.toLowerCase())
       );
     });
   }, [teachers, searchQuery]);
 
-  // Calculate summary stats
-  const stats = useMemo(() => {
-    const completed = teachers.filter(t => t.status === "completed").length;
-    const inProgress = teachers.filter(t => t.status === "in_progress").length;
-    const needsAttention = teachers.filter(t => t.status === "needs_attention").length;
-    const totalCourses = teachers.reduce((sum, t) => sum + t.course_count, 0);
-    return { completed, inProgress, needsAttention, totalCourses };
-  }, [teachers]);
-
   // Group teachers by type
   const teachersByType = useMemo(() => {
-    const groups: { LT: TeacherWithProgress[]; IT: TeacherWithProgress[]; KCFS: TeacherWithProgress[]; other: TeacherWithProgress[] } = {
+    const groups: { LT: TeacherProgress[]; IT: TeacherProgress[]; KCFS: TeacherProgress[]; other: TeacherProgress[] } = {
       LT: [],
       IT: [],
       KCFS: [],
       other: [],
     };
 
-    filteredTeachers.forEach(teacher => {
+    filteredTeachers.forEach((teacher) => {
       const type = teacher.teacher_type;
       if (type === "LT") {
         groups.LT.push(teacher);
@@ -191,18 +121,23 @@ export default function TeacherProgressPage() {
     <AuthGuard requiredRoles={["admin", "head"]}>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-500/20 rounded-lg">
-            <Users className="w-6 h-6 text-blue-500 dark:text-blue-400" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-text-primary">Teacher Progress</h1>
-            <p className="text-sm text-text-secondary">
-              {getGradeDisplay(gradeBand)} Teachers
-              {courseType ? ` • ${courseType} Track` : ""}
-            </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-500/20 rounded-lg">
+              <Users className="w-6 h-6 text-blue-500 dark:text-blue-400" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-text-primary">Teacher Progress</h1>
+              <p className="text-sm text-text-secondary">
+                {getGradeDisplay(gradeBand)} Teachers
+                {courseType ? ` • ${courseType} Track` : ""}
+              </p>
+            </div>
           </div>
         </div>
+
+        {/* Global Filter Bar */}
+        <GlobalFilterBar showYear showTerm />
 
         {/* Search */}
         <div className="relative max-w-md">
@@ -225,7 +160,7 @@ export default function TeacherProgressPage() {
             {loading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
-              <div className="text-2xl font-bold text-text-primary">{teachers.length}</div>
+              <div className="text-2xl font-bold text-text-primary">{stats.total_teachers}</div>
             )}
             <div className="text-xs text-text-tertiary">in grade band</div>
           </div>
@@ -239,7 +174,7 @@ export default function TeacherProgressPage() {
             ) : (
               <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.completed}</div>
             )}
-            <div className="text-xs text-text-tertiary">on track</div>
+            <div className="text-xs text-text-tertiary">≥90% complete</div>
           </div>
           <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
@@ -249,9 +184,9 @@ export default function TeacherProgressPage() {
             {loading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
-              <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.inProgress}</div>
+              <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.in_progress}</div>
             )}
-            <div className="text-xs text-text-tertiary">working</div>
+            <div className="text-xs text-text-tertiary">50-89% complete</div>
           </div>
           <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
@@ -261,9 +196,9 @@ export default function TeacherProgressPage() {
             {loading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
-              <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.needsAttention}</div>
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.needs_attention}</div>
             )}
-            <div className="text-xs text-text-tertiary">behind</div>
+            <div className="text-xs text-text-tertiary">&lt;50% complete</div>
           </div>
         </div>
 
@@ -351,7 +286,7 @@ export default function TeacherProgressPage() {
         <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
           <h3 className="text-blue-600 dark:text-blue-400 font-medium mb-2">About Progress Tracking</h3>
           <p className="text-text-secondary text-sm">
-            Progress is calculated based on score entries for the current assessment period.
+            Progress is calculated based on actual score entries. Formula: (scores entered) / (students × 13 assessments) × 100%.
             Teachers are grouped by their course type (LT, IT, KCFS) for easier management.
           </p>
         </div>
@@ -366,7 +301,7 @@ function TeacherTable({
   getStatusColor,
   getProgressBarColor,
 }: {
-  teachers: TeacherWithProgress[];
+  teachers: TeacherProgress[];
   getStatusColor: (status: string) => string;
   getProgressBarColor: (rate: number) => string;
 }) {
@@ -382,9 +317,9 @@ function TeacherTable({
       </thead>
       <tbody>
         {teachers.map((teacher) => (
-          <tr key={teacher.id} className="border-b border-border-subtle hover:bg-surface-hover">
+          <tr key={teacher.teacher_id} className="border-b border-border-subtle hover:bg-surface-hover">
             <td className="p-4">
-              <div className="text-text-primary font-medium">{teacher.full_name}</div>
+              <div className="text-text-primary font-medium">{teacher.teacher_name}</div>
               <div className="text-text-tertiary text-sm">{teacher.email}</div>
             </td>
             <td className="p-4">
@@ -405,6 +340,9 @@ function TeacherTable({
                   />
                 </div>
                 <span className="text-text-secondary text-sm w-12">{teacher.completion_rate}%</span>
+              </div>
+              <div className="text-text-tertiary text-xs mt-1">
+                {teacher.scores_entered} / {teacher.scores_expected} scores
               </div>
             </td>
             <td className="p-4">

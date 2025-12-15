@@ -11,6 +11,7 @@ import {
   type ClassDistribution,
 } from "@/lib/api/dashboard";
 import { createClient } from "@/lib/supabase/client";
+import { GlobalFilterBar, useGlobalFilters } from "@/components/filters";
 import {
   ResponsiveContainer,
   BarChart,
@@ -31,6 +32,7 @@ interface ClassSummary {
 
 export default function GradeOverviewPage() {
   const { userPermissions, user } = useAuth();
+  const { academicYear, termForApi } = useGlobalFilters();
   const userId = user?.id;
   const [loading, setLoading] = useState(true);
   const [kpis, setKpis] = useState<HeadTeacherKpis>({
@@ -96,13 +98,13 @@ export default function GradeOverviewPage() {
           grades = [Number(gradeBand)];
         }
 
-        // 4. Fetch classes in this grade band (current academic year only)
+        // 4. Fetch classes in this grade band (selected academic year)
         const { data: classesData } = await supabase
           .from("classes")
           .select("id, name, grade")
           .in("grade", grades)
           .eq("is_active", true)
-          .eq("academic_year", "2025-2026")  // Only current academic year
+          .eq("academic_year", academicYear)
           .order("grade", { ascending: true })
           .order("name", { ascending: true });
 
@@ -117,19 +119,44 @@ export default function GradeOverviewPage() {
             .eq("class_id", cls.id)
             .eq("is_active", true);
 
-          // Get average score for this class
-          const { data: scores } = await supabase
+          // Get average score for this class (filtered by term if selected)
+          // Note: exams table has course_id, not class_id directly
+          // We need to go through courses to get class_id
+          let scoresQuery = supabase
             .from("scores")
             .select(`
               score,
-              exams!inner(
-                class_id
+              exam:exams!inner(
+                id,
+                term,
+                course:courses!inner(
+                  class_id
+                )
               )
             `)
-            .eq("exams.class_id", cls.id)
             .not("score", "is", null);
 
-          const validScores = (scores || [])
+          const { data: scores } = await scoresQuery;
+
+          // Filter scores by class_id and optionally by term
+          const filteredScores = (scores || []).filter((s) => {
+            // Supabase FK relations can return array or single object
+            const examData = s.exam;
+            const exam = Array.isArray(examData) ? examData[0] : examData;
+            if (!exam) return false;
+
+            const courseData = exam.course;
+            const course = Array.isArray(courseData) ? courseData[0] : courseData;
+            if (!course) return false;
+
+            // Filter by class_id
+            if (course.class_id !== cls.id) return false;
+            // Filter by term if selected
+            if (termForApi && exam.term !== termForApi) return false;
+            return true;
+          });
+
+          const validScores = filteredScores
             .map((s) => s.score)
             .filter((s): s is number => s !== null && s > 0);
 
@@ -155,7 +182,7 @@ export default function GradeOverviewPage() {
     }
 
     fetchData();
-  }, [userId, gradeBand, courseType, userPermissions?.grade]);
+  }, [userId, gradeBand, courseType, userPermissions?.grade, academicYear, termForApi]);
 
   return (
     <AuthGuard requiredRoles={["admin", "head"]}>
@@ -172,6 +199,9 @@ export default function GradeOverviewPage() {
             </p>
           </div>
         </div>
+
+        {/* Global Filter Bar */}
+        <GlobalFilterBar showYear showTerm />
 
         {/* Stats */}
         <div className="grid grid-cols-4 gap-4">
