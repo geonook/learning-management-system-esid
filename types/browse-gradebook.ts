@@ -29,6 +29,10 @@ export interface ClassProgress {
   it_teacher: string | null;
   kcfs_teacher: string | null;
   overall_status: ProgressStatus;
+  // Expected assessment items (from gradebook_expectations or default)
+  lt_expected?: number;
+  it_expected?: number;
+  kcfs_expected?: number;
 }
 
 export interface BrowseGradebookStats {

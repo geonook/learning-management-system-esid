@@ -3,6 +3,11 @@
  *
  * Fetches class-based gradebook progress data.
  * Shows LT/IT/KCFS progress per class.
+ *
+ * Progress calculation now uses dynamic expectations:
+ * - LT/IT: Per Grade × Level expectations from gradebook_expectations table
+ * - KCFS: Unified expectations (grade=NULL, level=NULL)
+ * - Falls back to default 13 if no expectation is set
  */
 
 import { supabase } from '@/lib/supabase/client';
@@ -12,16 +17,33 @@ import type {
   BrowseGradebookFilters,
   ProgressStatus,
 } from '@/types/browse-gradebook';
+import { extractLevel, DEFAULT_EXPECTATION, type CourseType, type Level } from '@/types/gradebook-expectations';
 
-const ASSESSMENT_ITEMS = 13; // FA1-FA8 (8) + SA1-SA4 (4) + MID (1)
+const DEFAULT_ASSESSMENT_ITEMS = DEFAULT_EXPECTATION.expected_total; // 13
 
 /**
- * Calculate progress percentage
+ * Calculate progress percentage with dynamic expected items
  */
-function calculateProgress(scoresEntered: number, studentCount: number): number {
-  const expected = studentCount * ASSESSMENT_ITEMS;
-  if (expected === 0) return 0;
-  return Math.min(100, Math.round((scoresEntered / expected) * 100));
+function calculateProgress(scoresEntered: number, studentCount: number, expectedItems: number): number {
+  const totalExpected = studentCount * expectedItems;
+  if (totalExpected === 0) return 0;
+  return Math.min(100, Math.round((scoresEntered / totalExpected) * 100));
+}
+
+/**
+ * Expectation lookup key generator
+ */
+function getExpectationKey(
+  academicYear: string,
+  term: number,
+  courseType: CourseType,
+  grade: number | null,
+  level: Level | null
+): string {
+  if (courseType === 'KCFS') {
+    return `${academicYear}:${term}:KCFS:null:null`;
+  }
+  return `${academicYear}:${term}:${courseType}:${grade}:${level}`;
 }
 
 /**
@@ -46,10 +68,10 @@ function determineStatus(ltProgress: number, itProgress: number, kcfsProgress: n
 export async function getClassesProgress(
   filters?: BrowseGradebookFilters
 ): Promise<{ data: ClassProgress[]; stats: BrowseGradebookStats }> {
-  // 1. Fetch all classes
+  // 1. Fetch all classes with level info
   let classesQuery = supabase
     .from('classes')
-    .select('id, name, grade, academic_year')
+    .select('id, name, grade, level, academic_year')
     .order('grade', { ascending: true })
     .order('name');
 
@@ -118,51 +140,50 @@ export async function getClassesProgress(
   });
 
   // 4. Fetch score counts per course
-  // To filter by term, we need to join scores with exams (which has the term column)
+  // IMPORTANT: Always use exam → course relationship to get correct course_id
+  // Do NOT use scores.course_id directly as it may be NULL or incorrect
   const courseIds = courses?.map(c => c.id) || [];
 
   let scoreCounts: { course_id: string }[] = [];
   if (courseIds.length > 0) {
-    // Build query - if term filter is provided, join with exams table
+    // Always use exam → course join to get accurate course_id
+    // This matches the pattern in lib/actions/gradebook.ts
+    type ExamData = { course_id: string; term: number };
+
+    let scoresQuery = supabase
+      .from('scores')
+      .select('exam:exams!inner(course_id, term)')
+      .not('score', 'is', null);
+
+    // Apply term filter if provided
     if (filters?.term) {
-      // Join scores with exams to filter by term
-      const { data: scoresWithExams, error: scoresError } = await supabase
-        .from('scores')
-        .select('exam:exams!inner(course_id, term)')
-        .not('score', 'is', null)
-        .eq('exam.term', filters.term);
+      scoresQuery = scoresQuery.eq('exam.term', filters.term);
+    }
 
-      if (scoresError) {
-        console.error('Error fetching scores with term filter:', scoresError);
-        // Don't throw, just use empty scores
-      } else {
-        // Extract course_id from nested exam object and filter by courseIds
-        // Supabase returns exam as an object (not array) due to !inner join
-        type ExamData = { course_id: string; term: number };
-        scoreCounts = (scoresWithExams || [])
-          .filter(s => {
-            const examData = s.exam as unknown as ExamData | null;
-            return examData && courseIds.includes(examData.course_id);
-          })
-          .map(s => {
-            const examData = s.exam as unknown as ExamData;
-            return { course_id: examData.course_id };
-          });
-      }
+    const { data: scoresWithExams, error: scoresError } = await scoresQuery;
+
+    if (scoresError) {
+      console.error('Error fetching scores:', scoresError);
+      // Don't throw, just use empty scores
     } else {
-      // No term filter - use simple query
-      const { data: scores, error: scoresError } = await supabase
-        .from('scores')
-        .select('course_id')
-        .in('course_id', courseIds)
-        .not('score', 'is', null);
-
-      if (scoresError) {
-        console.error('Error fetching scores:', scoresError);
-        // Don't throw, just use empty scores
-      } else {
-        scoreCounts = scores || [];
+      // DEBUG: Log the first few items to verify structure
+      console.log('[Browse Gradebook] Total scores fetched:', scoresWithExams?.length);
+      if (scoresWithExams && scoresWithExams.length > 0) {
+        console.log('[Browse Gradebook] First score structure:', JSON.stringify(scoresWithExams[0]));
       }
+
+      // Extract course_id from nested exam object and filter by courseIds
+      scoreCounts = (scoresWithExams || [])
+        .filter(s => {
+          const examData = s.exam as unknown as ExamData | null;
+          return examData && courseIds.includes(examData.course_id);
+        })
+        .map(s => {
+          const examData = s.exam as unknown as ExamData;
+          return { course_id: examData.course_id };
+        });
+
+      console.log('[Browse Gradebook] Filtered scores count:', scoreCounts.length);
     }
   }
 
@@ -211,18 +232,63 @@ export async function getClassesProgress(
     courseLookup.set(course.class_id, classData);
   });
 
-  // 6. Build class progress data
+  // 6. Fetch expectations for progress calculation
+  const academicYear = filters?.academic_year || classes[0]?.academic_year || '2025-2026';
+  const term = filters?.term || 1;
+
+  const { data: expectations, error: expectationsError } = await supabase
+    .from('gradebook_expectations')
+    .select('course_type, grade, level, expected_total')
+    .eq('academic_year', academicYear)
+    .eq('term', term);
+
+  if (expectationsError) {
+    console.error('[Browse Gradebook] Error fetching expectations:', expectationsError);
+    // Continue with defaults if expectations fail to load
+  }
+
+  // Build expectations lookup map
+  const expectationsMap = new Map<string, number>();
+  expectations?.forEach(exp => {
+    const key = getExpectationKey(
+      academicYear,
+      term,
+      exp.course_type as CourseType,
+      exp.grade,
+      exp.level as Level | null
+    );
+    expectationsMap.set(key, exp.expected_total);
+  });
+
+  // Helper to get expected items for a specific class/course combination
+  const getExpectedItems = (
+    classGrade: number,
+    classLevel: string | null,
+    courseType: CourseType
+  ): number => {
+    const level = extractLevel(classLevel);
+    const key = getExpectationKey(academicYear, term, courseType, classGrade, level);
+    return expectationsMap.get(key) ?? DEFAULT_ASSESSMENT_ITEMS;
+  };
+
+  // 7. Build class progress data
   const classProgressList: ClassProgress[] = classes.map(cls => {
     const studentCount = studentCountMap.get(cls.id) || 0;
     const courseData = courseLookup.get(cls.id) || {};
+    const classLevel = (cls as { level?: string | null }).level ?? null;
 
     const ltScores = courseData.lt ? (scoreCountMap.get(courseData.lt.id) || 0) : 0;
     const itScores = courseData.it ? (scoreCountMap.get(courseData.it.id) || 0) : 0;
     const kcfsScores = courseData.kcfs ? (scoreCountMap.get(courseData.kcfs.id) || 0) : 0;
 
-    const ltProgress = calculateProgress(ltScores, studentCount);
-    const itProgress = calculateProgress(itScores, studentCount);
-    const kcfsProgress = calculateProgress(kcfsScores, studentCount);
+    // Get expected items from expectations table (or default)
+    const ltExpected = getExpectedItems(cls.grade, classLevel, 'LT');
+    const itExpected = getExpectedItems(cls.grade, classLevel, 'IT');
+    const kcfsExpected = getExpectedItems(cls.grade, classLevel, 'KCFS');
+
+    const ltProgress = calculateProgress(ltScores, studentCount, ltExpected);
+    const itProgress = calculateProgress(itScores, studentCount, itExpected);
+    const kcfsProgress = calculateProgress(kcfsScores, studentCount, kcfsExpected);
 
     return {
       class_id: cls.id,
@@ -236,16 +302,20 @@ export async function getClassesProgress(
       it_teacher: courseData.it?.teacher_name || null,
       kcfs_teacher: courseData.kcfs?.teacher_name || null,
       overall_status: determineStatus(ltProgress, itProgress, kcfsProgress),
+      // Include expected items for transparency
+      lt_expected: ltExpected,
+      it_expected: itExpected,
+      kcfs_expected: kcfsExpected,
     };
   });
 
-  // 7. Apply status filter if provided
+  // 8. Apply status filter if provided
   let filteredData = classProgressList;
   if (filters?.status) {
     filteredData = classProgressList.filter(c => c.overall_status === filters.status);
   }
 
-  // 8. Calculate stats (from unfiltered data)
+  // 9. Calculate stats (from unfiltered data)
   const stats: BrowseGradebookStats = {
     total_classes: classProgressList.length,
     on_track: classProgressList.filter(c => c.overall_status === 'on_track').length,

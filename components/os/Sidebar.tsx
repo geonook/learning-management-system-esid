@@ -19,7 +19,8 @@ import {
   MessageSquare,
   BarChart3,
   Zap,
-  ChevronDown
+  ChevronDown,
+  Target
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -191,7 +192,7 @@ export function Sidebar() {
             sectionId="grade"
             isExpanded={isExpanded('grade')}
             onToggle={() => toggleSection('grade')}
-            itemCount={3}
+            itemCount={4}
           >
             <SidebarItem
               href="/head/overview"
@@ -210,6 +211,12 @@ export function Sidebar() {
               icon={<GitCompare className="w-4 h-4" />}
               label="Class Comparison"
               active={pathname === "/head/comparison"}
+            />
+            <SidebarItem
+              href="/head/expectations"
+              icon={<Target className="w-4 h-4" />}
+              label="Expectations"
+              active={pathname === "/head/expectations"}
             />
           </SidebarSection>
         )}
