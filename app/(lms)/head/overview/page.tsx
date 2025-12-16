@@ -22,6 +22,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { parseCourseType, getGradeBandDisplay } from "@/lib/utils/gradeband";
 
 interface ClassSummary {
   id: string;
@@ -50,15 +51,8 @@ export default function GradeOverviewPage() {
   const [classes, setClasses] = useState<ClassSummary[]>([]);
 
   const gradeBand = userPermissions?.grade || "1";
-  const courseType = userPermissions?.track as "LT" | "IT" | "KCFS" || "LT";
-
-  // Parse grade band to display string
-  const getGradeDisplay = (band: string) => {
-    if (band.includes("-")) {
-      return `G${band}`;
-    }
-    return `G${band}`;
-  };
+  // Use validated course type instead of unsafe type casting
+  const courseType = parseCourseType(userPermissions?.track);
 
   useEffect(() => {
     // Wait for user to be available
@@ -303,7 +297,7 @@ export default function GradeOverviewPage() {
           <div>
             <h1 className="text-2xl font-bold text-text-primary">Grade Overview</h1>
             <p className="text-sm text-text-secondary">
-              {getGradeDisplay(gradeBand)} • {courseType} • Performance metrics
+              {getGradeBandDisplay(gradeBand)} • {courseType} • Performance metrics
             </p>
           </div>
         </div>
@@ -323,7 +317,7 @@ export default function GradeOverviewPage() {
             ) : (
               <div className="text-2xl font-bold text-text-primary">{kpis.totalClasses}</div>
             )}
-            <div className="text-xs text-text-tertiary">in {getGradeDisplay(gradeBand)}</div>
+            <div className="text-xs text-text-tertiary">in {getGradeBandDisplay(gradeBand)}</div>
           </div>
           <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
@@ -539,7 +533,7 @@ export default function GradeOverviewPage() {
               ) : (
                 <tr>
                   <td colSpan={4} className="p-8 text-center text-text-tertiary">
-                    No classes found for {getGradeDisplay(gradeBand)}
+                    No classes found for {getGradeBandDisplay(gradeBand)}
                   </td>
                 </tr>
               )}
@@ -551,7 +545,7 @@ export default function GradeOverviewPage() {
         <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4">
           <h3 className="text-emerald-600 dark:text-emerald-400 font-medium mb-2">Head Teacher Dashboard</h3>
           <p className="text-text-secondary text-sm">
-            This dashboard shows metrics for {getGradeDisplay(gradeBand)} classes in the {courseType} track.
+            This dashboard shows metrics for {getGradeBandDisplay(gradeBand)} classes in the {courseType} track.
             Data is refreshed in real-time as teachers enter scores. Click on a class to view detailed student performance.
           </p>
         </div>
