@@ -238,7 +238,8 @@ export async function getTeachersProgress(
       .from("scores")
       .select("exam_id")
       .in("exam_id", examIds)
-      .not("score", "is", null);
+      .not("score", "is", null)
+      .limit(10000);  // Override default 1000 row limit
 
     if (scoresError) {
       console.error("[getTeachersProgress] Scores query error:", scoresError);
