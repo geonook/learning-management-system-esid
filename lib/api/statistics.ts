@@ -306,7 +306,10 @@ export async function getClassStatistics(
           if (termGrade !== null) termGrades.push(termGrade);
 
           // Collect raw KCFS scores (0-5 scale) for pass/excellent rate
-          Object.values(scoreMap).forEach(score => {
+          // Only collect scores from KCFS category codes, not legacy FA/SA/MID
+          const kcfsCategoryCodes = ['COMM', 'COLLAB', 'SD', 'CT', 'BW', 'PORT', 'PRES'];
+          kcfsCategoryCodes.forEach(code => {
+            const score = scoreMap[code];
             if (score !== null && score !== undefined) {
               rawKCFSScores.push(score);
             }

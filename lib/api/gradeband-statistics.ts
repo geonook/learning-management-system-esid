@@ -176,14 +176,25 @@ export async function getGradeBandQuickStats(
         const validScores = scoresData.map(s => s.score).filter((s): s is number => s !== null && s > 0);
         avgScore = calculateAverage(validScores);
 
-        // Calculate pass rate from sample
-        const passedCount = validScores.filter(s => s >= 60).length;
-        passRate = validScores.length > 0 ? (passedCount / validScores.length) * 100 : null;
+        // Calculate pass rate from sample - use appropriate threshold based on course type
+        // Note: For KCFS, raw scores are 0-5 scale; for LT/IT, scores are 0-100 scale
+        const isKCFS = filters.course_type === 'KCFS';
+        if (isKCFS) {
+          // KCFS raw scores use 0-5 scale, pass >= 3
+          passRate = calculateKCFSPassRate(validScores);
+        } else {
+          // LT/IT scores use 0-100 scale, pass >= 60
+          const passedCount = validScores.filter(s => s >= 60).length;
+          passRate = validScores.length > 0 ? (passedCount / validScores.length) * 100 : null;
+        }
 
         // Estimate completion rate: unique students with scores / total students
         // This is a rough estimate based on having any scores
         const scoresCount = scoresData.length;
-        const expectedScores = totalStudents * 13; // 13 assessments per student
+        // KCFS has 4-6 assessments depending on grade; LT/IT has 13 (FA1-8 + SA1-4 + MID)
+        // Use average of 5 for KCFS (midpoint of 4-6) vs 13 for LT/IT
+        const expectedItemsPerStudent = isKCFS ? 5 : 13;
+        const expectedScores = totalStudents * expectedItemsPerStudent;
         completionRate = expectedScores > 0 ? Math.min((scoresCount / expectedScores) * 100, 100) : null;
       }
     }
@@ -401,7 +412,10 @@ export async function getGradeBandClassStatistics(
           if (termGrade !== null) termGrades.push(termGrade);
 
           // Collect raw KCFS scores (0-5 scale) for pass/excellent rate
-          Object.values(scoreMap).forEach(score => {
+          // Only collect scores from KCFS category codes, not legacy FA/SA/MID
+          const kcfsCategoryCodes = ['COMM', 'COLLAB', 'SD', 'CT', 'BW', 'PORT', 'PRES'];
+          kcfsCategoryCodes.forEach(code => {
+            const score = scoreMap[code];
             if (score !== null && score !== undefined) {
               rawKCFSScores.push(score);
             }
