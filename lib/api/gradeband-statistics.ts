@@ -69,43 +69,6 @@ export interface GradeBandQuickStats {
 // Client components should import directly from '@/lib/utils/gradeband'.
 import { parseGradeBand } from '@/lib/utils/gradeband';
 
-/**
- * Fetch with retry mechanism for handling network errors
- */
-async function fetchWithRetry<T>(
-  fn: () => PromiseLike<{ data: T | null; error: { message: string } | null }>,
-  retries = 5
-): Promise<{ data: T | null; error: { message: string } | null }> {
-  for (let i = 0; i < retries; i++) {
-    try {
-      const result = await fn();
-      if (!result.error) {
-        return result;  // 成功時直接返回，不需要延遲
-      }
-      // 可重試的錯誤類型
-      const isRetryableError =
-        result.error.message?.includes('fetch failed') ||
-        result.error.message?.includes('ECONNRESET') ||
-        result.error.message?.includes('ETIMEDOUT') ||
-        result.error.message?.includes('AbortError') ||
-        result.error.message?.includes('timeout');
-
-      if (isRetryableError) {
-        const delay = Math.min(1000 * Math.pow(2, i), 10000);
-        console.log(`[fetchWithRetry] Retry ${i + 1}/${retries} after ${result.error.message}, waiting ${delay}ms`);
-        await new Promise(r => setTimeout(r, delay));
-        continue;
-      }
-      return result;  // 不可重試的錯誤直接返回
-    } catch (err) {
-      const delay = Math.min(1000 * Math.pow(2, i), 10000);
-      console.log(`[fetchWithRetry] Caught error on attempt ${i + 1}/${retries}, waiting ${delay}ms`);
-      await new Promise(r => setTimeout(r, delay));
-      if (i === retries - 1) throw err;
-    }
-  }
-  return await fn();
-}
 
 // ============================================================
 // GradeBand Quick Stats
@@ -307,7 +270,7 @@ export async function getGradeBandClassStatistics(
     throw new Error(`Failed to fetch students: ${studentError.message}`);
   }
 
-  // 4. Fetch scores
+  // 4. Fetch scores - OPTIMIZED: Single query with limit instead of pagination loop
   const classIdSet = new Set(classIds);
   const studentIdList = students?.map(s => s.id) || [];
 
@@ -321,53 +284,37 @@ export async function getGradeBandClassStatistics(
   let rawScores: RawScore[] | null = null;
 
   if (studentIdList.length > 0) {
-    const SCORE_PAGE_SIZE = 1000;
-    let scoreOffset = 0;
-    let hasMoreScores = true;
-    const allRawScores: RawScore[] = [];
-
-    while (hasMoreScores) {
-      let scoresQuery = supabase
-        .from('scores')
-        .select(`
-          student_id,
-          assessment_code,
-          score,
-          exam:exams!inner(
-            course_id,
-            term,
-            course:courses!inner(
-              id,
-              class_id,
-              course_type
-            )
+    let scoresQuery = supabase
+      .from('scores')
+      .select(`
+        student_id,
+        assessment_code,
+        score,
+        exam:exams!inner(
+          course_id,
+          term,
+          course:courses!inner(
+            id,
+            class_id,
+            course_type
           )
-        `)
-        .in('student_id', studentIdList)
-        .not('score', 'is', null);
+        )
+      `)
+      .in('student_id', studentIdList)
+      .not('score', 'is', null)
+      .limit(10000);  // Reasonable limit for grade band (typically ~3000-5000 scores)
 
-      if (filters.term) {
-        scoresQuery = scoresQuery.eq('exam.term', filters.term);
-      }
-
-      const result = await fetchWithRetry(() =>
-        scoresQuery.range(scoreOffset, scoreOffset + SCORE_PAGE_SIZE - 1)
-      );
-
-      if (result.error) {
-        console.error('[getGradeBandClassStatistics] Scores error:', result.error);
-        break;
-      }
-
-      if (result.data && result.data.length > 0) {
-        allRawScores!.push(...result.data);
-      }
-
-      scoreOffset += SCORE_PAGE_SIZE;
-      hasMoreScores = (result.data?.length || 0) === SCORE_PAGE_SIZE;
+    if (filters.term) {
+      scoresQuery = scoresQuery.eq('exam.term', filters.term);
     }
 
-    rawScores = allRawScores;
+    const { data: scoresData, error: scoresError } = await scoresQuery;
+
+    if (scoresError) {
+      console.error('[getGradeBandClassStatistics] Scores error:', scoresError);
+    } else {
+      rawScores = scoresData;
+    }
   }
 
   // Transform and filter scores
@@ -641,6 +588,7 @@ export async function getGradeBandClassRanking(
 
 /**
  * Get all student grades within the grade band
+ * OPTIMIZED: Parallel batch fetch instead of sequential while loops
  */
 export async function getGradeBandStudentGrades(
   filters: GradeBandFilters
@@ -648,74 +596,98 @@ export async function getGradeBandStudentGrades(
   const supabase = createClient();
   const grades = parseGradeBand(filters.grade_band);
 
-  // 1. Fetch students with their classes
-  const allStudents: {
+  // 1. Fetch students with their classes - with count for parallel batch
+  let baseStudentQuery = supabase
+    .from('students')
+    .select(`
+      id,
+      student_id,
+      full_name,
+      class_id,
+      classes!inner (
+        id,
+        name,
+        level,
+        grade,
+        academic_year
+      )
+    `, { count: 'exact' })
+    .in('classes.grade', grades)
+    .eq('classes.academic_year', filters.academic_year)
+    .eq('is_active', true)
+    .order('student_id');
+
+  if (filters.search) {
+    baseStudentQuery = baseStudentQuery.or(
+      `full_name.ilike.%${filters.search}%,student_id.ilike.%${filters.search}%`
+    );
+  }
+
+  if (filters.class_id) {
+    baseStudentQuery = baseStudentQuery.eq('class_id', filters.class_id);
+  }
+
+  // Get first page and count
+  const { data: firstPageStudents, count: studentCount, error: studentError } = await baseStudentQuery.range(0, 999);
+
+  if (studentError) {
+    console.error('[getGradeBandStudentGrades] Students error:', studentError);
+    throw new Error(`Failed to fetch students: ${studentError.message}`);
+  }
+
+  if (!firstPageStudents || firstPageStudents.length === 0) {
+    return [];
+  }
+
+  // Fetch remaining pages in parallel if needed
+  let allStudentData = firstPageStudents;
+  if (studentCount && studentCount > 1000) {
+    const totalPages = Math.min(Math.ceil(studentCount / 1000), 5);
+    const pagePromises = Array.from({ length: totalPages - 1 }, (_, i) => {
+      let query = supabase
+        .from('students')
+        .select(`
+          id,
+          student_id,
+          full_name,
+          class_id,
+          classes!inner (
+            id,
+            name,
+            level,
+            grade,
+            academic_year
+          )
+        `)
+        .in('classes.grade', grades)
+        .eq('classes.academic_year', filters.academic_year)
+        .eq('is_active', true)
+        .order('student_id')
+        .range((i + 1) * 1000, (i + 2) * 1000 - 1);
+
+      if (filters.search) {
+        query = query.or(`full_name.ilike.%${filters.search}%,student_id.ilike.%${filters.search}%`);
+      }
+      if (filters.class_id) {
+        query = query.eq('class_id', filters.class_id);
+      }
+      return query.then(r => r.data || []);
+    });
+
+    const additionalPages = await Promise.all(pagePromises);
+    allStudentData = [...firstPageStudents, ...additionalPages.flat()];
+  }
+
+  const allStudents = allStudentData.map(s => ({
+    ...s,
+    classes: Array.isArray(s.classes) ? s.classes[0] : s.classes
+  })) as {
     id: string;
     student_id: string;
     full_name: string;
     class_id: string;
     classes: { id: string; name: string; level: string; grade: number };
-  }[] = [];
-
-  const PAGE_SIZE = 1000;
-  let offset = 0;
-  let hasMore = true;
-
-  while (hasMore) {
-    let studentQuery = supabase
-      .from('students')
-      .select(`
-        id,
-        student_id,
-        full_name,
-        class_id,
-        classes!inner (
-          id,
-          name,
-          level,
-          grade,
-          academic_year
-        )
-      `)
-      .in('classes.grade', grades)
-      .eq('classes.academic_year', filters.academic_year)
-      .eq('is_active', true)
-      .order('student_id')
-      .range(offset, offset + PAGE_SIZE - 1);
-
-    if (filters.search) {
-      studentQuery = studentQuery.or(
-        `full_name.ilike.%${filters.search}%,student_id.ilike.%${filters.search}%`
-      );
-    }
-
-    if (filters.class_id) {
-      studentQuery = studentQuery.eq('class_id', filters.class_id);
-    }
-
-    const { data: pageStudents, error: studentError } = await studentQuery;
-
-    if (studentError) {
-      console.error('[getGradeBandStudentGrades] Students error:', studentError);
-      throw new Error(`Failed to fetch students: ${studentError.message}`);
-    }
-
-    if (pageStudents && pageStudents.length > 0) {
-      const mapped = pageStudents.map(s => ({
-        ...s,
-        classes: Array.isArray(s.classes) ? s.classes[0] : s.classes
-      })) as typeof allStudents;
-      allStudents.push(...mapped);
-      offset += PAGE_SIZE;
-      hasMore = pageStudents.length === PAGE_SIZE;
-    } else {
-      hasMore = false;
-    }
-  }
-
-  if (allStudents.length === 0) {
-    return [];
-  }
+  }[];
 
   const studentIds = allStudents.map(s => s.id);
   const classIds = [...new Set(allStudents.map(s => s.class_id))];
@@ -739,67 +711,94 @@ export async function getGradeBandStudentGrades(
     throw new Error(`Failed to fetch courses: ${courseError.message}`);
   }
 
-  // 3. Fetch scores
+  // 3. Fetch scores - OPTIMIZED: Parallel batch fetch instead of sequential while loop
   const classIdSet = new Set(classIds);
   type ScoreRow = { student_id: string; course_id: string; course_type: string; assessment_code: string; score: number | null };
   const allScores: ScoreRow[] = [];
 
   if (studentIds.length > 0) {
-    const SCORE_PAGE_SIZE = 1000;
-    let scoreOffset = 0;
-    let hasMoreScores = true;
-
-    while (hasMoreScores) {
-      let scoresQuery = supabase
-        .from('scores')
-        .select(`
-          student_id,
-          assessment_code,
-          score,
-          exam:exams!inner(
-            course_id,
-            term,
-            course:courses!inner(
-              id,
-              class_id,
-              course_type
-            )
+    // First page with count
+    let baseScoresQuery = supabase
+      .from('scores')
+      .select(`
+        student_id,
+        assessment_code,
+        score,
+        exam:exams!inner(
+          course_id,
+          term,
+          course:courses!inner(
+            id,
+            class_id,
+            course_type
           )
-        `)
-        .in('student_id', studentIds);
+        )
+      `, { count: 'exact' })
+      .in('student_id', studentIds);
 
-      if (filters.term) {
-        scoresQuery = scoresQuery.eq('exam.term', filters.term);
-      }
+    if (filters.term) {
+      baseScoresQuery = baseScoresQuery.eq('exam.term', filters.term);
+    }
 
-      const result = await fetchWithRetry(() =>
-        scoresQuery.range(scoreOffset, scoreOffset + SCORE_PAGE_SIZE - 1)
-      );
+    const { data: firstPageScores, count: scoresCount, error: scoresError } = await baseScoresQuery.range(0, 999);
 
-      if (result.error) {
-        console.error('[getGradeBandStudentGrades] Scores error:', result.error);
-        break;
-      }
+    if (scoresError) {
+      console.error('[getGradeBandStudentGrades] Scores error:', scoresError);
+    } else {
+      // Process first page
+      const processScorePage = (pageScores: typeof firstPageScores) => {
+        for (const s of pageScores || []) {
+          const examData = s.exam as unknown as { course_id: string; course: { id: string; class_id: string; course_type: string } } | null;
+          if (!examData?.course_id || !examData?.course) continue;
+          if (!classIdSet.has(examData.course.class_id)) continue;
+          if (filters.course_type && examData.course.course_type !== filters.course_type) continue;
 
-      const pageScores = result.data || [];
+          allScores.push({
+            student_id: s.student_id,
+            course_id: examData.course.id,
+            course_type: examData.course.course_type,
+            assessment_code: s.assessment_code,
+            score: s.score,
+          });
+        }
+      };
 
-      for (const s of pageScores) {
-        const examData = s.exam as unknown as { course_id: string; course: { id: string; class_id: string; course_type: string } } | null;
-        if (!examData?.course_id || !examData?.course) continue;
-        if (!classIdSet.has(examData.course.class_id)) continue;
-        if (filters.course_type && examData.course.course_type !== filters.course_type) continue;
+      processScorePage(firstPageScores);
 
-        allScores.push({
-          student_id: s.student_id,
-          course_id: examData.course.id,
-          course_type: examData.course.course_type,
-          assessment_code: s.assessment_code,
-          score: s.score,
+      // Fetch remaining pages in parallel if needed
+      if (scoresCount && scoresCount > 1000) {
+        const totalPages = Math.min(Math.ceil(scoresCount / 1000), 10);  // Max 10 pages = 10000 scores
+        const pagePromises = Array.from({ length: totalPages - 1 }, (_, i) => {
+          let query = supabase
+            .from('scores')
+            .select(`
+              student_id,
+              assessment_code,
+              score,
+              exam:exams!inner(
+                course_id,
+                term,
+                course:courses!inner(
+                  id,
+                  class_id,
+                  course_type
+                )
+              )
+            `)
+            .in('student_id', studentIds)
+            .range((i + 1) * 1000, (i + 2) * 1000 - 1);
+
+          if (filters.term) {
+            query = query.eq('exam.term', filters.term);
+          }
+          return query.then(r => r.data || []);
         });
-      }
 
-      scoreOffset += SCORE_PAGE_SIZE;
-      hasMoreScores = pageScores.length === SCORE_PAGE_SIZE;
+        const additionalPages = await Promise.all(pagePromises);
+        for (const pageData of additionalPages) {
+          processScorePage(pageData);
+        }
+      }
     }
   }
 
