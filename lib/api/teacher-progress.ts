@@ -262,7 +262,6 @@ export async function getTeachersProgress(
         hasMore = false;
       }
     }
-    console.log("[getTeachersProgress] Scores fetched:", scoresData.length, "examIds count:", examIds.length, "pages:", page);
   }
 
   // 計算每個課程的成績數
