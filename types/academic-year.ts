@@ -58,10 +58,10 @@ export const TERM_TO_SEMESTER: Record<Term, Semester> = {
  * Term display names
  */
 export const TERM_NAMES: Record<Term, string> = {
-  1: 'Fall Midterm',
-  2: 'Fall Final',
-  3: 'Spring Midterm',
-  4: 'Spring Final',
+  1: 'Term 1',
+  2: 'Term 2',
+  3: 'Term 3',
+  4: 'Term 4',
 };
 
 /**

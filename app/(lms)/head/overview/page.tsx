@@ -28,6 +28,7 @@ interface ClassSummary {
   name: string;
   studentCount: number;
   avgScore: number | null;
+  level: string | null;
 }
 
 export default function GradeOverviewPage() {
@@ -99,7 +100,7 @@ export default function GradeOverviewPage() {
           getClassDistribution("head", undefined, gradeBand, courseType),
           supabase
             .from("classes")
-            .select("id, name, grade")
+            .select("id, name, grade, level")
             .in("grade", grades)
             .eq("is_active", true)
             .eq("academic_year", academicYear)
@@ -163,6 +164,7 @@ export default function GradeOverviewPage() {
             name: cls.name,
             studentCount: studentCountByClass.get(cls.id) || 0,
             avgScore: null,
+            level: cls.level,
           }));
           if (!isCancelled) {
             setClasses(classSummaries);
@@ -252,6 +254,7 @@ export default function GradeOverviewPage() {
             name: cls.name,
             studentCount,
             avgScore,
+            level: cls.level,
           };
         });
 
@@ -468,7 +471,7 @@ export default function GradeOverviewPage() {
                 <th className="text-left p-4 text-sm font-medium text-text-secondary">Class</th>
                 <th className="text-left p-4 text-sm font-medium text-text-secondary">Students</th>
                 <th className="text-left p-4 text-sm font-medium text-text-secondary">Avg Score</th>
-                <th className="text-left p-4 text-sm font-medium text-text-secondary">Status</th>
+                <th className="text-left p-4 text-sm font-medium text-text-secondary">Level</th>
               </tr>
             </thead>
             <tbody>
@@ -500,20 +503,18 @@ export default function GradeOverviewPage() {
                       </span>
                     </td>
                     <td className="p-4">
-                      {cls.avgScore !== null ? (
-                        cls.avgScore >= 70 ? (
-                          <span className="px-2 py-1 bg-green-500/20 text-green-600 dark:text-green-400 text-xs rounded-full">
-                            On Track
-                          </span>
-                        ) : (
-                          <span className="px-2 py-1 bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs rounded-full">
-                            Needs Attention
-                          </span>
-                        )
-                      ) : (
-                        <span className="px-2 py-1 bg-surface-elevated text-text-tertiary text-xs rounded-full">
-                          No Data
+                      {cls.level ? (
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                          cls.level.endsWith('E1')
+                            ? 'bg-green-500/20 text-green-600 dark:text-green-400'
+                            : cls.level.endsWith('E2')
+                            ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400'
+                            : 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+                        }`}>
+                          {cls.level}
                         </span>
+                      ) : (
+                        <span className="text-text-tertiary">-</span>
                       )}
                     </td>
                   </tr>
