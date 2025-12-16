@@ -23,6 +23,7 @@ import {
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { parseCourseType, getGradeBandDisplay } from "@/lib/utils/gradeband";
+import { ScopeIndicator } from "@/components/ui/scope-indicator";
 
 interface ClassSummary {
   id: string;
@@ -304,6 +305,14 @@ export default function GradeOverviewPage() {
 
         {/* Global Filter Bar */}
         <GlobalFilterBar showYear showTerm />
+
+        {/* Data Scope Indicator */}
+        <ScopeIndicator
+          gradeBand={gradeBand}
+          courseType={courseType}
+          academicYear={academicYear}
+          term={termForApi}
+        />
 
         {/* Stats */}
         <div className="grid grid-cols-4 gap-4">

@@ -18,9 +18,10 @@ import {
   getGradeBandQuickStats,
   type GradeBandQuickStats,
 } from "@/lib/api/gradeband-statistics";
-import { getGradeBandDisplay } from "@/lib/utils/gradeband";
+import { getGradeBandDisplay, parseCourseType } from "@/lib/utils/gradeband";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GlobalFilterBar, useGlobalFilters } from "@/components/filters";
+import { ScopeIndicator } from "@/components/ui/scope-indicator";
 
 export default function GradeBandManagementPage() {
   const [loading, setLoading] = useState(true);
@@ -151,6 +152,16 @@ export default function GradeBandManagementPage() {
 
         {/* Global Filters */}
         <GlobalFilterBar showYear showTerm />
+
+        {/* Scope Indicator */}
+        {gradeBand && (
+          <ScopeIndicator
+            gradeBand={gradeBand}
+            courseType={courseType as "LT" | "IT" | "KCFS" | null}
+            academicYear={academicYear}
+            term={term === "all" ? "all" : Number(term)}
+          />
+        )}
 
         {/* Quick Stats Summary */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

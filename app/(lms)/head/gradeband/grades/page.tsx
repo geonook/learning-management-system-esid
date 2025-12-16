@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { useAuthReady } from "@/hooks/useAuthReady";
-import { TrendingUp, ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import { TrendingUp } from "lucide-react";
+import { HeadGradeBandBreadcrumb } from "@/components/ui/breadcrumb";
 import { getGradeBandGradeLevelStatistics } from "@/lib/api/gradeband-statistics";
 import { getGradeBandDisplay } from "@/lib/utils/gradeband";
 import { formatNumber, formatPercentage } from "@/lib/statistics/calculations";
@@ -81,15 +81,8 @@ export default function GradeBandGradeLevelComparisonPage() {
     return (
       <AuthGuard requiredRoles={["admin", "head"]}>
         <div className="space-y-6">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/head/gradeband"
-              className="p-2 hover:bg-surface-hover rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-text-secondary" />
-            </Link>
-            <h1 className="text-2xl font-bold text-text-primary">Grade Level Comparison</h1>
-          </div>
+          <HeadGradeBandBreadcrumb currentPage="Grade Level Comparison" />
+          <h1 className="text-2xl font-bold text-text-primary">Grade Level Comparison</h1>
           <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-6">
             <p className="text-text-secondary">
               No grade band assigned. Please contact an administrator.
@@ -103,27 +96,25 @@ export default function GradeBandGradeLevelComparisonPage() {
   return (
     <AuthGuard requiredRoles={["admin", "head"]}>
       <div className="space-y-6">
+        {/* Breadcrumb */}
+        <HeadGradeBandBreadcrumb
+          currentPage="Grade Level Comparison"
+          gradeBandDisplay={gradeBandDisplay}
+        />
+
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/head/gradeband"
-              className="p-2 hover:bg-surface-hover rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-text-secondary" />
-            </Link>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500/20 rounded-lg">
-                <TrendingUp className="w-6 h-6 text-purple-500 dark:text-purple-400" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-text-primary">
-                  Grade Level Comparison
-                </h1>
-                <p className="text-sm text-text-secondary">
-                  Compare grade levels within {gradeBandDisplay}
-                </p>
-              </div>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-500/20 rounded-lg">
+              <TrendingUp className="w-6 h-6 text-purple-500 dark:text-purple-400" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-text-primary">
+                Grade Level Comparison
+              </h1>
+              <p className="text-sm text-text-secondary">
+                Compare grade levels within {gradeBandDisplay}
+              </p>
             </div>
           </div>
           <StatisticsActionButtons
