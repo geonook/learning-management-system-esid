@@ -39,7 +39,9 @@ export default function GradeOverviewPage() {
   const [kpis, setKpis] = useState<HeadTeacherKpis>({
     totalClasses: 0,
     averageScore: 0,
-    coverageRate: 0,
+    progressRate: 0,
+    scoresEntered: 0,
+    expectedScores: 0,
     activeIssues: null,
     studentsCount: 0,
     teachersCount: 0,
@@ -351,17 +353,21 @@ export default function GradeOverviewPage() {
           </div>
           <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-text-secondary text-sm">Coverage</span>
+              <span className="text-text-secondary text-sm">Progress</span>
               <AlertTriangle className="w-4 h-4 text-amber-500 dark:text-amber-400" />
             </div>
             {loading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
               <div className="text-2xl font-bold text-text-primary">
-                {kpis.coverageRate > 0 ? `${kpis.coverageRate}%` : "N/A"}
+                {kpis.progressRate > 0 ? `${kpis.progressRate}%` : "N/A"}
               </div>
             )}
-            <div className="text-xs text-text-tertiary">students scored</div>
+            <div className="text-xs text-text-tertiary">
+              {kpis.expectedScores > 0
+                ? `${kpis.scoresEntered}/${kpis.expectedScores} scores`
+                : "grade entry progress"}
+            </div>
           </div>
         </div>
 

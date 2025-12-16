@@ -208,7 +208,7 @@ export function Sidebar() {
             <SidebarItem
               href="/head/gradeband"
               icon={<BarChart3 className="w-4 h-4" />}
-              label="GradeBand"
+              label="Statistics"
               active={pathname?.startsWith("/head/gradeband") ?? false}
             />
             <SidebarItem

@@ -967,7 +967,9 @@ export async function getTeacherHeatmap(): Promise<number[][]> {
 export interface HeadTeacherKpis {
   totalClasses: number;
   averageScore: number;
-  coverageRate: number;
+  progressRate: number;       // 成績輸入進度百分比
+  scoresEntered: number;      // 已輸入成績數
+  expectedScores: number;     // 預期成績數 (學生數 × 13)
   activeIssues: number | null; // null = 待問題追蹤系統實作
   studentsCount: number;
   teachersCount: number;
@@ -981,7 +983,7 @@ export interface GradeClassSummary {
   itTeacher: string | null;
   kcfsTeacher: string | null;
   avgScore: number;
-  coverageRate: number;
+  progressRate: number;       // 成績輸入進度百分比
   lastActivity: string;
 }
 
@@ -1015,7 +1017,9 @@ export async function getHeadTeacherKpis(
       return {
         totalClasses: 0,
         averageScore: 0,
-        coverageRate: 0,
+        progressRate: 0,
+        scoresEntered: 0,
+        expectedScores: 0,
         activeIssues: 0,
         studentsCount: 0,
         teachersCount: 0,
@@ -1029,7 +1033,9 @@ export async function getHeadTeacherKpis(
       return {
         totalClasses: 0,
         averageScore: 0,
-        coverageRate: 0,
+        progressRate: 0,
+        scoresEntered: 0,
+        expectedScores: 0,
         activeIssues: 0,
         studentsCount: 0,
         teachersCount: 0,
@@ -1070,7 +1076,9 @@ export async function getHeadTeacherKpis(
       return {
         totalClasses,
         averageScore: 0,
-        coverageRate: 0,
+        progressRate: 0,
+        scoresEntered: 0,
+        expectedScores: (studentsCount || 0) * 13,
         activeIssues: null,
         studentsCount: studentsCount || 0,
         teachersCount,
@@ -1111,22 +1119,22 @@ export async function getHeadTeacherKpis(
           ) / 10
         : 0;
 
-    // Calculate coverage rate (students with recent scores)
-    const studentsWithScores = new Set(
-      (scores || []).map((s) => s.student_id).filter(Boolean)
-    ).size;
-
-    const coverageRate =
-      studentsCount && studentsCount > 0
-        ? Math.round((studentsWithScores / studentsCount) * 100)
-        : 0;
+    // Calculate progress rate (scores entered / expected)
+    // 13 評量項目 = FA1-8 (8) + SA1-4 (4) + MID (1)
+    const scoresEntered = (scores || []).length;
+    const expectedScores = (studentsCount || 0) * 13;
+    const progressRate = expectedScores > 0
+      ? Math.round((scoresEntered / expectedScores) * 100)
+      : 0;
 
     // activeIssues 需要問題追蹤系統實作，暫時返回 null
 
     return {
       totalClasses,
       averageScore,
-      coverageRate,
+      progressRate,
+      scoresEntered,
+      expectedScores,
       activeIssues: null, // 待問題追蹤系統實作
       studentsCount: studentsCount || 0,
       teachersCount,
@@ -1136,7 +1144,9 @@ export async function getHeadTeacherKpis(
     return {
       totalClasses: 0,
       averageScore: 0,
-      coverageRate: 0,
+      progressRate: 0,
+      scoresEntered: 0,
+      expectedScores: 0,
       activeIssues: null,
       studentsCount: 0,
       teachersCount: 0,
@@ -1250,14 +1260,13 @@ export async function getGradeClassSummary(
             ) / 10
           : 0;
 
-      // Calculate coverage rate
-      const studentsWithScores = new Set(
-        (scores || []).map((s) => s.student_id).filter(Boolean)
-      ).size;
-
-      const coverageRate =
-        studentCount && studentCount > 0
-          ? Math.round((studentsWithScores / studentCount) * 100)
+      // Calculate progress rate (scores entered / expected)
+      // 13 評量項目 = FA1-8 (8) + SA1-4 (4) + MID (1)
+      const scoresEntered = (scores || []).length;
+      const expectedScores = (studentCount || 0) * 13;
+      const progressRate =
+        expectedScores > 0
+          ? Math.round((scoresEntered / expectedScores) * 100)
           : 0;
 
       // Get last activity date
@@ -1279,7 +1288,7 @@ export async function getGradeClassSummary(
         itTeacher,
         kcfsTeacher,
         avgScore,
-        coverageRate,
+        progressRate,
         lastActivity,
       });
     }

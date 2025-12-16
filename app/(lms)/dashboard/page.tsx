@@ -69,7 +69,9 @@ export default function Dashboard() {
   const [headKpis, setHeadKpis] = useState<HeadTeacherKpis>({
     totalClasses: 0,
     averageScore: 0,
-    coverageRate: 0,
+    progressRate: 0,
+    scoresEntered: 0,
+    expectedScores: 0,
     activeIssues: null,
     studentsCount: 0,
     teachersCount: 0,

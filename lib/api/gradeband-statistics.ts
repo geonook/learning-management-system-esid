@@ -3,7 +3,7 @@
 /**
  * GradeBand Statistics API (Server Action)
  *
- * Statistics functions for Head Teacher's GradeBand Management module.
+ * Statistics functions for Head Teacher's GradeBand Statistics module.
  * Filters all data by the Head Teacher's grade_band (e.g., "3-4" = G3 + G4).
  *
  * @see lib/api/statistics.ts for the full-school version

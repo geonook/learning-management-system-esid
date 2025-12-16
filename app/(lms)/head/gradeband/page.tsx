@@ -107,7 +107,7 @@ export default function GradeBandManagementPage() {
                 <BarChart3 className="w-6 h-6 text-amber-500 dark:text-amber-400" />
               </div>
               <h1 className="text-2xl font-bold text-text-primary">
-                GradeBand Management
+                GradeBand Statistics
               </h1>
             </div>
           </div>
@@ -135,7 +135,7 @@ export default function GradeBandManagementPage() {
               <BarChart3 className="w-6 h-6 text-indigo-500 dark:text-indigo-400" />
             </div>
             <h1 className="text-2xl font-bold text-text-primary">
-              GradeBand Management
+              GradeBand Statistics
             </h1>
             {gradeBandDisplay && (
               <span className="px-3 py-1 bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full text-sm font-medium">
@@ -219,7 +219,7 @@ export default function GradeBandManagementPage() {
         {/* Info Box */}
         <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
           <h3 className="text-blue-600 dark:text-blue-400 font-medium mb-2">
-            About GradeBand Management
+            About GradeBand Statistics
           </h3>
           <p className="text-text-secondary text-sm">
             This module provides statistics for your assigned grade band ({gradeBandDisplay}).
