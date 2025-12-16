@@ -246,6 +246,7 @@ export async function getTeachersProgress(
       console.error("[getTeachersProgress] Scores query error:", scoresError);
     }
     scoresData = scores || [];
+    console.log("[getTeachersProgress] Scores fetched:", scoresData.length, "examIds count:", examIds.length);
   }
 
   // 計算每個課程的成績數
