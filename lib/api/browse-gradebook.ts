@@ -4,10 +4,10 @@
  * Fetches class-based gradebook progress data.
  * Shows LT/IT/KCFS progress per class.
  *
- * Progress calculation now uses dynamic expectations:
+ * Progress calculation:
  * - LT/IT: Per Grade × Level expectations from gradebook_expectations table
- * - KCFS: Unified expectations (grade=NULL, level=NULL)
- * - Falls back to default 13 if no expectation is set
+ * - KCFS: Grade-specific category counts (G1-2: 4, G3-4: 5, G5-6: 6)
+ * - Falls back to default 13 for LT/IT if no expectation is set
  */
 
 import { supabase } from '@/lib/supabase/client';
@@ -18,6 +18,7 @@ import type {
   ProgressStatus,
 } from '@/types/browse-gradebook';
 import { extractLevel, DEFAULT_EXPECTATION, type CourseType, type Level } from '@/types/gradebook-expectations';
+import { getKCFSExpectedCount } from '@/lib/grade/kcfs-calculations';
 
 const DEFAULT_ASSESSMENT_ITEMS = DEFAULT_EXPECTATION.expected_total; // 13
 
@@ -266,6 +267,12 @@ export async function getClassesProgress(
     classLevel: string | null,
     courseType: CourseType
   ): number => {
+    // KCFS uses grade-specific category counts (not from expectations table)
+    if (courseType === 'KCFS') {
+      return getKCFSExpectedCount(classGrade); // 4, 5, or 6 based on grade
+    }
+
+    // LT/IT use expectations table
     const level = extractLevel(classLevel);
     const key = getExpectationKey(academicYear, term, courseType, classGrade, level);
     return expectationsMap.get(key) ?? DEFAULT_ASSESSMENT_ITEMS;

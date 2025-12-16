@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { Spreadsheet } from "@/components/gradebook/Spreadsheet";
+import { Spreadsheet, ExtendedGradeRow } from "@/components/gradebook/Spreadsheet";
 import { CourseTypeSelector } from "@/components/gradebook/CourseTypeSelector";
-import { GradeRow } from "@/lib/gradebook/FormulaEngine";
 import { getGradebookData, CourseType } from "@/lib/actions/gradebook";
 import { cn } from "@/lib/utils";
 import { Loader2, User, Check, AlertCircle, Users } from "lucide-react";
@@ -12,10 +11,11 @@ export type SaveStatus = "saved" | "saving" | "error";
 
 interface GradebookClientProps {
   classId: string;
-  initialData: GradeRow[];
+  initialData: ExtendedGradeRow[];
   availableCourseTypes: CourseType[];
   initialCourseType: CourseType | null;
   initialTeacherName?: string | null;
+  classGrade?: number; // For KCFS category determination
 }
 
 export function GradebookClient({
@@ -24,8 +24,9 @@ export function GradebookClient({
   availableCourseTypes,
   initialCourseType,
   initialTeacherName,
+  classGrade,
 }: GradebookClientProps) {
-  const [data, setData] = useState<GradeRow[]>(initialData);
+  const [data, setData] = useState<ExtendedGradeRow[]>(initialData);
   const [currentCourseType, setCurrentCourseType] = useState<CourseType | null>(
     initialCourseType
   );
@@ -43,11 +44,12 @@ export function GradebookClient({
     startTransition(async () => {
       try {
         const result = await getGradebookData(classId, courseType);
-        const newData = result.students.map((s) => ({
+        const newData: ExtendedGradeRow[] = result.students.map((s) => ({
           id: s.id,
           studentName: s.full_name,
           studentId: s.student_id,
           scores: s.scores,
+          absentFlags: s.absentFlags || {},
         }));
         setData(newData);
         setCurrentCourseType(courseType);
@@ -140,6 +142,7 @@ export function GradebookClient({
             classId={classId}
             initialData={data}
             courseType={currentCourseType}
+            classGrade={classGrade}
             onSaveStatusChange={setSaveStatus}
           />
         </div>

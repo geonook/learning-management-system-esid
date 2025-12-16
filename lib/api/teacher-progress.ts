@@ -2,10 +2,12 @@
  * Teacher Progress API
  * 計算教師的成績輸入進度（真實數據）
  *
- * Progress calculation now uses Head Teacher's Gradebook Expectations settings:
- * - Each Grade × Level × CourseType can have different expected assessment counts
- * - Default: FA=8, SA=4, MID=1 (Total=13)
- * - Example: G5 E2 IT might have FA=4, SA=2, MID=1 (Total=7)
+ * Progress calculation:
+ * - LT/IT: Uses Head Teacher's Gradebook Expectations settings
+ *   - Each Grade × Level × CourseType can have different expected assessment counts
+ *   - Default: FA=8, SA=4, MID=1 (Total=13)
+ * - KCFS: Uses grade-specific category counts
+ *   - G1-2: 4 categories, G3-4: 5 categories, G5-6: 6 categories
  *
  * NOTE: All queries use explicit .limit() to override Supabase default 1000 row limit
  */
@@ -16,6 +18,7 @@ import {
   extractLevel,
   type Level,
 } from "@/types/gradebook-expectations";
+import { getKCFSExpectedCount } from "@/lib/grade/kcfs-calculations";
 
 export type CourseType = "LT" | "IT" | "KCFS";
 
@@ -289,16 +292,22 @@ export async function getTeachersProgress(
   >();
 
   /**
-   * Helper function to get expected_total for a class based on its grade and level
-   * Falls back to DEFAULT_EXPECTATION.expected_total (13) if no setting found
+   * Helper function to get expected_total for a class based on its grade, level, and course type
+   * - KCFS: Uses grade-specific category counts (G1-2: 4, G3-4: 5, G5-6: 6)
+   * - LT/IT: Uses expectations table or default (13)
    */
-  function getExpectedTotalForClass(classId: string): number {
+  function getExpectedTotalForClass(classId: string, courseType: CourseType): number {
     const classInfo = classInfoMap.get(classId);
     if (!classInfo || classInfo.grade === null) {
       return DEFAULT_EXPECTATION.expected_total;
     }
 
-    // Build key: "grade-level" (e.g., "5-E2")
+    // KCFS uses grade-specific category counts
+    if (courseType === "KCFS") {
+      return getKCFSExpectedCount(classInfo.grade); // 4, 5, or 6 based on grade
+    }
+
+    // LT/IT use expectations table
     const key = `${classInfo.grade}-${classInfo.level}`;
     const expectedTotal = expectationsMap.get(key);
 
@@ -324,8 +333,8 @@ export async function getTeachersProgress(
     const scoreCount = courseScoreCount.get(course.id) || 0;
     const className = classNameMap.get(course.class_id) || "";
 
-    // Get the expected_total for this specific class based on grade/level
-    const expectedTotalForClass = getExpectedTotalForClass(course.class_id);
+    // Get the expected_total for this specific class based on grade/level and course type
+    const expectedTotalForClass = getExpectedTotalForClass(course.class_id, course.course_type as CourseType);
     const expectedScoresForCourse = studentCount * expectedTotalForClass;
 
     if (existing) {

@@ -1,6 +1,6 @@
 import React from "react";
 import { getGradebookData, CourseType, TeacherInfo } from "@/lib/actions/gradebook";
-import { GradeRow } from "@/lib/gradebook/FormulaEngine";
+import { ExtendedGradeRow } from "@/components/gradebook/Spreadsheet";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { GradebookHeader } from "./GradebookHeader";
 import { GradebookClient } from "./GradebookClient";
@@ -18,10 +18,11 @@ export default async function ClassGradebookPage({ params, searchParams }: PageP
   const classId = params.classId;
   const requestedCourseType = searchParams.course as CourseType | undefined;
 
-  let initialData: GradeRow[] = [];
+  let initialData: ExtendedGradeRow[] = [];
   let availableCourseTypes: CourseType[] = [];
   let currentCourseType: CourseType | null = null;
   let teacherInfo: TeacherInfo | null = null;
+  let classGrade: number = 1;
   let error = null;
 
   if (classId) {
@@ -32,10 +33,12 @@ export default async function ClassGradebookPage({ params, searchParams }: PageP
         studentName: s.full_name,
         studentId: s.student_id,
         scores: s.scores,
+        absentFlags: s.absentFlags || {},
       }));
       availableCourseTypes = result.availableCourseTypes;
       currentCourseType = result.currentCourseType;
       teacherInfo = result.teacherInfo;
+      classGrade = result.classGrade ?? 1;
     } catch (e) {
       console.error("Failed to load gradebook data:", e);
       error = "Failed to load data. Please try again.";
@@ -62,6 +65,7 @@ export default async function ClassGradebookPage({ params, searchParams }: PageP
               availableCourseTypes={availableCourseTypes}
               initialCourseType={currentCourseType}
               initialTeacherName={teacherInfo?.teacherName}
+              classGrade={classGrade}
             />
           </div>
         )}

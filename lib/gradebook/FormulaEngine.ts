@@ -1,8 +1,17 @@
+import {
+  calculateKCFSTermGrade,
+  calculateKCFSGrades,
+  getKCFSCategories,
+  getKCFSCategoryCodes,
+} from '@/lib/grade/kcfs-calculations'
+import type { KCFSScoreEntry, KCFSCalculationResult } from '@/types/kcfs'
+
 export type GradeRow = {
   id: string;
   studentName: string;
   studentId: string;
   scores: Record<string, number | null>; // code -> score
+  absentFlags?: Record<string, boolean>; // code -> isAbsent (optional for backward compatibility)
 };
 
 export const ASSESSMENT_WEIGHTS = {
@@ -11,6 +20,9 @@ export const ASSESSMENT_WEIGHTS = {
   MIDTERM: 0.1,
   NORMALIZATION: 0.45,
 };
+
+// KCFS Base Score
+export const KCFS_BASE_SCORE = 50;
 
 export class FormulaEngine {
   /**
@@ -95,5 +107,85 @@ export class FormulaEngine {
   private static round(value: number, precision: number): number {
     const multiplier = Math.pow(10, precision);
     return Math.round(value * multiplier) / multiplier;
+  }
+
+  // ========================================
+  // KCFS Methods
+  // ========================================
+
+  /**
+   * Calculate KCFS Term Grade
+   * Formula: 50 + (Σ category_score × weight)
+   *
+   * @param scores - Record of category code to score value
+   * @param absentFlags - Record of category code to absent flag
+   * @param grade - Student grade (1-6)
+   * @returns Term grade (50-100) or null if no valid scores
+   */
+  static calculateKCFSTermGrade(
+    scores: Record<string, number | null>,
+    absentFlags: Record<string, boolean>,
+    grade: number
+  ): number | null {
+    // Convert to KCFSScoreEntry format
+    const kcfsScores = this.convertToKCFSScores(scores, absentFlags);
+    return calculateKCFSTermGrade(kcfsScores, grade);
+  }
+
+  /**
+   * Calculate KCFS grades with detailed breakdown
+   *
+   * @param scores - Record of category code to score value
+   * @param absentFlags - Record of category code to absent flag
+   * @param grade - Student grade (1-6)
+   * @returns Full calculation result with category breakdown
+   */
+  static calculateKCFSGrades(
+    scores: Record<string, number | null>,
+    absentFlags: Record<string, boolean>,
+    grade: number
+  ): KCFSCalculationResult {
+    const kcfsScores = this.convertToKCFSScores(scores, absentFlags);
+    return calculateKCFSGrades(kcfsScores, grade);
+  }
+
+  /**
+   * Get KCFS category codes for a specific grade
+   */
+  static getKCFSCategoryCodes(grade: number): string[] {
+    return getKCFSCategoryCodes(grade);
+  }
+
+  /**
+   * Get KCFS categories configuration for a specific grade
+   */
+  static getKCFSCategories(grade: number) {
+    return getKCFSCategories(grade);
+  }
+
+  /**
+   * Convert scores and absentFlags to KCFSScoreEntry format
+   */
+  private static convertToKCFSScores(
+    scores: Record<string, number | null>,
+    absentFlags: Record<string, boolean>
+  ): Record<string, KCFSScoreEntry | null> {
+    const result: Record<string, KCFSScoreEntry | null> = {};
+
+    for (const code of Object.keys(scores)) {
+      const value = scores[code];
+      const isAbsent = absentFlags[code] ?? false;
+
+      if (value === null && !isAbsent) {
+        result[code] = null; // Not entered
+      } else {
+        result[code] = {
+          value: isAbsent ? null : (value ?? null),
+          isAbsent,
+        };
+      }
+    }
+
+    return result;
   }
 }

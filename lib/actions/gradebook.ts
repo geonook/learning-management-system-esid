@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { Term } from "@/types/academic-year";
 import { TERM_ASSESSMENT_CODES } from "@/types/academic-year";
+import { getKCFSCategoryCodes } from "@/lib/grade/kcfs-calculations";
+import { isValidKCFSScore } from "@/lib/grade/kcfs-calculations";
 
 export type CourseType = "LT" | "IT" | "KCFS";
 
@@ -12,18 +14,26 @@ export type TeacherInfo = {
   teacherId: string | null;
 };
 
+// Score entry with absent flag
+export type ScoreEntry = {
+  value: number | null;
+  isAbsent: boolean;
+};
+
 export type GradebookData = {
   students: {
     id: string;
     student_id: string;
     full_name: string;
     scores: Record<string, number | null>; // code -> score
+    absentFlags: Record<string, boolean>; // code -> isAbsent
   }[];
   assessmentCodes: string[];
   availableCourseTypes: CourseType[];
   currentCourseType: CourseType | null;
   currentTerm: Term | null;
   teacherInfo: TeacherInfo | null;
+  classGrade?: number; // For KCFS category determination
 };
 
 /**
@@ -84,6 +94,15 @@ export async function getGradebookData(
   if (studentsError)
     throw new Error(`Failed to fetch students: ${studentsError.message}`);
 
+  // 2.5. Get class grade for KCFS
+  const { data: classData } = await supabase
+    .from("classes")
+    .select("grade")
+    .eq("id", classId)
+    .single();
+
+  const classGrade = classData?.grade ?? 1;
+
   // 3. Get scores filtered by course type and term via exam -> course relationship
   const studentIds = students.map((s) => s.id);
 
@@ -93,6 +112,7 @@ export async function getGradebookData(
       student_id,
       assessment_code,
       score,
+      is_absent,
       exam:exams!inner(
         course_id,
         term,
@@ -120,18 +140,22 @@ export async function getGradebookData(
     throw new Error(`Failed to fetch scores: ${scoresError.message}`);
   }
 
-  // 4. Transform to GradebookData format
+  // 4. Transform to GradebookData format (now includes absentFlags)
   const studentsWithScores = students.map((student) => {
     const studentScores: Record<string, number | null> = {};
+    const absentFlags: Record<string, boolean> = {};
+
     scores
       ?.filter((s) => s.student_id === student.id)
       .forEach((s) => {
         studentScores[s.assessment_code] = s.score;
+        absentFlags[s.assessment_code] = s.is_absent ?? false;
       });
 
     return {
       ...student,
       scores: studentScores,
+      absentFlags,
     };
   });
 
@@ -160,28 +184,25 @@ export async function getGradebookData(
     }
   }
 
-  // Determine assessment codes based on term
-  // If term is specified, show only that term's assessment codes
-  // Otherwise, show all assessment codes
-  const assessmentCodes = selectedTerm
-    ? TERM_ASSESSMENT_CODES[selectedTerm]
-    : [
-        // All assessment codes (Term 1/3: FA1-4, SA1-2, MID; Term 2/4: FA5-8, SA3-4, FINAL)
-        "FA1",
-        "FA2",
-        "FA3",
-        "FA4",
-        "FA5",
-        "FA6",
-        "FA7",
-        "FA8",
-        "SA1",
-        "SA2",
-        "SA3",
-        "SA4",
-        "MID",
-        "FINAL",
-      ];
+  // Determine assessment codes based on course type and term
+  // KCFS uses grade-specific category codes
+  // LT/IT uses term-based assessment codes
+  let assessmentCodes: string[];
+
+  if (selectedCourseType === "KCFS") {
+    // KCFS: Use grade-specific category codes
+    assessmentCodes = getKCFSCategoryCodes(classGrade);
+  } else if (selectedTerm) {
+    // LT/IT with term: Use term-specific codes
+    assessmentCodes = TERM_ASSESSMENT_CODES[selectedTerm];
+  } else {
+    // LT/IT without term: Show all codes
+    assessmentCodes = [
+      "FA1", "FA2", "FA3", "FA4", "FA5", "FA6", "FA7", "FA8",
+      "SA1", "SA2", "SA3", "SA4",
+      "MID", "FINAL",
+    ];
+  }
 
   return {
     students: studentsWithScores,
@@ -190,6 +211,7 @@ export async function getGradebookData(
     currentCourseType: selectedCourseType,
     currentTerm: selectedTerm,
     teacherInfo,
+    classGrade,
   };
 }
 
@@ -197,12 +219,21 @@ export async function getGradebookData(
  * Update a single score
  * Permission: Course Teacher (via courses table) OR Head Teacher of same grade OR Admin
  * Note: Office Members with teaching assignments can also edit their own courses
+ *
+ * @param classId - The class ID
+ * @param studentId - The student ID
+ * @param assessmentCode - The assessment code (FA1, COMM, etc.)
+ * @param score - The score value (null to clear)
+ * @param isAbsent - Whether the student is absent (optional, defaults to false)
+ * @param courseType - The course type (optional, for validation)
  */
 export async function updateScore(
   classId: string,
   studentId: string,
   assessmentCode: string,
-  score: number | null
+  score: number | null,
+  isAbsent: boolean = false,
+  courseType?: CourseType
 ) {
   const supabase = createClient();
 
@@ -252,6 +283,28 @@ export async function updateScore(
   }
   // ------------------------
 
+  // --- Score Validation ---
+  // If absent, score should be null
+  if (isAbsent && score !== null) {
+    throw new Error("Score must be null when marking as absent");
+  }
+
+  // Validate score based on course type
+  if (score !== null && !isAbsent) {
+    if (courseType === "KCFS") {
+      // KCFS: 0-5 range, 0.5 increments
+      if (!isValidKCFSScore(score)) {
+        throw new Error("KCFS scores must be between 0 and 5, in 0.5 increments");
+      }
+    } else {
+      // LT/IT: 0-100 range
+      if (score < 0 || score > 100) {
+        throw new Error("Scores must be between 0 and 100");
+      }
+    }
+  }
+  // ------------------------
+
   // Upsert score
   // First, get exam_id (mocking or finding default exam for this code/class context)
   // For simplicity in this phase, we assume exam_id is not strictly enforced or we find a default one.
@@ -287,7 +340,7 @@ export async function updateScore(
     exam = newExam;
   }
 
-  // 3. Upsert score
+  // 3. Upsert score (now includes is_absent)
   // We need to handle the case where score already exists for (student_id, exam_id, assessment_code)
   // But `scores` table PK is `id`. We should check unique constraint or select first.
 
@@ -303,7 +356,8 @@ export async function updateScore(
     await supabase
       .from("scores")
       .update({
-        score: score,
+        score: isAbsent ? null : score,
+        is_absent: isAbsent,
         updated_by: user.id,
         updated_at: new Date().toISOString(),
       })
@@ -313,7 +367,8 @@ export async function updateScore(
       student_id: studentId,
       exam_id: exam.id,
       assessment_code: assessmentCode,
-      score: score,
+      score: isAbsent ? null : score,
+      is_absent: isAbsent,
       entered_by: user.id,
     });
   }
