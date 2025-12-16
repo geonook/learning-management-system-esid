@@ -144,17 +144,6 @@ export default function GradeOverviewPage() {
           courseToClass.set(c.id, c.class_id);
         });
 
-        // DEBUG: Log course data
-        const courseClassIdSet = new Set(coursesData?.map(c => c.class_id) || []);
-        const classesWithoutCourse = classesData.filter(c => !courseClassIdSet.has(c.id));
-        console.log('[HeadOverview] Step 6 - coursesData:', {
-          count: coursesData?.length || 0,
-          courseType,
-          classIdsCount: classIds.length,
-          courseClassIds: coursesData?.map(c => c.class_id),
-          classesWithoutCourse: classesWithoutCourse.map(c => c.name),
-        });
-
         // 7. BATCH QUERY: Get exams for these courses (filtered by term if needed)
         let examsQuery = supabase
           .from("exams")
@@ -172,13 +161,6 @@ export default function GradeOverviewPage() {
           examToCourse.set(e.id, e.course_id);
         });
 
-        // DEBUG: Log exam data
-        console.log('[HeadOverview] Step 7 - examsData:', {
-          examCount: examIds.length,
-          courseIdsCount: courseIds.length,
-          termFilter: termForApi,
-        });
-
         // 8. BATCH QUERY: Get scores for these exams
         // IMPORTANT: Supabase has a hard limit of 1000 rows per request (cannot be overridden)
         // We need to fetch in batches of 1000 to get all scores
@@ -187,13 +169,6 @@ export default function GradeOverviewPage() {
           const BATCH_SIZE = 1000;
           let offset = 0;
           let hasMore = true;
-
-          // First, get the total count
-          const { count: totalCount } = await supabase
-            .from("scores")
-            .select("*", { count: "exact", head: true })
-            .in("exam_id", examIds)
-            .not("score", "is", null);
 
           // Fetch in batches until we have all data
           while (hasMore) {
@@ -217,46 +192,20 @@ export default function GradeOverviewPage() {
               hasMore = false;
             }
           }
-
-          // DEBUG: Log scores data (v4 - using pagination to bypass 1000 limit)
-          console.log('[HeadOverview] Step 8 - scoresData (PAGINATED):', {
-            scoresCount: scoresData.length,
-            totalCount: totalCount,  // Expected total from count query
-            examIdsCount: examIds.length,
-            batchesFetched: Math.ceil(scoresData.length / BATCH_SIZE),
-            expectedMin: 3500,  // G5-6 IT should have 3500+ scores
-          });
         }
 
         // Group scores by class
         const scoresByClass = new Map<string, number[]>();
-        let unmappedExamIds = 0;
-        let unmappedCourseIds = 0;
         scoresData.forEach((s) => {
           if (s.score === null || s.score <= 0) return;
           const courseId = examToCourse.get(s.exam_id);
-          if (!courseId) {
-            unmappedExamIds++;
-            return;
-          }
+          if (!courseId) return;
           const classId = courseToClass.get(courseId);
-          if (!classId) {
-            unmappedCourseIds++;
-            return;
-          }
+          if (!classId) return;
 
           const scores = scoresByClass.get(classId) || [];
           scores.push(s.score);
           scoresByClass.set(classId, scores);
-        });
-
-        // DEBUG: Log grouped scores
-        console.log('[HeadOverview] Step 9 - scoresByClass:', {
-          classesWithScores: scoresByClass.size,
-          totalClasses: classesData.length,
-          unmappedExamIds,
-          unmappedCourseIds,
-          classIdsWithScores: Array.from(scoresByClass.keys()),
         });
 
         // 9. Build class summaries
