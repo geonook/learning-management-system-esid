@@ -6,6 +6,8 @@
  * - Each Grade × Level × CourseType can have different expected assessment counts
  * - Default: FA=8, SA=4, MID=1 (Total=13)
  * - Example: G5 E2 IT might have FA=4, SA=2, MID=1 (Total=7)
+ *
+ * NOTE: All queries use explicit .limit() to override Supabase default 1000 row limit
  */
 
 import { createClient } from "@/lib/supabase/client";
