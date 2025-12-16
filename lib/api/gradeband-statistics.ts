@@ -113,6 +113,9 @@ async function fetchWithRetry<T>(
 
 /**
  * Get quick statistics for the grade band
+ *
+ * OPTIMIZED: Uses lightweight parallel queries instead of calling getGradeBandClassStatistics
+ * to avoid 29+ second TTFB issues caused by nested API calls and sequential pagination.
  */
 export async function getGradeBandQuickStats(
   filters: GradeBandFilters
@@ -139,8 +142,9 @@ export async function getGradeBandQuickStats(
     return { totalStudents: 0, totalClasses: 0, totalCourses: 0, avgScore: null, passRate: null, overallAverage: null, completionRate: null };
   }
 
-  // 2. Parallel queries for counts
-  const [studentsResult, coursesResult] = await Promise.all([
+  // 2. Parallel queries for counts + sample scores for avg calculation
+  const [studentsResult, coursesResult, studentsData, coursesData] = await Promise.all([
+    // Count queries (fast)
     supabase
       .from('students')
       .select('id', { count: 'exact', head: true })
@@ -152,32 +156,75 @@ export async function getGradeBandQuickStats(
       .in('class_id', classIds)
       .eq('is_active', true)
       .eq('academic_year', filters.academic_year),
+    // Get student IDs for score lookup
+    supabase
+      .from('students')
+      .select('id')
+      .in('class_id', classIds)
+      .eq('is_active', true)
+      .limit(2000),  // Limit to reasonable sample
+    // Get course IDs filtered by course_type
+    supabase
+      .from('courses')
+      .select('id, class_id')
+      .in('class_id', classIds)
+      .eq('is_active', true)
+      .eq('academic_year', filters.academic_year)
+      .eq('course_type', filters.course_type || 'LT'),
   ]);
 
-  // 3. Get class statistics to calculate average score and pass rate
-  const classStats = await getGradeBandClassStatistics(filters);
+  const studentIds = studentsData.data?.map(s => s.id) || [];
+  const courseIds = coursesData.data?.map(c => c.id) || [];
+  const totalStudents = studentsResult.count ?? 0;
 
-  const termGrades = filterValidScores(classStats.map(s => s.term_grade_avg));
-  const avgScore = calculateAverage(termGrades);
+  // 3. Get scores sample for average calculation (single query, limited)
+  let avgScore: number | null = null;
+  let passRate: number | null = null;
+  let completionRate: number | null = null;
 
-  // Calculate weighted pass rate
-  let totalPassed = 0;
-  let totalWithGrades = 0;
-  for (const stat of classStats) {
-    if (stat.pass_rate !== null && stat.student_count > 0) {
-      const studentsWithGrades = stat.term_grade_avg !== null ? stat.student_count : 0;
-      totalPassed += (stat.pass_rate / 100) * studentsWithGrades;
-      totalWithGrades += studentsWithGrades;
+  if (studentIds.length > 0 && courseIds.length > 0) {
+    // Build term filter for exams
+    let examQuery = supabase
+      .from('exams')
+      .select('id')
+      .in('course_id', courseIds);
+
+    if (filters.term) {
+      examQuery = examQuery.eq('term', filters.term);
+    }
+
+    const { data: exams } = await examQuery.limit(500);
+    const examIds = exams?.map(e => e.id) || [];
+
+    if (examIds.length > 0) {
+      // Get scores in a single query with limit
+      const { data: scoresData } = await supabase
+        .from('scores')
+        .select('score')
+        .in('exam_id', examIds)
+        .in('student_id', studentIds)
+        .not('score', 'is', null)
+        .limit(5000);  // Sample limit for performance
+
+      if (scoresData && scoresData.length > 0) {
+        const validScores = scoresData.map(s => s.score).filter((s): s is number => s !== null && s > 0);
+        avgScore = calculateAverage(validScores);
+
+        // Calculate pass rate from sample
+        const passedCount = validScores.filter(s => s >= 60).length;
+        passRate = validScores.length > 0 ? (passedCount / validScores.length) * 100 : null;
+
+        // Estimate completion rate: unique students with scores / total students
+        // This is a rough estimate based on having any scores
+        const scoresCount = scoresData.length;
+        const expectedScores = totalStudents * 13; // 13 assessments per student
+        completionRate = expectedScores > 0 ? Math.min((scoresCount / expectedScores) * 100, 100) : null;
+      }
     }
   }
-  const passRate = totalWithGrades > 0 ? (totalPassed / totalWithGrades) * 100 : null;
-
-  // Calculate completion rate (rough estimate based on having term grades)
-  const classesWithGrades = classStats.filter(s => s.term_grade_avg !== null).length;
-  const completionRate = classStats.length > 0 ? (classesWithGrades / classStats.length) * 100 : null;
 
   return {
-    totalStudents: studentsResult.count ?? 0,
+    totalStudents,
     totalClasses: classIds.length,
     totalCourses: coursesResult.count ?? 0,
     avgScore,
