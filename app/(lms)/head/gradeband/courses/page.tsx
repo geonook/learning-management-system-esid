@@ -225,6 +225,7 @@ export default function GradeBandCourseAnalysisPage() {
             loading={loading}
             title={`${selectedCourseType} Pass Rate Overview`}
             color={config.color}
+            courseType={selectedCourseType}
           />
         </div>
 

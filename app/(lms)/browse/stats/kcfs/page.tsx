@@ -143,6 +143,7 @@ export default function KCFSAnalysisPage() {
             loading={loading}
             title="KCFS Pass Rate Overview"
             color="#ec4899"
+            courseType="KCFS"
           />
         </div>
 

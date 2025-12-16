@@ -39,7 +39,23 @@ interface DonutProgressChartProps {
   loading: boolean;
   title?: string;
   color?: string;
+  /** Course type for appropriate label display */
+  courseType?: "LT" | "IT" | "KCFS";
 }
+
+// Label configurations by course type
+const CHART_LABELS = {
+  default: {
+    excellent: "Excellent (>=90)",
+    good: "Good (60-89)",
+    fail: "Fail (<60)",
+  },
+  KCFS: {
+    excellent: "Excellent (>=4.5)",
+    good: "Pass (3-4.5)",
+    fail: "Below Standard (<3)",
+  },
+};
 
 export function DonutProgressChart({
   passRate,
@@ -47,6 +63,7 @@ export function DonutProgressChart({
   loading,
   title = "Pass Rate Overview",
   color = "#06b6d4",
+  courseType,
 }: DonutProgressChartProps) {
   // API returns values as 0-100 percentages, use directly
   const passRatePercent = passRate ?? 0;
@@ -57,10 +74,13 @@ export function DonutProgressChart({
   const passOnlyPercent = passRatePercent - excellentRatePercent;
   const failPercent = 100 - passRatePercent;
 
+  // Select labels based on course type
+  const labels = courseType === "KCFS" ? CHART_LABELS.KCFS : CHART_LABELS.default;
+
   const chartData = [
-    { name: "Excellent (>=90)", value: Math.max(0, excellentPercent), color: "#22c55e" },
-    { name: "Good (60-89)", value: Math.max(0, passOnlyPercent), color: color },
-    { name: "Fail (<60)", value: Math.max(0, failPercent), color: "#ef4444" },
+    { name: labels.excellent, value: Math.max(0, excellentPercent), color: "#22c55e" },
+    { name: labels.good, value: Math.max(0, passOnlyPercent), color: color },
+    { name: labels.fail, value: Math.max(0, failPercent), color: "#ef4444" },
   ].filter((d) => d.value > 0);
 
   const isEmpty = passRate === null || chartData.length === 0;
