@@ -154,16 +154,18 @@ export async function getTeachersProgress(
     examsQuery = examsQuery.eq("term", filters.term);
   }
 
-  // 並行執行 student_courses 和 exams 查詢
-  const [studentCountsResult, examsResult] = await Promise.all([
+  // 並行執行 students 和 exams 查詢
+  // 注意：student_courses 表目前是空的，所以改用 students 表透過 class_id 關聯
+  const [studentsResult, examsResult] = await Promise.all([
     supabase
-      .from("student_courses")
-      .select("course_id")
-      .in("course_id", courseIds),
+      .from("students")
+      .select("class_id")
+      .in("class_id", classIds)
+      .eq("is_active", true),
     examsQuery,
   ]);
 
-  const { data: studentCounts, error: studentCountError } = studentCountsResult;
+  const { data: studentsData, error: studentCountError } = studentsResult;
   const { data: exams, error: examsError } = examsResult;
 
   if (studentCountError) {
@@ -173,11 +175,18 @@ export async function getTeachersProgress(
     console.error("[getTeachersProgress] Exams query error:", examsError);
   }
 
-  // 計算每個課程的學生數
+  // 計算每個班級的學生數
+  const classStudentCount = new Map<string, number>();
+  studentsData?.forEach((s) => {
+    const count = classStudentCount.get(s.class_id) || 0;
+    classStudentCount.set(s.class_id, count + 1);
+  });
+
+  // 將班級學生數映射到課程（每個班級有 3 門課程共用學生數）
   const courseStudentCount = new Map<string, number>();
-  studentCounts?.forEach((sc) => {
-    const count = courseStudentCount.get(sc.course_id) || 0;
-    courseStudentCount.set(sc.course_id, count + 1);
+  courses?.forEach((c) => {
+    const studentCount = classStudentCount.get(c.class_id) || 0;
+    courseStudentCount.set(c.id, studentCount);
   });
 
   const examIds = exams?.map((e) => e.id) || [];

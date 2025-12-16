@@ -80,20 +80,25 @@ async function fetchWithRetry<T>(
     try {
       const result = await fn();
       if (!result.error) {
-        await new Promise(r => setTimeout(r, 100));
-        return result;
+        return result;  // 成功時直接返回，不需要延遲
       }
-      if (result.error.message?.includes('fetch failed') ||
-          result.error.message?.includes('ECONNRESET') ||
-          result.error.message?.includes('ETIMEDOUT')) {
-        const delay = Math.min(2000 * Math.pow(2, i), 10000);
+      // 可重試的錯誤類型
+      const isRetryableError =
+        result.error.message?.includes('fetch failed') ||
+        result.error.message?.includes('ECONNRESET') ||
+        result.error.message?.includes('ETIMEDOUT') ||
+        result.error.message?.includes('AbortError') ||
+        result.error.message?.includes('timeout');
+
+      if (isRetryableError) {
+        const delay = Math.min(1000 * Math.pow(2, i), 10000);
         console.log(`[fetchWithRetry] Retry ${i + 1}/${retries} after ${result.error.message}, waiting ${delay}ms`);
         await new Promise(r => setTimeout(r, delay));
         continue;
       }
-      return result;
+      return result;  // 不可重試的錯誤直接返回
     } catch (err) {
-      const delay = Math.min(2000 * Math.pow(2, i), 10000);
+      const delay = Math.min(1000 * Math.pow(2, i), 10000);
       console.log(`[fetchWithRetry] Caught error on attempt ${i + 1}/${retries}, waiting ${delay}ms`);
       await new Promise(r => setTimeout(r, delay));
       if (i === retries - 1) throw err;

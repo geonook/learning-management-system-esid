@@ -198,32 +198,32 @@ export default function GradeOverviewPage() {
         // IMPORTANT: Supabase has a hard limit of 1000 rows per request
         // We fetch in batches of 1000 to get all scores
         // ═══════════════════════════════════════════════════════════════════
-        let scoresData: { exam_id: string; score: number | null }[] = [];
+        const scoresData: { exam_id: string; score: number | null }[] = [];
         if (examIds.length > 0) {
           const BATCH_SIZE = 1000;
           let offset = 0;
-          let hasMore = true;
 
-          while (hasMore) {
+          while (true) {
             const { data: batch, error: batchError } = await supabase
               .from("scores")
               .select("exam_id, score")
               .in("exam_id", examIds)
               .not("score", "is", null)
-              .range(offset, offset + BATCH_SIZE - 1);
+              .order("exam_id")  // 確保分頁一致性
+              .range(offset, offset + BATCH_SIZE - 1)
+              .limit(BATCH_SIZE);  // 明確設定限制
 
             if (batchError) {
               console.error('[HeadOverview] Batch fetch error:', batchError.message);
               break;
             }
 
-            if (batch && batch.length > 0) {
-              scoresData = [...scoresData, ...batch];
-              offset += batch.length;
-              hasMore = batch.length === BATCH_SIZE;
-            } else {
-              hasMore = false;
-            }
+            if (!batch || batch.length === 0) break;
+
+            scoresData.push(...batch);  // 使用 push 而非 spread（效能優化）
+            offset += BATCH_SIZE;  // 固定增量，修復原本的 bug
+
+            if (batch.length < BATCH_SIZE) break;  // 最後一批
           }
         }
 
