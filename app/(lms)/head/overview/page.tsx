@@ -77,22 +77,7 @@ export default function GradeOverviewPage() {
       const supabase = createClient();
 
       try {
-        // 1. Fetch Head Teacher KPIs (pass academicYear to avoid hardcoded year)
-        const kpiData = await getHeadTeacherKpis(gradeBand, courseType, academicYear);
-        if (isCancelled) return;
-        setKpis(kpiData);
-
-        // 2. Fetch score distribution for this grade band
-        const distData = await getClassDistribution(
-          "head",
-          undefined,
-          gradeBand,
-          courseType
-        );
-        if (isCancelled) return;
-        setDistribution(distData);
-
-        // 3. Parse grades from grade band
+        // Parse grades from grade band (needed for classes query)
         let grades: number[] = [];
         if (gradeBand.includes("-")) {
           const parts = gradeBand.split("-").map(Number);
@@ -105,17 +90,28 @@ export default function GradeOverviewPage() {
           grades = [Number(gradeBand)];
         }
 
-        // 4. Fetch classes in this grade band (selected academic year)
-        const { data: classesData } = await supabase
-          .from("classes")
-          .select("id, name, grade")
-          .in("grade", grades)
-          .eq("is_active", true)
-          .eq("academic_year", academicYear)
-          .order("grade", { ascending: true })
-          .order("name", { ascending: true });
+        // ═══════════════════════════════════════════════════════════════════
+        // PHASE 1: Parallel fetch - KPIs, Distribution, and Classes
+        // These queries are independent, so we can run them simultaneously
+        // ═══════════════════════════════════════════════════════════════════
+        const [kpiData, distData, classesResult] = await Promise.all([
+          getHeadTeacherKpis(gradeBand, courseType, academicYear),
+          getClassDistribution("head", undefined, gradeBand, courseType),
+          supabase
+            .from("classes")
+            .select("id, name, grade")
+            .in("grade", grades)
+            .eq("is_active", true)
+            .eq("academic_year", academicYear)
+            .order("grade", { ascending: true })
+            .order("name", { ascending: true }),
+        ]);
 
         if (isCancelled) return;
+        setKpis(kpiData);
+        setDistribution(distData);
+
+        const classesData = classesResult.data;
         if (!classesData || classesData.length === 0) {
           setClasses([]);
           setLoading(false);
@@ -124,36 +120,57 @@ export default function GradeOverviewPage() {
 
         const classIds = classesData.map((c) => c.id);
 
-        // 5. BATCH QUERY: Get all students for these classes at once
-        const { data: studentsData } = await supabase
-          .from("students")
-          .select("class_id")
-          .in("class_id", classIds)
-          .eq("is_active", true);
+        // ═══════════════════════════════════════════════════════════════════
+        // PHASE 2: Parallel fetch - Students and Courses (both need classIds)
+        // ═══════════════════════════════════════════════════════════════════
+        const [studentsResult, coursesResult] = await Promise.all([
+          supabase
+            .from("students")
+            .select("class_id")
+            .in("class_id", classIds)
+            .eq("is_active", true),
+          supabase
+            .from("courses")
+            .select("id, class_id")
+            .in("class_id", classIds)
+            .eq("is_active", true)
+            .eq("academic_year", academicYear)
+            .eq("course_type", courseType),
+        ]);
+
+        if (isCancelled) return;
 
         // Count students per class
         const studentCountByClass = new Map<string, number>();
-        (studentsData || []).forEach((s) => {
+        (studentsResult.data || []).forEach((s) => {
           const count = studentCountByClass.get(s.class_id) || 0;
           studentCountByClass.set(s.class_id, count + 1);
         });
 
-        // 6. BATCH QUERY: Get courses for these classes (filtered by course type)
-        const { data: coursesData } = await supabase
-          .from("courses")
-          .select("id, class_id")
-          .in("class_id", classIds)
-          .eq("is_active", true)
-          .eq("academic_year", academicYear)
-          .eq("course_type", courseType);  // Filter by head teacher's course type
-
-        const courseIds = coursesData?.map((c) => c.id) || [];
+        const courseIds = coursesResult.data?.map((c) => c.id) || [];
         const courseToClass = new Map<string, string>();
-        (coursesData || []).forEach((c) => {
+        (coursesResult.data || []).forEach((c) => {
           courseToClass.set(c.id, c.class_id);
         });
 
-        // 7. BATCH QUERY: Get exams for these courses (filtered by term if needed)
+        // ═══════════════════════════════════════════════════════════════════
+        // PHASE 3: Exams query (needs courseIds)
+        // ═══════════════════════════════════════════════════════════════════
+        if (courseIds.length === 0) {
+          // No courses found for this course type - show empty state
+          const classSummaries: ClassSummary[] = classesData.map((cls) => ({
+            id: cls.id,
+            name: cls.name,
+            studentCount: studentCountByClass.get(cls.id) || 0,
+            avgScore: null,
+          }));
+          if (!isCancelled) {
+            setClasses(classSummaries);
+            setLoading(false);
+          }
+          return;
+        }
+
         let examsQuery = supabase
           .from("exams")
           .select("id, course_id, term")
@@ -164,22 +181,25 @@ export default function GradeOverviewPage() {
         }
 
         const { data: examsData } = await examsQuery;
+        if (isCancelled) return;
+
         const examIds = examsData?.map((e) => e.id) || [];
         const examToCourse = new Map<string, string>();
         (examsData || []).forEach((e) => {
           examToCourse.set(e.id, e.course_id);
         });
 
-        // 8. BATCH QUERY: Get scores for these exams
-        // IMPORTANT: Supabase has a hard limit of 1000 rows per request (cannot be overridden)
-        // We need to fetch in batches of 1000 to get all scores
+        // ═══════════════════════════════════════════════════════════════════
+        // PHASE 4: Scores batch query (needs examIds)
+        // IMPORTANT: Supabase has a hard limit of 1000 rows per request
+        // We fetch in batches of 1000 to get all scores
+        // ═══════════════════════════════════════════════════════════════════
         let scoresData: { exam_id: string; score: number | null }[] = [];
         if (examIds.length > 0) {
           const BATCH_SIZE = 1000;
           let offset = 0;
           let hasMore = true;
 
-          // Fetch in batches until we have all data
           while (hasMore) {
             const { data: batch, error: batchError } = await supabase
               .from("scores")
@@ -203,6 +223,8 @@ export default function GradeOverviewPage() {
           }
         }
 
+        if (isCancelled) return;
+
         // Group scores by class
         const scoresByClass = new Map<string, number[]>();
         scoresData.forEach((s) => {
@@ -217,7 +239,7 @@ export default function GradeOverviewPage() {
           scoresByClass.set(classId, scores);
         });
 
-        // 9. Build class summaries
+        // Build class summaries
         const classSummaries: ClassSummary[] = classesData.map((cls) => {
           const studentCount = studentCountByClass.get(cls.id) || 0;
           const classScores = scoresByClass.get(cls.id) || [];
