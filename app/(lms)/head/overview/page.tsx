@@ -63,7 +63,12 @@ export default function GradeOverviewPage() {
       return;
     }
 
+    let isCancelled = false;
+
     async function fetchData() {
+      // Reset loading state when dependencies change (fixes Term switching UX)
+      setLoading(true);
+
       if (!userPermissions?.grade) {
         setLoading(false);
         return;
@@ -74,6 +79,7 @@ export default function GradeOverviewPage() {
       try {
         // 1. Fetch Head Teacher KPIs (pass academicYear to avoid hardcoded year)
         const kpiData = await getHeadTeacherKpis(gradeBand, courseType, academicYear);
+        if (isCancelled) return;
         setKpis(kpiData);
 
         // 2. Fetch score distribution for this grade band
@@ -83,6 +89,7 @@ export default function GradeOverviewPage() {
           gradeBand,
           courseType
         );
+        if (isCancelled) return;
         setDistribution(distData);
 
         // 3. Parse grades from grade band
@@ -108,8 +115,10 @@ export default function GradeOverviewPage() {
           .order("grade", { ascending: true })
           .order("name", { ascending: true });
 
+        if (isCancelled) return;
         if (!classesData || classesData.length === 0) {
           setClasses([]);
+          setLoading(false);
           return;
         }
 
@@ -224,16 +233,25 @@ export default function GradeOverviewPage() {
           };
         });
 
-        setClasses(classSummaries);
+        if (!isCancelled) {
+          setClasses(classSummaries);
+        }
 
       } catch (error) {
         console.error("Failed to fetch head teacher overview:", error);
       } finally {
-        setLoading(false);
+        if (!isCancelled) {
+          setLoading(false);
+        }
       }
     }
 
     fetchData();
+
+    // Cleanup function to prevent state updates on unmounted component
+    return () => {
+      isCancelled = true;
+    };
   }, [userId, gradeBand, courseType, userPermissions?.grade, academicYear, termForApi]);
 
   return (
