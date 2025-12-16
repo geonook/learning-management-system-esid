@@ -73,7 +73,8 @@ export default function TeacherProgressPage() {
     });
   }, [teachers, searchQuery]);
 
-  // Group teachers by type
+  // When a single course_type is selected, all teachers go into that type group
+  // When no course_type filter, group by teacher_type (fallback to "other")
   const teachersByType = useMemo(() => {
     const groups: { LT: TeacherProgress[]; IT: TeacherProgress[]; KCFS: TeacherProgress[]; other: TeacherProgress[] } = {
       LT: [],
@@ -83,20 +84,27 @@ export default function TeacherProgressPage() {
     };
 
     filteredTeachers.forEach((teacher) => {
-      const type = teacher.teacher_type;
-      if (type === "LT") {
-        groups.LT.push(teacher);
-      } else if (type === "IT") {
-        groups.IT.push(teacher);
-      } else if (type === "KCFS") {
-        groups.KCFS.push(teacher);
+      // If courseType filter is active, all teachers teaching that course type
+      // should be shown in that category (regardless of their teacher_type)
+      if (courseType) {
+        groups[courseType].push(teacher);
       } else {
-        groups.other.push(teacher);
+        // No filter: group by teacher_type, or "other" if null
+        const type = teacher.teacher_type;
+        if (type === "LT") {
+          groups.LT.push(teacher);
+        } else if (type === "IT") {
+          groups.IT.push(teacher);
+        } else if (type === "KCFS") {
+          groups.KCFS.push(teacher);
+        } else {
+          groups.other.push(teacher);
+        }
       }
     });
 
     return groups;
-  }, [filteredTeachers]);
+  }, [filteredTeachers, courseType]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -264,6 +272,20 @@ export default function TeacherProgressPage() {
                   <span className="text-text-tertiary text-sm">Kang Chiao Future Skills</span>
                 </div>
                 <TeacherTable teachers={teachersByType.KCFS} getStatusColor={getStatusColor} getProgressBarColor={getProgressBarColor} />
+              </div>
+            )}
+
+            {/* Other Teachers (no teacher_type set) - only show when no filter applied */}
+            {teachersByType.other.length > 0 && !courseType && (
+              <div className="bg-surface-secondary rounded-xl border border-border-default overflow-hidden">
+                <div className="p-4 border-b border-border-default flex items-center gap-2">
+                  <Users className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+                  <h3 className="text-lg font-medium text-text-primary">
+                    Other Teachers ({teachersByType.other.length})
+                  </h3>
+                  <span className="text-text-tertiary text-sm">Teachers without specific type assigned</span>
+                </div>
+                <TeacherTable teachers={teachersByType.other} getStatusColor={getStatusColor} getProgressBarColor={getProgressBarColor} />
               </div>
             )}
 
