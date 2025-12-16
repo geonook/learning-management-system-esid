@@ -173,7 +173,7 @@ export async function getTeachersProgress(
     coursesQuery = coursesQuery.eq("course_type", filters.course_type);
   }
 
-  const { data: courses, error: coursesError } = await coursesQuery;
+  const { data: courses, error: coursesError } = await coursesQuery.limit(1000);  // Override default limit
 
   if (coursesError) {
     console.error("[getTeachersProgress] Courses query error:", coursesError);
@@ -200,8 +200,9 @@ export async function getTeachersProgress(
       .from("students")
       .select("class_id")
       .in("class_id", classIds)
-      .eq("is_active", true),
-    examsQuery,
+      .eq("is_active", true)
+      .limit(10000),  // Override default 1000 row limit
+    examsQuery.limit(10000),  // Override default 1000 row limit
   ]);
 
   const { data: studentsData, error: studentCountError } = studentsResult;
