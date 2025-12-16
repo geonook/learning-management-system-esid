@@ -1,6 +1,21 @@
 # LMS Database Skill
 
 > Supabase 資料庫查詢模式、RLS 政策、Migration 關鍵記錄
+> Last Updated: 2025-12-16
+
+## Database Connection Strings
+
+```bash
+# Staging Database (kqvpcoolgyhjqleekmee)
+# Used by: lms-staging.zeabur.app
+psql "postgresql://postgres.kqvpcoolgyhjqleekmee:geonook8588@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres"
+
+# Production Database (piwbooidofbaqklhijup)
+# Used by: lms.kcislk.ntpc.edu.tw (future)
+psql "postgresql://postgres.piwbooidofbaqklhijup:geonook8588@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres"
+```
+
+---
 
 ## Supabase Nested Join 查詢模式（重要！）
 
@@ -231,3 +246,33 @@ CREATE INDEX idx_courses_teacher_id ON courses(teacher_id);
 
 **原因**：FK 欄位與過濾邏輯不匹配
 **解決**：從正確的巢狀物件取得 class_id（見上方正確模式）
+
+### 錯誤：查詢結果被截斷到 1000 筆
+
+**原因**：Supabase PostgREST 的 `max_rows` 預設是 1000
+**解決**：
+1. Supabase Dashboard → API Settings → Max rows 設為 10000
+2. 程式碼使用 `.range()` 分頁查詢：
+```typescript
+// 分頁查詢繞過 max_rows 限制
+const PAGE_SIZE = 1000;
+let page = 0;
+let allData: any[] = [];
+let hasMore = true;
+
+while (hasMore) {
+  const { data } = await supabase
+    .from('scores')
+    .select('exam_id')
+    .in('exam_id', examIds)
+    .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+  if (data && data.length > 0) {
+    allData = allData.concat(data);
+    page++;
+    hasMore = data.length === PAGE_SIZE;
+  } else {
+    hasMore = false;
+  }
+}
+```

@@ -1,16 +1,16 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 4.0
-> **Last Updated**: 2025-12-15
+> **Documentation Version**: 4.1
+> **Last Updated**: 2025-12-16
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School LMS with Next.js + TypeScript + Supabase Cloud
-> **Current Version**: v1.52.0 - Gradebook Expectations System
+> **Current Version**: v1.53.0 - Teacher Progress with Gradebook Expectations Integration
 
 This file provides essential guidance to Claude Code when working with code in this repository.
 
 ## Current Status
 
-- **v1.52.0** - Gradebook Expectations system for Head Teachers
+- **v1.53.0** - Teacher Progress now uses Head Teacher's Gradebook Expectations settings
 - **Production**: 84 classes, 504 courses (2 academic years), 1514 students
 - **Tech Stack**: Next.js 14 (App Router) + TypeScript + Tailwind + Supabase Cloud
 
@@ -86,6 +86,22 @@ git checkout develop
 - **Frontend**: Next.js 14 (App Router) + TypeScript + Tailwind + shadcn/ui
 - **Backend**: Supabase Cloud (PostgreSQL, Auth, RLS)
 - **Deployment**: Zeabur (frontend) + Supabase Cloud (database)
+
+### Database Connection Strings (Direct psql access)
+```bash
+# Staging Database (kqvpcoolgyhjqleekmee)
+# Used by: lms-staging.zeabur.app
+psql "postgresql://postgres.kqvpcoolgyhjqleekmee:geonook8588@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres"
+
+# Production Database (piwbooidofbaqklhijup)
+# Used by: lms.kcislk.ntpc.edu.tw (future)
+psql "postgresql://postgres.piwbooidofbaqklhijup:geonook8588@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres"
+```
+
+### Supabase API Settings (IMPORTANT)
+- **Max rows**: Must be set to **10000** in Supabase Dashboard → API Settings
+- Default 1000 row limit will truncate large queries (scores, exams, students)
+- Use `.range()` pagination for queries that may exceed max_rows
 
 ### Core Directories
 ```

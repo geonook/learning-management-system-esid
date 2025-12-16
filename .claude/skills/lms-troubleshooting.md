@@ -1,6 +1,7 @@
 # LMS Troubleshooting Skill
 
 > 已解決問題、常見錯誤、除錯技巧
+> Last Updated: 2025-12-16
 
 ## Statistics 頁面成績不顯示
 
