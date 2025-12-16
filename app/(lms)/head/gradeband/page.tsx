@@ -18,7 +18,7 @@ import {
   getGradeBandQuickStats,
   type GradeBandQuickStats,
 } from "@/lib/api/gradeband-statistics";
-import { getGradeBandDisplay, parseCourseType } from "@/lib/utils/gradeband";
+import { getGradeBandDisplay } from "@/lib/utils/gradeband";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GlobalFilterBar, useGlobalFilters } from "@/components/filters";
 import { ScopeIndicator } from "@/components/ui/scope-indicator";
