@@ -98,7 +98,7 @@ export class AnalyticsEngine {
   }
 
   /**
-   * Calculate performance distribution
+   * Calculate performance distribution (for LT/IT 0-100 scale)
    */
   public calculateDistribution(scores: number[]): PerformanceDistribution {
     const ranges = [
@@ -135,6 +135,61 @@ export class AnalyticsEngine {
       standardDeviation: stats.standardDeviation,
       skewness: Math.round(skewness * 100) / 100
     }
+  }
+
+  /**
+   * Calculate KCFS performance distribution (for 0-5 scale)
+   * KCFS uses different ranges: 4.5-5 = Excellent, 4-4.5 = Good, etc.
+   */
+  public calculateKCFSDistribution(scores: number[]): PerformanceDistribution {
+    const ranges = [
+      { min: 4.5, max: 5, label: 'Excellent (4.5-5)' },
+      { min: 4, max: 4.49, label: 'Good (4-4.5)' },
+      { min: 3.5, max: 3.99, label: 'Satisfactory (3.5-4)' },
+      { min: 3, max: 3.49, label: 'Pass (3-3.5)' },
+      { min: 0, max: 2.99, label: 'Below Standard (0-3)' }
+    ]
+
+    const stats = this.calculateStatistics(scores)
+    const distribution = ranges.map(range => {
+      const count = scores.filter(score => score >= range.min && score <= range.max).length
+      return {
+        range: range.label,
+        count,
+        percentage: Math.round((count / (scores.length || 1)) * 100 * 100) / 100
+      }
+    })
+
+    // Calculate skewness (measure of distribution asymmetry)
+    const skewness = scores.length > 0 && stats.standardDeviation > 0
+      ? scores.reduce((sum, score) => sum + Math.pow((score - stats.mean) / stats.standardDeviation, 3), 0) / scores.length
+      : 0
+
+    return {
+      ranges: distribution.map(d => ({
+        range: d.range,
+        count: d.count,
+        percentage: d.percentage
+      })),
+      mean: stats.mean,
+      median: stats.median,
+      standardDeviation: stats.standardDeviation,
+      skewness: Math.round(skewness * 100) / 100
+    }
+  }
+
+  /**
+   * Calculate distribution based on course type
+   * Automatically selects appropriate scale (0-100 for LT/IT, 0-5 for KCFS)
+   */
+  public calculateDistributionByCourseType(
+    scores: number[],
+    courseType: 'LT' | 'IT' | 'KCFS'
+  ): PerformanceDistribution {
+    if (courseType === 'KCFS') {
+      return this.calculateKCFSDistribution(scores)
+    }
+    return this.calculateDistribution(scores)
   }
 
   /**

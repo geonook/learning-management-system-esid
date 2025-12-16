@@ -157,11 +157,113 @@ export function calculateThresholdRate(values: number[], threshold: number): num
 }
 
 // ============================================================
+// KCFS Rate Calculations (0-5 Scale)
+// ============================================================
+
+/**
+ * Calculate KCFS pass rate (scores >= 3)
+ * KCFS uses 0-5 scale where 3 corresponds to 80 points
+ * Returns percentage (0-100) or null if no valid values
+ */
+export function calculateKCFSPassRate(values: number[]): number | null {
+  if (values.length === 0) return null;
+
+  const passCount = values.filter(v => v >= 3).length;
+  return roundTo((passCount / values.length) * 100, 2);
+}
+
+/**
+ * Calculate KCFS excellent rate (scores >= 4.5)
+ * KCFS uses 0-5 scale where 4.5 corresponds to 95 points
+ * Returns percentage (0-100) or null if no valid values
+ */
+export function calculateKCFSExcellentRate(values: number[]): number | null {
+  if (values.length === 0) return null;
+
+  const excellentCount = values.filter(v => v >= 4.5).length;
+  return roundTo((excellentCount / values.length) * 100, 2);
+}
+
+/**
+ * Calculate KCFS category average from a score map
+ * @param scoreMap - Map of assessment code to score
+ * @param categoryCodes - Array of KCFS category codes (COMM, COLLAB, etc.)
+ */
+export function calculateKCFSCategoryAverage(
+  scoreMap: Record<string, number | null>,
+  categoryCodes: string[]
+): number | null {
+  const scores = categoryCodes
+    .map(code => scoreMap[code])
+    .filter((v): v is number => v !== null && v !== undefined);
+  return calculateAverage(scores);
+}
+
+/**
+ * Calculate KCFS term grade from raw scores (statistics version)
+ * Simplified version for statistics that doesn't require KCFSScoreEntry format.
+ *
+ * Formula: Term Grade = 50 + (Σ category_score × weight)
+ *
+ * @param scoreMap - Map of assessment code to score (0-5 scale)
+ * @param grade - Student grade (1-6)
+ * @returns Term grade (50-100) or null if no valid scores
+ */
+export function calculateKCFSTermGradeFromMap(
+  scoreMap: Record<string, number | null>,
+  grade: number
+): number | null {
+  // Get categories and weight based on grade
+  const config = getKCFSGradeConfig(grade);
+  const { categories, weight } = config;
+
+  let weightedSum = 0;
+  let validCount = 0;
+
+  for (const category of categories) {
+    const score = scoreMap[category];
+    // Skip null/undefined scores
+    if (score === null || score === undefined) continue;
+
+    weightedSum += score * weight;
+    validCount++;
+  }
+
+  if (validCount === 0) return null;
+
+  const termGrade = 50 + weightedSum;
+  return roundTo(termGrade, 1);
+}
+
+/**
+ * Get KCFS grade configuration based on grade number
+ * Duplicated from /lib/grade/kcfs-calculations.ts to avoid circular dependencies
+ */
+function getKCFSGradeConfig(grade: number): { categories: string[]; weight: number } {
+  if (grade <= 2) {
+    return {
+      categories: ['COMM', 'COLLAB', 'SD', 'CT'],
+      weight: 2.5,
+    };
+  }
+  if (grade <= 4) {
+    return {
+      categories: ['COMM', 'COLLAB', 'SD', 'CT', 'BW'],
+      weight: 2.0,
+    };
+  }
+  return {
+    categories: ['COMM', 'COLLAB', 'SD', 'CT', 'PORT', 'PRES'],
+    weight: 5 / 3,
+  };
+}
+
+// ============================================================
 // Performance Level
 // ============================================================
 
 /**
- * Determine performance level based on score
+ * Determine performance level based on score (0-100 scale for LT/IT)
  */
 export function getPerformanceLevel(score: number | null): PerformanceLevel {
   if (score === null) return 'needs_improvement';
@@ -169,6 +271,19 @@ export function getPerformanceLevel(score: number | null): PerformanceLevel {
   if (score >= 80) return 'good';
   if (score >= 70) return 'average';
   if (score >= 60) return 'pass';
+  return 'needs_improvement';
+}
+
+/**
+ * Determine KCFS performance level based on score (0-5 scale)
+ * 4.5+ = excellent, 4+ = good, 3.5+ = average, 3+ = pass
+ */
+export function getKCFSPerformanceLevel(score: number | null): PerformanceLevel {
+  if (score === null) return 'needs_improvement';
+  if (score >= 4.5) return 'excellent';
+  if (score >= 4) return 'good';
+  if (score >= 3.5) return 'average';
+  if (score >= 3) return 'pass';
   return 'needs_improvement';
 }
 

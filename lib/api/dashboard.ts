@@ -27,6 +27,32 @@ import { DEFAULT_EXPECTATION } from "@/types/gradebook-expectations";
 // FA1-8 (8) + SA1-4 (4) + MID (1) = 13
 const DEFAULT_ASSESSMENT_ITEMS = DEFAULT_EXPECTATION.expected_total;
 
+// KCFS expected items by grade range
+// G1-2: 4 categories, G3-4: 5 categories, G5-6: 6 categories
+function getKCFSExpectedItems(grades: number[]): number {
+  // If multiple grades, calculate average expected count
+  if (grades.length === 0) return 4;
+
+  const totalCategories = grades.reduce((sum, grade) => {
+    if (grade <= 2) return sum + 4;
+    if (grade <= 4) return sum + 5;
+    return sum + 6;
+  }, 0);
+
+  return Math.round(totalCategories / grades.length);
+}
+
+// Get expected assessment items based on course type and grade(s)
+function getExpectedAssessmentItems(
+  courseType: "LT" | "IT" | "KCFS",
+  grades: number[]
+): number {
+  if (courseType === "KCFS") {
+    return getKCFSExpectedItems(grades);
+  }
+  return DEFAULT_ASSESSMENT_ITEMS;
+}
+
 // Types for dashboard data structures
 export interface DashboardStudent {
   id: string;
@@ -1233,12 +1259,13 @@ export async function getHeadTeacherKpis(
     const courseIds = (coursesForScores || []).map((c) => c.id);
 
     if (courseIds.length === 0) {
+      const expectedItemsPerStudent = getExpectedAssessmentItems(courseType, grades);
       return {
         totalClasses,
         averageScore: 0,
         progressRate: 0,
         scoresEntered: 0,
-        expectedScores: (studentsCount || 0) * DEFAULT_ASSESSMENT_ITEMS,
+        expectedScores: (studentsCount || 0) * expectedItemsPerStudent,
         activeIssues: null,
         studentsCount: studentsCount || 0,
         teachersCount,
@@ -1280,9 +1307,11 @@ export async function getHeadTeacherKpis(
         : 0;
 
     // Calculate progress rate (scores entered / expected)
-    // 13 評量項目 = FA1-8 (8) + SA1-4 (4) + MID (1)
+    // LT/IT: 13 items = FA1-8 (8) + SA1-4 (4) + MID (1)
+    // KCFS: 4-6 items depending on grade (G1-2=4, G3-4=5, G5-6=6)
     const scoresEntered = (scores || []).length;
-    const expectedScores = (studentsCount || 0) * DEFAULT_ASSESSMENT_ITEMS;
+    const expectedItemsPerStudent = getExpectedAssessmentItems(courseType, grades);
+    const expectedScores = (studentsCount || 0) * expectedItemsPerStudent;
     const progressRate = expectedScores > 0
       ? Math.round((scoresEntered / expectedScores) * 100)
       : 0;
@@ -1492,9 +1521,12 @@ export async function getGradeClassSummary(
           : 0;
 
       // Calculate progress rate (scores entered / expected)
-      // 13 評量項目 = FA1-8 (8) + SA1-4 (4) + MID (1)
+      // Each class has 3 course types: LT (13), IT (13), KCFS (4-6 depending on grade)
+      // Total expected = student_count × (13 + 13 + KCFS_count)
       const scoresEntered = scores.length;
-      const expectedScores = studentCount * DEFAULT_ASSESSMENT_ITEMS;
+      const kcfsExpectedPerStudent = getKCFSExpectedItems([grade]);
+      const expectedPerStudent = DEFAULT_ASSESSMENT_ITEMS + DEFAULT_ASSESSMENT_ITEMS + kcfsExpectedPerStudent; // LT + IT + KCFS
+      const expectedScores = studentCount * expectedPerStudent;
       const progressRate =
         expectedScores > 0
           ? Math.round((scoresEntered / expectedScores) * 100)

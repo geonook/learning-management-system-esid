@@ -18,6 +18,9 @@ import {
   calculateStdDev,
   calculatePassRate,
   calculateExcellentRate,
+  calculateKCFSPassRate,
+  calculateKCFSExcellentRate,
+  calculateKCFSTermGradeFromMap,
   calculateFormativeAverage,
   calculateSummativeAverage,
   calculateTermGrade,
@@ -291,22 +294,48 @@ export async function getClassStatistics(
       const termGrades: number[] = [];
       const faAvgs: number[] = [];
       const saAvgs: number[] = [];
+      const rawKCFSScores: number[] = []; // For KCFS pass/excellent rate calculation
+
+      // Branch based on course type
+      const isKCFS = course.course_type === 'KCFS';
 
       for (const [, scoreMap] of studentScoreMap) {
-        const faAvg = calculateFormativeAverage(
-          scoreMap['FA1'], scoreMap['FA2'], scoreMap['FA3'], scoreMap['FA4'],
-          scoreMap['FA5'], scoreMap['FA6'], scoreMap['FA7'], scoreMap['FA8']
-        );
-        const saAvg = calculateSummativeAverage(
-          scoreMap['SA1'], scoreMap['SA2'], scoreMap['SA3'], scoreMap['SA4']
-        );
-        const midterm = scoreMap['MID'] ?? null;
-        const termGrade = calculateTermGrade(faAvg, saAvg, midterm);
+        if (isKCFS) {
+          // KCFS: Use KCFS-specific calculation
+          const termGrade = calculateKCFSTermGradeFromMap(scoreMap, cls.grade);
+          if (termGrade !== null) termGrades.push(termGrade);
 
-        if (faAvg !== null) faAvgs.push(faAvg);
-        if (saAvg !== null) saAvgs.push(saAvg);
-        if (termGrade !== null) termGrades.push(termGrade);
+          // Collect raw KCFS scores (0-5 scale) for pass/excellent rate
+          Object.values(scoreMap).forEach(score => {
+            if (score !== null && score !== undefined) {
+              rawKCFSScores.push(score);
+            }
+          });
+        } else {
+          // LT/IT: Use traditional FA/SA/MID calculation
+          const faAvg = calculateFormativeAverage(
+            scoreMap['FA1'], scoreMap['FA2'], scoreMap['FA3'], scoreMap['FA4'],
+            scoreMap['FA5'], scoreMap['FA6'], scoreMap['FA7'], scoreMap['FA8']
+          );
+          const saAvg = calculateSummativeAverage(
+            scoreMap['SA1'], scoreMap['SA2'], scoreMap['SA3'], scoreMap['SA4']
+          );
+          const midterm = scoreMap['MID'] ?? null;
+          const termGrade = calculateTermGrade(faAvg, saAvg, midterm);
+
+          if (faAvg !== null) faAvgs.push(faAvg);
+          if (saAvg !== null) saAvgs.push(saAvg);
+          if (termGrade !== null) termGrades.push(termGrade);
+        }
       }
+
+      // Calculate pass/excellent rates based on course type
+      const passRate = isKCFS
+        ? calculateKCFSPassRate(rawKCFSScores)
+        : calculatePassRate(termGrades);
+      const excellentRate = isKCFS
+        ? calculateKCFSExcellentRate(rawKCFSScores)
+        : calculateExcellentRate(termGrades);
 
       results.push({
         class_id: cls.id,
@@ -318,10 +347,10 @@ export async function getClassStatistics(
         max: calculateMax(termGrades),
         min: calculateMin(termGrades),
         std_dev: calculateStdDev(termGrades),
-        fa_avg: calculateAverage(faAvgs),
-        sa_avg: calculateAverage(saAvgs),
-        pass_rate: calculatePassRate(termGrades),
-        excellent_rate: calculateExcellentRate(termGrades),
+        fa_avg: isKCFS ? null : calculateAverage(faAvgs), // KCFS doesn't have FA/SA
+        sa_avg: isKCFS ? null : calculateAverage(saAvgs),
+        pass_rate: passRate,
+        excellent_rate: excellentRate,
       });
     }
   }
