@@ -258,6 +258,17 @@ export default function GradeOverviewPage() {
           };
         });
 
+        // Sort by Level: E1 > E2 > E3 > null
+        classSummaries.sort((a, b) => {
+          if (!a.level && !b.level) return 0;
+          if (!a.level) return 1;  // null goes last
+          if (!b.level) return -1;
+          // Extract E level number (e.g., "G5E1" -> "1", "G5E2" -> "2")
+          const levelA = a.level.match(/E(\d)/)?.[1] || "9";
+          const levelB = b.level.match(/E(\d)/)?.[1] || "9";
+          return levelA.localeCompare(levelB);
+        });
+
         if (!isCancelled) {
           setClasses(classSummaries);
         }
