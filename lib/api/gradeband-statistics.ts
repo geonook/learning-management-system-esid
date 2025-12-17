@@ -762,6 +762,8 @@ export async function getGradeBandStudentGrades(
   const allScores: ScoreRow[] = [];
 
   if (studentIds.length > 0) {
+    console.log('[getGradeBandStudentGrades] Fetching scores for', studentIds.length, 'students');
+
     // First page with count
     // NOTE: Removed `.eq('exam.term', filters.term)` due to Supabase/PostgREST nested relation filtering bug
     // Term filtering is done in JavaScript during processScorePage instead
