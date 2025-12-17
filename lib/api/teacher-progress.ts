@@ -237,32 +237,30 @@ export async function getTeachersProgress(
   const examIds = exams?.map((e) => e.id) || [];
   const examToCourse = new Map(exams?.map((e) => [e.id, e.course_id]) || []);
 
-  // 6. 取得成績 (使用分頁查詢繞過 Supabase max_rows 1000 限制)
+  // 6. 取得成績
+  // 策略：將 examIds 分批查詢，每批最多 50 個 ID
+  // 這樣確保每批查詢的結果不超過 Supabase 的 max_rows 限制
+  // (50 exams × 最多 ~30 學生 = ~1500 scores/batch，安全低於 max_rows)
   let scoresData: { exam_id: string }[] = [];
   if (examIds.length > 0) {
-    const PAGE_SIZE = 1000;
-    let page = 0;
-    let hasMore = true;
+    const EXAM_BATCH_SIZE = 50;
 
-    while (hasMore) {
+    for (let i = 0; i < examIds.length; i += EXAM_BATCH_SIZE) {
+      const batchExamIds = examIds.slice(i, i + EXAM_BATCH_SIZE);
+
       const { data: scores, error: scoresError } = await supabase
         .from("scores")
         .select("exam_id")
-        .in("exam_id", examIds)
-        .not("score", "is", null)
-        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+        .in("exam_id", batchExamIds)
+        .not("score", "is", null);
 
       if (scoresError) {
         console.error("[getTeachersProgress] Scores query error:", scoresError);
-        break;
+        continue;
       }
 
       if (scores && scores.length > 0) {
         scoresData = scoresData.concat(scores);
-        page++;
-        hasMore = scores.length === PAGE_SIZE;
-      } else {
-        hasMore = false;
       }
     }
   }
@@ -276,6 +274,7 @@ export async function getTeachersProgress(
       courseScoreCount.set(courseId, count + 1);
     }
   });
+
 
   // 7. 按教師分組並計算進度（使用 Expectations 設定的 expected_total）
   const teacherMap = new Map<
