@@ -308,7 +308,8 @@ export default function TeacherProgressPage() {
         <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
           <h3 className="text-blue-600 dark:text-blue-400 font-medium mb-2">About Progress Tracking</h3>
           <p className="text-text-secondary text-sm">
-            Progress is calculated based on actual score entries. Formula: (scores entered) / (students × 13 assessments) × 100%.
+            Progress is calculated based on actual score entries. Formula: (scores entered) / (students × expected assessments) × 100%.
+            Expected assessments are configured in the Expectations settings for each grade level.
             Teachers are grouped by their course type (LT, IT, KCFS) for easier management.
           </p>
         </div>
