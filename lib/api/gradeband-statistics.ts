@@ -340,7 +340,8 @@ export async function getGradeBandClassStatistics(
       if (!classIdSet.has(examData.course.class_id)) return false;
       if (filters.course_type && examData.course.course_type !== filters.course_type) return false;
       // Term filter in JS (workaround for Supabase nested relation bug)
-      if (filters.term && examData.term !== filters.term) return false;
+      // Use Number() to ensure type-safe comparison (filters.term may be string from Zustand persist)
+      if (filters.term && examData.term !== Number(filters.term)) return false;
       return true;
     })
     .map(s => {
@@ -796,7 +797,8 @@ export async function getGradeBandStudentGrades(
           if (!classIdSet.has(examData.course.class_id)) continue;
           if (filters.course_type && examData.course.course_type !== filters.course_type) continue;
           // Term filter in JS (workaround for Supabase nested relation bug)
-          if (filters.term && examData.term !== filters.term) continue;
+          // Use Number() to ensure type-safe comparison (filters.term may be string from Zustand persist)
+          if (filters.term && examData.term !== Number(filters.term)) continue;
 
           allScores.push({
             student_id: s.student_id,
