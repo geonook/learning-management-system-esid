@@ -96,7 +96,29 @@ export default function GradeBandStudentGradesPage() {
         console.log('[StudentGradesPage] API returned:', data.length, 'records');
         // Log sample record to see score values
         if (data.length > 0) {
-          console.log('[StudentGradesPage] Sample record:', data[0]);
+          const sample = data[0];
+          console.log('[StudentGradesPage] Sample record scores:', {
+            fa_avg: sample.fa_avg,
+            sa_avg: sample.sa_avg,
+            midterm: sample.midterm,
+            term_grade: sample.term_grade,
+            fa1: sample.fa1,
+            fa2: sample.fa2,
+            sa1: sample.sa1,
+          });
+          // Find a record with non-null scores
+          const withScores = data.find(d => d.fa_avg !== null || d.term_grade !== null);
+          if (withScores) {
+            console.log('[StudentGradesPage] Record with scores:', {
+              name: withScores.full_name,
+              fa_avg: withScores.fa_avg,
+              sa_avg: withScores.sa_avg,
+              midterm: withScores.midterm,
+              term_grade: withScores.term_grade,
+            });
+          } else {
+            console.log('[StudentGradesPage] WARNING: No records have scores!');
+          }
         }
         // Filter by selected grade
         const gradeFiltered = data.filter((g) => {
