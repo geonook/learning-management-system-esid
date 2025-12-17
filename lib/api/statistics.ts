@@ -741,19 +741,21 @@ export async function getStudentGrades(
       if (firstPageScores && firstPageScores.length === SCORE_PAGE_SIZE) {
         const maxPages = 10; // Limit to 10,000 scores max
 
-        const fetchScorePage = async (pageIndex: number): Promise<ScoreRow[]> => {
+        // Fetch all pages and track raw counts for proper termination
+        const fetchScorePage = async (pageIndex: number): Promise<{ processed: ScoreRow[]; rawCount: number }> => {
           const { data } = await buildScoresQuery(pageIndex * SCORE_PAGE_SIZE, (pageIndex + 1) * SCORE_PAGE_SIZE - 1);
-          return processScores(data);
+          return { processed: processScores(data), rawCount: data?.length || 0 };
         };
 
         const pagePromises = Array.from({ length: maxPages - 1 }, (_, i) => fetchScorePage(i + 1));
 
         const additionalPages = await Promise.all(pagePromises);
-        for (const pageData of additionalPages) {
-          if (pageData.length > 0) {
-            allScores.push(...pageData);
+        for (const pageResult of additionalPages) {
+          if (pageResult.processed.length > 0) {
+            allScores.push(...pageResult.processed);
           }
-          if (pageData.length < SCORE_PAGE_SIZE) break;
+          // Break based on RAW count, not filtered count
+          if (pageResult.rawCount < SCORE_PAGE_SIZE) break;
         }
       }
     }
