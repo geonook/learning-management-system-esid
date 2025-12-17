@@ -764,67 +764,83 @@ export async function getGradeBandStudentGrades(
   if (studentIds.length > 0) {
     console.log('[getGradeBandStudentGrades] Fetching scores for', studentIds.length, 'students');
 
-    // First page with count
-    // NOTE: Removed `.eq('exam.term', filters.term)` due to Supabase/PostgREST nested relation filtering bug
-    // Term filtering is done in JavaScript during processScorePage instead
-    const baseScoresQuery = supabase
-      .from('scores')
-      .select(`
-        student_id,
-        assessment_code,
-        score,
-        exam:exams!inner(
-          course_id,
-          term,
-          course:courses!inner(
-            id,
-            class_id,
-            course_type
-          )
-        )
-      `, { count: 'exact' })
-      .in('student_id', studentIds);
-
-    const { data: firstPageScores, count: scoresCount, error: scoresError } = await baseScoresQuery.range(0, 999);
-
-    if (scoresError) {
-      console.error('[getGradeBandStudentGrades] Scores error:', scoresError);
-    } else {
-      // Process first page
-      // Term filtering done here in JS instead of SQL due to Supabase nested relation bug
-      let debugStats = { total: 0, noExamData: 0, wrongClass: 0, wrongCourseType: 0, wrongTerm: 0, passed: 0 };
-      const processScorePage = (pageScores: typeof firstPageScores) => {
-        for (const s of pageScores || []) {
-          debugStats.total++;
-          const examData = s.exam as unknown as { course_id: string; term: number | null; course: { id: string; class_id: string; course_type: string } } | null;
-          if (!examData?.course_id || !examData?.course) { debugStats.noExamData++; continue; }
-          if (!classIdSet.has(examData.course.class_id)) { debugStats.wrongClass++; continue; }
-          if (filters.course_type && examData.course.course_type !== filters.course_type) { debugStats.wrongCourseType++; continue; }
-          // Term filter in JS (workaround for Supabase nested relation bug)
-          // Use Number() to ensure type-safe comparison (filters.term may be string from Zustand persist)
-          if (filters.term && examData.term !== Number(filters.term)) {
-            debugStats.wrongTerm++;
-            continue;
-          }
-          debugStats.passed++;
-
-          allScores.push({
-            student_id: s.student_id,
-            course_id: examData.course.id,
-            course_type: examData.course.course_type,
-            assessment_code: s.assessment_code,
-            score: s.score,
-          });
+    // Process scores function (shared across batches)
+    // Term filtering done here in JS instead of SQL due to Supabase nested relation bug
+    const debugStats = { total: 0, noExamData: 0, wrongClass: 0, wrongCourseType: 0, wrongTerm: 0, passed: 0 };
+    type ScorePageData = {
+      student_id: string;
+      assessment_code: string;
+      score: number | null;
+      exam: unknown;
+    }[];
+    const processScorePage = (pageScores: ScorePageData | null) => {
+      for (const s of pageScores || []) {
+        debugStats.total++;
+        const examData = s.exam as { course_id: string; term: number | null; course: { id: string; class_id: string; course_type: string } } | null;
+        if (!examData?.course_id || !examData?.course) { debugStats.noExamData++; continue; }
+        if (!classIdSet.has(examData.course.class_id)) { debugStats.wrongClass++; continue; }
+        if (filters.course_type && examData.course.course_type !== filters.course_type) { debugStats.wrongCourseType++; continue; }
+        // Term filter in JS (workaround for Supabase nested relation bug)
+        // Use Number() to ensure type-safe comparison (filters.term may be string from Zustand persist)
+        if (filters.term && examData.term !== Number(filters.term)) {
+          debugStats.wrongTerm++;
+          continue;
         }
-      };
+        debugStats.passed++;
+
+        allScores.push({
+          student_id: s.student_id,
+          course_id: examData.course.id,
+          course_type: examData.course.course_type,
+          assessment_code: s.assessment_code,
+          score: s.score,
+        });
+      }
+    };
+
+    // Split studentIds into batches to avoid URL length limits (max ~200 UUIDs per batch)
+    const STUDENT_BATCH_SIZE = 200;
+    const studentBatches: string[][] = [];
+    for (let i = 0; i < studentIds.length; i += STUDENT_BATCH_SIZE) {
+      studentBatches.push(studentIds.slice(i, i + STUDENT_BATCH_SIZE));
+    }
+
+    console.log('[getGradeBandStudentGrades] Split into', studentBatches.length, 'batches');
+
+    // Process each batch
+    for (const batchStudentIds of studentBatches) {
+      // Fetch scores for this batch with pagination
+      const { data: firstPageScores, count: scoresCount, error: scoresError } = await supabase
+        .from('scores')
+        .select(`
+          student_id,
+          assessment_code,
+          score,
+          exam:exams!inner(
+            course_id,
+            term,
+            course:courses!inner(
+              id,
+              class_id,
+              course_type
+            )
+          )
+        `, { count: 'exact' })
+        .in('student_id', batchStudentIds)
+        .range(0, 999);
+
+      if (scoresError) {
+        console.error('[getGradeBandStudentGrades] Scores error for batch:', scoresError);
+        continue; // Try next batch instead of failing completely
+      }
 
       processScorePage(firstPageScores);
 
-      // Fetch remaining pages in parallel if needed
+      // Fetch remaining pages for this batch if needed
       if (scoresCount && scoresCount > 1000) {
-        const totalPages = Math.min(Math.ceil(scoresCount / 1000), 10);  // Max 10 pages = 10000 scores
+        const totalPages = Math.min(Math.ceil(scoresCount / 1000), 10);
         const pagePromises = Array.from({ length: totalPages - 1 }, (_, i) => {
-          const query = supabase
+          return supabase
             .from('scores')
             .select(`
               student_id,
@@ -840,10 +856,9 @@ export async function getGradeBandStudentGrades(
                 )
               )
             `)
-            .in('student_id', studentIds)
-            .range((i + 1) * 1000, (i + 2) * 1000 - 1);
-
-          return query.then(r => r.data || []);
+            .in('student_id', batchStudentIds)
+            .range((i + 1) * 1000, (i + 2) * 1000 - 1)
+            .then(r => r.data || []);
         });
 
         const additionalPages = await Promise.all(pagePromises);
@@ -851,15 +866,16 @@ export async function getGradeBandStudentGrades(
           processScorePage(pageData);
         }
       }
-      // Unified debug logging (same format as getStudentGrades for easy comparison)
-      console.log('[getGradeBandStudentGrades] Score processing stats:', {
-        filters: { grade_band: filters.grade_band, course_type: filters.course_type, term: filters.term, termType: typeof filters.term },
-        studentCount: studentIds.length,
-        classCount: classIdSet.size,
-        debugStats,
-        allScoresCount: allScores.length,
-      });
     }
+
+    // Unified debug logging (same format as getStudentGrades for easy comparison)
+    console.log('[getGradeBandStudentGrades] Score processing stats:', {
+      filters: { grade_band: filters.grade_band, course_type: filters.course_type, term: filters.term, termType: typeof filters.term },
+      studentCount: studentIds.length,
+      classCount: classIdSet.size,
+      debugStats,
+      allScoresCount: allScores.length,
+    });
   }
 
   // Build lookup maps
