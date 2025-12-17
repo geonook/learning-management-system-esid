@@ -10,6 +10,10 @@ export async function GET() {
   // Get database info
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
+  // Check if user is authenticated
+  const { data: { user } } = await supabase.auth.getUser();
+  const isAuthenticated = !!user;
+
   // Test 1: Simple scores query (no join)
   const { data: simpleScores, count: simpleCount, error: simpleError } = await supabase
     .from('scores')
@@ -117,6 +121,11 @@ export async function GET() {
 
   return NextResponse.json({
     supabaseUrl,
+    authStatus: {
+      isAuthenticated,
+      userId: user?.id,
+      email: user?.email,
+    },
     databaseStats: {
       totalScores,
       totalStudents,
