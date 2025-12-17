@@ -638,6 +638,8 @@ export async function getGradeBandClassRanking(
 export async function getGradeBandStudentGrades(
   filters: GradeBandFilters
 ): Promise<StudentGradeRow[]> {
+  console.log('[getGradeBandStudentGrades] filters:', JSON.stringify(filters));
+  console.log('[getGradeBandStudentGrades] filters.term type:', typeof filters.term, 'value:', filters.term);
   const supabase = createClient();
   const grades = parseGradeBand(filters.grade_band);
 
@@ -788,17 +790,31 @@ export async function getGradeBandStudentGrades(
     if (scoresError) {
       console.error('[getGradeBandStudentGrades] Scores error:', scoresError);
     } else {
+      console.log('[getGradeBandStudentGrades] First page scores count:', firstPageScores?.length, 'total:', scoresCount);
+      // Debug: log first score structure
+      if (firstPageScores && firstPageScores.length > 0) {
+        console.log('[getGradeBandStudentGrades] Sample score structure:', JSON.stringify(firstPageScores[0]));
+      }
       // Process first page
       // Term filtering done here in JS instead of SQL due to Supabase nested relation bug
+      let debugStats = { total: 0, noExamData: 0, wrongClass: 0, wrongCourseType: 0, wrongTerm: 0, passed: 0 };
       const processScorePage = (pageScores: typeof firstPageScores) => {
         for (const s of pageScores || []) {
+          debugStats.total++;
           const examData = s.exam as unknown as { course_id: string; term: number | null; course: { id: string; class_id: string; course_type: string } } | null;
-          if (!examData?.course_id || !examData?.course) continue;
-          if (!classIdSet.has(examData.course.class_id)) continue;
-          if (filters.course_type && examData.course.course_type !== filters.course_type) continue;
+          if (!examData?.course_id || !examData?.course) { debugStats.noExamData++; continue; }
+          if (!classIdSet.has(examData.course.class_id)) { debugStats.wrongClass++; continue; }
+          if (filters.course_type && examData.course.course_type !== filters.course_type) { debugStats.wrongCourseType++; continue; }
           // Term filter in JS (workaround for Supabase nested relation bug)
           // Use Number() to ensure type-safe comparison (filters.term may be string from Zustand persist)
-          if (filters.term && examData.term !== Number(filters.term)) continue;
+          if (filters.term && examData.term !== Number(filters.term)) {
+            if (debugStats.wrongTerm < 3) {
+              console.log('[getGradeBandStudentGrades] Term mismatch:', 'examData.term=', examData.term, typeof examData.term, 'filters.term=', filters.term, typeof filters.term, 'Number(filters.term)=', Number(filters.term));
+            }
+            debugStats.wrongTerm++;
+            continue;
+          }
+          debugStats.passed++;
 
           allScores.push({
             student_id: s.student_id,
@@ -843,6 +859,7 @@ export async function getGradeBandStudentGrades(
           processScorePage(pageData);
         }
       }
+      console.log('[getGradeBandStudentGrades] Debug stats:', debugStats);
     }
   }
 
