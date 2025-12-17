@@ -50,14 +50,28 @@ export default function GradeBandCourseAnalysisPage() {
   const [statistics, setStatistics] = useState<GradeLevelSummary[]>([]);
   const [selectedCourseType, setSelectedCourseType] = useState<CourseType>("LT");
   const { academicYear, termForApi } = useGlobalFilters();
-  const { isReady, permissions } = useAuthReady();
+  const { isReady, permissions, role } = useAuthReady();
 
-  // Get grade_band from user permissions
+  // Get grade_band and track from user permissions
   const gradeBand = permissions?.grade ?? null;
   const gradeBandDisplay = gradeBand ? getGradeBandDisplay(gradeBand) : "";
 
-  const courseTypes: CourseType[] = ["LT", "IT", "KCFS"];
+  // Track permission: Head Teachers only see their assigned track
+  const headTeacherTrack = permissions?.track as CourseType | null;
+  const isAdmin = role === "admin";
+
+  // Filter course types based on permissions
+  const courseTypes: CourseType[] = (isAdmin || !headTeacherTrack)
+    ? ["LT", "IT", "KCFS"]
+    : [headTeacherTrack];
   const config = courseTypeConfig[selectedCourseType];
+
+  // Sync selectedCourseType to Head Teacher's track on mount
+  useEffect(() => {
+    if (headTeacherTrack && !courseTypes.includes(selectedCourseType)) {
+      setSelectedCourseType(headTeacherTrack);
+    }
+  }, [headTeacherTrack, courseTypes, selectedCourseType]);
 
   useEffect(() => {
     if (!isReady || !gradeBand) return;
