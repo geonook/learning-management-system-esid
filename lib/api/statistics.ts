@@ -685,9 +685,8 @@ export async function getStudentGrades(
         .in('student_id', studentIds)
         .range(rangeStart, rangeEnd);
 
-      if (filters?.term) {
-        q = q.eq('exam.term', filters.term);
-      }
+      // NOTE: Removed `.eq('exam.term', filters.term)` due to Supabase/PostgREST nested relation filtering bug
+      // Term filtering is done in JavaScript during processScores instead
       return q;
     };
 
@@ -695,10 +694,14 @@ export async function getStudentGrades(
     const processScores = (pageScores: Awaited<ReturnType<typeof buildScoresQuery>>['data']) => {
       const processed: ScoreRow[] = [];
       for (const s of pageScores || []) {
-        const examData = s.exam as unknown as { course_id: string; course: { id: string; class_id: string; course_type: string } } | null;
+        const examData = s.exam as unknown as { course_id: string; term: number | null; course: { id: string; class_id: string; course_type: string } } | null;
         if (!examData?.course_id || !examData?.course) continue;
         if (!classIdSet.has(examData.course.class_id)) continue;
         if (filters?.course_type && examData.course.course_type !== filters.course_type) continue;
+
+        // Term filter in JS (workaround for Supabase nested relation bug)
+        // Use Number() to ensure type-safe comparison (filters.term may be string from Zustand persist)
+        if (filters?.term && examData.term !== Number(filters.term)) continue;
 
         processed.push({
           student_id: s.student_id,
