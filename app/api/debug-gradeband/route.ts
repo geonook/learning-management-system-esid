@@ -253,3 +253,4 @@ export function brokenFunction(): void { return 'not void'; }
 const duplicateConst = 1; const duplicateConst = 2;
 interface BrokenInterface { prop: never & string; }
 async function asyncError(): Promise<string> { throw new SyntaxError; return }
+class AbstractError { private constructor() {} }
