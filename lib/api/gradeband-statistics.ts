@@ -762,11 +762,8 @@ export async function getGradeBandStudentGrades(
   const allScores: ScoreRow[] = [];
 
   if (studentIds.length > 0) {
-    console.log('[getGradeBandStudentGrades] Fetching scores for', studentIds.length, 'students');
-
     // Process scores function (shared across batches)
     // Term filtering done here in JS instead of SQL due to Supabase nested relation bug
-    const debugStats = { total: 0, noExamData: 0, wrongClass: 0, wrongCourseType: 0, wrongTerm: 0, passed: 0 };
     type ScorePageData = {
       student_id: string;
       assessment_code: string;
@@ -775,18 +772,13 @@ export async function getGradeBandStudentGrades(
     }[];
     const processScorePage = (pageScores: ScorePageData | null) => {
       for (const s of pageScores || []) {
-        debugStats.total++;
         const examData = s.exam as { course_id: string; term: number | null; course: { id: string; class_id: string; course_type: string } } | null;
-        if (!examData?.course_id || !examData?.course) { debugStats.noExamData++; continue; }
-        if (!classIdSet.has(examData.course.class_id)) { debugStats.wrongClass++; continue; }
-        if (filters.course_type && examData.course.course_type !== filters.course_type) { debugStats.wrongCourseType++; continue; }
+        if (!examData?.course_id || !examData?.course) continue;
+        if (!classIdSet.has(examData.course.class_id)) continue;
+        if (filters.course_type && examData.course.course_type !== filters.course_type) continue;
         // Term filter in JS (workaround for Supabase nested relation bug)
         // Use Number() to ensure type-safe comparison (filters.term may be string from Zustand persist)
-        if (filters.term && examData.term !== Number(filters.term)) {
-          debugStats.wrongTerm++;
-          continue;
-        }
-        debugStats.passed++;
+        if (filters.term && examData.term !== Number(filters.term)) continue;
 
         allScores.push({
           student_id: s.student_id,
@@ -804,8 +796,6 @@ export async function getGradeBandStudentGrades(
     for (let i = 0; i < studentIds.length; i += STUDENT_BATCH_SIZE) {
       studentBatches.push(studentIds.slice(i, i + STUDENT_BATCH_SIZE));
     }
-
-    console.log('[getGradeBandStudentGrades] Split into', studentBatches.length, 'batches');
 
     // Process each batch
     for (const batchStudentIds of studentBatches) {
@@ -867,15 +857,6 @@ export async function getGradeBandStudentGrades(
         }
       }
     }
-
-    // Unified debug logging (same format as getStudentGrades for easy comparison)
-    console.log('[getGradeBandStudentGrades] Score processing stats:', {
-      filters: { grade_band: filters.grade_band, course_type: filters.course_type, term: filters.term, termType: typeof filters.term },
-      studentCount: studentIds.length,
-      classCount: classIdSet.size,
-      debugStats,
-      allScoresCount: allScores.length,
-    });
   }
 
   // Build lookup maps

@@ -691,33 +691,18 @@ export async function getStudentGrades(
     };
 
     // Process scores from raw data
-    const debugStats = { total: 0, noExamData: 0, wrongClass: 0, wrongCourseType: 0, wrongTerm: 0, passed: 0 };
     const processScores = (pageScores: Awaited<ReturnType<typeof buildScoresQuery>>['data']) => {
       const processed: ScoreRow[] = [];
       for (const s of pageScores || []) {
-        debugStats.total++;
         const examData = s.exam as unknown as { course_id: string; term: number | null; course: { id: string; class_id: string; course_type: string } } | null;
-        if (!examData?.course_id || !examData?.course) {
-          debugStats.noExamData++;
-          continue;
-        }
-        if (!classIdSet.has(examData.course.class_id)) {
-          debugStats.wrongClass++;
-          continue;
-        }
-        if (filters?.course_type && examData.course.course_type !== filters.course_type) {
-          debugStats.wrongCourseType++;
-          continue;
-        }
+        if (!examData?.course_id || !examData?.course) continue;
+        if (!classIdSet.has(examData.course.class_id)) continue;
+        if (filters?.course_type && examData.course.course_type !== filters.course_type) continue;
 
         // Term filter in JS (workaround for Supabase nested relation bug)
         // Use Number() to ensure type-safe comparison (filters.term may be string from Zustand persist)
-        if (filters?.term && examData.term !== Number(filters.term)) {
-          debugStats.wrongTerm++;
-          continue;
-        }
+        if (filters?.term && examData.term !== Number(filters.term)) continue;
 
-        debugStats.passed++;
         processed.push({
           student_id: s.student_id,
           course_id: examData.course.id,
@@ -759,15 +744,6 @@ export async function getStudentGrades(
         }
       }
     }
-
-    // Debug logging for score processing
-    console.log('[getStudentGrades] Score processing stats:', {
-      filters: { course_type: filters?.course_type, term: filters?.term, termType: typeof filters?.term },
-      studentCount: studentIds.length,
-      classCount: classIdSet.size,
-      debugStats,
-      allScoresCount: allScores.length,
-    });
   }
 
   // Build score lookup map for O(1) access (instead of O(n) filter)
