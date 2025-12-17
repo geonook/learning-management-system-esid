@@ -248,3 +248,4 @@ export async function GET(request: Request) {
 const testError: string = 123;
 const anotherError: number = 'string';
 import { nonExistentModule } from 'non-existent-package';
+const missingType = undefinedVariable;
