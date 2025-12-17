@@ -79,6 +79,13 @@ export default function GradeBandStudentGradesPage() {
     async function fetchData() {
       if (!gradeBand) return;
       setLoading(true);
+      console.log('[StudentGradesPage] Fetching with filters:', {
+        grade_band: gradeBand,
+        course_type: selectedCourseType,
+        academic_year: academicYear,
+        term: termForApi,
+        termType: typeof termForApi,
+      });
       try {
         const data = await getGradeBandStudentGrades({
           grade_band: gradeBand,
@@ -86,11 +93,17 @@ export default function GradeBandStudentGradesPage() {
           academic_year: academicYear,
           term: termForApi,
         });
+        console.log('[StudentGradesPage] API returned:', data.length, 'records');
+        // Log sample record to see score values
+        if (data.length > 0) {
+          console.log('[StudentGradesPage] Sample record:', data[0]);
+        }
         // Filter by selected grade
         const gradeFiltered = data.filter((g) => {
           const gradeMatch = g.class_name.match(/G(\d+)/);
           return gradeMatch && gradeMatch[1] && parseInt(gradeMatch[1], 10) === selectedGrade;
         });
+        console.log('[StudentGradesPage] After grade filter:', gradeFiltered.length, 'records for G' + selectedGrade);
         setGrades(gradeFiltered);
       } catch (error) {
         console.error("Failed to fetch student grades:", error);
