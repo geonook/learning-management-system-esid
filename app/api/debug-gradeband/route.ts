@@ -246,3 +246,4 @@ export async function GET(request: Request) {
 }
 // Test commit 1 - syntax error for Zeabur testing
 const testError: string = 123;
+const anotherError: number = 'string';
