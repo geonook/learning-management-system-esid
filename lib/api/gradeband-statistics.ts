@@ -864,6 +864,7 @@ export async function getGradeBandStudentGrades(
   }
 
   // Build lookup maps
+  console.log('[getGradeBandStudentGrades] Total allScores after processing:', allScores.length);
   const scoreLookup = new Map<string, ScoreRow[]>();
   for (const score of allScores) {
     const key = `${score.student_id}:${score.course_id}`;
@@ -872,6 +873,7 @@ export async function getGradeBandStudentGrades(
     }
     scoreLookup.get(key)!.push(score);
   }
+  console.log('[getGradeBandStudentGrades] scoreLookup size:', scoreLookup.size);
 
   const courseByClassId = new Map<string, typeof courses>();
   for (const course of courses || []) {
