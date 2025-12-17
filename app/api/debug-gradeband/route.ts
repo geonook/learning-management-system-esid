@@ -23,7 +23,7 @@ export async function GET(request: Request) {
 
   // Parse grade band
   const grades = gradeBand.includes('-')
-    ? Array.from({ length: parseInt(gradeBand.split('-')[1]) - parseInt(gradeBand.split('-')[0]) + 1 }, (_, i) => parseInt(gradeBand.split('-')[0]) + i)
+    ? Array.from({ length: parseInt(gradeBand.split('-')[1] || '0') - parseInt(gradeBand.split('-')[0] || '0') + 1 }, (_, i) => parseInt(gradeBand.split('-')[0] || '0') + i)
     : [parseInt(gradeBand)];
 
   // 1. Get students
