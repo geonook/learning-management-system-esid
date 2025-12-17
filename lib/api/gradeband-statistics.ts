@@ -638,8 +638,6 @@ export async function getGradeBandClassRanking(
 export async function getGradeBandStudentGrades(
   filters: GradeBandFilters
 ): Promise<StudentGradeRow[]> {
-  console.log('[getGradeBandStudentGrades] filters:', JSON.stringify(filters));
-  console.log('[getGradeBandStudentGrades] filters.term type:', typeof filters.term, 'value:', filters.term);
   const supabase = createClient();
   const grades = parseGradeBand(filters.grade_band);
 
@@ -790,11 +788,6 @@ export async function getGradeBandStudentGrades(
     if (scoresError) {
       console.error('[getGradeBandStudentGrades] Scores error:', scoresError);
     } else {
-      console.log('[getGradeBandStudentGrades] First page scores count:', firstPageScores?.length, 'total:', scoresCount);
-      // Debug: log first score structure
-      if (firstPageScores && firstPageScores.length > 0) {
-        console.log('[getGradeBandStudentGrades] Sample score structure:', JSON.stringify(firstPageScores[0]));
-      }
       // Process first page
       // Term filtering done here in JS instead of SQL due to Supabase nested relation bug
       let debugStats = { total: 0, noExamData: 0, wrongClass: 0, wrongCourseType: 0, wrongTerm: 0, passed: 0 };
@@ -808,9 +801,6 @@ export async function getGradeBandStudentGrades(
           // Term filter in JS (workaround for Supabase nested relation bug)
           // Use Number() to ensure type-safe comparison (filters.term may be string from Zustand persist)
           if (filters.term && examData.term !== Number(filters.term)) {
-            if (debugStats.wrongTerm < 3) {
-              console.log('[getGradeBandStudentGrades] Term mismatch:', 'examData.term=', examData.term, typeof examData.term, 'filters.term=', filters.term, typeof filters.term, 'Number(filters.term)=', Number(filters.term));
-            }
             debugStats.wrongTerm++;
             continue;
           }
@@ -859,12 +849,18 @@ export async function getGradeBandStudentGrades(
           processScorePage(pageData);
         }
       }
-      console.log('[getGradeBandStudentGrades] Debug stats:', debugStats);
+      // Unified debug logging (same format as getStudentGrades for easy comparison)
+      console.log('[getGradeBandStudentGrades] Score processing stats:', {
+        filters: { grade_band: filters.grade_band, course_type: filters.course_type, term: filters.term, termType: typeof filters.term },
+        studentCount: studentIds.length,
+        classCount: classIdSet.size,
+        debugStats,
+        allScoresCount: allScores.length,
+      });
     }
   }
 
   // Build lookup maps
-  console.log('[getGradeBandStudentGrades] Total allScores after processing:', allScores.length);
   const scoreLookup = new Map<string, ScoreRow[]>();
   for (const score of allScores) {
     const key = `${score.student_id}:${score.course_id}`;
@@ -873,7 +869,6 @@ export async function getGradeBandStudentGrades(
     }
     scoreLookup.get(key)!.push(score);
   }
-  console.log('[getGradeBandStudentGrades] scoreLookup size:', scoreLookup.size);
 
   const courseByClassId = new Map<string, typeof courses>();
   for (const course of courses || []) {
