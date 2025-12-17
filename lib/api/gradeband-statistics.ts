@@ -284,7 +284,7 @@ export async function getGradeBandClassStatistics(
     throw new Error(`Failed to fetch students: ${studentError.message}`);
   }
 
-  // 4. Fetch scores - OPTIMIZED: Single query with limit instead of pagination loop
+  // 4. Fetch scores - Split into batches to avoid URL length limits
   const classIdSet = new Set(classIds);
   const studentIdList = students?.map(s => s.id) || [];
 
@@ -295,37 +295,47 @@ export async function getGradeBandClassStatistics(
     exam: unknown;
   };
 
-  let rawScores: RawScore[] | null = null;
+  const rawScores: RawScore[] = [];
 
   if (studentIdList.length > 0) {
+    // Split studentIds into batches to avoid URL length limits (max ~200 UUIDs per batch)
+    const STUDENT_BATCH_SIZE = 200;
+    const studentBatches: string[][] = [];
+    for (let i = 0; i < studentIdList.length; i += STUDENT_BATCH_SIZE) {
+      studentBatches.push(studentIdList.slice(i, i + STUDENT_BATCH_SIZE));
+    }
+
     // NOTE: Removed `.eq('exam.term', filters.term)` due to Supabase/PostgREST nested relation filtering bug
     // Term filtering is done in JavaScript during the filter step below
-    const scoresQuery = supabase
-      .from('scores')
-      .select(`
-        student_id,
-        assessment_code,
-        score,
-        exam:exams!inner(
-          course_id,
-          term,
-          course:courses!inner(
-            id,
-            class_id,
-            course_type
+    for (const batchStudentIds of studentBatches) {
+      const { data: scoresData, error: scoresError } = await supabase
+        .from('scores')
+        .select(`
+          student_id,
+          assessment_code,
+          score,
+          exam:exams!inner(
+            course_id,
+            term,
+            course:courses!inner(
+              id,
+              class_id,
+              course_type
+            )
           )
-        )
-      `)
-      .in('student_id', studentIdList)
-      .not('score', 'is', null)
-      .limit(10000);  // Reasonable limit for grade band (typically ~3000-5000 scores)
+        `)
+        .in('student_id', batchStudentIds)
+        .not('score', 'is', null)
+        .limit(5000);  // Limit per batch
 
-    const { data: scoresData, error: scoresError } = await scoresQuery;
+      if (scoresError) {
+        console.error('[getGradeBandClassStatistics] Scores error for batch:', scoresError);
+        continue; // Try next batch
+      }
 
-    if (scoresError) {
-      console.error('[getGradeBandClassStatistics] Scores error:', scoresError);
-    } else {
-      rawScores = scoresData;
+      if (scoresData) {
+        rawScores.push(...scoresData);
+      }
     }
   }
 
