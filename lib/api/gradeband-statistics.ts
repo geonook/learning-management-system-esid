@@ -298,7 +298,9 @@ export async function getGradeBandClassStatistics(
   let rawScores: RawScore[] | null = null;
 
   if (studentIdList.length > 0) {
-    let scoresQuery = supabase
+    // NOTE: Removed `.eq('exam.term', filters.term)` due to Supabase/PostgREST nested relation filtering bug
+    // Term filtering is done in JavaScript during the filter step below
+    const scoresQuery = supabase
       .from('scores')
       .select(`
         student_id,
@@ -318,10 +320,6 @@ export async function getGradeBandClassStatistics(
       .not('score', 'is', null)
       .limit(10000);  // Reasonable limit for grade band (typically ~3000-5000 scores)
 
-    if (filters.term) {
-      scoresQuery = scoresQuery.eq('exam.term', filters.term);
-    }
-
     const { data: scoresData, error: scoresError } = await scoresQuery;
 
     if (scoresError) {
@@ -332,14 +330,17 @@ export async function getGradeBandClassStatistics(
   }
 
   // Transform and filter scores
+  // Term filtering done here in JS instead of SQL due to Supabase nested relation bug
   const scores = (rawScores || [])
     .filter(s => {
       const examRaw = s.exam;
       const examData = (Array.isArray(examRaw) ? examRaw[0] : examRaw) as
-        { course_id: string; course: { id: string; class_id: string; course_type: string } } | null;
+        { course_id: string; term: number | null; course: { id: string; class_id: string; course_type: string } } | null;
       if (!examData?.course_id || !examData?.course) return false;
       if (!classIdSet.has(examData.course.class_id)) return false;
       if (filters.course_type && examData.course.course_type !== filters.course_type) return false;
+      // Term filter in JS (workaround for Supabase nested relation bug)
+      if (filters.term && examData.term !== filters.term) return false;
       return true;
     })
     .map(s => {
@@ -761,7 +762,9 @@ export async function getGradeBandStudentGrades(
 
   if (studentIds.length > 0) {
     // First page with count
-    let baseScoresQuery = supabase
+    // NOTE: Removed `.eq('exam.term', filters.term)` due to Supabase/PostgREST nested relation filtering bug
+    // Term filtering is done in JavaScript during processScorePage instead
+    const baseScoresQuery = supabase
       .from('scores')
       .select(`
         student_id,
@@ -779,22 +782,21 @@ export async function getGradeBandStudentGrades(
       `, { count: 'exact' })
       .in('student_id', studentIds);
 
-    if (filters.term) {
-      baseScoresQuery = baseScoresQuery.eq('exam.term', filters.term);
-    }
-
     const { data: firstPageScores, count: scoresCount, error: scoresError } = await baseScoresQuery.range(0, 999);
 
     if (scoresError) {
       console.error('[getGradeBandStudentGrades] Scores error:', scoresError);
     } else {
       // Process first page
+      // Term filtering done here in JS instead of SQL due to Supabase nested relation bug
       const processScorePage = (pageScores: typeof firstPageScores) => {
         for (const s of pageScores || []) {
-          const examData = s.exam as unknown as { course_id: string; course: { id: string; class_id: string; course_type: string } } | null;
+          const examData = s.exam as unknown as { course_id: string; term: number | null; course: { id: string; class_id: string; course_type: string } } | null;
           if (!examData?.course_id || !examData?.course) continue;
           if (!classIdSet.has(examData.course.class_id)) continue;
           if (filters.course_type && examData.course.course_type !== filters.course_type) continue;
+          // Term filter in JS (workaround for Supabase nested relation bug)
+          if (filters.term && examData.term !== filters.term) continue;
 
           allScores.push({
             student_id: s.student_id,
@@ -812,7 +814,7 @@ export async function getGradeBandStudentGrades(
       if (scoresCount && scoresCount > 1000) {
         const totalPages = Math.min(Math.ceil(scoresCount / 1000), 10);  // Max 10 pages = 10000 scores
         const pagePromises = Array.from({ length: totalPages - 1 }, (_, i) => {
-          let query = supabase
+          const query = supabase
             .from('scores')
             .select(`
               student_id,
@@ -831,9 +833,6 @@ export async function getGradeBandStudentGrades(
             .in('student_id', studentIds)
             .range((i + 1) * 1000, (i + 2) * 1000 - 1);
 
-          if (filters.term) {
-            query = query.eq('exam.term', filters.term);
-          }
           return query.then(r => r.data || []);
         });
 
