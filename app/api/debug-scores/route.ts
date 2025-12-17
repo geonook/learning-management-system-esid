@@ -89,7 +89,22 @@ export async function GET(request: Request) {
   const classData = student?.classes as { name: string; grade: number } | { name: string; grade: number }[] | null;
   const classInfo = Array.isArray(classData) ? classData[0] : classData;
 
+  // Get total score count for diagnosis
+  const { count: totalScoreCount } = await supabase
+    .from('scores')
+    .select('*', { count: 'exact', head: true });
+
+  // Get total student count
+  const { count: totalStudentCount } = await supabase
+    .from('students')
+    .select('*', { count: 'exact', head: true });
+
   return NextResponse.json({
+    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    databaseStats: {
+      totalScores: totalScoreCount,
+      totalStudents: totalStudentCount,
+    },
     studentId,
     studentClassId: student?.class_id,
     studentClassName: classInfo?.name,
