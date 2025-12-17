@@ -155,6 +155,64 @@ export async function GET(request: Request) {
     scoresByStudent.get(score.student_id)!.push(score);
   }
 
+  // Build final result like gradeband-statistics.ts does
+  const courseIds = new Set(courses?.map(c => c.id) || []);
+  const sampleResults: Array<{
+    student_id: string;
+    full_name: string;
+    class_name: string;
+    fa1: number | null;
+    fa2: number | null;
+    fa_avg: number | null;
+    sa1: number | null;
+    midterm: number | null;
+    term_grade: number | null;
+  }> = [];
+
+  // Calculate averages for first 5 students with scores
+  for (const student of (students || []).slice(0, 10)) {
+    const studentScores = scoresByStudent.get(student.id) || [];
+    // Only include IT course scores
+    const itScores = studentScores.filter(s => courseIds.has(s.course_id));
+
+    const scoreMap: Record<string, number | null> = {};
+    for (const s of itScores) {
+      scoreMap[s.assessment_code] = s.score;
+    }
+
+    const fa1 = scoreMap['FA1'] ?? null;
+    const fa2 = scoreMap['FA2'] ?? null;
+    const fa3 = scoreMap['FA3'] ?? null;
+    const fa4 = scoreMap['FA4'] ?? null;
+    const sa1 = scoreMap['SA1'] ?? null;
+    const midterm = scoreMap['MID'] ?? null;
+
+    // Calculate FA average (only non-null values > 0)
+    const faValues = [fa1, fa2, fa3, fa4].filter((v): v is number => v !== null && v > 0);
+    const faAvg = faValues.length > 0 ? faValues.reduce((a, b) => a + b, 0) / faValues.length : null;
+
+    // Calculate term grade (simplified)
+    const termGrade = faAvg !== null && midterm !== null
+      ? (faAvg * 0.15 + midterm * 0.10) / 0.25
+      : null;
+
+    const classData = student.classes as unknown as { name: string; grade: number };
+
+    if (itScores.length > 0) {
+      sampleResults.push({
+        student_id: student.student_id,
+        full_name: student.full_name,
+        class_name: classData?.name || 'Unknown',
+        fa1,
+        fa2,
+        fa_avg: faAvg !== null ? Math.round(faAvg * 100) / 100 : null,
+        sa1,
+        midterm,
+        term_grade: termGrade !== null ? Math.round(termGrade * 100) / 100 : null,
+      });
+    }
+  }
+
   return NextResponse.json({
     params: { gradeBand, courseType, academicYear, term, termType: typeof term },
     auth: { isAuthenticated: !!user || useServiceRole, userId: user?.id, email: user?.email, usingServiceRole: useServiceRole },
@@ -179,6 +237,10 @@ export async function GET(request: Request) {
       sampleRaw: scores?.slice(0, 2),
       sampleProcessed: processedScores.slice(0, 5),
       studentsWithScores: scoresByStudent.size,
+    },
+    calculatedResults: {
+      count: sampleResults.length,
+      samples: sampleResults,
     },
   });
 }
