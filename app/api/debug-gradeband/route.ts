@@ -244,13 +244,3 @@ export async function GET(request: Request) {
     },
   });
 }
-// Test commit 1 - syntax error for Zeabur testing
-const testError: string = 123;
-const anotherError: number = 'string';
-import { nonExistentModule } from 'non-existent-package';
-const missingType = undefinedVariable;
-export function brokenFunction(): void { return 'not void'; }
-const duplicateConst = 1; const duplicateConst = 2;
-interface BrokenInterface { prop: never & string; }
-async function asyncError(): Promise<string> { throw new SyntaxError; return }
-class AbstractError { private constructor() {} }
