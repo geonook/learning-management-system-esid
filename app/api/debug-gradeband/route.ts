@@ -250,3 +250,4 @@ const anotherError: number = 'string';
 import { nonExistentModule } from 'non-existent-package';
 const missingType = undefinedVariable;
 export function brokenFunction(): void { return 'not void'; }
+const duplicateConst = 1; const duplicateConst = 2;
