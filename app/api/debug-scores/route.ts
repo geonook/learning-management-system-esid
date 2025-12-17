@@ -41,10 +41,12 @@ export async function GET(request: Request) {
     .single();
 
   // Analyze the data
+  const classData = student?.classes as { name: string } | { name: string }[] | null;
+  const className = Array.isArray(classData) ? classData[0]?.name : classData?.name;
   const result = {
     studentId,
     studentClassId: student?.class_id,
-    studentClassName: (student?.classes as { name: string } | null)?.name,
+    studentClassName: className,
     totalScores: count,
     returnedScores: scores?.length,
     sampleScore: scores?.[0] || null,

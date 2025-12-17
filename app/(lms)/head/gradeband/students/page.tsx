@@ -95,8 +95,8 @@ export default function GradeBandStudentGradesPage() {
         });
         console.log('[StudentGradesPage] API returned:', data.length, 'records');
         // Log sample record to see score values
-        if (data.length > 0) {
-          const sample = data[0];
+        const sample = data[0];
+        if (sample) {
           console.log('[StudentGradesPage] Sample record scores:', {
             fa_avg: sample.fa_avg,
             sa_avg: sample.sa_avg,
