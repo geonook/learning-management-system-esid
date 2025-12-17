@@ -80,7 +80,7 @@ export const useAppStore = create<State>()(
     {
       name: "lms-esid-store",
       storage: createJSONStorage(() => localStorage),
-      version: 3, // Bumped to force selectedTerm reset to "all"
+      version: 4, // Bumped to fix academic year selection (2026-2027 has no data)
       migrate: (persistedState, version) => {
         const state = persistedState as State
         if (version < 2) {
@@ -96,6 +96,13 @@ export const useAppStore = create<State>()(
           return {
             ...state,
             selectedTerm: "all" as Term | "all",
+          }
+        }
+        if (version < 4) {
+          // Force reset academic year to current year (fix for 2026-2027 having no data)
+          return {
+            ...state,
+            selectedAcademicYear: getCurrentAcademicYear(),
           }
         }
         return state

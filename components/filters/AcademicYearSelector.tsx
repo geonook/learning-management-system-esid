@@ -63,10 +63,24 @@ export function AcademicYearSelector({
   }, [propYears]);
 
   // Ensure selected year is valid
+  // If current selection is not in the list, prefer current academic year or first available
   useEffect(() => {
-    const firstYear = years[0];
-    if (years.length > 0 && firstYear && !years.includes(selectedAcademicYear)) {
-      setSelectedAcademicYear(firstYear);
+    if (years.length === 0) return;
+
+    if (!years.includes(selectedAcademicYear)) {
+      // Prefer the current academic year if available
+      const currentYear = getCurrentAcademicYear();
+      if (years.includes(currentYear)) {
+        console.log('[AcademicYearSelector] Syncing to current year:', currentYear);
+        setSelectedAcademicYear(currentYear);
+      } else {
+        // Fallback to first available year
+        const firstYear = years[0];
+        if (firstYear) {
+          console.log('[AcademicYearSelector] Syncing to first year:', firstYear);
+          setSelectedAcademicYear(firstYear);
+        }
+      }
     }
   }, [years, selectedAcademicYear, setSelectedAcademicYear]);
 
