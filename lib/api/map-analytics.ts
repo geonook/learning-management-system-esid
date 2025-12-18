@@ -129,6 +129,7 @@ export async function getMapGroupAverages(params: {
 
   // 查詢 MAP 資料，JOIN students 取得 level (英文等級)
   // 使用 student_id (UUID) 連接 students 表
+  // 注意：使用學生「目前的年級」(students.grade) 來分組，而不是 MAP 記錄的年級
   const { data, error } = await supabase
     .from("map_assessments")
     .select(
@@ -141,13 +142,13 @@ export async function getMapGroupAverages(params: {
       rit_score,
       student_id,
       students:student_id (
+        grade,
         level,
         is_active
       )
     `
     )
     .not("student_id", "is", null)
-    .order("grade")
     .order("term_tested");
 
   if (error) {
@@ -159,13 +160,16 @@ export async function getMapGroupAverages(params: {
 
   // 過濾已停用的學生
   const activeData = data.filter((d) => {
-    const student = d.students as unknown as { level: string; is_active: boolean } | null;
+    const student = d.students as unknown as { grade: number; level: string; is_active: boolean } | null;
     return student?.is_active === true;
   });
 
-  // 過濾特定年級（如果有指定）
+  // 過濾特定年級（如果有指定）- 使用學生「目前的年級」
   const filteredData = params.grade
-    ? activeData.filter((d) => d.grade === params.grade)
+    ? activeData.filter((d) => {
+        const student = d.students as unknown as { grade: number } | null;
+        return student?.grade === params.grade;
+      })
     : activeData;
 
   // 分組計算平均
@@ -182,19 +186,21 @@ export async function getMapGroupAverages(params: {
   const groups = new Map<GroupKey, GroupData>();
 
   for (const row of filteredData) {
-    // 從 level 欄位取得英文等級 (格式: G3E1 -> E1)
-    const studentLevel = (row.students as unknown as { level: string })?.level;
+    // 從 students 表取得學生目前的年級和英文等級
+    const student = row.students as unknown as { grade: number; level: string } | null;
+    const currentGrade = student?.grade ?? row.grade;  // fallback to MAP grade
+    const studentLevel = student?.level;
     const englishLevel = studentLevel
       ? studentLevel.slice(-2)  // 取最後兩個字元 (E1, E2, E3)
       : "Unknown";
 
-    // 按 English Level 分組
-    const levelKey = `${row.grade}-${englishLevel}-${row.course}-${row.term_tested}`;
+    // 按 English Level 分組 - 使用學生目前的年級
+    const levelKey = `${currentGrade}-${englishLevel}-${row.course}-${row.term_tested}`;
     let levelGroup = groups.get(levelKey);
     if (!levelGroup) {
       levelGroup = {
         scores: [],
-        grade: row.grade,
+        grade: currentGrade,
         englishLevel,
         course: row.course,
         termTested: row.term_tested,
@@ -205,13 +211,13 @@ export async function getMapGroupAverages(params: {
     }
     levelGroup.scores.push(row.rit_score);
 
-    // 按 All 分組
-    const allKey = `${row.grade}-All-${row.course}-${row.term_tested}`;
+    // 按 All 分組 - 使用學生目前的年級
+    const allKey = `${currentGrade}-All-${row.course}-${row.term_tested}`;
     let allGroup = groups.get(allKey);
     if (!allGroup) {
       allGroup = {
         scores: [],
-        grade: row.grade,
+        grade: currentGrade,
         englishLevel: "All",
         course: row.course,
         termTested: row.term_tested,
