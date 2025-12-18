@@ -13,9 +13,13 @@ import {
   BookOpen,
   BarChart3,
   Users,
+  Target,
+  LayoutDashboard,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { MapStudentSection } from "@/components/map";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StudentMapAnalysisTab } from "@/components/map/student";
 
 interface StudentDetails {
   id: string;
@@ -45,6 +49,10 @@ export default function StudentDetailPage() {
   const [student, setStudent] = useState<StudentDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("overview");
+
+  // Check if student is in MAP grades (G3-G6)
+  const isMapGrade = student ? student.grade >= 3 && student.grade <= 6 : false;
 
   useEffect(() => {
     // Wait for user to be available
@@ -295,96 +303,161 @@ export default function StudentDetailPage() {
               </div>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-3 gap-4">
-              {student.grade_averages.map((ga) => (
-                <div key={ga.course_type} className="bg-surface-elevated rounded-xl border border-border-default p-6 shadow-sm">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className={`px-2 py-1 text-xs rounded-full ${getCourseTypeColor(ga.course_type)}`}>
-                      {ga.course_type}
-                    </span>
-                    <span className="text-text-secondary text-sm">Average</span>
-                  </div>
-                  <div className={`text-3xl font-bold ${getScoreColor(ga.average)}`}>
-                    {ga.average !== null ? ga.average : "N/A"}
-                  </div>
-                </div>
-              ))}
-              {student.grade_averages.length === 0 && (
-                <div className="col-span-3 bg-surface-elevated rounded-xl border border-border-default p-6 text-center shadow-sm">
-                  <BarChart3 className="w-8 h-8 text-text-tertiary mx-auto mb-2" />
-                  <p className="text-text-tertiary">No grades available</p>
-                </div>
-              )}
-            </div>
+            {/* Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+              <TabsList className="bg-surface-elevated border border-border-default">
+                <TabsTrigger value="overview" className="gap-2">
+                  <LayoutDashboard className="w-4 h-4" />
+                  Overview
+                </TabsTrigger>
+                {isMapGrade && (
+                  <TabsTrigger value="map-analysis" className="gap-2">
+                    <Target className="w-4 h-4" />
+                    MAP Analysis
+                  </TabsTrigger>
+                )}
+                <TabsTrigger value="courses" className="gap-2">
+                  <BookOpen className="w-4 h-4" />
+                  Courses
+                </TabsTrigger>
+              </TabsList>
 
-            {/* MAP Growth Assessment Section (G3-G6 only) */}
-            <MapStudentSection
-              studentId={student.id}
-              studentNumber={student.student_id}
-              grade={student.grade}
-            />
-
-            {/* Enrolled Courses */}
-            <div className="bg-surface-elevated rounded-xl border border-border-default shadow-sm">
-              <div className="p-4 border-b border-border-default">
-                <h2 className="text-lg font-semibold text-text-primary">Enrolled Courses</h2>
-              </div>
-              {student.courses.length === 0 ? (
-                <div className="p-8 text-center">
-                  <BookOpen className="w-12 h-12 text-text-tertiary mx-auto mb-4" />
-                  <p className="text-text-secondary">Not enrolled in any courses</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-border-subtle">
-                  {student.courses.map((course) => (
-                    <div
-                      key={course.id}
-                      className="flex items-center justify-between p-4 hover:bg-surface-hover transition-colors duration-normal ease-apple"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="p-2 bg-surface-tertiary rounded-lg">
-                          <BookOpen className="w-5 h-5 text-text-secondary" />
-                        </div>
-                        <div>
-                          <div className="text-text-primary font-medium">
-                            {course.course_type === "LT" && "Local Teacher ELA"}
-                            {course.course_type === "IT" && "International Teacher ELA"}
-                            {course.course_type === "KCFS" && "Kang Chiao Future Skill"}
-                          </div>
-                          <div className="text-sm text-text-tertiary">
-                            Teacher: {course.teacher_name || "Not assigned"}
-                          </div>
-                        </div>
+              {/* Overview Tab */}
+              <TabsContent value="overview" className="space-y-6">
+                {/* Stats Grid */}
+                <div className="grid grid-cols-3 gap-4">
+                  {student.grade_averages.map((ga) => (
+                    <div key={ga.course_type} className="bg-surface-elevated rounded-xl border border-border-default p-6 shadow-sm">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className={`px-2 py-1 text-xs rounded-full ${getCourseTypeColor(ga.course_type)}`}>
+                          {ga.course_type}
+                        </span>
+                        <span className="text-text-secondary text-sm">Average</span>
                       </div>
-                      <span className={`px-2 py-1 text-xs rounded-full ${getCourseTypeColor(course.course_type)}`}>
-                        {course.course_type}
-                      </span>
+                      <div className={`text-3xl font-bold ${getScoreColor(ga.average)}`}>
+                        {ga.average !== null ? ga.average : "N/A"}
+                      </div>
                     </div>
                   ))}
+                  {student.grade_averages.length === 0 && (
+                    <div className="col-span-3 bg-surface-elevated rounded-xl border border-border-default p-6 text-center shadow-sm">
+                      <BarChart3 className="w-8 h-8 text-text-tertiary mx-auto mb-2" />
+                      <p className="text-text-tertiary">No grades available</p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            {/* Quick Actions */}
-            {student.class_id && (
-              <div className="flex gap-4">
-                <Link
-                  href={`/class/${student.class_id}/gradebook`}
-                  className="flex-1 flex items-center justify-center gap-2 p-4 bg-surface-elevated rounded-xl border border-border-default hover:shadow-md hover:border-purple-500/30 dark:hover:border-purple-400/30 hover:-translate-y-0.5 transition-all duration-normal ease-apple text-text-primary shadow-sm group"
-                >
-                  <BarChart3 className="w-5 h-5 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors" />
-                  <span className="group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">View Class Gradebook</span>
-                </Link>
-                <Link
-                  href={`/class/${student.class_id}`}
-                  className="flex-1 flex items-center justify-center gap-2 p-4 bg-surface-elevated rounded-xl border border-border-default hover:shadow-md hover:border-purple-500/30 dark:hover:border-purple-400/30 hover:-translate-y-0.5 transition-all duration-normal ease-apple text-text-primary shadow-sm group"
-                >
-                  <Users className="w-5 h-5 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors" />
-                  <span className="group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">View Class Details</span>
-                </Link>
-              </div>
-            )}
+                {/* MAP Growth Assessment Section (G3-G6 only) */}
+                <MapStudentSection
+                  studentId={student.id}
+                  studentNumber={student.student_id}
+                  grade={student.grade}
+                />
+
+                {/* Quick Course Summary */}
+                {student.courses.length > 0 && (
+                  <div className="bg-surface-elevated rounded-xl border border-border-default shadow-sm">
+                    <div className="p-4 border-b border-border-default flex items-center justify-between">
+                      <h2 className="text-lg font-semibold text-text-primary">Enrolled Courses</h2>
+                      <button
+                        onClick={() => setActiveTab("courses")}
+                        className="text-sm text-purple-600 dark:text-purple-400 hover:underline"
+                      >
+                        View All
+                      </button>
+                    </div>
+                    <div className="p-4 flex flex-wrap gap-2">
+                      {student.courses.map((course) => (
+                        <span
+                          key={course.id}
+                          className={`px-3 py-1.5 text-sm rounded-lg ${getCourseTypeColor(course.course_type)}`}
+                        >
+                          {course.course_type === "LT" && "Local Teacher ELA"}
+                          {course.course_type === "IT" && "International Teacher ELA"}
+                          {course.course_type === "KCFS" && "Kang Chiao Future Skill"}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* MAP Analysis Tab (G3-G6 only) */}
+              {isMapGrade && (
+                <TabsContent value="map-analysis" className="space-y-6">
+                  <StudentMapAnalysisTab
+                    studentId={student.id}
+                    studentNumber={student.student_id}
+                    grade={student.grade}
+                    classId={student.class_id}
+                  />
+                </TabsContent>
+              )}
+
+              {/* Courses Tab */}
+              <TabsContent value="courses" className="space-y-6">
+                {/* Enrolled Courses */}
+                <div className="bg-surface-elevated rounded-xl border border-border-default shadow-sm">
+                  <div className="p-4 border-b border-border-default">
+                    <h2 className="text-lg font-semibold text-text-primary">Enrolled Courses</h2>
+                  </div>
+                  {student.courses.length === 0 ? (
+                    <div className="p-8 text-center">
+                      <BookOpen className="w-12 h-12 text-text-tertiary mx-auto mb-4" />
+                      <p className="text-text-secondary">Not enrolled in any courses</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-border-subtle">
+                      {student.courses.map((course) => (
+                        <div
+                          key={course.id}
+                          className="flex items-center justify-between p-4 hover:bg-surface-hover transition-colors duration-normal ease-apple"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="p-2 bg-surface-tertiary rounded-lg">
+                              <BookOpen className="w-5 h-5 text-text-secondary" />
+                            </div>
+                            <div>
+                              <div className="text-text-primary font-medium">
+                                {course.course_type === "LT" && "Local Teacher ELA"}
+                                {course.course_type === "IT" && "International Teacher ELA"}
+                                {course.course_type === "KCFS" && "Kang Chiao Future Skill"}
+                              </div>
+                              <div className="text-sm text-text-tertiary">
+                                Teacher: {course.teacher_name || "Not assigned"}
+                              </div>
+                            </div>
+                          </div>
+                          <span className={`px-2 py-1 text-xs rounded-full ${getCourseTypeColor(course.course_type)}`}>
+                            {course.course_type}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Quick Actions */}
+                {student.class_id && (
+                  <div className="flex gap-4">
+                    <Link
+                      href={`/class/${student.class_id}/gradebook`}
+                      className="flex-1 flex items-center justify-center gap-2 p-4 bg-surface-elevated rounded-xl border border-border-default hover:shadow-md hover:border-purple-500/30 dark:hover:border-purple-400/30 hover:-translate-y-0.5 transition-all duration-normal ease-apple text-text-primary shadow-sm group"
+                    >
+                      <BarChart3 className="w-5 h-5 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors" />
+                      <span className="group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">View Class Gradebook</span>
+                    </Link>
+                    <Link
+                      href={`/class/${student.class_id}`}
+                      className="flex-1 flex items-center justify-center gap-2 p-4 bg-surface-elevated rounded-xl border border-border-default hover:shadow-md hover:border-purple-500/30 dark:hover:border-purple-400/30 hover:-translate-y-0.5 transition-all duration-normal ease-apple text-text-primary shadow-sm group"
+                    >
+                      <Users className="w-5 h-5 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors" />
+                      <span className="group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">View Class Details</span>
+                    </Link>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </>
         )}
       </div>
