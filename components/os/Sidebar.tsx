@@ -310,7 +310,7 @@ export function Sidebar() {
         {/* Section: Head Teacher - Teaching Classes (授課班級) */}
         {isHead && (
           <SidebarSection
-            title="我的授課班級"
+            title="My Classes"
             sectionId="teaching"
             isExpanded={isExpanded('teaching')}
             onToggle={() => toggleSection('teaching')}
@@ -322,7 +322,7 @@ export function Sidebar() {
                 <Skeleton className="h-9 w-full rounded-lg" />
               </div>
             ) : teachingClasses.length === 0 ? (
-              <div className="text-sm text-text-tertiary py-1">尚無授課班級</div>
+              <div className="text-sm text-text-tertiary py-1">No classes assigned</div>
             ) : (
               teachingClasses.map((cls) => (
                 <SidebarItem
@@ -340,7 +340,7 @@ export function Sidebar() {
         {/* Section: Head Teacher - Managed Classes (管轄班級) */}
         {isHead && (
           <SidebarSection
-            title="我管轄的班級"
+            title="Grade Band"
             sectionId="managed"
             isExpanded={isExpanded('managed')}
             onToggle={() => toggleSection('managed')}
@@ -353,7 +353,7 @@ export function Sidebar() {
                 <Skeleton className="h-9 w-full rounded-lg" />
               </div>
             ) : managedClasses.length === 0 ? (
-              <div className="text-sm text-text-tertiary py-1">尚無管轄班級</div>
+              <div className="text-sm text-text-tertiary py-1">No classes in grade band</div>
             ) : (
               managedClasses.map((cls) => (
                 <SidebarItem

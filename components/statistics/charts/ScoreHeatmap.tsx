@@ -1,6 +1,6 @@
 "use client";
 
-import { ChartWrapper } from "./ChartWrapper";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { HeatmapCell } from "@/lib/api/dashboard";
 
 interface ScoreHeatmapProps {
@@ -23,18 +23,13 @@ function getScoreColor(score: number | null): string {
 // Get text color based on score
 function getTextColor(score: number | null): string {
   if (score === null) return "text-gray-400 dark:text-gray-500";
-  if (score >= 70) return "text-white";
   return "text-white";
 }
 
 export function ScoreHeatmap({
   data,
   loading,
-  title = "Score Heatmap",
-  subtitle = "Grade level performance by course type",
 }: ScoreHeatmapProps) {
-  const isEmpty = !data || data.length === 0;
-
   // Group data by grade level
   const grades = ["G1", "G2", "G3", "G4", "G5", "G6"];
   const courseTypes = ["LT", "IT", "KCFS"];
@@ -46,90 +41,91 @@ export function ScoreHeatmap({
     dataMap.set(key, cell);
   });
 
+  if (loading) {
+    return (
+      <div className="h-full flex flex-col">
+        <div className="grid grid-cols-4 gap-1">
+          <Skeleton className="h-6 w-12" />
+          {courseTypes.map(ct => (
+            <Skeleton key={ct} className="h-6 w-full" />
+          ))}
+        </div>
+        <div className="flex-1 grid grid-cols-4 gap-1 mt-2">
+          {grades.slice(0, 3).map(g => (
+            <div key={g} className="contents">
+              <Skeleton className="h-10" />
+              <Skeleton className="h-10" />
+              <Skeleton className="h-10" />
+              <Skeleton className="h-10" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const isEmpty = !data || data.length === 0;
+
+  if (isEmpty) {
+    return (
+      <div className="h-full flex items-center justify-center text-text-tertiary text-sm">
+        No data available
+      </div>
+    );
+  }
+
   return (
-    <ChartWrapper
-      title={title}
-      subtitle={subtitle}
-      loading={loading}
-      isEmpty={isEmpty}
-      height={280}
-    >
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr>
-              <th className="p-2 text-left text-sm font-medium text-text-secondary w-16">
-                Grade
+    <div className="h-full flex flex-col">
+      <table className="w-full table-fixed">
+        <thead>
+          <tr>
+            <th className="p-1 text-left text-xs font-medium text-text-secondary w-12">
+              Grade
+            </th>
+            {courseTypes.map(ct => (
+              <th
+                key={ct}
+                className="p-1 text-center text-xs font-medium text-text-secondary"
+              >
+                {ct}
               </th>
-              {courseTypes.map(ct => (
-                <th
-                  key={ct}
-                  className="p-2 text-center text-sm font-medium text-text-secondary"
-                >
-                  {ct}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {grades.map(grade => (
-              <tr key={grade}>
-                <td className="p-2 text-sm font-medium text-text-primary">
-                  {grade}
-                </td>
-                {courseTypes.map(ct => {
-                  const key = `${grade}-${ct}`;
-                  const cell = dataMap.get(key);
-                  const score = cell?.avgScore ?? null;
-
-                  return (
-                    <td key={ct} className="p-1">
-                      <div
-                        className={`
-                          rounded-lg p-3 text-center transition-all hover:scale-105 cursor-default
-                          ${getScoreColor(score)}
-                        `}
-                        title={cell ? `${cell.studentCount} students` : "No data"}
-                      >
-                        <div className={`text-lg font-bold ${getTextColor(score)}`}>
-                          {score !== null ? score.toFixed(1) : "-"}
-                        </div>
-                        <div className={`text-xs ${getTextColor(score)} opacity-75`}>
-                          {cell?.studentCount ?? 0} students
-                        </div>
-                      </div>
-                    </td>
-                  );
-                })}
-              </tr>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </tr>
+        </thead>
+        <tbody>
+          {grades.map(grade => (
+            <tr key={grade}>
+              <td className="p-1 text-xs font-medium text-text-primary">
+                {grade}
+              </td>
+              {courseTypes.map(ct => {
+                const key = `${grade}-${ct}`;
+                const cell = dataMap.get(key);
+                const score = cell?.avgScore ?? null;
 
-      {/* Legend */}
-      <div className="flex justify-center gap-4 mt-4">
-        <div className="flex items-center gap-1">
-          <div className="w-4 h-4 rounded bg-green-500" />
-          <span className="text-xs text-text-secondary">&gt;=90</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-4 h-4 rounded bg-green-400" />
-          <span className="text-xs text-text-secondary">80-89</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-4 h-4 rounded bg-yellow-400" />
-          <span className="text-xs text-text-secondary">70-79</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-4 h-4 rounded bg-amber-500" />
-          <span className="text-xs text-text-secondary">60-69</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-4 h-4 rounded bg-red-500" />
-          <span className="text-xs text-text-secondary">&lt;60</span>
-        </div>
-      </div>
-    </ChartWrapper>
+                return (
+                  <td key={ct} className="p-0.5">
+                    <div
+                      className={`
+                        rounded p-1.5 text-center transition-all hover:scale-105 cursor-default
+                        ${getScoreColor(score)}
+                      `}
+                      title={cell ? `${cell.studentCount} students` : "No data"}
+                    >
+                      <div className={`text-sm font-bold ${getTextColor(score)}`}>
+                        {score !== null ? score.toFixed(1) : "-"}
+                      </div>
+                      <div className={`text-[10px] ${getTextColor(score)} opacity-75`}>
+                        {cell?.studentCount ?? 0}
+                      </div>
+                    </div>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

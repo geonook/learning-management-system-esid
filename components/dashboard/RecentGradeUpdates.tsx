@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, User, School, BookOpen } from "lucide-react";
+import { Clock, User } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { RecentGradeUpdate } from "@/lib/api/dashboard";
 
@@ -52,94 +52,78 @@ function getCourseTypeColor(courseType: string): string {
 export function RecentGradeUpdates({
   data,
   loading,
-  title = "Recent Grade Updates",
 }: RecentGradeUpdatesProps) {
   if (loading) {
     return (
-      <div className="bg-surface-secondary rounded-xl border border-border-default p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Clock className="w-5 h-5 text-text-secondary" />
-          <h3 className="text-lg font-semibold text-text-primary">{title}</h3>
-        </div>
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <Skeleton className="w-8 h-8 rounded-full" />
-              <div className="flex-1">
-                <Skeleton className="h-4 w-32 mb-1" />
-                <Skeleton className="h-3 w-48" />
-              </div>
-              <Skeleton className="h-6 w-12" />
+      <div className="h-full flex flex-col space-y-2">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <Skeleton className="w-6 h-6 rounded-full flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <Skeleton className="h-3 w-24 mb-1" />
+              <Skeleton className="h-2.5 w-32" />
             </div>
-          ))}
-        </div>
+            <Skeleton className="h-5 w-8 flex-shrink-0" />
+          </div>
+        ))}
       </div>
     );
   }
 
   const isEmpty = !data || data.length === 0;
 
-  return (
-    <div className="bg-surface-secondary rounded-xl border border-border-default p-6">
-      <div className="flex items-center gap-2 mb-4">
-        <Clock className="w-5 h-5 text-text-secondary" />
-        <h3 className="text-lg font-semibold text-text-primary">{title}</h3>
+  if (isEmpty) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center text-text-tertiary">
+        <Clock className="w-8 h-8 mb-2 opacity-50" />
+        <p className="text-sm">No recent updates</p>
       </div>
+    );
+  }
 
-      {isEmpty ? (
-        <div className="text-center py-8">
-          <Clock className="w-12 h-12 text-text-tertiary mx-auto mb-3" />
-          <p className="text-text-tertiary text-sm">No recent updates</p>
-        </div>
-      ) : (
-        <div className="space-y-3 max-h-[350px] overflow-y-auto">
-          {data.map((update, index) => (
-            <div
-              key={update.id || index}
-              className="flex items-start gap-3 p-3 bg-surface-tertiary rounded-lg hover:bg-surface-hover transition-colors"
-            >
-              {/* Avatar placeholder */}
-              <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
-                <User className="w-4 h-4 text-indigo-500" />
+  return (
+    <div className="h-full flex flex-col">
+      <div className="flex-1 space-y-1.5 overflow-y-auto pr-1">
+        {data.map((update, index) => (
+          <div
+            key={update.id || index}
+            className="flex items-center gap-2 p-1.5 bg-surface-tertiary/50 rounded-lg hover:bg-surface-hover transition-colors"
+          >
+            {/* Avatar */}
+            <div className="w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+              <User className="w-3 h-3 text-indigo-500" />
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="font-medium text-text-primary text-xs truncate">
+                  {update.studentName}
+                </span>
+                <span className="text-text-tertiary text-[10px]">
+                  {formatRelativeTime(update.updatedAt)}
+                </span>
               </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium text-text-primary text-sm truncate">
-                    {update.studentName}
-                  </span>
-                  <span className="text-text-tertiary text-xs">
-                    {formatRelativeTime(update.updatedAt)}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 mt-1 text-xs text-text-secondary">
-                  <div className="flex items-center gap-1">
-                    <School className="w-3 h-3" />
-                    <span>{update.className}</span>
-                  </div>
-                  <span className="text-text-tertiary">|</span>
-                  <div className="flex items-center gap-1">
-                    <BookOpen className="w-3 h-3" />
-                    <span className={getCourseTypeColor(update.courseName)}>
-                      {update.courseName}
-                    </span>
-                  </div>
-                  <span className="text-text-tertiary">|</span>
-                  <span>{update.examCode}</span>
-                </div>
-              </div>
-
-              {/* Score */}
-              <div
-                className={`text-lg font-bold ${getScoreColor(update.score)} flex-shrink-0`}
-              >
-                {update.score}
+              <div className="flex items-center gap-1 text-[10px] text-text-secondary">
+                <span className="truncate">{update.className}</span>
+                <span className="text-text-tertiary">·</span>
+                <span className={getCourseTypeColor(update.courseName)}>
+                  {update.courseName}
+                </span>
+                <span className="text-text-tertiary">·</span>
+                <span>{update.examCode}</span>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+
+            {/* Score */}
+            <div
+              className={`text-sm font-bold ${getScoreColor(update.score)} flex-shrink-0`}
+            >
+              {update.score}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

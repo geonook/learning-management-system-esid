@@ -1,6 +1,6 @@
 "use client";
 
-import { ChartWrapper } from "./ChartWrapper";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { ClassCompletionItem } from "@/lib/api/dashboard";
 
 interface ClassCompletionBarsProps {
@@ -35,42 +35,58 @@ function getCourseTypeColor(courseType: string): string {
 export function ClassCompletionBars({
   data,
   loading,
-  title = "Class Completion Progress",
-  subtitle = "Grade entry progress by class",
 }: ClassCompletionBarsProps) {
+  if (loading) {
+    return (
+      <div className="h-full flex flex-col space-y-2">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="space-y-1">
+            <div className="flex justify-between">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-12" />
+            </div>
+            <Skeleton className="h-2 w-full rounded-full" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   const isEmpty = !data || data.length === 0;
 
+  if (isEmpty) {
+    return (
+      <div className="h-full flex items-center justify-center text-text-tertiary text-sm">
+        No classes assigned
+      </div>
+    );
+  }
+
   return (
-    <ChartWrapper
-      title={title}
-      subtitle={subtitle}
-      loading={loading}
-      isEmpty={isEmpty}
-      height={280}
-    >
-      <div className="space-y-3 overflow-y-auto max-h-[260px] pr-2">
+    <div className="h-full flex flex-col">
+      <div className="flex-1 space-y-2 overflow-y-auto pr-1">
         {data.map((item, index) => (
-          <div key={`${item.classId}-${item.courseType}-${index}`} className="space-y-1">
+          <div key={`${item.classId}-${item.courseType}-${index}`} className="space-y-0.5">
             {/* Header row */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-text-primary">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-xs font-medium text-text-primary truncate">
                   {item.className}
                 </span>
                 <span
-                  className={`px-2 py-0.5 text-xs font-medium rounded ${getCourseTypeColor(
+                  className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${getCourseTypeColor(
                     item.courseType
                   )}`}
                 >
                   {item.courseType}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-text-secondary">
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <span className="text-[10px] text-text-secondary">
                   {item.entered}/{item.expected}
                 </span>
                 <span
-                  className={`text-sm font-bold ${
+                  className={`text-xs font-bold ${
                     item.percentage >= 70
                       ? "text-green-600 dark:text-green-400"
                       : item.percentage >= 50
@@ -84,7 +100,7 @@ export function ClassCompletionBars({
             </div>
 
             {/* Progress bar */}
-            <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${getProgressColor(
                   item.percentage
@@ -96,23 +112,22 @@ export function ClassCompletionBars({
         ))}
       </div>
 
-      {/* Summary */}
+      {/* Compact Summary */}
       {data.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-border-subtle flex justify-between text-sm">
+        <div className="mt-2 pt-2 border-t border-border-subtle flex justify-between text-xs">
           <span className="text-text-secondary">
-            {data.length} course{data.length > 1 ? "s" : ""} total
+            {data.length} course{data.length > 1 ? "s" : ""}
           </span>
           <span className="text-text-secondary">
             Avg:{" "}
             <span className="font-medium text-text-primary">
               {Math.round(
                 data.reduce((sum, item) => sum + item.percentage, 0) / data.length
-              )}
-              %
+              )}%
             </span>
           </span>
         </div>
       )}
-    </ChartWrapper>
+    </div>
   );
 }
