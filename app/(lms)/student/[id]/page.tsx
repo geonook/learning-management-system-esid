@@ -232,7 +232,7 @@ export default function StudentDetailPage() {
       ];
 
   return (
-    <AuthGuard requiredRoles={["admin", "head", "office_member"]}>
+    <AuthGuard requiredRoles={["admin", "head", "teacher", "office_member"]}>
       <div className="space-y-6">
         {/* Page Header with Breadcrumbs */}
         <PageHeader

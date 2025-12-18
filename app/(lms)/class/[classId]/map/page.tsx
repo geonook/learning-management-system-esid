@@ -24,6 +24,7 @@ import {
   PenTool,
   Users,
   BarChart3,
+  ChevronRight,
 } from "lucide-react";
 import {
   formatTermLabel,
@@ -371,55 +372,59 @@ export default function ClassMapPage() {
                           Lang Usage RIT
                         </div>
                       </th>
+                      <th className="px-4 py-3 w-12"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border-subtle">
                     {students.map((student) => (
-                      <tr
+                      <Link
                         key={student.id}
-                        className="hover:bg-surface-hover transition-colors duration-normal"
+                        href={`/student/${student.id}`}
+                        className="contents group"
                       >
-                        <td className="px-4 py-3">
-                          <Link
-                            href={`/student/${student.id}`}
-                            className="font-medium text-purple-600 dark:text-purple-400 hover:underline"
-                          >
-                            {student.full_name}
-                          </Link>
-                          <p className="text-xs text-text-tertiary font-mono">{student.student_id}</p>
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          {student.reading_rit !== null ? (
-                            <span
-                              className={`text-lg font-bold ${getRitScoreColor(
-                                student.reading_rit,
-                                classInfo?.grade || 5
-                              )}`}
-                            >
-                              {student.reading_rit}
+                        <tr className="hover:bg-surface-hover transition-colors duration-normal cursor-pointer">
+                          <td className="px-4 py-3">
+                            <span className="font-medium text-text-primary group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                              {student.full_name}
                             </span>
-                          ) : (
-                            <span className="text-text-tertiary">-</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-text-secondary">
-                          {student.reading_lexile || "-"}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          {student.language_usage_rit !== null ? (
-                            <span
-                              className={`text-lg font-bold ${getRitScoreColor(
-                                student.language_usage_rit,
-                                classInfo?.grade || 5
-                              )}`}
-                            >
-                              {student.language_usage_rit}
-                            </span>
-                          ) : (
-                            <span className="text-text-tertiary">-</span>
-                          )}
-                        </td>
-                      </tr>
+                            <p className="text-xs text-text-tertiary font-mono">{student.student_id}</p>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {student.reading_rit !== null ? (
+                              <span
+                                className={`text-lg font-bold ${getRitScoreColor(
+                                  student.reading_rit,
+                                  classInfo?.grade || 5
+                                )}`}
+                              >
+                                {student.reading_rit}
+                              </span>
+                            ) : (
+                              <span className="text-text-tertiary">-</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-text-secondary">
+                            {student.reading_lexile || "-"}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {student.language_usage_rit !== null ? (
+                              <span
+                                className={`text-lg font-bold ${getRitScoreColor(
+                                  student.language_usage_rit,
+                                  classInfo?.grade || 5
+                                )}`}
+                              >
+                                {student.language_usage_rit}
+                              </span>
+                            ) : (
+                              <span className="text-text-tertiary">-</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <ChevronRight className="w-4 h-4 text-text-tertiary group-hover:text-text-secondary transition-colors inline-block" />
+                          </td>
+                        </tr>
+                      </Link>
                     ))}
                   </tbody>
                 </table>
