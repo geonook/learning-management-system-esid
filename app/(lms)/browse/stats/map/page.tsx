@@ -233,12 +233,15 @@ export default function MapAnalysisPage() {
   }, []);
 
   // Fetch Quality Data
-  const fetchQualityData = useCallback(async () => {
+  const fetchQualityData = useCallback(async (grade: number) => {
     setLoading("quality", true);
     setError("quality", null);
     try {
-      // Use the most recent term
-      const result = await getTestQualityReport({ termTested: "Fall 2025-2026" });
+      // Use the most recent term and filter by grade
+      const result = await getTestQualityReport({
+        termTested: "Fall 2025-2026",
+        grade,
+      });
       setQualityData(result);
     } catch (err) {
       console.error("Error fetching quality data:", err);
@@ -290,15 +293,13 @@ export default function MapAnalysisPage() {
   useEffect(() => {
     const loadTabData = async () => {
       // Skip if already loaded for this grade (and growth type for growth tab, transition period for transitions tab)
-      // Quality tab is school-wide, so it doesn't depend on grade
       let tabKey: string;
       if (selectedTab === "growth") {
         tabKey = `${selectedTab}-${selectedGrade}-${growthType}`;
       } else if (selectedTab === "transitions") {
         tabKey = `${selectedTab}-${selectedGrade}-${transitionPeriod}`;
-      } else if (selectedTab === "quality") {
-        tabKey = `${selectedTab}-all`;  // Quality is school-wide, not grade-specific
       } else {
+        // All other tabs (including quality) are grade-specific
         tabKey = `${selectedTab}-${selectedGrade}`;
       }
       if (loadedTabs.has(tabKey)) return;
@@ -317,7 +318,7 @@ export default function MapAnalysisPage() {
           await fetchLexileData(selectedGrade);
           break;
         case "quality":
-          await fetchQualityData();
+          await fetchQualityData(selectedGrade);
           break;
         case "transitions":
           if (isBenchmarkSupported(selectedGrade)) {

@@ -1206,6 +1206,7 @@ export async function getLexileAnalysis(params: {
  */
 export async function getTestQualityReport(params: {
   termTested: string;
+  grade?: number;  // Optional grade filter
   flagThreshold?: number;
 }): Promise<TestQualityData | null> {
   const supabase = createClient();
@@ -1235,10 +1236,13 @@ export async function getTestQualityReport(params: {
 
   if (!data || data.length === 0) return null;
 
-  // 過濾活躍學生
+  // Filter active students and optionally by grade
   const filteredData = data.filter((d) => {
-    const student = d.students as unknown as { is_active: boolean } | null;
-    return student?.is_active === true;
+    const student = d.students as unknown as { grade: number; is_active: boolean } | null;
+    if (student?.is_active !== true) return false;
+    // Filter by grade if specified
+    if (params.grade !== undefined && student?.grade !== params.grade) return false;
+    return true;
   });
 
   // 分類
