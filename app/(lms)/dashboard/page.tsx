@@ -9,9 +9,9 @@ import {
   Users,
   School,
   GraduationCap,
-  Clock,
   BookOpen,
   Percent,
+  Clock,
 } from "lucide-react";
 import {
   getTeacherDashboardKpis,
@@ -21,7 +21,6 @@ import {
   getClassCompletionProgress,
   getSchoolCompletionProgress,
   getScoreHeatmapData,
-  getRecentGradeUpdates,
   type TeacherDashboardKpis,
   type HeadTeacherDashboardKpis,
   type AdminDashboardKpis,
@@ -29,7 +28,6 @@ import {
   type ClassCompletionItem,
   type SchoolCompletionProgress,
   type HeatmapCell,
-  type RecentGradeUpdate,
 } from "@/lib/api/dashboard";
 import {
   ResponsiveContainer,
@@ -40,9 +38,8 @@ import {
 } from "recharts";
 import { MissionControl } from "@/components/os/MissionControl";
 import { Widget } from "@/components/os/Widget";
-import { Skeleton, SkeletonKPI, SkeletonList } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonKPI } from "@/components/ui/skeleton";
 import { ScoreHeatmap, ClassCompletionBars, CompletionDonut } from "@/components/statistics/charts";
-import { RecentGradeUpdates } from "@/components/dashboard/RecentGradeUpdates";
 import { useGlobalFilters } from "@/components/filters";
 
 export default function Dashboard() {
@@ -53,7 +50,6 @@ export default function Dashboard() {
   // Independent loading states
   const [loadingKpis, setLoadingKpis] = useState(true);
   const [loadingCharts, setLoadingCharts] = useState(true);
-  const [loadingLists, setLoadingLists] = useState(true);
 
   // Teacher data states
   const [teacherKpis, setTeacherKpis] = useState<TeacherDashboardKpis>({
@@ -86,9 +82,6 @@ export default function Dashboard() {
     expected: 0,
     percentage: 0,
   });
-
-  // Shared data states
-  const [recentUpdates, setRecentUpdates] = useState<RecentGradeUpdate[]>([]);
 
   // Extract primitive values
   const userId = user?.id;
@@ -172,25 +165,10 @@ export default function Dashboard() {
       }
     };
 
-    // 3. Load Lists
-    const loadLists = async () => {
-      try {
-        // Filter out 'student' role since it's not supported by getRecentGradeUpdates
-        const roleForApi = userRole === "student" ? undefined : userRole;
-        const updates = await getRecentGradeUpdates(userId, roleForApi, academicYear, 10);
-        if (!isCancelled) setRecentUpdates(updates);
-      } catch (e) {
-        if (!isCancelled) console.error("Failed to load lists", e);
-      } finally {
-        if (!isCancelled) setLoadingLists(false);
-      }
-    };
-
     hasLoadedOnce.current = true;
 
     loadKpis();
     loadCharts();
-    loadLists();
 
     return () => {
       isCancelled = true;
@@ -471,7 +449,7 @@ export default function Dashboard() {
           <>
             <Widget
               title="Score Distribution"
-              size="medium"
+              size="xlarge"
               icon={<BarChart2 size={16} />}
               delay={5}
             >
@@ -530,7 +508,7 @@ export default function Dashboard() {
           <>
             <Widget
               title="Score Heatmap"
-              size="medium"
+              size="xlarge"
               icon={<BarChart2 size={16} />}
               delay={5}
             >
@@ -562,7 +540,7 @@ export default function Dashboard() {
           <>
             <Widget
               title="Score Heatmap"
-              size="medium"
+              size="xlarge"
               icon={<BarChart2 size={16} />}
               delay={5}
             >
@@ -589,20 +567,6 @@ export default function Dashboard() {
           </>
         )}
 
-        {/* ==================== LISTS ==================== */}
-        <Widget
-          title="Recent Updates"
-          size="tall"
-          icon={<Clock size={16} />}
-          delay={7}
-          className="col-span-2"
-        >
-          <RecentGradeUpdates
-            data={recentUpdates}
-            loading={loadingLists}
-            title=""
-          />
-        </Widget>
       </MissionControl>
     </AuthGuard>
   );

@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { GlassCard } from "./GlassCard";
 import { motion } from "framer-motion";
 
-export type WidgetSize = "small" | "medium" | "large" | "wide" | "tall";
+export type WidgetSize = "small" | "medium" | "large" | "wide" | "tall" | "xlarge";
 
 interface WidgetProps {
   title?: string;
@@ -22,6 +22,7 @@ const sizeClasses: Record<WidgetSize, string> = {
   large: "col-span-2 row-span-2 md:col-span-3 md:row-span-3",
   wide: "col-span-2 row-span-1 md:col-span-4 md:row-span-2",
   tall: "col-span-1 row-span-2",
+  xlarge: "col-span-2 row-span-2 md:col-span-4 md:row-span-2",
 };
 
 export function Widget({
