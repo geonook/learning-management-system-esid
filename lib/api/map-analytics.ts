@@ -1154,8 +1154,7 @@ export async function getTestQualityReport(params: {
       rapid_guessing_percent,
       students:student_id (
         grade,
-        first_name,
-        last_name,
+        full_name,
         is_active
       )
     `)
@@ -1195,13 +1194,12 @@ export async function getTestQualityReport(params: {
 
       const student = row.students as unknown as {
         grade: number;
-        first_name: string;
-        last_name: string;
+        full_name: string;
       } | null;
 
       flaggedStudents.push({
         studentNumber: row.student_number,
-        studentName: student ? `${student.first_name} ${student.last_name}` : row.student_number,
+        studentName: student?.full_name ?? row.student_number,
         grade: student?.grade ?? 0,
         course: row.course as Course,
         ritScore: row.rit_score,
