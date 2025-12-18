@@ -32,15 +32,28 @@ export const LEXILE_BANDS: LexileBand[] = [
 
 /**
  * 解析 Lexile 字串為數值
- * @param lexileStr - Lexile 字串 (如 "1190L", "BR400", "850L")
+ * @param lexileStr - Lexile 字串 (如 "1190L", "BR400L", "BR400", "850L")
  * @returns 數值 (BR 為負值) 或 null
+ *
+ * 支援格式:
+ * - "1190L" → 1190 (標準格式)
+ * - "BR100L" → -100 (Beginning Reader，資料庫實際格式)
+ * - "BR100" → -100 (Beginning Reader，備用格式)
+ * - "1190" → 1190 (純數字)
  */
 export function parseLexile(lexileStr: string | null | undefined): number | null {
   if (!lexileStr || typeof lexileStr !== "string") return null;
 
   const trimmed = lexileStr.trim();
 
-  // BR (Beginning Reader) 格式: BR400 → -400
+  // BR (Beginning Reader) 格式帶 L: BR400L → -400
+  // 這是資料庫中實際使用的格式
+  const brWithLMatch = trimmed.match(/^BR(\d+)L$/i);
+  if (brWithLMatch && brWithLMatch[1]) {
+    return -parseInt(brWithLMatch[1], 10);
+  }
+
+  // BR (Beginning Reader) 格式不帶 L: BR400 → -400
   const brMatch = trimmed.match(/^BR(\d+)$/i);
   if (brMatch && brMatch[1]) {
     return -parseInt(brMatch[1], 10);
@@ -64,13 +77,15 @@ export function parseLexile(lexileStr: string | null | undefined): number | null
 /**
  * 格式化數值為 Lexile 字串
  * @param value - Lexile 數值 (BR 為負值)
- * @returns 格式化字串 (如 "1190L", "BR400")
+ * @returns 格式化字串 (如 "1190L", "BR400L")
+ *
+ * 注意: BR 格式輸出為 "BR100L" 以與資料庫格式一致
  */
 export function formatLexile(value: number | null | undefined): string {
   if (value === null || value === undefined) return "-";
 
   if (value < 0) {
-    return `BR${Math.abs(value)}`;
+    return `BR${Math.abs(value)}L`;
   }
 
   return `${value}L`;
