@@ -200,13 +200,42 @@ export async function getGradeBandQuickStats(
           passRate = validScores.length > 0 ? (passedCount / validScores.length) * 100 : null;
         }
 
-        // Estimate completion rate: unique students with scores / total students
-        // This is a rough estimate based on having any scores
+        // Calculate completion rate based on Gradebook Expectations
+        // Fetch expected_total from gradebook_expectations table
         const scoresCount = allScoresData.length;
-        // KCFS has 4-6 assessments depending on grade; LT/IT has 13 (FA1-8 + SA1-4 + MID)
-        // Use average of 5 for KCFS (midpoint of 4-6) vs 13 for LT/IT
-        const expectedItemsPerStudent = isKCFS ? 5 : 13;
-        const expectedScores = totalStudents * expectedItemsPerStudent;
+        let expectedTotal = 13; // Default for LT/IT
+
+        if (filters.term) {
+          // Query gradebook_expectations for the expected_total
+          // For LT/IT: need to get average across all grade×level combinations
+          // For KCFS: single unified setting (grade=null, level=null)
+          let expectationsQuery = supabase
+            .from('gradebook_expectations')
+            .select('expected_total')
+            .eq('academic_year', filters.academic_year)
+            .eq('term', filters.term)
+            .eq('course_type', filters.course_type || 'LT');
+
+          if (isKCFS) {
+            expectationsQuery = expectationsQuery.is('grade', null).is('level', null);
+          }
+
+          const { data: expectations } = await expectationsQuery;
+
+          if (expectations && expectations.length > 0) {
+            // Calculate average expected_total across all settings
+            const totalExpected = expectations.reduce((sum, e) => sum + (e.expected_total || 0), 0);
+            expectedTotal = Math.round(totalExpected / expectations.length);
+          } else {
+            // No expectations set, use defaults
+            expectedTotal = isKCFS ? 5 : 13;
+          }
+        } else {
+          // No term filter, use defaults
+          expectedTotal = isKCFS ? 5 : 13;
+        }
+
+        const expectedScores = totalStudents * expectedTotal;
         completionRate = expectedScores > 0 ? Math.min((scoresCount / expectedScores) * 100, 100) : null;
       }
     }
