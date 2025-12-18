@@ -14,7 +14,9 @@ export type Term = "fall" | "spring";
 export type Course = "Language Usage" | "Reading";
 
 // NWEA 常模數據 (按學年 > 年級 > 學期)
+// 資料來源：NWEA 2025 Norms (116 million scores from 13.8 million students, Fall 2022 - Spring 2024)
 const MAP_NORMS: Record<string, Record<number, Record<Term, NormData>>> = {
+  // 2024-2025 學年使用舊版常模
   "2024-2025": {
     3: {
       fall: { languageUsage: 188, reading: 187 },
@@ -29,23 +31,23 @@ const MAP_NORMS: Record<string, Record<number, Record<Term, NormData>>> = {
       spring: { languageUsage: 210, reading: 211 },
     },
   },
-  // 2025-2026 使用與 2024-2025 相同的常模（NWEA 通常每隔幾年更新一次）
+  // 2025-2026 學年使用 2025 NWEA Norms (更新版)
   "2025-2026": {
     3: {
-      fall: { languageUsage: 188, reading: 187 },
-      spring: { languageUsage: 198, reading: 197 },
+      fall: { languageUsage: 184, reading: 185 },
+      spring: { languageUsage: 193, reading: 194 },
     },
     4: {
-      fall: { languageUsage: 197, reading: 197 },
-      spring: { languageUsage: 205, reading: 205 },
+      fall: { languageUsage: 195, reading: 196 },
+      spring: { languageUsage: 201, reading: 202 },
     },
     5: {
-      fall: { languageUsage: 204, reading: 204 },
-      spring: { languageUsage: 210, reading: 211 },
+      fall: { languageUsage: 202, reading: 204 },
+      spring: { languageUsage: 207, reading: 208 },
     },
     6: {
-      fall: { languageUsage: 208, reading: 210 },
-      spring: { languageUsage: 213, reading: 215 },
+      fall: { languageUsage: 206, reading: 209 },
+      spring: { languageUsage: 210, reading: 212 },
     },
   },
 };
