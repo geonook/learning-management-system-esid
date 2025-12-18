@@ -79,8 +79,8 @@ export function MapBenchmarkDonutChart({
             </TooltipTrigger>
             <TooltipContent className="max-w-[280px]">
               <p className="text-xs">
-                <strong>Benchmark 分類</strong>是根據學生 MAP 兩科平均分數
-                (Language Usage + Reading) ÷ 2 來判斷英文程度。
+                <strong>Benchmark Classification</strong> is based on the student&apos;s MAP
+                two-subject average (Language Usage + Reading) ÷ 2.
               </p>
               {thresholds && (
                 <ul className="text-xs mt-1 space-y-0.5">
@@ -140,11 +140,11 @@ export function MapBenchmarkDonutChart({
         {/* Explanation Box */}
         <div className="mt-3 p-2 bg-muted/50 rounded-md text-xs text-muted-foreground">
           <p className="mb-1">
-            <strong>說明：</strong>此圖表顯示學生依 MAP Average 分數
-            在 E1/E2/E3 三個程度的分佈比例。
+            <strong>Note:</strong> This chart shows the distribution of students
+            across E1/E2/E3 proficiency levels based on MAP Average score.
           </p>
           <p>
-            分類依據最近一次 Spring 學期的測驗結果。G6 不適用此分類。
+            Classification is based on the most recent Spring term results. G6 does not have benchmark classification.
           </p>
         </div>
       </div>
