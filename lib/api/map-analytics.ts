@@ -127,7 +127,7 @@ export async function getMapGroupAverages(params: {
 }): Promise<MapGroupAverage[]> {
   const supabase = createClient();
 
-  // 查詢 MAP 資料，JOIN students 取得 english_level
+  // 查詢 MAP 資料，JOIN students 取得 level (英文等級)
   // 使用 student_id (UUID) 連接 students 表
   const { data, error } = await supabase
     .from("map_assessments")
@@ -141,7 +141,7 @@ export async function getMapGroupAverages(params: {
       rit_score,
       student_id,
       students:student_id (
-        english_level,
+        level,
         is_active
       )
     `
@@ -159,7 +159,7 @@ export async function getMapGroupAverages(params: {
 
   // 過濾已停用的學生
   const activeData = data.filter((d) => {
-    const student = d.students as unknown as { english_level: string; is_active: boolean } | null;
+    const student = d.students as unknown as { level: string; is_active: boolean } | null;
     return student?.is_active === true;
   });
 
@@ -182,9 +182,11 @@ export async function getMapGroupAverages(params: {
   const groups = new Map<GroupKey, GroupData>();
 
   for (const row of filteredData) {
-    const englishLevel =
-      (row.students as unknown as { english_level: string })?.english_level ||
-      "Unknown";
+    // 從 level 欄位取得英文等級 (格式: G3E1 -> E1)
+    const studentLevel = (row.students as unknown as { level: string })?.level;
+    const englishLevel = studentLevel
+      ? studentLevel.slice(-2)  // 取最後兩個字元 (E1, E2, E3)
+      : "Unknown";
 
     // 按 English Level 分組
     const levelKey = `${row.grade}-${englishLevel}-${row.course}-${row.term_tested}`;
