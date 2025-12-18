@@ -49,6 +49,7 @@ import {
   getBenchmarkTransition,
   type MapAnalyticsData,
   type GrowthAnalysisData,
+  type GrowthType,
   type GoalPerformanceData,
   type LexileAnalysisData,
   type TestQualityData,
@@ -73,6 +74,8 @@ export default function MapAnalysisPage() {
   const [selectedGrade, setSelectedGrade] = useState(5);
   // Analysis tab selection
   const [selectedTab, setSelectedTab] = useState("overview");
+  // Growth type selection
+  const [growthType, setGrowthType] = useState<GrowthType>("within-year");
 
   // Data states
   const [overviewData, setOverviewData] = useState<MapAnalyticsData | null>(null);
@@ -134,11 +137,29 @@ export default function MapAnalysisPage() {
   }, []);
 
   // Fetch Growth Data
-  const fetchGrowthData = useCallback(async (grade: number) => {
+  const fetchGrowthData = useCallback(async (grade: number, type: GrowthType) => {
     setLoading("growth", true);
     setError("growth", null);
     try {
-      const result = await getGrowthAnalysis({ grade, academicYear: "2024-2025" });
+      let result: GrowthAnalysisData | null;
+
+      if (type === "within-year") {
+        // 學年內成長：Fall 2024-2025 → Spring 2024-2025
+        result = await getGrowthAnalysis({
+          grade,
+          growthType: "within-year",
+          academicYear: "2024-2025",
+        });
+      } else {
+        // 跨學年成長：Fall 2024-2025 → Fall 2025-2026
+        result = await getGrowthAnalysis({
+          grade,
+          growthType: "year-over-year",
+          fromTerm: "Fall 2024-2025",
+          toTerm: "Fall 2025-2026",
+        });
+      }
+
       setGrowthData(result);
     } catch (err) {
       console.error("Error fetching growth data:", err);
@@ -223,8 +244,10 @@ export default function MapAnalysisPage() {
   // Load data when tab changes (lazy loading)
   useEffect(() => {
     const loadTabData = async () => {
-      // Skip if already loaded for this grade
-      const tabKey = `${selectedTab}-${selectedGrade}`;
+      // Skip if already loaded for this grade (and growth type for growth tab)
+      const tabKey = selectedTab === "growth"
+        ? `${selectedTab}-${selectedGrade}-${growthType}`
+        : `${selectedTab}-${selectedGrade}`;
       if (loadedTabs.has(tabKey)) return;
 
       switch (selectedTab) {
@@ -232,7 +255,7 @@ export default function MapAnalysisPage() {
           await fetchOverviewData(selectedGrade);
           break;
         case "growth":
-          await fetchGrowthData(selectedGrade);
+          await fetchGrowthData(selectedGrade, growthType);
           break;
         case "goals":
           await fetchGoalData(selectedGrade);
@@ -257,6 +280,7 @@ export default function MapAnalysisPage() {
   }, [
     selectedTab,
     selectedGrade,
+    growthType,
     loadedTabs,
     fetchOverviewData,
     fetchGrowthData,
@@ -265,6 +289,16 @@ export default function MapAnalysisPage() {
     fetchQualityData,
     fetchTransitionData,
   ]);
+
+  // Handle growth type change - trigger reload
+  const handleGrowthTypeChange = (type: GrowthType) => {
+    setGrowthType(type);
+    // Reset loaded tabs to trigger reload for growth tab
+    const tabKey = `growth-${selectedGrade}-${type}`;
+    if (!loadedTabs.has(tabKey)) {
+      // Will be loaded by the useEffect
+    }
+  };
 
   // Reset loaded tabs when grade changes
   const handleGradeChange = (value: string) => {
@@ -444,6 +478,53 @@ export default function MapAnalysisPage() {
 
         {/* Growth Tab */}
         <TabsContent value="growth" className="space-y-6 mt-6">
+          {/* Growth Type Selector */}
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="font-medium text-sm mb-1">Growth Analysis Type</h3>
+                  <p className="text-xs text-muted-foreground">
+                    {growthType === "within-year"
+                      ? "Measures student progress within a single academic year (Fall → Spring)"
+                      : "Measures student progress over one year (Fall → Fall of next year)"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant={growthType === "within-year" ? "default" : "outline"}
+                    onClick={() => handleGrowthTypeChange("within-year")}
+                    disabled={loadingStates.growth}
+                  >
+                    Within Year
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={growthType === "year-over-year" ? "default" : "outline"}
+                    onClick={() => handleGrowthTypeChange("year-over-year")}
+                    disabled={loadingStates.growth}
+                  >
+                    Year-over-Year
+                  </Button>
+                </div>
+              </div>
+
+              {/* Explanation Box */}
+              <div className="mt-4 p-3 bg-muted/50 rounded-lg text-xs space-y-2">
+                <p>
+                  <strong>Within Year:</strong> Fall 2024-2025 → Spring 2024-2025 (same grade, same year)
+                </p>
+                <p>
+                  <strong>Year-over-Year:</strong> Fall 2024-2025 → Fall 2025-2026 (升一年級)
+                </p>
+                <p className="text-muted-foreground">
+                  Growth Index = Actual Growth ÷ Expected Growth | 1.0 = 達標 | &gt; 1.0 = 超越預期 | &lt; 1.0 = 低於預期
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           {loadingStates.growth && renderSkeleton(2)}
           {errorStates.growth && renderError(errorStates.growth)}
           {!loadingStates.growth && !errorStates.growth && growthData && (
@@ -470,9 +551,23 @@ export default function MapAnalysisPage() {
                 </Card>
               </div>
 
-              <p className="text-xs text-muted-foreground text-center">
-                Growth calculated from Fall to Spring {growthData.academicYear}
-              </p>
+              {/* Summary Info */}
+              <Card className="bg-muted/30">
+                <CardContent className="pt-4">
+                  <div className="text-center text-sm">
+                    <p className="font-medium">
+                      {growthData.growthType === "within-year"
+                        ? `${growthData.fromTerm} → ${growthData.toTerm}`
+                        : `G${growthData.fromGrade} ${growthData.fromTerm.split(" ")[0]} → G${growthData.toGrade} ${growthData.toTerm.split(" ")[0]}`}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {growthData.growthType === "within-year"
+                        ? "學年內成長分析：追蹤學生在同一學年內從秋季到春季的進步"
+                        : "跨學年成長分析：追蹤學生經過一年升級後的進步"}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
             </>
           )}
           {!loadingStates.growth &&

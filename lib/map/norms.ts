@@ -107,7 +107,7 @@ export function getNormAverage(
 }
 
 /**
- * 取得預期成長值 (Spring - Fall)
+ * 取得預期成長值 (Spring - Fall) - 學年內成長
  */
 export function getExpectedGrowth(
   academicYear: string,
@@ -120,6 +120,33 @@ export function getExpectedGrowth(
   if (fallNorm === null || springNorm === null) return null;
 
   return springNorm - fallNorm;
+}
+
+/**
+ * 取得跨學年預期成長值 (Year 2 Fall - Year 1 Fall)
+ *
+ * 例如：G4 Fall 2024-2025 → G5 Fall 2025-2026
+ * 預期成長 = G5 Fall Norm - G4 Fall Norm
+ *
+ * @param fromAcademicYear - 起始學年 (如 "2024-2025")
+ * @param toAcademicYear - 結束學年 (如 "2025-2026")
+ * @param fromGrade - 起始年級 (如 4)
+ * @param toGrade - 結束年級 (如 5)
+ * @param course - 課程
+ */
+export function getExpectedYearOverYearGrowth(
+  fromAcademicYear: string,
+  toAcademicYear: string,
+  fromGrade: number,
+  toGrade: number,
+  course: Course
+): number | null {
+  const fromFallNorm = getNorm(fromAcademicYear, fromGrade, "fall", course);
+  const toFallNorm = getNorm(toAcademicYear, toGrade, "fall", course);
+
+  if (fromFallNorm === null || toFallNorm === null) return null;
+
+  return toFallNorm - fromFallNorm;
 }
 
 /**

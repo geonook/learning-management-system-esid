@@ -592,22 +592,29 @@ export async function getMapAnalyticsData(params: {
 // Advanced Analytics Types
 // ============================================================
 
+export type GrowthType = "within-year" | "year-over-year";
+
 export interface GrowthAnalysisData {
   grade: number;
-  academicYear: string;
+  growthType: GrowthType;
+  fromTerm: string;
+  toTerm: string;
+  fromGrade?: number;  // 跨學年時的起始年級
+  toGrade?: number;    // 跨學年時的結束年級（= grade）
+  academicYear?: string;  // 學年內成長時使用
   byLevel: {
     englishLevel: string;
     languageUsage: {
-      avgFall: number | null;
-      avgSpring: number | null;
+      avgFrom: number | null;
+      avgTo: number | null;
       actualGrowth: number | null;
       expectedGrowth: number | null;
       growthIndex: number | null;
       studentCount: number;
     };
     reading: {
-      avgFall: number | null;
-      avgSpring: number | null;
+      avgFrom: number | null;
+      avgTo: number | null;
       actualGrowth: number | null;
       expectedGrowth: number | null;
       growthIndex: number | null;
@@ -726,21 +733,57 @@ export interface CohortTrackingData {
 // Growth Analysis API
 // ============================================================
 
-import { getExpectedGrowth } from "@/lib/map/norms";
+import { getExpectedGrowth, getExpectedYearOverYearGrowth } from "@/lib/map/norms";
 
 /**
- * 取得成長分析資料 (Fall → Spring)
+ * 取得成長分析資料
+ *
+ * 支援兩種成長類型：
+ * 1. within-year: 學年內成長 (Fall → Spring)，同一學年內的成長
+ * 2. year-over-year: 跨學年成長 (Fall Year1 → Fall Year2)，追蹤學生年度進步
  */
 export async function getGrowthAnalysis(params: {
   grade: number;
-  academicYear: string;
+  growthType?: GrowthType;
+  academicYear?: string;  // within-year 時使用
+  fromTerm?: string;      // year-over-year 時使用
+  toTerm?: string;        // year-over-year 時使用
 }): Promise<GrowthAnalysisData | null> {
   const supabase = createClient();
 
-  const fallTerm = `Fall ${params.academicYear}`;
-  const springTerm = `Spring ${params.academicYear}`;
+  const growthType = params.growthType ?? "within-year";
 
-  // 取得 Fall 和 Spring 的資料
+  let fromTerm: string;
+  let toTerm: string;
+  let fromGrade: number | undefined;
+  let toGrade: number | undefined;
+  let fromAcademicYear: string | undefined;
+  let toAcademicYear: string | undefined;
+
+  if (growthType === "within-year") {
+    // 學年內成長：Fall → Spring
+    const academicYear = params.academicYear ?? "2024-2025";
+    fromTerm = `Fall ${academicYear}`;
+    toTerm = `Spring ${academicYear}`;
+    fromAcademicYear = academicYear;
+    toAcademicYear = academicYear;
+  } else {
+    // 跨學年成長：使用傳入的 term，或預設 Fall 2024-2025 → Fall 2025-2026
+    fromTerm = params.fromTerm ?? "Fall 2024-2025";
+    toTerm = params.toTerm ?? "Fall 2025-2026";
+
+    // 解析學年
+    const fromParsed = parseTermTested(fromTerm);
+    const toParsed = parseTermTested(toTerm);
+    fromAcademicYear = fromParsed?.academicYear;
+    toAcademicYear = toParsed?.academicYear;
+
+    // 跨學年成長：學生升了一年級
+    fromGrade = params.grade - 1;
+    toGrade = params.grade;
+  }
+
+  // 取得兩個學期的資料
   const { data, error } = await supabase
     .from("map_assessments")
     .select(`
@@ -748,13 +791,14 @@ export async function getGrowthAnalysis(params: {
       course,
       term_tested,
       rit_score,
+      grade,
       students:student_id (
         grade,
         level,
         is_active
       )
     `)
-    .in("term_tested", [fallTerm, springTerm])
+    .in("term_tested", [fromTerm, toTerm])
     .not("student_id", "is", null);
 
   if (error) {
@@ -764,36 +808,45 @@ export async function getGrowthAnalysis(params: {
 
   if (!data || data.length === 0) return null;
 
-  // 過濾活躍學生和指定年級
+  // 過濾活躍學生
+  // 對於跨學年成長，需要追蹤學生的學號而不是目前年級
   const filteredData = data.filter((d) => {
     const student = d.students as unknown as { grade: number; level: string; is_active: boolean } | null;
-    return student?.is_active === true && student?.grade === params.grade;
+    if (student?.is_active !== true) return false;
+
+    if (growthType === "within-year") {
+      // 學年內成長：使用學生目前年級
+      return student.grade === params.grade;
+    } else {
+      // 跨學年成長：使用學生目前年級（應該是 toGrade）
+      return student.grade === params.grade;
+    }
   });
 
   // 按學生分組
   type StudentData = {
     level: string;
-    fall: { languageUsage: number | null; reading: number | null };
-    spring: { languageUsage: number | null; reading: number | null };
+    from: { languageUsage: number | null; reading: number | null };
+    to: { languageUsage: number | null; reading: number | null };
   };
   const studentMap = new Map<string, StudentData>();
 
   for (const row of filteredData) {
     const student = row.students as unknown as { level: string } | null;
     const level = student?.level?.slice(-2) || "Unknown";
-    const isFall = row.term_tested === fallTerm;
+    const isFromTerm = row.term_tested === fromTerm;
 
     let studentData = studentMap.get(row.student_number);
     if (!studentData) {
       studentData = {
         level,
-        fall: { languageUsage: null, reading: null },
-        spring: { languageUsage: null, reading: null },
+        from: { languageUsage: null, reading: null },
+        to: { languageUsage: null, reading: null },
       };
       studentMap.set(row.student_number, studentData);
     }
 
-    const termData = isFall ? studentData.fall : studentData.spring;
+    const termData = isFromTerm ? studentData.from : studentData.to;
     if (row.course === "Language Usage") {
       termData.languageUsage = row.rit_score;
     } else if (row.course === "Reading") {
@@ -815,32 +868,40 @@ export async function getGrowthAnalysis(params: {
 
     // Language Usage
     const luStudents = students.filter(
-      (s) => s.fall.languageUsage !== null && s.spring.languageUsage !== null
+      (s) => s.from.languageUsage !== null && s.to.languageUsage !== null
     );
-    const luFallSum = luStudents.reduce((sum, s) => sum + (s.fall.languageUsage ?? 0), 0);
-    const luSpringSum = luStudents.reduce((sum, s) => sum + (s.spring.languageUsage ?? 0), 0);
+    const luFromSum = luStudents.reduce((sum, s) => sum + (s.from.languageUsage ?? 0), 0);
+    const luToSum = luStudents.reduce((sum, s) => sum + (s.to.languageUsage ?? 0), 0);
 
     // Reading
     const rdStudents = students.filter(
-      (s) => s.fall.reading !== null && s.spring.reading !== null
+      (s) => s.from.reading !== null && s.to.reading !== null
     );
-    const rdFallSum = rdStudents.reduce((sum, s) => sum + (s.fall.reading ?? 0), 0);
-    const rdSpringSum = rdStudents.reduce((sum, s) => sum + (s.spring.reading ?? 0), 0);
+    const rdFromSum = rdStudents.reduce((sum, s) => sum + (s.from.reading ?? 0), 0);
+    const rdToSum = rdStudents.reduce((sum, s) => sum + (s.to.reading ?? 0), 0);
 
-    // Expected Growth
-    const expectedLU = getExpectedGrowth(params.academicYear, params.grade, "Language Usage");
-    const expectedRD = getExpectedGrowth(params.academicYear, params.grade, "Reading");
+    // Expected Growth - 根據成長類型使用不同計算方式
+    let expectedLU: number | null = null;
+    let expectedRD: number | null = null;
 
-    const luAvgFall = luStudents.length > 0 ? luFallSum / luStudents.length : null;
-    const luAvgSpring = luStudents.length > 0 ? luSpringSum / luStudents.length : null;
-    const luActualGrowth = luAvgFall !== null && luAvgSpring !== null ? luAvgSpring - luAvgFall : null;
+    if (growthType === "within-year" && fromAcademicYear) {
+      expectedLU = getExpectedGrowth(fromAcademicYear, params.grade, "Language Usage");
+      expectedRD = getExpectedGrowth(fromAcademicYear, params.grade, "Reading");
+    } else if (growthType === "year-over-year" && fromAcademicYear && toAcademicYear && fromGrade && toGrade) {
+      expectedLU = getExpectedYearOverYearGrowth(fromAcademicYear, toAcademicYear, fromGrade, toGrade, "Language Usage");
+      expectedRD = getExpectedYearOverYearGrowth(fromAcademicYear, toAcademicYear, fromGrade, toGrade, "Reading");
+    }
+
+    const luAvgFrom = luStudents.length > 0 ? luFromSum / luStudents.length : null;
+    const luAvgTo = luStudents.length > 0 ? luToSum / luStudents.length : null;
+    const luActualGrowth = luAvgFrom !== null && luAvgTo !== null ? luAvgTo - luAvgFrom : null;
     const luGrowthIndex = luActualGrowth !== null && expectedLU !== null && expectedLU !== 0
       ? luActualGrowth / expectedLU
       : null;
 
-    const rdAvgFall = rdStudents.length > 0 ? rdFallSum / rdStudents.length : null;
-    const rdAvgSpring = rdStudents.length > 0 ? rdSpringSum / rdStudents.length : null;
-    const rdActualGrowth = rdAvgFall !== null && rdAvgSpring !== null ? rdAvgSpring - rdAvgFall : null;
+    const rdAvgFrom = rdStudents.length > 0 ? rdFromSum / rdStudents.length : null;
+    const rdAvgTo = rdStudents.length > 0 ? rdToSum / rdStudents.length : null;
+    const rdActualGrowth = rdAvgFrom !== null && rdAvgTo !== null ? rdAvgTo - rdAvgFrom : null;
     const rdGrowthIndex = rdActualGrowth !== null && expectedRD !== null && expectedRD !== 0
       ? rdActualGrowth / expectedRD
       : null;
@@ -848,11 +909,11 @@ export async function getGrowthAnalysis(params: {
     // 收集個人成長值 (用於分佈圖)
     if (level === "All") {
       for (const s of luStudents) {
-        const growth = (s.spring.languageUsage ?? 0) - (s.fall.languageUsage ?? 0);
+        const growth = (s.to.languageUsage ?? 0) - (s.from.languageUsage ?? 0);
         allGrowths.push(growth);
       }
       for (const s of rdStudents) {
-        const growth = (s.spring.reading ?? 0) - (s.fall.reading ?? 0);
+        const growth = (s.to.reading ?? 0) - (s.from.reading ?? 0);
         allGrowths.push(growth);
       }
     }
@@ -860,16 +921,16 @@ export async function getGrowthAnalysis(params: {
     byLevel.push({
       englishLevel: level,
       languageUsage: {
-        avgFall: luAvgFall !== null ? Math.round(luAvgFall * 10) / 10 : null,
-        avgSpring: luAvgSpring !== null ? Math.round(luAvgSpring * 10) / 10 : null,
+        avgFrom: luAvgFrom !== null ? Math.round(luAvgFrom * 10) / 10 : null,
+        avgTo: luAvgTo !== null ? Math.round(luAvgTo * 10) / 10 : null,
         actualGrowth: luActualGrowth !== null ? Math.round(luActualGrowth * 10) / 10 : null,
         expectedGrowth: expectedLU,
         growthIndex: luGrowthIndex !== null ? Math.round(luGrowthIndex * 100) / 100 : null,
         studentCount: luStudents.length,
       },
       reading: {
-        avgFall: rdAvgFall !== null ? Math.round(rdAvgFall * 10) / 10 : null,
-        avgSpring: rdAvgSpring !== null ? Math.round(rdAvgSpring * 10) / 10 : null,
+        avgFrom: rdAvgFrom !== null ? Math.round(rdAvgFrom * 10) / 10 : null,
+        avgTo: rdAvgTo !== null ? Math.round(rdAvgTo * 10) / 10 : null,
         actualGrowth: rdActualGrowth !== null ? Math.round(rdActualGrowth * 10) / 10 : null,
         expectedGrowth: expectedRD,
         growthIndex: rdGrowthIndex !== null ? Math.round(rdGrowthIndex * 100) / 100 : null,
@@ -898,7 +959,12 @@ export async function getGrowthAnalysis(params: {
 
   return {
     grade: params.grade,
-    academicYear: params.academicYear,
+    growthType,
+    fromTerm,
+    toTerm,
+    fromGrade: growthType === "year-over-year" ? fromGrade : undefined,
+    toGrade: growthType === "year-over-year" ? toGrade : undefined,
+    academicYear: growthType === "within-year" ? fromAcademicYear : undefined,
     byLevel,
     distribution,
   };

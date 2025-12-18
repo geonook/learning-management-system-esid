@@ -96,13 +96,34 @@ export function MapGrowthIndexChart({
     return null;
   };
 
+  // 格式化顯示標題
+  const formatTitle = () => {
+    if (data.growthType === "within-year") {
+      return `G${data.grade} Growth Index (${data.academicYear})`;
+    } else {
+      // Year-over-year: 顯示 G4→G5 格式
+      return `G${data.fromGrade}→G${data.toGrade} Year-over-Year Growth Index`;
+    }
+  };
+
+  const formatSubtitle = () => {
+    if (data.growthType === "within-year") {
+      return `Fall → Spring (1.0 = on target)`;
+    } else {
+      // 簡化學期顯示
+      const fromShort = data.fromTerm.replace(/(\w+) (\d{4})-\d{4}/, "$1 $2");
+      const toShort = data.toTerm.replace(/(\w+) (\d{4})-\d{4}/, "$1 $2");
+      return `${fromShort} → ${toShort} (1.0 = on target)`;
+    }
+  };
+
   return (
     <div className="w-full">
       <h4 className="text-sm font-medium mb-1 text-center">
-        G{data.grade} Growth Index ({data.academicYear})
+        {formatTitle()}
       </h4>
       <p className="text-xs text-muted-foreground text-center mb-2">
-        Actual Growth ÷ Expected Growth (1.0 = on target)
+        {formatSubtitle()}
       </p>
       <ResponsiveContainer width="100%" height={height}>
         <BarChart

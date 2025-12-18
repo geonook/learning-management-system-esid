@@ -83,13 +83,32 @@ export function MapGrowthDistribution({
   const maxCount = Math.max(...chartData.map((d) => d.count));
   const yMax = Math.ceil(maxCount / 10) * 10;
 
+  // 格式化標題
+  const formatTitle = () => {
+    if (data.growthType === "within-year") {
+      return `G${data.grade} Growth Distribution (${data.academicYear})`;
+    } else {
+      return `G${data.fromGrade}→G${data.toGrade} Year-over-Year Growth Distribution`;
+    }
+  };
+
+  const formatSubtitle = () => {
+    if (data.growthType === "within-year") {
+      return `Fall → Spring | All students (Total: ${totalStudents})`;
+    } else {
+      const fromShort = data.fromTerm.replace(/(\w+) (\d{4})-\d{4}/, "$1 $2");
+      const toShort = data.toTerm.replace(/(\w+) (\d{4})-\d{4}/, "$1 $2");
+      return `${fromShort} → ${toShort} | All students (Total: ${totalStudents})`;
+    }
+  };
+
   return (
     <div className="w-full">
       <h4 className="text-sm font-medium mb-1 text-center">
-        G{data.grade} Growth Distribution ({data.academicYear})
+        {formatTitle()}
       </h4>
       <p className="text-xs text-muted-foreground text-center mb-2">
-        All students across Language Usage & Reading (Total: {totalStudents})
+        {formatSubtitle()}
       </p>
       <ResponsiveContainer width="100%" height={height}>
         <BarChart
@@ -133,7 +152,10 @@ export function MapGrowthDistribution({
       <div className="mt-3 p-2 bg-muted/50 rounded-md text-xs text-muted-foreground">
         <p className="mb-1">
           <strong>Distribution:</strong> Shows how many students achieved
-          different levels of growth from Fall to Spring.
+          different levels of growth{" "}
+          {data.growthType === "within-year"
+            ? "from Fall to Spring"
+            : "over the past year"}.
         </p>
         <div className="grid grid-cols-5 gap-2 mt-2">
           {chartData.map((d) => (
