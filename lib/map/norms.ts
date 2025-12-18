@@ -30,6 +30,10 @@ const MAP_NORMS: Record<string, Record<number, Record<Term, NormData>>> = {
       fall: { languageUsage: 204, reading: 204 },
       spring: { languageUsage: 210, reading: 211 },
     },
+    6: {
+      fall: { languageUsage: 208, reading: 210 },
+      spring: { languageUsage: 212, reading: 214 },
+    },
   },
   // 2025-2026 學年使用 2025 NWEA Norms (更新版)
   "2025-2026": {
