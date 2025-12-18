@@ -143,6 +143,14 @@ export async function getGradeBandQuickStats(
   const courseIds = coursesData.data?.map(c => c.id) || [];
   const totalStudents = studentsResult.count ?? 0;
 
+  console.log('[getGradeBandQuickStats] Debug:', {
+    filters,
+    classIds: classIds.length,
+    studentIds: studentIds.length,
+    courseIds: courseIds.length,
+    totalStudents,
+  });
+
   // 3. Get scores sample for average calculation (single query, limited)
   let avgScore: number | null = null;
   let passRate: number | null = null;
@@ -162,6 +170,8 @@ export async function getGradeBandQuickStats(
     const { data: exams } = await examQuery.limit(500);
     const examIds = exams?.map(e => e.id) || [];
 
+    console.log('[getGradeBandQuickStats] Exams found:', examIds.length);
+
     if (examIds.length > 0) {
       // Get scores in a single query with limit
       const { data: scoresData } = await supabase
@@ -172,8 +182,11 @@ export async function getGradeBandQuickStats(
         .not('score', 'is', null)
         .limit(5000);  // Sample limit for performance
 
+      console.log('[getGradeBandQuickStats] Scores found:', scoresData?.length || 0);
+
       if (scoresData && scoresData.length > 0) {
         const validScores = scoresData.map(s => s.score).filter((s): s is number => s !== null && s > 0);
+        console.log('[getGradeBandQuickStats] Valid scores:', validScores.length, 'Sample:', validScores.slice(0, 5));
         avgScore = calculateAverage(validScores);
 
         // Calculate pass rate from sample - use appropriate threshold based on course type
