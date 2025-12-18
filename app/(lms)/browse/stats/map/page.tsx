@@ -4,62 +4,321 @@
  * MAP Growth Analysis Page
  *
  * 位置: /browse/stats/map
- * 顯示 MAP Growth 統計分析，包括：
- * - Growth Trend Line Charts (Language Usage, Reading, Average)
- * - Benchmark Distribution Donut Chart
- * - Overview Table
+ * Tab-based 統計分析頁面，包括：
+ * - Overview: Growth Trend, Benchmark, Overview Table
+ * - Growth: Growth Index, Distribution
+ * - Goals: Goal Radar, Goal Table
+ * - Lexile: Lexile Distribution, Stats
+ * - Quality: Test Quality Monitoring
+ * - Transitions: Benchmark Transition Matrix
  */
 
-import { useState, useEffect } from "react";
-import { Target, RefreshCw } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import {
+  Target,
+  RefreshCw,
+  LayoutDashboard,
+  TrendingUp,
+  BookOpen,
+  Shield,
+  ArrowLeftRight,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   MapGrowthLineChart,
   MapBenchmarkDonutChart,
   MapOverviewTable,
+  MapGrowthIndexChart,
+  MapGrowthDistribution,
+  MapGoalRadar,
+  MapGoalTable,
+  MapLexileDistribution,
+  MapLexileStats,
+  MapTestQualityPie,
+  MapBenchmarkTransition,
 } from "@/components/map/charts";
 import {
   getMapAnalyticsData,
+  getGrowthAnalysis,
+  getGoalPerformance,
+  getLexileAnalysis,
+  getTestQualityReport,
+  getBenchmarkTransition,
   type MapAnalyticsData,
+  type GrowthAnalysisData,
+  type GoalPerformanceData,
+  type LexileAnalysisData,
+  type TestQualityData,
+  type BenchmarkTransitionData,
 } from "@/lib/api/map-analytics";
 import { isBenchmarkSupported } from "@/lib/map/benchmarks";
 
 const SUPPORTED_GRADES = [3, 4, 5, 6];
 
-export default function MapAnalysisPage() {
-  const [selectedGrade, setSelectedGrade] = useState(5);
-  const [data, setData] = useState<MapAnalyticsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+// Analysis Tabs 定義
+const ANALYSIS_TABS = [
+  { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "growth", label: "Growth", icon: TrendingUp },
+  { id: "goals", label: "Goals", icon: Target },
+  { id: "lexile", label: "Lexile", icon: BookOpen },
+  { id: "quality", label: "Quality", icon: Shield },
+  { id: "transitions", label: "Transitions", icon: ArrowLeftRight },
+];
 
-  const fetchData = async (grade: number) => {
-    setLoading(true);
-    setError(null);
+export default function MapAnalysisPage() {
+  // Grade selection
+  const [selectedGrade, setSelectedGrade] = useState(5);
+  // Analysis tab selection
+  const [selectedTab, setSelectedTab] = useState("overview");
+
+  // Data states
+  const [overviewData, setOverviewData] = useState<MapAnalyticsData | null>(null);
+  const [growthData, setGrowthData] = useState<GrowthAnalysisData | null>(null);
+  const [goalData, setGoalData] = useState<{
+    reading: GoalPerformanceData | null;
+    languageUsage: GoalPerformanceData | null;
+  }>({ reading: null, languageUsage: null });
+  const [lexileData, setLexileData] = useState<LexileAnalysisData | null>(null);
+  const [qualityData, setQualityData] = useState<TestQualityData | null>(null);
+  const [transitionData, setTransitionData] = useState<BenchmarkTransitionData | null>(null);
+
+  // Loading states per tab
+  const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({
+    overview: false,
+    growth: false,
+    goals: false,
+    lexile: false,
+    quality: false,
+    transitions: false,
+  });
+
+  // Error states per tab
+  const [errorStates, setErrorStates] = useState<Record<string, string | null>>({
+    overview: null,
+    growth: null,
+    goals: null,
+    lexile: null,
+    quality: null,
+    transitions: null,
+  });
+
+  // Track which tabs have been loaded
+  const [loadedTabs, setLoadedTabs] = useState<Set<string>>(new Set());
+
+  // Helper to set loading state
+  const setLoading = (tab: string, loading: boolean) => {
+    setLoadingStates((prev) => ({ ...prev, [tab]: loading }));
+  };
+
+  // Helper to set error state
+  const setError = (tab: string, error: string | null) => {
+    setErrorStates((prev) => ({ ...prev, [tab]: error }));
+  };
+
+  // Fetch Overview Data
+  const fetchOverviewData = useCallback(async (grade: number) => {
+    setLoading("overview", true);
+    setError("overview", null);
     try {
       const result = await getMapAnalyticsData({ grade });
-      setData(result);
+      setOverviewData(result);
     } catch (err) {
-      console.error("Error fetching MAP analytics:", err);
-      setError("Failed to load MAP analytics data");
+      console.error("Error fetching overview data:", err);
+      setError("overview", "Failed to load overview data");
     } finally {
-      setLoading(false);
+      setLoading("overview", false);
     }
-  };
+  }, []);
 
+  // Fetch Growth Data
+  const fetchGrowthData = useCallback(async (grade: number) => {
+    setLoading("growth", true);
+    setError("growth", null);
+    try {
+      const result = await getGrowthAnalysis({ grade, academicYear: "2024-2025" });
+      setGrowthData(result);
+    } catch (err) {
+      console.error("Error fetching growth data:", err);
+      setError("growth", "Failed to load growth data");
+    } finally {
+      setLoading("growth", false);
+    }
+  }, []);
+
+  // Fetch Goal Data (both courses)
+  const fetchGoalData = useCallback(async (grade: number) => {
+    setLoading("goals", true);
+    setError("goals", null);
+    try {
+      // Use the most recent term
+      const termTested = "Fall 2025-2026";
+      const [reading, languageUsage] = await Promise.all([
+        getGoalPerformance({ grade, course: "Reading", termTested }),
+        getGoalPerformance({ grade, course: "Language Usage", termTested }),
+      ]);
+      setGoalData({ reading, languageUsage });
+    } catch (err) {
+      console.error("Error fetching goal data:", err);
+      setError("goals", "Failed to load goal data");
+    } finally {
+      setLoading("goals", false);
+    }
+  }, []);
+
+  // Fetch Lexile Data
+  const fetchLexileData = useCallback(async (grade: number) => {
+    setLoading("lexile", true);
+    setError("lexile", null);
+    try {
+      // Use the most recent term
+      const result = await getLexileAnalysis({ grade, termTested: "Fall 2025-2026" });
+      setLexileData(result);
+    } catch (err) {
+      console.error("Error fetching lexile data:", err);
+      setError("lexile", "Failed to load lexile data");
+    } finally {
+      setLoading("lexile", false);
+    }
+  }, []);
+
+  // Fetch Quality Data
+  const fetchQualityData = useCallback(async () => {
+    setLoading("quality", true);
+    setError("quality", null);
+    try {
+      // Use the most recent term
+      const result = await getTestQualityReport({ termTested: "Fall 2025-2026" });
+      setQualityData(result);
+    } catch (err) {
+      console.error("Error fetching quality data:", err);
+      setError("quality", "Failed to load quality data");
+    } finally {
+      setLoading("quality", false);
+    }
+  }, []);
+
+  // Fetch Transition Data
+  const fetchTransitionData = useCallback(async (grade: number) => {
+    setLoading("transitions", true);
+    setError("transitions", null);
+    try {
+      // 取得最近兩個學期的轉換
+      const result = await getBenchmarkTransition({
+        grade,
+        fromTerm: "Fall 2024-2025",
+        toTerm: "Spring 2024-2025",
+      });
+      setTransitionData(result);
+    } catch (err) {
+      console.error("Error fetching transition data:", err);
+      setError("transitions", "Failed to load transition data");
+    } finally {
+      setLoading("transitions", false);
+    }
+  }, []);
+
+  // Load data when tab changes (lazy loading)
   useEffect(() => {
-    fetchData(selectedGrade);
-  }, [selectedGrade]);
+    const loadTabData = async () => {
+      // Skip if already loaded for this grade
+      const tabKey = `${selectedTab}-${selectedGrade}`;
+      if (loadedTabs.has(tabKey)) return;
 
+      switch (selectedTab) {
+        case "overview":
+          await fetchOverviewData(selectedGrade);
+          break;
+        case "growth":
+          await fetchGrowthData(selectedGrade);
+          break;
+        case "goals":
+          await fetchGoalData(selectedGrade);
+          break;
+        case "lexile":
+          await fetchLexileData(selectedGrade);
+          break;
+        case "quality":
+          await fetchQualityData();
+          break;
+        case "transitions":
+          if (isBenchmarkSupported(selectedGrade)) {
+            await fetchTransitionData(selectedGrade);
+          }
+          break;
+      }
+
+      setLoadedTabs((prev) => new Set(prev).add(tabKey));
+    };
+
+    loadTabData();
+  }, [
+    selectedTab,
+    selectedGrade,
+    loadedTabs,
+    fetchOverviewData,
+    fetchGrowthData,
+    fetchGoalData,
+    fetchLexileData,
+    fetchQualityData,
+    fetchTransitionData,
+  ]);
+
+  // Reset loaded tabs when grade changes
   const handleGradeChange = (value: string) => {
     setSelectedGrade(parseInt(value, 10));
+    setLoadedTabs(new Set()); // Reset loaded tabs to trigger reload
   };
 
+  // Refresh current tab
   const handleRefresh = () => {
-    fetchData(selectedGrade);
+    const tabKey = `${selectedTab}-${selectedGrade}`;
+    setLoadedTabs((prev) => {
+      const next = new Set(prev);
+      next.delete(tabKey);
+      return next;
+    });
   };
+
+  // Render loading skeleton
+  const renderSkeleton = (count: number = 3) => (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {Array.from({ length: count }).map((_, i) => (
+        <Card key={i}>
+          <CardHeader>
+            <Skeleton className="h-5 w-32" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[300px]" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+
+  // Render error message
+  const renderError = (message: string) => (
+    <Card className="border-red-200 dark:border-red-800">
+      <CardContent className="pt-6">
+        <p className="text-red-600 dark:text-red-400">{message}</p>
+      </CardContent>
+    </Card>
+  );
+
+  // Render no data message
+  const renderNoData = (message: string) => (
+    <Card>
+      <CardContent className="pt-6">
+        <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+          <Target className="w-12 h-12 mb-4 opacity-50" />
+          <p className="text-lg font-medium">No data available</p>
+          <p className="text-sm">{message}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -72,7 +331,7 @@ export default function MapAnalysisPage() {
           <div>
             <h1 className="text-2xl font-bold">MAP Growth Analysis</h1>
             <p className="text-sm text-muted-foreground">
-              G3-G6 Reading &amp; Language Usage Performance by English Level
+              G3-G6 Reading &amp; Language Usage Performance Analytics
             </p>
           </div>
         </div>
@@ -80,9 +339,11 @@ export default function MapAnalysisPage() {
           variant="outline"
           size="sm"
           onClick={handleRefresh}
-          disabled={loading}
+          disabled={loadingStates[selectedTab]}
         >
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+          <RefreshCw
+            className={`w-4 h-4 mr-2 ${loadingStates[selectedTab] ? "animate-spin" : ""}`}
+          />
           Refresh
         </Button>
       </div>
@@ -98,130 +359,397 @@ export default function MapAnalysisPage() {
         </TabsList>
       </Tabs>
 
-      {/* Error State */}
-      {error && (
-        <Card className="border-red-200 dark:border-red-800">
-          <CardContent className="pt-6">
-            <p className="text-red-600 dark:text-red-400">{error}</p>
-          </CardContent>
-        </Card>
-      )}
+      {/* Analysis Tabs */}
+      <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+        <TabsList className="grid w-full grid-cols-6">
+          {ANALYSIS_TABS.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-1.5">
+                <Icon className="w-4 h-4" />
+                <span className="hidden sm:inline">{tab.label}</span>
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
 
-      {/* Loading State */}
-      {loading && (
-        <div className="space-y-6">
-          {/* Charts Skeleton */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <Card key={i}>
-                <CardHeader>
-                  <Skeleton className="h-5 w-32" />
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-6 mt-6">
+          {loadingStates.overview && renderSkeleton(3)}
+          {errorStates.overview && renderError(errorStates.overview)}
+          {!loadingStates.overview && !errorStates.overview && overviewData && (
+            <>
+              {/* Growth Trend Charts */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {overviewData.chartData.map((chart) => (
+                  <Card key={`${chart.grade}-${chart.course}`}>
+                    <CardContent className="pt-4">
+                      <MapGrowthLineChart data={chart} showNorm />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Benchmark + Overview Table */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Benchmark Distribution</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {isBenchmarkSupported(selectedGrade) ? (
+                      <MapBenchmarkDonutChart data={overviewData.benchmarkDistribution} />
+                    ) : (
+                      <div className="flex items-center justify-center h-[280px] text-muted-foreground text-sm">
+                        <p>G6 does not have benchmark classification</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card className="lg:col-span-2">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Overview Table</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <MapOverviewTable
+                      data={overviewData.overviewTable}
+                      normComparison={overviewData.normComparison}
+                      grade={selectedGrade}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Data Info */}
+              {overviewData.terms.length > 0 && (
+                <p className="text-xs text-muted-foreground text-center">
+                  Data includes {overviewData.terms.length} term(s):{" "}
+                  {overviewData.terms
+                    .map((t) => {
+                      const match = t.match(/^(Fall|Spring)\s+(\d{4})-(\d{4})$/);
+                      if (!match) return t;
+                      return `${match[1]} ${match[2]?.slice(2)}-${match[3]?.slice(2)}`;
+                    })
+                    .join(", ")}
+                </p>
+              )}
+            </>
+          )}
+          {!loadingStates.overview &&
+            !errorStates.overview &&
+            overviewData?.chartData.length === 0 &&
+            renderNoData(`No MAP data for Grade ${selectedGrade}`)}
+        </TabsContent>
+
+        {/* Growth Tab */}
+        <TabsContent value="growth" className="space-y-6 mt-6">
+          {loadingStates.growth && renderSkeleton(2)}
+          {errorStates.growth && renderError(errorStates.growth)}
+          {!loadingStates.growth && !errorStates.growth && growthData && (
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Growth Index Chart */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Growth Index by English Level</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <MapGrowthIndexChart data={growthData} />
+                  </CardContent>
+                </Card>
+
+                {/* Growth Distribution */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Growth Distribution</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <MapGrowthDistribution data={growthData} />
+                  </CardContent>
+                </Card>
+              </div>
+
+              <p className="text-xs text-muted-foreground text-center">
+                Growth calculated from Fall to Spring {growthData.academicYear}
+              </p>
+            </>
+          )}
+          {!loadingStates.growth &&
+            !errorStates.growth &&
+            (!growthData || growthData.byLevel.length === 0) &&
+            renderNoData(`No growth data for Grade ${selectedGrade}`)}
+        </TabsContent>
+
+        {/* Goals Tab */}
+        <TabsContent value="goals" className="space-y-6 mt-6">
+          {loadingStates.goals && renderSkeleton(2)}
+          {errorStates.goals && renderError(errorStates.goals)}
+          {!loadingStates.goals && !errorStates.goals && (goalData.reading || goalData.languageUsage) && (
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Reading Goals */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Reading Goal Performance</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {goalData.reading ? (
+                      <MapGoalRadar data={goalData.reading} />
+                    ) : (
+                      <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                        No Reading goal data
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Language Usage Goals */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Language Usage Goal Performance</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {goalData.languageUsage ? (
+                      <MapGoalRadar data={goalData.languageUsage} />
+                    ) : (
+                      <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                        No Language Usage goal data
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Goal Comparison Tables */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Reading Goal Details</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {goalData.reading ? (
+                      <MapGoalTable data={goalData.reading} />
+                    ) : (
+                      <div className="flex items-center justify-center h-[200px] text-muted-foreground">
+                        No Reading goal data
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Language Usage Goal Details</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {goalData.languageUsage ? (
+                      <MapGoalTable data={goalData.languageUsage} />
+                    ) : (
+                      <div className="flex items-center justify-center h-[200px] text-muted-foreground">
+                        No Language Usage goal data
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </>
+          )}
+          {!loadingStates.goals &&
+            !errorStates.goals &&
+            !goalData.reading &&
+            !goalData.languageUsage &&
+            renderNoData(`No goal data for Grade ${selectedGrade}`)}
+        </TabsContent>
+
+        {/* Lexile Tab */}
+        <TabsContent value="lexile" className="space-y-6 mt-6">
+          {loadingStates.lexile && renderSkeleton(2)}
+          {errorStates.lexile && renderError(errorStates.lexile)}
+          {!loadingStates.lexile && !errorStates.lexile && lexileData && (
+            <>
+              {/* Lexile Stats */}
+              <MapLexileStats data={lexileData} />
+
+              {/* Lexile Distribution Chart */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Lexile Score Distribution</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Skeleton className="h-[300px]" />
+                  <MapLexileDistribution data={lexileData} />
                 </CardContent>
               </Card>
-            ))}
-          </div>
-          {/* Bottom Section Skeleton */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader>
-                <Skeleton className="h-5 w-40" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-[280px]" />
-              </CardContent>
-            </Card>
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <Skeleton className="h-5 w-32" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-[280px]" />
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      )}
 
-      {/* Main Content */}
-      {!loading && data && (
-        <div className="space-y-6">
-          {/* Growth Trend Charts (3 columns) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {data.chartData.map((chart) => (
-              <Card key={`${chart.grade}-${chart.course}`}>
-                <CardContent className="pt-4">
-                  <MapGrowthLineChart data={chart} showNorm />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Bottom Section: Benchmark Donut + Overview Table */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Benchmark Distribution (only for G3-G5) */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Benchmark Distribution</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isBenchmarkSupported(selectedGrade) ? (
-                  <MapBenchmarkDonutChart data={data.benchmarkDistribution} />
-                ) : (
-                  <div className="flex items-center justify-center h-[280px] text-muted-foreground text-sm">
-                    <p>G6 does not have benchmark classification</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Overview Table */}
-            <Card className="lg:col-span-2">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Overview Table</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <MapOverviewTable
-                  data={data.overviewTable}
-                  normComparison={data.normComparison}
-                  grade={selectedGrade}
-                />
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Data Info */}
-          {data.terms.length > 0 && (
-            <p className="text-xs text-muted-foreground text-center">
-              Data includes {data.terms.length} term(s):{" "}
-              {data.terms
-                .map((t) => {
-                  const match = t.match(/^(Fall|Spring)\s+(\d{4})-(\d{4})$/);
-                  if (!match) return t;
-                  return `${match[1]} ${match[2]?.slice(2)}-${match[3]?.slice(2)}`;
-                })
-                .join(", ")}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* No Data State */}
-      {!loading && !error && data && data.chartData.length === 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <Target className="w-12 h-12 mb-4 opacity-50" />
-              <p className="text-lg font-medium">No MAP data available</p>
-              <p className="text-sm">
-                There is no MAP assessment data for Grade {selectedGrade}
+              <p className="text-xs text-muted-foreground text-center">
+                Lexile data from {lexileData.termTested} for Grade {lexileData.grade}
               </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            </>
+          )}
+          {!loadingStates.lexile &&
+            !errorStates.lexile &&
+            (!lexileData || lexileData.stats.count === 0) &&
+            renderNoData(`No Lexile data for Grade ${selectedGrade}`)}
+        </TabsContent>
+
+        {/* Quality Tab */}
+        <TabsContent value="quality" className="space-y-6 mt-6">
+          {loadingStates.quality && renderSkeleton(2)}
+          {errorStates.quality && renderError(errorStates.quality)}
+          {!loadingStates.quality && !errorStates.quality && qualityData && (
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Quality Pie Chart */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Rapid Guessing Distribution</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <MapTestQualityPie data={qualityData} />
+                  </CardContent>
+                </Card>
+
+                {/* Summary Stats */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Test Quality Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="text-center p-4 bg-green-50 dark:bg-green-950/30 rounded-lg">
+                          <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                            {qualityData.summary.normal.count}
+                          </p>
+                          <p className="text-xs text-muted-foreground">Normal (≤15%)</p>
+                        </div>
+                        <div className="text-center p-4 bg-amber-50 dark:bg-amber-950/30 rounded-lg">
+                          <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                            {qualityData.summary.caution.count}
+                          </p>
+                          <p className="text-xs text-muted-foreground">Caution (15-30%)</p>
+                        </div>
+                        <div className="text-center p-4 bg-red-50 dark:bg-red-950/30 rounded-lg">
+                          <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+                            {qualityData.summary.flagged.count}
+                          </p>
+                          <p className="text-xs text-muted-foreground">Flagged (&gt;30%)</p>
+                        </div>
+                      </div>
+
+                      {qualityData.flaggedStudents.length > 0 && (
+                        <div className="mt-4">
+                          <h4 className="text-sm font-medium mb-2">Flagged Students</h4>
+                          <div className="max-h-[200px] overflow-y-auto space-y-2">
+                            {qualityData.flaggedStudents.slice(0, 10).map((student, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-center justify-between p-2 bg-red-50 dark:bg-red-950/20 rounded text-sm"
+                              >
+                                <span>
+                                  {student.studentName} (G{student.grade})
+                                </span>
+                                <span className="text-red-600 dark:text-red-400 font-medium">
+                                  {student.rapidGuessingPercent}%
+                                </span>
+                              </div>
+                            ))}
+                            {qualityData.flaggedStudents.length > 10 && (
+                              <p className="text-xs text-muted-foreground text-center">
+                                And {qualityData.flaggedStudents.length - 10} more...
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <p className="text-xs text-muted-foreground text-center">
+                Quality data from {qualityData.termTested}. Total assessments: {qualityData.summary.total}
+              </p>
+            </>
+          )}
+          {!loadingStates.quality &&
+            !errorStates.quality &&
+            (!qualityData || qualityData.summary.total === 0) &&
+            renderNoData("No test quality data available")}
+        </TabsContent>
+
+        {/* Transitions Tab */}
+        <TabsContent value="transitions" className="space-y-6 mt-6">
+          {!isBenchmarkSupported(selectedGrade) ? (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <ArrowLeftRight className="w-12 h-12 mb-4 opacity-50" />
+                  <p className="text-lg font-medium">Not Available for G6</p>
+                  <p className="text-sm">Benchmark transitions are only tracked for G3-G5</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {loadingStates.transitions && renderSkeleton(1)}
+              {errorStates.transitions && renderError(errorStates.transitions)}
+              {!loadingStates.transitions && !errorStates.transitions && transitionData && (
+                <>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">
+                        Benchmark Transition ({transitionData.fromTerm} → {transitionData.toTerm})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <MapBenchmarkTransition data={transitionData} />
+                    </CardContent>
+                  </Card>
+
+                  {/* Transition Summary */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <Card className="bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800">
+                      <CardContent className="pt-4 text-center">
+                        <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                          {transitionData.summary.improved.count}
+                        </p>
+                        <p className="text-sm text-green-700 dark:text-green-300">
+                          Improved ({transitionData.summary.improved.percentage}%)
+                        </p>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gray-50 dark:bg-gray-900/30">
+                      <CardContent className="pt-4 text-center">
+                        <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+                          {transitionData.summary.same.count}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Same ({transitionData.summary.same.percentage}%)
+                        </p>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800">
+                      <CardContent className="pt-4 text-center">
+                        <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+                          {transitionData.summary.declined.count}
+                        </p>
+                        <p className="text-sm text-red-700 dark:text-red-300">
+                          Declined ({transitionData.summary.declined.percentage}%)
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </>
+              )}
+              {!loadingStates.transitions &&
+                !errorStates.transitions &&
+                !transitionData &&
+                renderNoData(`No transition data for Grade ${selectedGrade}`)}
+            </>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
