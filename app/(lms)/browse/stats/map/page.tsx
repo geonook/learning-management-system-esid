@@ -101,7 +101,10 @@ export default function MapAnalysisPage() {
 
   // Data states
   const [overviewData, setOverviewData] = useState<MapAnalyticsData | null>(null);
-  const [growthData, setGrowthData] = useState<GrowthAnalysisData | null>(null);
+  // Growth data per grade and type: key = `${grade}-${type}`
+  const [growthDataCache, setGrowthDataCache] = useState<Record<string, GrowthAnalysisData | null>>({});
+  // Derived growthData for current selection
+  const growthData = growthDataCache[`${selectedGrade}-${growthType}`] ?? null;
   const [goalData, setGoalData] = useState<{
     reading: GoalPerformanceData | null;
     languageUsage: GoalPerformanceData | null;
@@ -166,14 +169,14 @@ export default function MapAnalysisPage() {
       let result: GrowthAnalysisData | null;
 
       if (type === "within-year") {
-        // 學年內成長：Fall 2024-2025 → Spring 2024-2025
+        // Within-year growth: Fall 2024-2025 → Spring 2024-2025
         result = await getGrowthAnalysis({
           grade,
           growthType: "within-year",
           academicYear: "2024-2025",
         });
       } else {
-        // 跨學年成長：Fall 2024-2025 → Fall 2025-2026
+        // Year-over-year growth: Fall 2024-2025 → Fall 2025-2026
         result = await getGrowthAnalysis({
           grade,
           growthType: "year-over-year",
@@ -182,7 +185,9 @@ export default function MapAnalysisPage() {
         });
       }
 
-      setGrowthData(result);
+      // Store in cache by grade and type
+      const cacheKey = `${grade}-${type}`;
+      setGrowthDataCache(prev => ({ ...prev, [cacheKey]: result }));
     } catch (err) {
       console.error("Error fetching growth data:", err);
       setError("growth", "Failed to load growth data");
@@ -575,10 +580,10 @@ export default function MapAnalysisPage() {
                   <strong>Within Year:</strong> Fall 2024-2025 → Spring 2024-2025 (same grade, same year)
                 </p>
                 <p>
-                  <strong>Year-over-Year:</strong> Fall 2024-2025 → Fall 2025-2026 (升一年級)
+                  <strong>Year-over-Year:</strong> Fall 2024-2025 → Fall 2025-2026 (advance one grade)
                 </p>
                 <p className="text-muted-foreground">
-                  Growth Index = Actual Growth ÷ Expected Growth | 1.0 = 達標 | &gt; 1.0 = 超越預期 | &lt; 1.0 = 低於預期
+                  Growth Index = Actual Growth ÷ Expected Growth | 1.0 = on target | &gt; 1.0 = above expected | &lt; 1.0 = below expected
                 </p>
               </div>
             </CardContent>
