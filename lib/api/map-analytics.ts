@@ -1311,8 +1311,14 @@ export async function getBenchmarkTransition(params: {
   grade: number;
   fromTerm: string;
   toTerm: string;
+  fromGrade?: number;  // 跨學年時，from 的年級 (預設與 grade 相同)
+  toGrade?: number;    // 跨學年時，to 的年級 (預設與 grade 相同)
 }): Promise<BenchmarkTransitionData | null> {
   const supabase = createClient();
+
+  // 跨學年時使用不同年級的 Benchmark 閾值
+  const fromGrade = params.fromGrade ?? params.grade;
+  const toGrade = params.toGrade ?? params.grade;
 
   // 取得兩個學期的資料
   const { data, error } = await supabase
@@ -1322,6 +1328,7 @@ export async function getBenchmarkTransition(params: {
       course,
       term_tested,
       rit_score,
+      grade,
       students:student_id (
         grade,
         is_active
@@ -1337,10 +1344,11 @@ export async function getBenchmarkTransition(params: {
 
   if (!data || data.length === 0) return null;
 
-  // 過濾活躍學生和指定年級
+  // 過濾活躍學生 (以目前年級 = toGrade 為主)
+  // 跨學年的情況下，學生的 current grade 會是 toGrade
   const filteredData = data.filter((d) => {
     const student = d.students as unknown as { grade: number; is_active: boolean } | null;
-    return student?.is_active === true && student?.grade === params.grade;
+    return student?.is_active === true && student?.grade === toGrade;
   });
 
   // 按學生分組，計算每個學期的 Average
@@ -1391,8 +1399,10 @@ export async function getBenchmarkTransition(params: {
     const fromAvg = calculateMapAverage(student.from.languageUsage, student.from.reading);
     const toAvg = calculateMapAverage(student.to.languageUsage, student.to.reading);
 
-    const fromBenchmark = classifyBenchmark(params.grade, fromAvg) as BenchmarkLevel | null;
-    const toBenchmark = classifyBenchmark(params.grade, toAvg) as BenchmarkLevel | null;
+    // 使用對應年級的 Benchmark 閾值
+    // fromGrade 用於 fromTerm，toGrade 用於 toTerm
+    const fromBenchmark = classifyBenchmark(fromGrade, fromAvg) as BenchmarkLevel | null;
+    const toBenchmark = classifyBenchmark(toGrade, toAvg) as BenchmarkLevel | null;
 
     if (fromBenchmark && toBenchmark) {
       transitions.push({ from: fromBenchmark, to: toBenchmark });

@@ -69,6 +69,26 @@ const ANALYSIS_TABS = [
   { id: "transitions", label: "Transitions", icon: ArrowLeftRight },
 ];
 
+// Transition period options
+type TransitionPeriod = "fall-to-spring" | "spring-to-fall";
+
+const TRANSITION_PERIODS = [
+  {
+    id: "fall-to-spring" as TransitionPeriod,
+    label: "Fall → Spring 2024-25",
+    fromTerm: "Fall 2024-2025",
+    toTerm: "Spring 2024-2025",
+    description: "學年內 Benchmark 變化",
+  },
+  {
+    id: "spring-to-fall" as TransitionPeriod,
+    label: "Spring 24-25 → Fall 25-26",
+    fromTerm: "Spring 2024-2025",
+    toTerm: "Fall 2025-2026",
+    description: "跨學年 Benchmark 變化（升級後）",
+  },
+];
+
 export default function MapAnalysisPage() {
   // Grade selection
   const [selectedGrade, setSelectedGrade] = useState(5);
@@ -76,6 +96,8 @@ export default function MapAnalysisPage() {
   const [selectedTab, setSelectedTab] = useState("overview");
   // Growth type selection
   const [growthType, setGrowthType] = useState<GrowthType>("within-year");
+  // Transition period selection
+  const [transitionPeriod, setTransitionPeriod] = useState<TransitionPeriod>("fall-to-spring");
 
   // Data states
   const [overviewData, setOverviewData] = useState<MapAnalyticsData | null>(null);
@@ -222,15 +244,33 @@ export default function MapAnalysisPage() {
   }, []);
 
   // Fetch Transition Data
-  const fetchTransitionData = useCallback(async (grade: number) => {
+  const fetchTransitionData = useCallback(async (grade: number, period: TransitionPeriod) => {
     setLoading("transitions", true);
     setError("transitions", null);
     try {
-      // 取得最近兩個學期的轉換
+      const periodConfig = TRANSITION_PERIODS.find((p) => p.id === period);
+      if (!periodConfig) {
+        setError("transitions", "Invalid transition period");
+        return;
+      }
+
+      // 跨學年時，fromGrade 需要減 1（學生升級後）
+      const isCrossYear = period === "spring-to-fall";
+      const fromGrade = isCrossYear ? grade - 1 : grade;
+      const toGrade = grade;
+
+      // G3 跨學年無法計算（因為 G2 沒有 Benchmark）
+      if (isCrossYear && fromGrade < 3) {
+        setTransitionData(null);
+        return;
+      }
+
       const result = await getBenchmarkTransition({
         grade,
-        fromTerm: "Fall 2024-2025",
-        toTerm: "Spring 2024-2025",
+        fromTerm: periodConfig.fromTerm,
+        toTerm: periodConfig.toTerm,
+        fromGrade,
+        toGrade,
       });
       setTransitionData(result);
     } catch (err) {
@@ -244,10 +284,18 @@ export default function MapAnalysisPage() {
   // Load data when tab changes (lazy loading)
   useEffect(() => {
     const loadTabData = async () => {
-      // Skip if already loaded for this grade (and growth type for growth tab)
-      const tabKey = selectedTab === "growth"
-        ? `${selectedTab}-${selectedGrade}-${growthType}`
-        : `${selectedTab}-${selectedGrade}`;
+      // Skip if already loaded for this grade (and growth type for growth tab, transition period for transitions tab)
+      // Quality tab is school-wide, so it doesn't depend on grade
+      let tabKey: string;
+      if (selectedTab === "growth") {
+        tabKey = `${selectedTab}-${selectedGrade}-${growthType}`;
+      } else if (selectedTab === "transitions") {
+        tabKey = `${selectedTab}-${selectedGrade}-${transitionPeriod}`;
+      } else if (selectedTab === "quality") {
+        tabKey = `${selectedTab}-all`;  // Quality is school-wide, not grade-specific
+      } else {
+        tabKey = `${selectedTab}-${selectedGrade}`;
+      }
       if (loadedTabs.has(tabKey)) return;
 
       switch (selectedTab) {
@@ -268,7 +316,7 @@ export default function MapAnalysisPage() {
           break;
         case "transitions":
           if (isBenchmarkSupported(selectedGrade)) {
-            await fetchTransitionData(selectedGrade);
+            await fetchTransitionData(selectedGrade, transitionPeriod);
           }
           break;
       }
@@ -281,6 +329,7 @@ export default function MapAnalysisPage() {
     selectedTab,
     selectedGrade,
     growthType,
+    transitionPeriod,
     loadedTabs,
     fetchOverviewData,
     fetchGrowthData,
@@ -295,6 +344,16 @@ export default function MapAnalysisPage() {
     setGrowthType(type);
     // Reset loaded tabs to trigger reload for growth tab
     const tabKey = `growth-${selectedGrade}-${type}`;
+    if (!loadedTabs.has(tabKey)) {
+      // Will be loaded by the useEffect
+    }
+  };
+
+  // Handle transition period change - trigger reload
+  const handleTransitionPeriodChange = (period: TransitionPeriod) => {
+    setTransitionPeriod(period);
+    // Reset loaded tabs to trigger reload for transitions tab
+    const tabKey = `transitions-${selectedGrade}-${period}`;
     if (!loadedTabs.has(tabKey)) {
       // Will be loaded by the useEffect
     }
@@ -787,6 +846,55 @@ export default function MapAnalysisPage() {
             </Card>
           ) : (
             <>
+              {/* Transition Period Selector */}
+              <Card>
+                <CardContent className="pt-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                      <h3 className="font-medium text-sm mb-1">Transition Period</h3>
+                      <p className="text-xs text-muted-foreground">
+                        {transitionPeriod === "fall-to-spring"
+                          ? "Track benchmark changes within the same academic year"
+                          : "Track benchmark changes across academic years (students advance one grade)"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {TRANSITION_PERIODS.map((period) => {
+                        // G3 跨學年無法計算（因為 G2 沒有 Benchmark）
+                        const isDisabled = period.id === "spring-to-fall" && selectedGrade === 3;
+                        return (
+                          <Button
+                            key={period.id}
+                            size="sm"
+                            variant={transitionPeriod === period.id ? "default" : "outline"}
+                            onClick={() => handleTransitionPeriodChange(period.id)}
+                            disabled={loadingStates.transitions || isDisabled}
+                            title={isDisabled ? "G3 無法計算跨學年 Benchmark（G2 沒有分類）" : period.description}
+                          >
+                            {period.label}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Explanation Box */}
+                  <div className="mt-4 p-3 bg-muted/50 rounded-lg text-xs space-y-2">
+                    <p>
+                      <strong>學年內 (Fall → Spring):</strong> 同一學年內的 Benchmark 變化，使用相同年級的閾值
+                    </p>
+                    <p>
+                      <strong>跨學年 (Spring → Fall):</strong> 跨學年的 Benchmark 變化，學生升一級後使用新年級的閾值
+                    </p>
+                    {transitionPeriod === "spring-to-fall" && (
+                      <p className="text-amber-600 dark:text-amber-400">
+                        ⚠️ 跨學年分析：G{selectedGrade} 學生在 Spring 24-25 時是 G{selectedGrade - 1}，使用 G{selectedGrade - 1} 的 Benchmark 閾值
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
               {loadingStates.transitions && renderSkeleton(1)}
               {errorStates.transitions && renderError(errorStates.transitions)}
               {!loadingStates.transitions && !errorStates.transitions && transitionData && (
@@ -795,6 +903,11 @@ export default function MapAnalysisPage() {
                     <CardHeader className="pb-2">
                       <CardTitle className="text-base">
                         Benchmark Transition ({transitionData.fromTerm} → {transitionData.toTerm})
+                        {transitionPeriod === "spring-to-fall" && (
+                          <span className="ml-2 text-xs font-normal text-muted-foreground">
+                            (G{selectedGrade - 1} → G{selectedGrade})
+                          </span>
+                        )}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
