@@ -6,3 +6,5 @@ export { MapLexileDistribution } from "./MapLexileDistribution";
 export { MapLexileStats } from "./MapLexileStats";
 export { MapTestQualityPie } from "./MapTestQualityPie";
 export { MapBenchmarkTransition } from "./MapBenchmarkTransition";
+export { MapGrowthIndexChart } from "./MapGrowthIndexChart";
+export { MapGrowthDistribution } from "./MapGrowthDistribution";
