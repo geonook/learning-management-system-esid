@@ -173,19 +173,31 @@ export async function getGradeBandQuickStats(
     console.log('[getGradeBandQuickStats] Exams found:', examIds.length);
 
     if (examIds.length > 0) {
-      // Get scores in a single query with limit
-      const { data: scoresData } = await supabase
-        .from('scores')
-        .select('score')
-        .in('exam_id', examIds)
-        .in('student_id', studentIds)
-        .not('score', 'is', null)
-        .limit(5000);  // Sample limit for performance
+      // Get scores using batch query to avoid URL length limits
+      // Problem: 504 studentIds + 199 examIds = URL too long
+      // Solution: Only use examIds filter (smaller), let scores filter by exam_id only
+      const allScoresData: { score: number | null }[] = [];
 
-      console.log('[getGradeBandQuickStats] Scores found:', scoresData?.length || 0);
+      // Batch examIds into groups of 100 to avoid URL length limits
+      const EXAM_BATCH_SIZE = 100;
+      for (let i = 0; i < examIds.length; i += EXAM_BATCH_SIZE) {
+        const batchExamIds = examIds.slice(i, i + EXAM_BATCH_SIZE);
+        const { data: batchScores } = await supabase
+          .from('scores')
+          .select('score')
+          .in('exam_id', batchExamIds)
+          .not('score', 'is', null)
+          .limit(2000);
 
-      if (scoresData && scoresData.length > 0) {
-        const validScores = scoresData.map(s => s.score).filter((s): s is number => s !== null && s > 0);
+        if (batchScores) {
+          allScoresData.push(...batchScores);
+        }
+      }
+
+      console.log('[getGradeBandQuickStats] Scores found:', allScoresData.length);
+
+      if (allScoresData.length > 0) {
+        const validScores = allScoresData.map(s => s.score).filter((s): s is number => s !== null && s > 0);
         console.log('[getGradeBandQuickStats] Valid scores:', validScores.length, 'Sample:', validScores.slice(0, 5));
         avgScore = calculateAverage(validScores);
 
@@ -203,7 +215,7 @@ export async function getGradeBandQuickStats(
 
         // Estimate completion rate: unique students with scores / total students
         // This is a rough estimate based on having any scores
-        const scoresCount = scoresData.length;
+        const scoresCount = allScoresData.length;
         // KCFS has 4-6 assessments depending on grade; LT/IT has 13 (FA1-8 + SA1-4 + MID)
         // Use average of 5 for KCFS (midpoint of 4-6) vs 13 for LT/IT
         const expectedItemsPerStudent = isKCFS ? 5 : 13;
