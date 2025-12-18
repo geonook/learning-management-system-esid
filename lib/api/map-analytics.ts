@@ -128,6 +128,7 @@ export async function getMapGroupAverages(params: {
   const supabase = createClient();
 
   // 查詢 MAP 資料，JOIN students 取得 english_level
+  // 使用 student_id (UUID) 連接 students 表
   const { data, error } = await supabase
     .from("map_assessments")
     .select(
@@ -139,12 +140,13 @@ export async function getMapGroupAverages(params: {
       term,
       rit_score,
       student_id,
-      students!inner (
-        english_level
+      students:student_id (
+        english_level,
+        is_active
       )
     `
     )
-    .eq("students.is_active", true)
+    .not("student_id", "is", null)
     .order("grade")
     .order("term_tested");
 
@@ -155,10 +157,16 @@ export async function getMapGroupAverages(params: {
 
   if (!data || data.length === 0) return [];
 
+  // 過濾已停用的學生
+  const activeData = data.filter((d) => {
+    const student = d.students as unknown as { english_level: string; is_active: boolean } | null;
+    return student?.is_active === true;
+  });
+
   // 過濾特定年級（如果有指定）
   const filteredData = params.grade
-    ? data.filter((d) => d.grade === params.grade)
-    : data;
+    ? activeData.filter((d) => d.grade === params.grade)
+    : activeData;
 
   // 分組計算平均
   type GroupKey = string;
