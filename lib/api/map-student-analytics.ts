@@ -160,10 +160,11 @@ export interface StudentMapAnalytics {
 /**
  * 取得學生 Benchmark 狀態
  *
- * Benchmark 使用「下學年年級」的閾值判斷：
- * - 測驗時 G3 → 用 G4 閾值判斷是否準備好升級
- * - 測驗時 G4 → 用 G5 閾值判斷是否準備好升級
- * - 測驗時 G5 → 無閾值（G6 畢業無 Benchmark）
+ * Benchmark 使用「測驗時年級」的閾值判斷升級準備狀態：
+ * - 測驗時 G3 → 用 G3 閾值 (206, 183) 判斷 G3→G4 升級
+ * - 測驗時 G4 → 用 G4 閾值 (213, 191) 判斷 G4→G5 升級
+ * - 測驗時 G5 → 用 G5 閾值 (218, 194) 判斷 G5→G6 升級
+ * - 測驗時 G6 → 無閾值（學生畢業）
  */
 export async function getStudentBenchmarkStatus(
   studentNumber: string,
@@ -204,15 +205,15 @@ export async function getStudentBenchmarkStatus(
   // 取得測驗時的年級（從任一科目取得）
   const testGrade = readingData?.grade ?? luData?.grade ?? 0;
 
-  // 下學年年級 = 測驗時年級 + 1（用於 Benchmark 判斷）
+  // 下學年年級 = 測驗時年級 + 1（用於顯示）
   const nextYearGrade = testGrade + 1;
 
-  // 計算平均和 Benchmark（使用下學年年級的閾值）
+  // 計算平均和 Benchmark（使用測驗時年級的閾值，判斷是否準備好升級）
   const average = readingScore !== null && luScore !== null
     ? calculateMapAverage(luScore, readingScore)
     : null;
-  const benchmark = average !== null ? classifyBenchmark(nextYearGrade, average) : null;
-  const thresholds = getBenchmarkThresholds(nextYearGrade);
+  const benchmark = average !== null ? classifyBenchmark(testGrade, average) : null;
+  const thresholds = getBenchmarkThresholds(testGrade);
 
   // 計算與閾值的距離
   let distanceToE1: number | null = null;

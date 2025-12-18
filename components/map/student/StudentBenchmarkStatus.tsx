@@ -60,7 +60,7 @@ export function StudentBenchmarkStatus({ data }: StudentBenchmarkStatusProps) {
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-text-primary">Benchmark Status</h3>
         <span className="text-xs text-text-tertiary bg-surface-tertiary px-2 py-1 rounded">
-          G{data.nextYearGrade} Standard
+          G{data.testGrade}→G{data.nextYearGrade} Standard
         </span>
       </div>
 
