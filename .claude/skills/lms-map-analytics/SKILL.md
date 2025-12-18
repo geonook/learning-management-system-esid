@@ -29,7 +29,9 @@ Calculate mean RIT by:
 
 ### 2. Benchmark Classification
 
-Categorize students into E1/E2/E3 based on Spring RIT scores.
+Categorize students into E1/E2/E3 based on **Spring Average (兩科平均)**.
+
+**Important**: Classification uses the Average of Language Usage + Reading, NOT individual course scores.
 
 See `references/benchmarks.md` for classification rules by grade.
 

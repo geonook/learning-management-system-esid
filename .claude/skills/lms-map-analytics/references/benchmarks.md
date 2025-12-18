@@ -2,165 +2,179 @@
 
 ## Overview
 
-Students are classified into three English Levels (E1/E2/E3) based on their **Spring semester** RIT scores. This classification is used for:
+Students are classified into three English Levels (E1/E2/E3) based on their **Spring semester Average RIT score** (兩科平均). This classification is used for:
 - English class placement for the following year
 - Progress tracking against level expectations
 - Identifying students needing intervention
+
+## Important: Classification is Based on Average
+
+**Benchmark 分類是看 Average（兩科平均）來判斷，不是分別看 Language Usage 和 Reading。**
+
+```
+Average = (Language Usage RIT + Reading RIT) / 2
+```
 
 ## Classification Rules by Grade
 
 ### Grade 3 → Grade 4
 
-| Level | Language Usage | Reading |
-|-------|----------------|---------|
-| **E1** (Advanced) | ≥ 206 | ≥ 203 |
-| **E2** (Intermediate) | ≥ 183 and < 206 | ≥ 180 and < 203 |
-| **E3** (Developing) | < 183 | < 180 |
+| Level | Average RIT |
+|-------|-------------|
+| **E1** (Advanced) | ≥ 206 |
+| **E2** (Intermediate) | ≥ 183 and < 206 |
+| **E3** (Developing) | < 183 |
 
 ### Grade 4 → Grade 5
 
-| Level | Language Usage | Reading |
-|-------|----------------|---------|
-| **E1** (Advanced) | ≥ 213 | ≥ 210 |
-| **E2** (Intermediate) | ≥ 191 and < 213 | ≥ 188 and < 210 |
-| **E3** (Developing) | < 191 | < 188 |
+| Level | Average RIT |
+|-------|-------------|
+| **E1** (Advanced) | ≥ 213 |
+| **E2** (Intermediate) | ≥ 191 and < 213 |
+| **E3** (Developing) | < 191 |
 
 ### Grade 5 → Grade 6
 
-| Level | Language Usage | Reading |
-|-------|----------------|---------|
-| **E1** (Advanced) | ≥ 218 | ≥ 215 |
-| **E2** (Intermediate) | ≥ 194 and < 218 | ≥ 191 and < 215 |
-| **E3** (Developing) | < 194 | < 191 |
+| Level | Average RIT |
+|-------|-------------|
+| **E1** (Advanced) | ≥ 218 |
+| **E2** (Intermediate) | ≥ 194 and < 218 |
+| **E3** (Developing) | < 194 |
 
-## Benchmark Pattern
+## Summary Table
 
-Reading benchmark is consistently **3 points lower** than Language Usage:
-
-```
-Reading Benchmark = Language Usage Benchmark - 3
-```
-
-## Classification SQL
-
-```sql
--- Classify students based on Spring Language Usage scores
-CREATE OR REPLACE FUNCTION classify_english_level(
-  grade INTEGER,
-  course TEXT,
-  rit_score INTEGER
-) RETURNS TEXT AS $$
-BEGIN
-  IF course = 'Language Usage' THEN
-    CASE grade
-      WHEN 3 THEN
-        IF rit_score >= 206 THEN RETURN 'E1';
-        ELSIF rit_score >= 183 THEN RETURN 'E2';
-        ELSE RETURN 'E3';
-        END IF;
-      WHEN 4 THEN
-        IF rit_score >= 213 THEN RETURN 'E1';
-        ELSIF rit_score >= 191 THEN RETURN 'E2';
-        ELSE RETURN 'E3';
-        END IF;
-      WHEN 5 THEN
-        IF rit_score >= 218 THEN RETURN 'E1';
-        ELSIF rit_score >= 194 THEN RETURN 'E2';
-        ELSE RETURN 'E3';
-        END IF;
-    END CASE;
-  ELSIF course = 'Reading' THEN
-    CASE grade
-      WHEN 3 THEN
-        IF rit_score >= 203 THEN RETURN 'E1';
-        ELSIF rit_score >= 180 THEN RETURN 'E2';
-        ELSE RETURN 'E3';
-        END IF;
-      WHEN 4 THEN
-        IF rit_score >= 210 THEN RETURN 'E1';
-        ELSIF rit_score >= 188 THEN RETURN 'E2';
-        ELSE RETURN 'E3';
-        END IF;
-      WHEN 5 THEN
-        IF rit_score >= 215 THEN RETURN 'E1';
-        ELSIF rit_score >= 191 THEN RETURN 'E2';
-        ELSE RETURN 'E3';
-        END IF;
-    END CASE;
-  END IF;
-  RETURN NULL;
-END;
-$$ LANGUAGE plpgsql;
-```
+| Grade | E1 Threshold | E2 Threshold |
+|-------|--------------|--------------|
+| G3 | ≥ 206 | ≥ 183 |
+| G4 | ≥ 213 | ≥ 191 |
+| G5 | ≥ 218 | ≥ 194 |
 
 ## TypeScript Implementation
 
 ```typescript
-interface BenchmarkConfig {
-  e1Threshold: number;
-  e2Threshold: number;
+interface BenchmarkThreshold {
+  e1Threshold: number;  // Average >= e1 → E1
+  e2Threshold: number;  // e2 <= Average < e1 → E2, else E3
 }
 
-const BENCHMARKS: Record<number, Record<string, BenchmarkConfig>> = {
-  3: {
-    'Language Usage': { e1Threshold: 206, e2Threshold: 183 },
-    'Reading': { e1Threshold: 203, e2Threshold: 180 },
-  },
-  4: {
-    'Language Usage': { e1Threshold: 213, e2Threshold: 191 },
-    'Reading': { e1Threshold: 210, e2Threshold: 188 },
-  },
-  5: {
-    'Language Usage': { e1Threshold: 218, e2Threshold: 194 },
-    'Reading': { e1Threshold: 215, e2Threshold: 191 },
-  },
+// Thresholds apply to Average (兩科平均)
+const BENCHMARKS: Record<number, BenchmarkThreshold> = {
+  3: { e1Threshold: 206, e2Threshold: 183 },
+  4: { e1Threshold: 213, e2Threshold: 191 },
+  5: { e1Threshold: 218, e2Threshold: 194 },
 };
 
-function classifyEnglishLevel(
+// Calculate two-subject average
+export function calculateMapAverage(
+  languageUsage: number,
+  reading: number
+): number {
+  return (languageUsage + reading) / 2;
+}
+
+// Classify benchmark based on average score
+export function classifyBenchmark(
   grade: number,
-  course: string,
-  ritScore: number
+  average: number  // Pre-calculated average of both subjects
 ): 'E1' | 'E2' | 'E3' | null {
-  const config = BENCHMARKS[grade]?.[course];
-  if (!config) return null;
-  
-  if (ritScore >= config.e1Threshold) return 'E1';
-  if (ritScore >= config.e2Threshold) return 'E2';
+  const thresholds = BENCHMARKS[grade];
+  if (!thresholds) return null;
+
+  if (average >= thresholds.e1Threshold) return 'E1';
+  if (average >= thresholds.e2Threshold) return 'E2';
   return 'E3';
 }
+
+// Get benchmark thresholds for display
+export function getBenchmarkThresholds(grade: number): BenchmarkThreshold | null {
+  return BENCHMARKS[grade] || null;
+}
+```
+
+## SQL Implementation
+
+```sql
+-- Calculate student average and classify benchmark
+WITH student_averages AS (
+  SELECT
+    ma.student_number,
+    ma.grade,
+    ROUND((
+      MAX(CASE WHEN ma.course = 'Language Usage' THEN ma.rit_score END) +
+      MAX(CASE WHEN ma.course = 'Reading' THEN ma.rit_score END)
+    ) / 2.0, 2) as average
+  FROM map_assessments ma
+  WHERE ma.term = 'spring'
+    AND ma.academic_year = '2024-2025'
+  GROUP BY ma.student_number, ma.grade
+  HAVING
+    MAX(CASE WHEN ma.course = 'Language Usage' THEN ma.rit_score END) IS NOT NULL
+    AND MAX(CASE WHEN ma.course = 'Reading' THEN ma.rit_score END) IS NOT NULL
+)
+SELECT
+  student_number,
+  grade,
+  average,
+  CASE
+    WHEN grade = 3 THEN
+      CASE WHEN average >= 206 THEN 'E1' WHEN average >= 183 THEN 'E2' ELSE 'E3' END
+    WHEN grade = 4 THEN
+      CASE WHEN average >= 213 THEN 'E1' WHEN average >= 191 THEN 'E2' ELSE 'E3' END
+    WHEN grade = 5 THEN
+      CASE WHEN average >= 218 THEN 'E1' WHEN average >= 194 THEN 'E2' ELSE 'E3' END
+  END as benchmark
+FROM student_averages
+ORDER BY grade, benchmark;
 ```
 
 ## Benchmark Distribution Query
 
 ```sql
--- Count students in each benchmark category
-SELECT 
-  ma.grade,
-  ma.course,
-  CASE 
-    WHEN ma.course = 'Language Usage' THEN
-      CASE ma.grade
-        WHEN 3 THEN CASE WHEN ma.rit_score >= 206 THEN 'E1' WHEN ma.rit_score >= 183 THEN 'E2' ELSE 'E3' END
-        WHEN 4 THEN CASE WHEN ma.rit_score >= 213 THEN 'E1' WHEN ma.rit_score >= 191 THEN 'E2' ELSE 'E3' END
-        WHEN 5 THEN CASE WHEN ma.rit_score >= 218 THEN 'E1' WHEN ma.rit_score >= 194 THEN 'E2' ELSE 'E3' END
-      END
-    WHEN ma.course = 'Reading' THEN
-      CASE ma.grade
-        WHEN 3 THEN CASE WHEN ma.rit_score >= 203 THEN 'E1' WHEN ma.rit_score >= 180 THEN 'E2' ELSE 'E3' END
-        WHEN 4 THEN CASE WHEN ma.rit_score >= 210 THEN 'E1' WHEN ma.rit_score >= 188 THEN 'E2' ELSE 'E3' END
-        WHEN 5 THEN CASE WHEN ma.rit_score >= 215 THEN 'E1' WHEN ma.rit_score >= 191 THEN 'E2' ELSE 'E3' END
-      END
-  END as benchmark_level,
-  COUNT(*) as student_count
-FROM map_assessments ma
-WHERE ma.term = 'spring'
-  AND ma.grade IN (3, 4, 5)
-GROUP BY ma.grade, ma.course, benchmark_level
-ORDER BY ma.grade, ma.course, benchmark_level;
+-- Count students in each benchmark category (based on Average)
+WITH student_averages AS (
+  SELECT
+    ma.student_number,
+    ma.grade,
+    ROUND((
+      MAX(CASE WHEN ma.course = 'Language Usage' THEN ma.rit_score END) +
+      MAX(CASE WHEN ma.course = 'Reading' THEN ma.rit_score END)
+    ) / 2.0, 2) as average
+  FROM map_assessments ma
+  WHERE ma.term = 'spring'
+    AND ma.academic_year = '2024-2025'
+    AND ma.grade IN (3, 4, 5)
+  GROUP BY ma.student_number, ma.grade
+  HAVING
+    MAX(CASE WHEN ma.course = 'Language Usage' THEN ma.rit_score END) IS NOT NULL
+    AND MAX(CASE WHEN ma.course = 'Reading' THEN ma.rit_score END) IS NOT NULL
+),
+classified AS (
+  SELECT
+    grade,
+    average,
+    CASE
+      WHEN grade = 3 THEN
+        CASE WHEN average >= 206 THEN 'E1' WHEN average >= 183 THEN 'E2' ELSE 'E3' END
+      WHEN grade = 4 THEN
+        CASE WHEN average >= 213 THEN 'E1' WHEN average >= 191 THEN 'E2' ELSE 'E3' END
+      WHEN grade = 5 THEN
+        CASE WHEN average >= 218 THEN 'E1' WHEN average >= 194 THEN 'E2' ELSE 'E3' END
+    END as benchmark
+  FROM student_averages
+)
+SELECT
+  grade,
+  benchmark,
+  COUNT(*) as student_count,
+  ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (PARTITION BY grade), 1) as percentage
+FROM classified
+GROUP BY grade, benchmark
+ORDER BY grade, benchmark;
 ```
 
 ## Notes
 
 - G6 does not have benchmark classification (students graduate)
 - Classification is based on **Spring** scores only
+- Both Language Usage AND Reading scores must exist to calculate Average
 - Used for **next year's** English Level placement

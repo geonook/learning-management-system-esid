@@ -136,44 +136,53 @@ GROUP BY grade, english_level, course
 ORDER BY grade, english_level, course;
 ```
 
-## 4. Benchmark Distribution
+## 4. Benchmark Distribution (Based on Average)
 
 ### Count by Benchmark Category
 
+**Important**: Benchmark classification is based on **Average (兩科平均)**, NOT individual course scores.
+
 ```sql
-WITH classified AS (
-  SELECT 
+-- Benchmark Distribution based on Average (Language Usage + Reading) / 2
+WITH student_averages AS (
+  SELECT
+    ma.student_number,
     ma.grade,
-    ma.course,
-    ma.rit_score,
-    CASE 
-      WHEN ma.course = 'Language Usage' THEN
-        CASE ma.grade
-          WHEN 3 THEN CASE WHEN ma.rit_score >= 206 THEN 'E1' WHEN ma.rit_score >= 183 THEN 'E2' ELSE 'E3' END
-          WHEN 4 THEN CASE WHEN ma.rit_score >= 213 THEN 'E1' WHEN ma.rit_score >= 191 THEN 'E2' ELSE 'E3' END
-          WHEN 5 THEN CASE WHEN ma.rit_score >= 218 THEN 'E1' WHEN ma.rit_score >= 194 THEN 'E2' ELSE 'E3' END
-        END
-      WHEN ma.course = 'Reading' THEN
-        CASE ma.grade
-          WHEN 3 THEN CASE WHEN ma.rit_score >= 203 THEN 'E1' WHEN ma.rit_score >= 180 THEN 'E2' ELSE 'E3' END
-          WHEN 4 THEN CASE WHEN ma.rit_score >= 210 THEN 'E1' WHEN ma.rit_score >= 188 THEN 'E2' ELSE 'E3' END
-          WHEN 5 THEN CASE WHEN ma.rit_score >= 215 THEN 'E1' WHEN ma.rit_score >= 191 THEN 'E2' ELSE 'E3' END
-        END
-    END as benchmark
+    ROUND((
+      MAX(CASE WHEN ma.course = 'Language Usage' THEN ma.rit_score END) +
+      MAX(CASE WHEN ma.course = 'Reading' THEN ma.rit_score END)
+    ) / 2.0, 2) as average
   FROM map_assessments ma
-  WHERE ma.term = 'spring' 
+  WHERE ma.term = 'spring'
     AND ma.academic_year = '2024-2025'
     AND ma.grade IN (3, 4, 5)
+  GROUP BY ma.student_number, ma.grade
+  HAVING
+    MAX(CASE WHEN ma.course = 'Language Usage' THEN ma.rit_score END) IS NOT NULL
+    AND MAX(CASE WHEN ma.course = 'Reading' THEN ma.rit_score END) IS NOT NULL
+),
+classified AS (
+  SELECT
+    grade,
+    average,
+    CASE
+      WHEN grade = 3 THEN
+        CASE WHEN average >= 206 THEN 'E1' WHEN average >= 183 THEN 'E2' ELSE 'E3' END
+      WHEN grade = 4 THEN
+        CASE WHEN average >= 213 THEN 'E1' WHEN average >= 191 THEN 'E2' ELSE 'E3' END
+      WHEN grade = 5 THEN
+        CASE WHEN average >= 218 THEN 'E1' WHEN average >= 194 THEN 'E2' ELSE 'E3' END
+    END as benchmark
+  FROM student_averages
 )
-SELECT 
+SELECT
   grade,
-  course,
   benchmark,
-  COUNT(*) as count
+  COUNT(*) as student_count,
+  ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (PARTITION BY grade), 1) as percentage
 FROM classified
-WHERE benchmark IS NOT NULL
-GROUP BY grade, course, benchmark
-ORDER BY grade, course, benchmark;
+GROUP BY grade, benchmark
+ORDER BY grade, benchmark;
 ```
 
 ## 5. Norm Comparison

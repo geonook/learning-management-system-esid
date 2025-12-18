@@ -90,16 +90,18 @@ interface GrowthComparisonChart {
 ## 3. Benchmark Distribution Pie/Donut Chart
 
 ### Purpose
-Show student distribution across E1/E2/E3 benchmark categories.
+Show student distribution across E1/E2/E3 benchmark categories based on **Average (兩科平均)**.
+
+**Important**: Classification uses Average = (Language Usage + Reading) / 2, NOT individual course scores.
 
 ### Configuration
 
 ```typescript
 interface BenchmarkDistributionChart {
   type: 'pie' | 'donut';
-  title: string;        // "Grade 3 Language Usage Benchmark Distribution"
+  title: string;        // "Grade 3 Benchmark Distribution (by Average)"
   data: Array<{
-    name: string;       // 'E1 (≥206)', 'E2 (183-205)', 'E3 (<183)'
+    name: string;       // 'E1 (≥206)', 'E2 (183-205)', 'E3 (<183)' - thresholds for G3
     value: number;      // Student count
     color: string;      // '#22c55e' (green), '#f59e0b' (yellow), '#ef4444' (red)
   }>;
@@ -108,6 +110,11 @@ interface BenchmarkDistributionChart {
     formatter: (params) => `${params.name}: ${params.value} (${params.percent}%)`;
   };
 }
+
+// Grade-specific threshold labels:
+// G3: E1 (≥206), E2 (183-205), E3 (<183)
+// G4: E1 (≥213), E2 (191-212), E3 (<191)
+// G5: E1 (≥218), E2 (194-217), E3 (<194)
 ```
 
 ### Color Scheme
@@ -121,8 +128,8 @@ interface BenchmarkDistributionChart {
 ### Example
 
 ```
-    Grade 3 Language Usage Benchmark
-    
+    Grade 3 Benchmark Distribution (by Average)
+
          ╭──────────────╮
         ╱    E1 (57)     ╲
        │    22.6%         │
@@ -133,6 +140,8 @@ interface BenchmarkDistributionChart {
         ╲   E2 (142)     ╱
          ╰──────────────╯
               56.3%
+
+    Note: Based on Average = (LU + Reading) / 2
 ```
 
 ## 4. Norm Comparison Line Chart
