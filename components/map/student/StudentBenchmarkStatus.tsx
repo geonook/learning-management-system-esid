@@ -57,12 +57,17 @@ export function StudentBenchmarkStatus({ data }: StudentBenchmarkStatusProps) {
 
   return (
     <div className="bg-surface-elevated rounded-xl border border-border-default p-6 shadow-sm">
-      <h3 className="text-lg font-semibold text-text-primary mb-4">Benchmark Status</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-text-primary">Benchmark Status</h3>
+        <span className="text-xs text-text-tertiary bg-surface-tertiary px-2 py-1 rounded">
+          G{data.nextYearGrade} Standard
+        </span>
+      </div>
 
       {/* Current Level and Average */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <span className="text-text-secondary">Current Level:</span>
+          <span className="text-text-secondary">Ready for G{data.nextYearGrade}:</span>
           {data.benchmark && (
             <span
               className="px-3 py-1 rounded-full text-white font-medium"

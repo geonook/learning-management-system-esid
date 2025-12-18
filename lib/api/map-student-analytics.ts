@@ -28,7 +28,8 @@ import { parseLexile, getLexileBand, formatLexile } from "@/lib/map/lexile";
 // ============================================================
 
 export interface StudentBenchmarkStatus {
-  grade: number;
+  testGrade: number;       // 測驗時的年級
+  nextYearGrade: number;   // 下學年的年級 (用於 Benchmark 判斷)
   termTested: string;
   languageUsage: number | null;
   reading: number | null;
@@ -158,18 +159,23 @@ export interface StudentMapAnalytics {
 
 /**
  * 取得學生 Benchmark 狀態
+ *
+ * Benchmark 使用「下學年年級」的閾值判斷：
+ * - 測驗時 G3 → 用 G4 閾值判斷是否準備好升級
+ * - 測驗時 G4 → 用 G5 閾值判斷是否準備好升級
+ * - 測驗時 G5 → 無閾值（G6 畢業無 Benchmark）
  */
 export async function getStudentBenchmarkStatus(
   studentNumber: string,
-  grade: number,
+  _currentGrade: number, // 保留參數但不使用，改用測驗時的年級
   termTested?: string
 ): Promise<StudentBenchmarkStatus | null> {
   const supabase = createClient();
 
-  // 取得該學生最新的 MAP 資料
+  // 取得該學生最新的 MAP 資料（包含測驗時的年級）
   let query = supabase
     .from("map_assessments")
-    .select("term_tested, course, rit_score")
+    .select("term_tested, course, rit_score, grade")
     .eq("student_number", studentNumber)
     .in("course", ["Reading", "Language Usage"]);
 
@@ -177,25 +183,36 @@ export async function getStudentBenchmarkStatus(
     query = query.eq("term_tested", termTested);
   }
 
-  const { data, error } = await query.order("term_tested", { ascending: false });
+  const { data, error } = await query;
 
   if (error || !data || data.length === 0) return null;
 
-  // 取得最新的學期
-  const latestTerm = termTested || data[0]?.term_tested;
+  // 取得最新的學期（使用正確的學期排序邏輯，而非字串排序）
+  const uniqueTerms = [...new Set(data.map(d => d.term_tested))];
+  const sortedTerms = uniqueTerms.sort((a, b) => -compareTermTested(a, b));
+  const latestTerm = termTested || sortedTerms[0];
   if (!latestTerm) return null;
 
-  // 取得該學期的兩科成績
+  // 取得該學期的兩科成績和測驗時年級
   const termData = data.filter((d) => d.term_tested === latestTerm);
-  const readingScore = termData.find((d) => d.course === "Reading")?.rit_score ?? null;
-  const luScore = termData.find((d) => d.course === "Language Usage")?.rit_score ?? null;
+  const readingData = termData.find((d) => d.course === "Reading");
+  const luData = termData.find((d) => d.course === "Language Usage");
 
-  // 計算平均和 Benchmark
+  const readingScore = readingData?.rit_score ?? null;
+  const luScore = luData?.rit_score ?? null;
+
+  // 取得測驗時的年級（從任一科目取得）
+  const testGrade = readingData?.grade ?? luData?.grade ?? 0;
+
+  // 下學年年級 = 測驗時年級 + 1（用於 Benchmark 判斷）
+  const nextYearGrade = testGrade + 1;
+
+  // 計算平均和 Benchmark（使用下學年年級的閾值）
   const average = readingScore !== null && luScore !== null
     ? calculateMapAverage(luScore, readingScore)
     : null;
-  const benchmark = average !== null ? classifyBenchmark(grade, average) : null;
-  const thresholds = getBenchmarkThresholds(grade);
+  const benchmark = average !== null ? classifyBenchmark(nextYearGrade, average) : null;
+  const thresholds = getBenchmarkThresholds(nextYearGrade);
 
   // 計算與閾值的距離
   let distanceToE1: number | null = null;
@@ -206,7 +223,8 @@ export async function getStudentBenchmarkStatus(
   }
 
   return {
-    grade,
+    testGrade,
+    nextYearGrade,
     termTested: latestTerm,
     languageUsage: luScore,
     reading: readingScore,
