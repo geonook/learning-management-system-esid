@@ -312,16 +312,18 @@ export async function getStudentGoalPerformance(
 ): Promise<StudentGoalPerformance | null> {
   const supabase = createClient();
 
-  // 取得最新的學期
+  // 取得最新的學期（使用正確的學期排序邏輯）
   let targetTerm = termTested;
   if (!targetTerm) {
     const { data: termsData } = await supabase
       .from("map_assessments")
       .select("term_tested")
-      .eq("student_number", studentNumber)
-      .order("term_tested", { ascending: false })
-      .limit(1);
-    targetTerm = termsData?.[0]?.term_tested;
+      .eq("student_number", studentNumber);
+    if (termsData && termsData.length > 0) {
+      const uniqueTerms = [...new Set(termsData.map(d => d.term_tested))];
+      const sortedTerms = uniqueTerms.sort((a, b) => -compareTermTested(a, b));
+      targetTerm = sortedTerms[0];
+    }
   }
 
   if (!targetTerm) return null;
@@ -415,21 +417,19 @@ export async function getStudentLexileStatus(
   const supabase = createClient();
 
   // 取得 Reading 評量的 Lexile 資料
-  let query = supabase
+  const { data, error } = await supabase
     .from("map_assessments")
     .select("term_tested, lexile_score")
     .eq("student_number", studentNumber)
     .eq("course", "Reading")
-    .not("lexile_score", "is", null)
-    .order("term_tested", { ascending: false });
-
-  const { data, error } = await query;
+    .not("lexile_score", "is", null);
 
   if (error || !data || data.length === 0) return null;
 
-  // 取得最新的 Lexile
-  const latestTerm = termTested || data[0]?.term_tested;
-  const latestData = data.find((d) => d.term_tested === latestTerm);
+  // 使用正確的學期排序邏輯取得最新學期
+  const sortedData = [...data].sort((a, b) => -compareTermTested(a.term_tested, b.term_tested));
+  const latestTerm = termTested || sortedData[0]?.term_tested;
+  const latestData = sortedData.find((d) => d.term_tested === latestTerm);
   if (!latestData) return null;
 
   const lexileScore = parseLexile(latestData.lexile_score);
@@ -448,10 +448,10 @@ export async function getStudentLexileStatus(
     };
   }
 
-  // 計算成長（與上一學期比較）
+  // 計算成長（與上一學期比較，使用排序後的資料）
   let growth = null;
-  if (data.length > 1) {
-    const previousData = data[1];
+  if (sortedData.length > 1) {
+    const previousData = sortedData[1];
     if (previousData) {
       const previousScore = parseLexile(previousData.lexile_score);
       if (previousScore !== null && lexileScore !== null) {
@@ -550,16 +550,18 @@ export async function getStudentRankings(
 ): Promise<StudentRankings | null> {
   const supabase = createClient();
 
-  // 取得該學生最新的學期
+  // 取得該學生最新的學期（使用正確的學期排序邏輯）
   let targetTerm = termTested;
   if (!targetTerm) {
     const { data: termsData } = await supabase
       .from("map_assessments")
       .select("term_tested")
-      .eq("student_number", studentNumber)
-      .order("term_tested", { ascending: false })
-      .limit(1);
-    targetTerm = termsData?.[0]?.term_tested;
+      .eq("student_number", studentNumber);
+    if (termsData && termsData.length > 0) {
+      const uniqueTerms = [...new Set(termsData.map(d => d.term_tested))];
+      const sortedTerms = uniqueTerms.sort((a, b) => -compareTermTested(a, b));
+      targetTerm = sortedTerms[0];
+    }
   }
 
   if (!targetTerm) return null;
