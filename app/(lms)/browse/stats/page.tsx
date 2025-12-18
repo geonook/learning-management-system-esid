@@ -13,6 +13,7 @@ import {
   Star,
   GraduationCap,
   Layers,
+  Target,
 } from "lucide-react";
 import { StatNavCard, QuickStatCard } from "@/components/statistics/StatNavCard";
 import { getQuickStats, type QuickStats } from "@/lib/api/statistics";
@@ -69,6 +70,13 @@ const statNavCards = [
     icon: Star,
     href: "/browse/stats/kcfs",
     color: "bg-pink-500/20 text-pink-500 dark:text-pink-400",
+  },
+  {
+    title: "MAP Growth Analysis",
+    description: "NWEA MAP RIT scores, benchmarks, and norm comparison",
+    icon: Target,
+    href: "/browse/stats/map",
+    color: "bg-emerald-500/20 text-emerald-500 dark:text-emerald-400",
   },
 ];
 
