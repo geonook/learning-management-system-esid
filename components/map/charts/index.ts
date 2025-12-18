@@ -8,3 +8,5 @@ export { MapTestQualityPie } from "./MapTestQualityPie";
 export { MapBenchmarkTransition } from "./MapBenchmarkTransition";
 export { MapGrowthIndexChart } from "./MapGrowthIndexChart";
 export { MapGrowthDistribution } from "./MapGrowthDistribution";
+export { MapGoalRadar } from "./MapGoalRadar";
+export { MapGoalTable } from "./MapGoalTable";
