@@ -286,83 +286,83 @@ export default function BrowseMapPage() {
                     <th className="px-4 py-3 text-right text-xs font-medium text-text-tertiary uppercase tracking-wide">
                       Guessing
                     </th>
+                    <th className="px-4 py-3 w-12"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-subtle">
                   {assessments.map((assessment) => (
-                    <tr
+                    <Link
                       key={assessment.id}
-                      className="hover:bg-surface-hover transition-colors duration-normal"
+                      href={
+                        assessment.student_id
+                          ? `/student/${assessment.student_id}`
+                          : "#"
+                      }
+                      className="contents group"
                     >
-                      <td className="px-4 py-3">
-                        <Link
-                          href={
-                            assessment.student_id
-                              ? `/student/${assessment.student_id}`
-                              : "#"
-                          }
-                          className={`font-medium ${
-                            assessment.student_id
-                              ? "text-purple-600 dark:text-purple-400 hover:underline"
-                              : "text-text-primary"
-                          }`}
-                        >
-                          {assessment.student_first_name || assessment.student_last_name
-                            ? `${assessment.student_first_name || ""} ${assessment.student_last_name || ""}`.trim()
-                            : assessment.student_number}
-                        </Link>
-                        <p className="text-xs text-text-tertiary font-mono">
-                          {assessment.student_number}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="px-2 py-1 text-xs rounded-full bg-surface-tertiary text-text-secondary">
-                          G{assessment.grade}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`px-2 py-1 text-xs rounded-full ${
-                            assessment.course === "Reading"
-                              ? "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400"
-                              : "bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-400"
-                          }`}
-                        >
-                          {assessment.course}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-text-secondary">
-                        {formatTermLabel(assessment.term_tested)}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <span
-                          className={`text-lg font-bold ${getRitScoreColor(
-                            assessment.rit_score,
-                            assessment.grade
-                          )}`}
-                        >
-                          {assessment.rit_score}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-text-secondary">
-                        {assessment.lexile_score || "-"}
-                      </td>
-                      <td className="px-4 py-3 text-right text-sm">
-                        {assessment.rapid_guessing_percent !== null ? (
-                          <span
-                            className={
-                              assessment.rapid_guessing_percent > 10
-                                ? "text-amber-600 dark:text-amber-400"
-                                : "text-text-secondary"
-                            }
-                          >
-                            {assessment.rapid_guessing_percent}%
+                      <tr className="hover:bg-surface-hover transition-colors duration-normal cursor-pointer">
+                        <td className="px-4 py-3">
+                          <span className="font-medium text-text-primary group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                            {assessment.student_first_name || assessment.student_last_name
+                              ? `${assessment.student_first_name || ""} ${assessment.student_last_name || ""}`.trim()
+                              : assessment.student_number}
                           </span>
-                        ) : (
-                          <span className="text-text-tertiary">-</span>
-                        )}
-                      </td>
-                    </tr>
+                          <p className="text-xs text-text-tertiary font-mono">
+                            {assessment.student_number}
+                          </p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="px-2 py-1 text-xs rounded-full bg-surface-tertiary text-text-secondary">
+                            G{assessment.grade}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full ${
+                              assessment.course === "Reading"
+                                ? "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400"
+                                : "bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-400"
+                            }`}
+                          >
+                            {assessment.course}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-text-secondary">
+                          {formatTermLabel(assessment.term_tested)}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span
+                            className={`text-lg font-bold ${getRitScoreColor(
+                              assessment.rit_score,
+                              assessment.grade
+                            )}`}
+                          >
+                            {assessment.rit_score}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-text-secondary">
+                          {assessment.lexile_score || "-"}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm">
+                          {assessment.rapid_guessing_percent !== null ? (
+                            <span
+                              className={
+                                assessment.rapid_guessing_percent > 10
+                                  ? "text-amber-600 dark:text-amber-400"
+                                  : "text-text-secondary"
+                              }
+                            >
+                              {assessment.rapid_guessing_percent}%
+                            </span>
+                          ) : (
+                            <span className="text-text-tertiary">-</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <ChevronRight className="w-4 h-4 text-text-tertiary group-hover:text-text-secondary transition-colors inline-block" />
+                        </td>
+                      </tr>
+                    </Link>
                   ))}
                 </tbody>
               </table>
