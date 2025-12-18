@@ -38,7 +38,7 @@ export default async function ClassLayout({
       </div>
 
       {/* Tabs */}
-      <ClassContextTabs classId={params.classId} />
+      <ClassContextTabs classId={params.classId} grade={classData.grade} />
 
       {/* Content */}
       <div className="flex-1 min-h-0 overflow-y-auto">{children}</div>

@@ -32,14 +32,15 @@ const useStaging = process.argv.includes("--staging");
 
 // Staging environment
 const STAGING_URL = "https://kqvpcoolgyhjqleekmee.supabase.co";
-const STAGING_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtxdnBjb29sZ3loanFsZWVrbWVlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMDMzNTQwMiwiZXhwIjoyMDQ1OTExNDAyfQ.ibWn_TN2Xq2mAguRQ2ORcqRuqHYCPybAT0DAo8J0pAQ";
 
 // Production environment
-const PROD_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://piwbooidofbaqklhijup.supabase.co";
-const PROD_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const PROD_URL = "https://piwbooidofbaqklhijup.supabase.co";
+
+// Use environment variable for service role key (works for both environments)
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
 const SUPABASE_URL = useStaging ? STAGING_URL : PROD_URL;
-const SUPABASE_SERVICE_KEY = useStaging ? STAGING_KEY : PROD_KEY;
+const SUPABASE_SERVICE_KEY = SERVICE_KEY;
 
 // ============================================================
 // Types

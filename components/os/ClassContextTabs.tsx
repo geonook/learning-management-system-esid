@@ -9,15 +9,20 @@ import {
   CalendarCheck,
   Users,
   MessageSquare,
+  Target,
 } from "lucide-react";
 
 interface ClassContextTabsProps {
   classId: string;
+  grade?: number;
 }
 
-export function ClassContextTabs({ classId }: ClassContextTabsProps) {
+export function ClassContextTabs({ classId, grade }: ClassContextTabsProps) {
   const pathname = usePathname();
   const baseUrl = `/class/${classId}`;
+
+  // MAP is only available for G3-G6
+  const showMapTab = grade !== undefined && grade >= 3 && grade <= 6;
 
   const tabs = [
     {
@@ -50,6 +55,17 @@ export function ClassContextTabs({ classId }: ClassContextTabsProps) {
       icon: <MessageSquare className="w-4 h-4" />,
       exact: false,
     },
+    // MAP tab only for G3-G6
+    ...(showMapTab
+      ? [
+          {
+            href: `${baseUrl}/map`,
+            label: "MAP",
+            icon: <Target className="w-4 h-4" />,
+            exact: false,
+          },
+        ]
+      : []),
   ];
 
   return (
