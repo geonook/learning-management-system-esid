@@ -424,6 +424,118 @@ export type Database = {
           }
         ]
       }
+      map_assessments: {
+        Row: {
+          id: string
+          student_id: string | null
+          student_number: string
+          student_last_name: string | null
+          student_first_name: string | null
+          grade: number
+          school: string | null
+          term_tested: string
+          academic_year: string
+          term: 'fall' | 'spring'
+          course: 'Reading' | 'Language Usage'
+          test_name: string | null
+          rit_score: number
+          rit_score_range: string | null
+          rapid_guessing_percent: number | null
+          lexile_score: string | null
+          lexile_range: string | null
+          imported_at: string
+          import_batch_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          student_id?: string | null
+          student_number: string
+          student_last_name?: string | null
+          student_first_name?: string | null
+          grade: number
+          school?: string | null
+          term_tested: string
+          academic_year: string
+          term: 'fall' | 'spring'
+          course: 'Reading' | 'Language Usage'
+          test_name?: string | null
+          rit_score: number
+          rit_score_range?: string | null
+          rapid_guessing_percent?: number | null
+          lexile_score?: string | null
+          lexile_range?: string | null
+          imported_at?: string
+          import_batch_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          student_id?: string | null
+          student_number?: string
+          student_last_name?: string | null
+          student_first_name?: string | null
+          grade?: number
+          school?: string | null
+          term_tested?: string
+          academic_year?: string
+          term?: 'fall' | 'spring'
+          course?: 'Reading' | 'Language Usage'
+          test_name?: string | null
+          rit_score?: number
+          rit_score_range?: string | null
+          rapid_guessing_percent?: number | null
+          lexile_score?: string | null
+          lexile_range?: string | null
+          imported_at?: string
+          import_batch_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "map_assessments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      map_goal_scores: {
+        Row: {
+          id: string
+          assessment_id: string
+          goal_name: string
+          goal_rit_range: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          assessment_id: string
+          goal_name: string
+          goal_rit_range?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          assessment_id?: string
+          goal_name?: string
+          goal_rit_range?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "map_goal_scores_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "map_assessments"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       student_grade_aggregates: {

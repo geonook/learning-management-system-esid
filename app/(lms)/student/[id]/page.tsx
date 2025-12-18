@@ -15,6 +15,7 @@ import {
   Users,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { MapStudentSection } from "@/components/map";
 
 interface StudentDetails {
   id: string;
@@ -316,6 +317,13 @@ export default function StudentDetailPage() {
                 </div>
               )}
             </div>
+
+            {/* MAP Growth Assessment Section (G3-G6 only) */}
+            <MapStudentSection
+              studentId={student.id}
+              studentNumber={student.student_id}
+              grade={student.grade}
+            />
 
             {/* Enrolled Courses */}
             <div className="bg-surface-elevated rounded-xl border border-border-default shadow-sm">

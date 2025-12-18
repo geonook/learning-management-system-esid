@@ -267,13 +267,19 @@ export function Sidebar() {
             sectionId="academic"
             isExpanded={isExpanded('academic')}
             onToggle={() => toggleSection('academic')}
-            itemCount={3}
+            itemCount={4}
           >
             <SidebarItem
               href="/browse/gradebook"
               icon={<BookOpen className="w-4 h-4" />}
               label="Gradebook"
               active={pathname === "/browse/gradebook"}
+            />
+            <SidebarItem
+              href="/browse/map"
+              icon={<Target className="w-4 h-4" />}
+              label="MAP Scores"
+              active={pathname === "/browse/map"}
             />
             <SidebarItem
               href="/browse/comms"
