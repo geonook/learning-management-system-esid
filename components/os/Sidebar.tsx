@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/supabase/auth-context";
-import { getClassesByTeacher, getClassesByGradeBand, Class } from "@/lib/api/classes";
+import { getClassesByTeacher, getClassesByGradeBand, getTeachingClasses, Class, ClassWithCourseType } from "@/lib/api/classes";
 import {
   LayoutDashboard,
   Calendar,
@@ -24,7 +24,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Section IDs for localStorage persistence
-type SectionId = 'overview' | 'admin' | 'grade' | 'browse' | 'academic' | 'quick' | 'classes';
+type SectionId = 'overview' | 'admin' | 'grade' | 'browse' | 'academic' | 'quick' | 'classes' | 'teaching' | 'managed';
 
 // Default expanded state - Overview always expanded, others collapsed by default
 const DEFAULT_EXPANDED: Record<SectionId, boolean> = {
@@ -35,6 +35,8 @@ const DEFAULT_EXPANDED: Record<SectionId, boolean> = {
   academic: false,
   quick: true,
   classes: true,
+  teaching: true,  // Head Teacher 授課班級
+  managed: true,   // Head Teacher 管轄班級
 };
 
 const STORAGE_KEY = 'lms-sidebar-sections';
@@ -43,6 +45,9 @@ export function Sidebar() {
   const pathname = usePathname();
   const { user, userPermissions } = useAuth();
   const [classes, setClasses] = useState<Class[]>([]);
+  // Head Teacher specific states
+  const [teachingClasses, setTeachingClasses] = useState<ClassWithCourseType[]>([]);
+  const [managedClasses, setManagedClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedSections, setExpandedSections] = useState<Record<SectionId, boolean>>(DEFAULT_EXPANDED);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -87,29 +92,34 @@ export function Sidebar() {
     async function fetchClasses() {
       if (!user) return;
       try {
-        let data: Class[] = [];
-
-        // Head Teacher: Get all classes in their grade band
+        // Head Teacher: Get both teaching classes AND managed classes (grade band)
         if (isHead && userPermissions?.grade) {
-          data = await getClassesByGradeBand(userPermissions.grade);
+          const [teaching, managed] = await Promise.all([
+            getTeachingClasses(user.id),
+            getClassesByGradeBand(userPermissions.grade)
+          ]);
+          setTeachingClasses(teaching);
+          // Filter managed classes to exclude teaching classes (avoid duplicates)
+          const teachingIds = new Set(teaching.map(c => c.id));
+          setManagedClasses(managed.filter(c => !teachingIds.has(c.id)));
         }
         // Regular Teacher: Get classes they teach (via courses table)
         else if (isTeacher) {
-          data = await getClassesByTeacher(user.id);
+          const data = await getClassesByTeacher(user.id);
+          setClasses(data);
         }
         // Office Member: Check if they have any teaching assignments
         else if (isOfficeMember) {
           // Office members might also be teachers (dual role)
           // Check if they have any courses assigned to them
-          data = await getClassesByTeacher(user.id);
+          const data = await getClassesByTeacher(user.id);
           if (data.length > 0) {
             setHasTeachingAssignments(true);
           }
+          setClasses(data);
         }
         // Admin: Could show all classes or none
         // For now, show none (they can use Browse pages)
-
-        setClasses(data);
       } catch (error) {
         console.error("Failed to fetch classes", error);
       } finally {
@@ -297,8 +307,69 @@ export function Sidebar() {
           </SidebarSection>
         )}
 
-        {/* Section: My Classes (for teachers, heads, and office members with courses) */}
-        {(isHead || isTeacher || hasTeacherAccess || (loading && (isHead || isTeacher || isOfficeMember))) && (
+        {/* Section: Head Teacher - Teaching Classes (授課班級) */}
+        {isHead && (
+          <SidebarSection
+            title="我的授課班級"
+            sectionId="teaching"
+            isExpanded={isExpanded('teaching')}
+            onToggle={() => toggleSection('teaching')}
+            itemCount={loading ? undefined : teachingClasses.length}
+          >
+            {loading ? (
+              <div className="space-y-1">
+                <Skeleton className="h-9 w-full rounded-lg" />
+                <Skeleton className="h-9 w-full rounded-lg" />
+              </div>
+            ) : teachingClasses.length === 0 ? (
+              <div className="text-sm text-text-tertiary py-1">尚無授課班級</div>
+            ) : (
+              teachingClasses.map((cls) => (
+                <SidebarItem
+                  key={`teaching-${cls.id}-${cls.course_type}`}
+                  href={`/class/${cls.id}`}
+                  icon={<BookOpen className="w-4 h-4" />}
+                  label={`${cls.name} (${cls.course_type})`}
+                  active={pathname?.startsWith(`/class/${cls.id}`) ?? false}
+                />
+              ))
+            )}
+          </SidebarSection>
+        )}
+
+        {/* Section: Head Teacher - Managed Classes (管轄班級) */}
+        {isHead && (
+          <SidebarSection
+            title="我管轄的班級"
+            sectionId="managed"
+            isExpanded={isExpanded('managed')}
+            onToggle={() => toggleSection('managed')}
+            itemCount={loading ? undefined : managedClasses.length}
+          >
+            {loading ? (
+              <div className="space-y-1">
+                <Skeleton className="h-9 w-full rounded-lg" />
+                <Skeleton className="h-9 w-full rounded-lg" />
+                <Skeleton className="h-9 w-full rounded-lg" />
+              </div>
+            ) : managedClasses.length === 0 ? (
+              <div className="text-sm text-text-tertiary py-1">尚無管轄班級</div>
+            ) : (
+              managedClasses.map((cls) => (
+                <SidebarItem
+                  key={`managed-${cls.id}`}
+                  href={`/class/${cls.id}`}
+                  icon={<BookOpen className="w-4 h-4" />}
+                  label={cls.name}
+                  active={pathname?.startsWith(`/class/${cls.id}`) ?? false}
+                />
+              ))
+            )}
+          </SidebarSection>
+        )}
+
+        {/* Section: My Classes (for teachers and office members with courses - NOT head teachers) */}
+        {!isHead && (isTeacher || hasTeacherAccess || (loading && (isTeacher || isOfficeMember))) && (
           <SidebarSection
             title="My Classes"
             sectionId="classes"

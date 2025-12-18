@@ -113,6 +113,62 @@ export async function getClassesByTeacher(
   return Array.from(classMap.values())
 }
 
+// Extended class type with course type for teaching classes
+export type ClassWithCourseType = Class & {
+  course_type: 'LT' | 'IT' | 'KCFS'
+  course_id: string
+}
+
+// Get teaching classes for a user (Teacher or Head Teacher)
+// Returns classes with course type information for each course the user teaches
+export async function getTeachingClasses(
+  userId: string,
+  academicYear?: string
+): Promise<ClassWithCourseType[]> {
+  const currentYear = academicYear || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`
+
+  // Query courses with class information
+  const { data, error } = await supabase
+    .from('courses')
+    .select(`
+      id,
+      class_id,
+      course_type,
+      classes!inner (
+        id,
+        name,
+        grade,
+        level,
+        track,
+        academic_year,
+        is_active,
+        created_at,
+        updated_at
+      )
+    `)
+    .eq('teacher_id', userId)
+    .eq('is_active', true)
+    .eq('classes.academic_year', currentYear)
+    .eq('classes.is_active', true)
+    .order('classes(grade)')
+    .order('classes(name)')
+
+  if (error) {
+    console.error('Error fetching teaching classes:', error)
+    throw new Error(`Failed to fetch teaching classes: ${error.message}`)
+  }
+
+  // Return classes with course type information
+  return (data || []).map(course => {
+    const cls = course.classes as unknown as Class
+    return {
+      ...cls,
+      course_type: course.course_type as 'LT' | 'IT' | 'KCFS',
+      course_id: course.id
+    }
+  })
+}
+
 // Get classes by grade band (for Head Teachers)
 // grade_band can be: "1", "2", "3-4", "5-6", "1-2", "1-6"
 export async function getClassesByGradeBand(

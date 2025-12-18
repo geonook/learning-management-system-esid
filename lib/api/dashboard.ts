@@ -1562,3 +1562,765 @@ export async function getGradeClassSummary(
     return [];
   }
 }
+
+// ======================================
+// NEW DASHBOARD APIs for v2.0
+// ======================================
+
+// Types for new Dashboard APIs
+export interface TeacherDashboardKpis {
+  classes: number;         // 授課班級數
+  students: number;        // 授課學生數
+  progress: number;        // 成績登入進度 (%)
+  avgScore: number | null; // 授課班級平均分
+}
+
+export interface HeadTeacherDashboardKpis {
+  classes: number;         // 授課班級數
+  students: number;        // 授課學生數
+  avgScore: number | null; // 授課班級平均分
+  atRisk: number;          // 未達標學生數 (Term Grade < 60)
+}
+
+export interface AdminDashboardKpis {
+  classes: number;    // 全校班級數
+  students: number;   // 全校學生數
+  teachers: number;   // 教師數
+  courses: number;    // 課程數
+}
+
+export interface ClassCompletionItem {
+  classId: string;
+  className: string;
+  courseType: string;    // LT, IT, KCFS
+  entered: number;       // 已登入成績數
+  expected: number;      // 應登入成績數
+  percentage: number;    // 完成百分比
+}
+
+export interface SchoolCompletionProgress {
+  entered: number;       // 已登入成績數
+  expected: number;      // 應登入成績數
+  percentage: number;    // 完成百分比
+}
+
+export interface HeatmapCell {
+  gradeLevel: string;  // G1, G2, ..., G6
+  courseType: string;  // LT, IT, KCFS
+  avgScore: number | null;
+  studentCount: number;
+}
+
+export interface RecentGradeUpdate {
+  id: string;
+  studentName: string;
+  className: string;
+  courseName: string;
+  examCode: string;
+  score: number;
+  updatedAt: string;
+}
+
+/**
+ * Get Teacher Dashboard KPIs (授課班級範圍)
+ */
+export async function getTeacherDashboardKpis(
+  userId: string,
+  academicYear?: string,
+  term?: 1 | 2 | 3 | 4
+): Promise<TeacherDashboardKpis> {
+  const supabase = createClient();
+  const currentYear = academicYear || "2025-2026";
+
+  try {
+    // Get teacher's courses
+    const { data: courses, error: coursesError } = await supabase
+      .from("courses")
+      .select(`
+        id,
+        class_id,
+        course_type,
+        classes!inner(id, name, grade)
+      `)
+      .eq("teacher_id", userId)
+      .eq("is_active", true)
+      .eq("academic_year", currentYear)
+      .eq("classes.is_active", true);
+
+    if (coursesError || !courses || courses.length === 0) {
+      return { classes: 0, students: 0, progress: 0, avgScore: null };
+    }
+
+    // Get unique class IDs and count
+    const classIds = [...new Set(courses.map(c => c.class_id))];
+    const classCount = classIds.length;
+
+    // Get student count
+    const { count: studentCount } = await supabase
+      .from("students")
+      .select("*", { count: "exact" })
+      .in("class_id", classIds)
+      .eq("is_active", true);
+
+    // Get course IDs for score queries
+    const courseIds = courses.map(c => c.id);
+
+    // Get exams for these courses (with optional term filter)
+    let examQuery = supabase
+      .from("exams")
+      .select("id")
+      .in("course_id", courseIds);
+
+    if (term) {
+      examQuery = examQuery.eq("term", term);
+    }
+
+    const { data: exams } = await examQuery;
+    const examIds = (exams || []).map(e => e.id);
+
+    if (examIds.length === 0) {
+      return {
+        classes: classCount,
+        students: studentCount || 0,
+        progress: 0,
+        avgScore: null
+      };
+    }
+
+    // Get scores
+    const { data: scores } = await supabase
+      .from("scores")
+      .select("score")
+      .in("exam_id", examIds)
+      .not("score", "is", null)
+      .limit(10000);
+
+    const validScores = (scores || [])
+      .map(s => s.score)
+      .filter((s): s is number => s !== null && s > 0);
+
+    const avgScore = validScores.length > 0
+      ? Math.round((validScores.reduce((sum, s) => sum + s, 0) / validScores.length) * 10) / 10
+      : null;
+
+    // Calculate progress (simplified: scores entered / expected)
+    const scoresEntered = (scores || []).length;
+    const expectedPerStudent = 13; // FA1-8 + SA1-4 + MID
+    const expectedScores = (studentCount || 0) * expectedPerStudent * courses.length;
+    const progress = expectedScores > 0
+      ? Math.round((scoresEntered / expectedScores) * 100)
+      : 0;
+
+    return {
+      classes: classCount,
+      students: studentCount || 0,
+      progress: Math.min(progress, 100),
+      avgScore,
+    };
+  } catch (error) {
+    console.error("Exception in getTeacherDashboardKpis:", error);
+    return { classes: 0, students: 0, progress: 0, avgScore: null };
+  }
+}
+
+/**
+ * Get Head Teacher Dashboard KPIs (授課班級範圍)
+ */
+export async function getHeadTeacherDashboardKpis(
+  userId: string,
+  academicYear?: string,
+  term?: 1 | 2 | 3 | 4
+): Promise<HeadTeacherDashboardKpis> {
+  const supabase = createClient();
+  const currentYear = academicYear || "2025-2026";
+
+  try {
+    // Get head teacher's courses (授課班級)
+    const { data: courses, error: coursesError } = await supabase
+      .from("courses")
+      .select(`
+        id,
+        class_id,
+        course_type,
+        classes!inner(id, name, grade)
+      `)
+      .eq("teacher_id", userId)
+      .eq("is_active", true)
+      .eq("academic_year", currentYear)
+      .eq("classes.is_active", true);
+
+    if (coursesError || !courses || courses.length === 0) {
+      return { classes: 0, students: 0, avgScore: null, atRisk: 0 };
+    }
+
+    // Get unique class IDs
+    const classIds = [...new Set(courses.map(c => c.class_id))];
+    const classCount = classIds.length;
+
+    // Get students in teaching classes
+    const { data: students, count: studentCount } = await supabase
+      .from("students")
+      .select("id", { count: "exact" })
+      .in("class_id", classIds)
+      .eq("is_active", true);
+
+    const studentIds = (students || []).map(s => s.id);
+
+    if (studentIds.length === 0) {
+      return { classes: classCount, students: 0, avgScore: null, atRisk: 0 };
+    }
+
+    // Get course IDs for score queries
+    const courseIds = courses.map(c => c.id);
+
+    // Get exams for these courses
+    let examQuery = supabase
+      .from("exams")
+      .select("id")
+      .in("course_id", courseIds);
+
+    if (term) {
+      examQuery = examQuery.eq("term", term);
+    }
+
+    const { data: exams } = await examQuery;
+    const examIds = (exams || []).map(e => e.id);
+
+    if (examIds.length === 0) {
+      return {
+        classes: classCount,
+        students: studentCount || 0,
+        avgScore: null,
+        atRisk: 0
+      };
+    }
+
+    // Get scores
+    const { data: scores } = await supabase
+      .from("scores")
+      .select("score, student_id")
+      .in("exam_id", examIds)
+      .in("student_id", studentIds)
+      .not("score", "is", null)
+      .limit(10000);
+
+    const validScores = (scores || [])
+      .map(s => s.score)
+      .filter((s): s is number => s !== null && s > 0);
+
+    const avgScore = validScores.length > 0
+      ? Math.round((validScores.reduce((sum, s) => sum + s, 0) / validScores.length) * 10) / 10
+      : null;
+
+    // Calculate at-risk students (students with avg < 60)
+    // Group scores by student
+    const scoresByStudent = new Map<string, number[]>();
+    (scores || []).forEach(s => {
+      if (s.score && s.score > 0) {
+        const existing = scoresByStudent.get(s.student_id) || [];
+        existing.push(s.score);
+        scoresByStudent.set(s.student_id, existing);
+      }
+    });
+
+    let atRisk = 0;
+    scoresByStudent.forEach(studentScores => {
+      if (studentScores.length > 0) {
+        const studentAvg = studentScores.reduce((sum, s) => sum + s, 0) / studentScores.length;
+        if (studentAvg < 60) {
+          atRisk++;
+        }
+      }
+    });
+
+    return {
+      classes: classCount,
+      students: studentCount || 0,
+      avgScore,
+      atRisk,
+    };
+  } catch (error) {
+    console.error("Exception in getHeadTeacherDashboardKpis:", error);
+    return { classes: 0, students: 0, avgScore: null, atRisk: 0 };
+  }
+}
+
+/**
+ * Get Admin Dashboard KPIs (全校範圍)
+ */
+export async function getAdminDashboardKpis(
+  academicYear?: string
+): Promise<AdminDashboardKpis> {
+  const supabase = createClient();
+  const currentYear = academicYear || "2025-2026";
+
+  try {
+    // Parallel queries for counts
+    const [classesResult, studentsResult, coursesResult] = await Promise.all([
+      supabase
+        .from("classes")
+        .select("*", { count: "exact" })
+        .eq("academic_year", currentYear)
+        .eq("is_active", true),
+      supabase
+        .from("students")
+        .select("*", { count: "exact" })
+        .eq("is_active", true),
+      supabase
+        .from("courses")
+        .select("teacher_id", { count: "exact" })
+        .eq("academic_year", currentYear)
+        .eq("is_active", true),
+    ]);
+
+    // Get unique teacher count
+    const { data: teachersData } = await supabase
+      .from("courses")
+      .select("teacher_id")
+      .eq("academic_year", currentYear)
+      .eq("is_active", true);
+
+    const uniqueTeachers = new Set((teachersData || []).map(c => c.teacher_id).filter(Boolean));
+
+    return {
+      classes: classesResult.count || 0,
+      students: studentsResult.count || 0,
+      teachers: uniqueTeachers.size,
+      courses: coursesResult.count || 0,
+    };
+  } catch (error) {
+    console.error("Exception in getAdminDashboardKpis:", error);
+    return { classes: 0, students: 0, teachers: 0, courses: 0 };
+  }
+}
+
+/**
+ * Get class completion progress for Teacher/Head Teacher (按班級顯示)
+ */
+export async function getClassCompletionProgress(
+  userId: string,
+  academicYear?: string,
+  term?: 1 | 2 | 3 | 4
+): Promise<ClassCompletionItem[]> {
+  const supabase = createClient();
+  const currentYear = academicYear || "2025-2026";
+
+  try {
+    // Get user's courses with class info
+    const { data: courses, error } = await supabase
+      .from("courses")
+      .select(`
+        id,
+        class_id,
+        course_type,
+        classes!inner(id, name, grade)
+      `)
+      .eq("teacher_id", userId)
+      .eq("is_active", true)
+      .eq("academic_year", currentYear)
+      .eq("classes.is_active", true);
+
+    if (error || !courses || courses.length === 0) {
+      return [];
+    }
+
+    // Get student counts by class
+    const classIds = [...new Set(courses.map(c => c.class_id))];
+    const { data: students } = await supabase
+      .from("students")
+      .select("id, class_id")
+      .in("class_id", classIds)
+      .eq("is_active", true);
+
+    const studentCountByClass = new Map<string, number>();
+    (students || []).forEach(s => {
+      const count = studentCountByClass.get(s.class_id) || 0;
+      studentCountByClass.set(s.class_id, count + 1);
+    });
+
+    // Get exams and scores for each course
+    const result: ClassCompletionItem[] = [];
+
+    for (const course of courses) {
+      const classData = course.classes as unknown as { id: string; name: string; grade: number };
+
+      // Get exams for this course
+      let examQuery = supabase
+        .from("exams")
+        .select("id")
+        .eq("course_id", course.id);
+
+      if (term) {
+        examQuery = examQuery.eq("term", term);
+      }
+
+      const { data: exams } = await examQuery;
+      const examIds = (exams || []).map(e => e.id);
+
+      // Get scores count
+      let scoresEntered = 0;
+      if (examIds.length > 0) {
+        const { count } = await supabase
+          .from("scores")
+          .select("*", { count: "exact" })
+          .in("exam_id", examIds)
+          .not("score", "is", null);
+        scoresEntered = count || 0;
+      }
+
+      // Calculate expected scores
+      const studentCount = studentCountByClass.get(course.class_id) || 0;
+      const expectedPerStudent = course.course_type === "KCFS"
+        ? getKCFSExpectedItems([classData.grade])
+        : DEFAULT_ASSESSMENT_ITEMS;
+      const expected = studentCount * expectedPerStudent;
+      const percentage = expected > 0 ? Math.round((scoresEntered / expected) * 100) : 0;
+
+      result.push({
+        classId: course.class_id,
+        className: classData.name,
+        courseType: course.course_type,
+        entered: scoresEntered,
+        expected,
+        percentage: Math.min(percentage, 100),
+      });
+    }
+
+    // Sort by percentage ascending (lowest first)
+    return result.sort((a, b) => a.percentage - b.percentage);
+  } catch (error) {
+    console.error("Exception in getClassCompletionProgress:", error);
+    return [];
+  }
+}
+
+/**
+ * Get school-wide completion progress for Admin/Office (圓環圖用)
+ */
+export async function getSchoolCompletionProgress(
+  academicYear?: string,
+  term?: 1 | 2 | 3 | 4
+): Promise<SchoolCompletionProgress> {
+  const supabase = createClient();
+  const currentYear = academicYear || "2025-2026";
+
+  try {
+    // Get all active courses
+    const { data: courses } = await supabase
+      .from("courses")
+      .select(`
+        id,
+        class_id,
+        course_type,
+        classes!inner(grade)
+      `)
+      .eq("is_active", true)
+      .eq("academic_year", currentYear)
+      .eq("classes.is_active", true);
+
+    if (!courses || courses.length === 0) {
+      return { entered: 0, expected: 0, percentage: 0 };
+    }
+
+    // Get student counts
+    const classIds = [...new Set(courses.map(c => c.class_id))];
+    const { data: students } = await supabase
+      .from("students")
+      .select("class_id")
+      .in("class_id", classIds)
+      .eq("is_active", true);
+
+    const studentCountByClass = new Map<string, number>();
+    (students || []).forEach(s => {
+      const count = studentCountByClass.get(s.class_id) || 0;
+      studentCountByClass.set(s.class_id, count + 1);
+    });
+
+    // Calculate expected scores
+    let totalExpected = 0;
+    courses.forEach(course => {
+      const classData = course.classes as unknown as { grade: number };
+      const studentCount = studentCountByClass.get(course.class_id) || 0;
+      const expectedPerStudent = course.course_type === "KCFS"
+        ? getKCFSExpectedItems([classData.grade])
+        : DEFAULT_ASSESSMENT_ITEMS;
+      totalExpected += studentCount * expectedPerStudent;
+    });
+
+    // Get exam IDs
+    const courseIds = courses.map(c => c.id);
+    let examQuery = supabase
+      .from("exams")
+      .select("id")
+      .in("course_id", courseIds);
+
+    if (term) {
+      examQuery = examQuery.eq("term", term);
+    }
+
+    const { data: exams } = await examQuery;
+    const examIds = (exams || []).map(e => e.id);
+
+    // Get scores count
+    let totalEntered = 0;
+    if (examIds.length > 0) {
+      const { count } = await supabase
+        .from("scores")
+        .select("*", { count: "exact" })
+        .in("exam_id", examIds)
+        .not("score", "is", null);
+      totalEntered = count || 0;
+    }
+
+    const percentage = totalExpected > 0
+      ? Math.round((totalEntered / totalExpected) * 100)
+      : 0;
+
+    return {
+      entered: totalEntered,
+      expected: totalExpected,
+      percentage: Math.min(percentage, 100),
+    };
+  } catch (error) {
+    console.error("Exception in getSchoolCompletionProgress:", error);
+    return { entered: 0, expected: 0, percentage: 0 };
+  }
+}
+
+/**
+ * Get score heatmap data (年級 × 課程類型)
+ */
+export async function getScoreHeatmapData(
+  academicYear?: string,
+  term?: 1 | 2 | 3 | 4,
+  gradeBand?: string
+): Promise<HeatmapCell[]> {
+  const supabase = createClient();
+  const currentYear = academicYear || "2025-2026";
+
+  try {
+    // Get grades to include
+    let grades = [1, 2, 3, 4, 5, 6];
+    if (gradeBand) {
+      grades = parseGradeBand(gradeBand);
+    }
+
+    const courseTypes = ["LT", "IT", "KCFS"];
+    const result: HeatmapCell[] = [];
+
+    // Get all courses for the specified grades
+    const { data: courses } = await supabase
+      .from("courses")
+      .select(`
+        id,
+        course_type,
+        classes!inner(id, grade)
+      `)
+      .eq("is_active", true)
+      .eq("academic_year", currentYear)
+      .eq("classes.is_active", true)
+      .in("classes.grade", grades);
+
+    if (!courses || courses.length === 0) {
+      // Return empty cells for all grade/courseType combinations
+      for (const grade of grades) {
+        for (const ct of courseTypes) {
+          result.push({
+            gradeLevel: `G${grade}`,
+            courseType: ct,
+            avgScore: null,
+            studentCount: 0,
+          });
+        }
+      }
+      return result;
+    }
+
+    // Group courses by grade and course_type
+    const coursesByGradeAndType = new Map<string, string[]>();
+    courses.forEach(course => {
+      const classData = course.classes as unknown as { id: string; grade: number };
+      const key = `${classData.grade}-${course.course_type}`;
+      const existing = coursesByGradeAndType.get(key) || [];
+      existing.push(course.id);
+      coursesByGradeAndType.set(key, existing);
+    });
+
+    // Get student counts by grade
+    const classIds = [...new Set(courses.map(c => (c.classes as unknown as { id: string }).id))];
+    const { data: students } = await supabase
+      .from("students")
+      .select("class_id, classes!inner(grade)")
+      .in("class_id", classIds)
+      .eq("is_active", true);
+
+    const studentCountByGrade = new Map<number, number>();
+    (students || []).forEach(s => {
+      const classData = s.classes as unknown as { grade: number };
+      const count = studentCountByGrade.get(classData.grade) || 0;
+      studentCountByGrade.set(classData.grade, count + 1);
+    });
+
+    // For each grade and course type, get average score
+    for (const grade of grades) {
+      for (const ct of courseTypes) {
+        const key = `${grade}-${ct}`;
+        const courseIds = coursesByGradeAndType.get(key) || [];
+
+        if (courseIds.length === 0) {
+          result.push({
+            gradeLevel: `G${grade}`,
+            courseType: ct,
+            avgScore: null,
+            studentCount: studentCountByGrade.get(grade) || 0,
+          });
+          continue;
+        }
+
+        // Get exams for these courses
+        let examQuery = supabase
+          .from("exams")
+          .select("id")
+          .in("course_id", courseIds);
+
+        if (term) {
+          examQuery = examQuery.eq("term", term);
+        }
+
+        const { data: exams } = await examQuery;
+        const examIds = (exams || []).map(e => e.id);
+
+        let avgScore: number | null = null;
+
+        if (examIds.length > 0) {
+          const { data: scores } = await supabase
+            .from("scores")
+            .select("score")
+            .in("exam_id", examIds)
+            .not("score", "is", null)
+            .gt("score", 0)
+            .limit(10000);
+
+          const validScores = (scores || []).map(s => s.score).filter((s): s is number => s !== null);
+
+          if (validScores.length > 0) {
+            avgScore = Math.round((validScores.reduce((sum, s) => sum + s, 0) / validScores.length) * 10) / 10;
+          }
+        }
+
+        result.push({
+          gradeLevel: `G${grade}`,
+          courseType: ct,
+          avgScore,
+          studentCount: studentCountByGrade.get(grade) || 0,
+        });
+      }
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Exception in getScoreHeatmapData:", error);
+    return [];
+  }
+}
+
+/**
+ * Get recent grade updates (最近成績更新列表)
+ */
+export async function getRecentGradeUpdates(
+  userId?: string,
+  role?: "admin" | "head" | "teacher" | "office_member",
+  academicYear?: string,
+  limit: number = 10
+): Promise<RecentGradeUpdate[]> {
+  const supabase = createClient();
+  const currentYear = academicYear || "2025-2026";
+
+  try {
+    // Build query based on role
+    let courseFilter: string[] | null = null;
+
+    if ((role === "teacher" || role === "head") && userId) {
+      // Get user's course IDs
+      const { data: courses } = await supabase
+        .from("courses")
+        .select("id")
+        .eq("teacher_id", userId)
+        .eq("is_active", true)
+        .eq("academic_year", currentYear);
+
+      courseFilter = (courses || []).map(c => c.id);
+
+      if (courseFilter.length === 0) {
+        return [];
+      }
+    }
+
+    // Get exam IDs for the filtered courses (or all)
+    let examQuery = supabase.from("exams").select("id, name, course_id");
+
+    if (courseFilter) {
+      examQuery = examQuery.in("course_id", courseFilter);
+    }
+
+    const { data: exams } = await examQuery;
+
+    if (!exams || exams.length === 0) {
+      return [];
+    }
+
+    const examMap = new Map(exams.map(e => [e.id, { name: e.name, courseId: e.course_id }]));
+    const examIds = exams.map(e => e.id);
+
+    // Get recent scores with student info
+    const { data: scores } = await supabase
+      .from("scores")
+      .select(`
+        id,
+        score,
+        exam_id,
+        updated_at,
+        students!inner(full_name, class_id, classes!inner(name))
+      `)
+      .in("exam_id", examIds)
+      .not("score", "is", null)
+      .order("updated_at", { ascending: false })
+      .limit(limit);
+
+    if (!scores || scores.length === 0) {
+      return [];
+    }
+
+    // Get course info for course names
+    const courseIds = [...new Set(exams.map(e => e.course_id))];
+    const { data: courses } = await supabase
+      .from("courses")
+      .select("id, course_type")
+      .in("id", courseIds);
+
+    const courseMap = new Map((courses || []).map(c => [c.id, c.course_type]));
+
+    return scores.map(score => {
+      const studentData = score.students as unknown as {
+        full_name: string;
+        class_id: string;
+        classes: { name: string };
+      };
+      const examInfo = examMap.get(score.exam_id);
+      const courseType = examInfo ? courseMap.get(examInfo.courseId) : null;
+
+      return {
+        id: score.id,
+        studentName: studentData.full_name,
+        className: studentData.classes.name,
+        courseName: courseType || "Unknown",
+        examCode: examInfo?.name || "Unknown",
+        score: score.score || 0,
+        updatedAt: score.updated_at,
+      };
+    });
+  } catch (error) {
+    console.error("Exception in getRecentGradeUpdates:", error);
+    return [];
+  }
+}
