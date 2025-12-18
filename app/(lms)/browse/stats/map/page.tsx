@@ -78,14 +78,14 @@ const TRANSITION_PERIODS = [
     label: "Fall → Spring 2024-25",
     fromTerm: "Fall 2024-2025",
     toTerm: "Spring 2024-2025",
-    description: "學年內 Benchmark 變化",
+    description: "Within-year benchmark changes",
   },
   {
     id: "spring-to-fall" as TransitionPeriod,
     label: "Spring 24-25 → Fall 25-26",
     fromTerm: "Spring 2024-2025",
     toTerm: "Fall 2025-2026",
-    description: "跨學年 Benchmark 變化（升級後）",
+    description: "Cross-year benchmark changes (after grade promotion)",
   },
 ];
 
@@ -621,8 +621,8 @@ export default function MapAnalysisPage() {
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
                       {growthData.growthType === "within-year"
-                        ? "學年內成長分析：追蹤學生在同一學年內從秋季到春季的進步"
-                        : "跨學年成長分析：追蹤學生經過一年升級後的進步"}
+                        ? "Within-year growth: Tracking student progress from Fall to Spring within the same academic year"
+                        : "Year-over-year growth: Tracking student progress after advancing one grade level"}
                     </p>
                   </div>
                 </CardContent>
@@ -860,7 +860,7 @@ export default function MapAnalysisPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       {TRANSITION_PERIODS.map((period) => {
-                        // G3 跨學年無法計算（因為 G2 沒有 Benchmark）
+                        // G3 cross-year not available (G2 has no Benchmark classification)
                         const isDisabled = period.id === "spring-to-fall" && selectedGrade === 3;
                         return (
                           <Button
@@ -869,7 +869,7 @@ export default function MapAnalysisPage() {
                             variant={transitionPeriod === period.id ? "default" : "outline"}
                             onClick={() => handleTransitionPeriodChange(period.id)}
                             disabled={loadingStates.transitions || isDisabled}
-                            title={isDisabled ? "G3 無法計算跨學年 Benchmark（G2 沒有分類）" : period.description}
+                            title={isDisabled ? "G3 cross-year not available (G2 has no Benchmark classification)" : period.description}
                           >
                             {period.label}
                           </Button>
@@ -881,14 +881,14 @@ export default function MapAnalysisPage() {
                   {/* Explanation Box */}
                   <div className="mt-4 p-3 bg-muted/50 rounded-lg text-xs space-y-2">
                     <p>
-                      <strong>學年內 (Fall → Spring):</strong> 同一學年內的 Benchmark 變化，使用相同年級的閾值
+                      <strong>Within-year (Fall → Spring):</strong> Benchmark changes within the same academic year, using the same grade thresholds
                     </p>
                     <p>
-                      <strong>跨學年 (Spring → Fall):</strong> 跨學年的 Benchmark 變化，學生升一級後使用新年級的閾值
+                      <strong>Cross-year (Spring → Fall):</strong> Benchmark changes across academic years, students advance one grade and use new grade thresholds
                     </p>
                     {transitionPeriod === "spring-to-fall" && (
                       <p className="text-amber-600 dark:text-amber-400">
-                        ⚠️ 跨學年分析：G{selectedGrade} 學生在 Spring 24-25 時是 G{selectedGrade - 1}，使用 G{selectedGrade - 1} 的 Benchmark 閾值
+                        Note: G{selectedGrade} students were G{selectedGrade - 1} in Spring 24-25, using G{selectedGrade - 1} benchmark thresholds for the starting point
                       </p>
                     )}
                   </div>
