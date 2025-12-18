@@ -2,3 +2,7 @@
 export { MapGrowthLineChart } from "./MapGrowthLineChart";
 export { MapBenchmarkDonutChart } from "./MapBenchmarkDonutChart";
 export { MapOverviewTable } from "./MapOverviewTable";
+export { MapLexileDistribution } from "./MapLexileDistribution";
+export { MapLexileStats } from "./MapLexileStats";
+export { MapTestQualityPie } from "./MapTestQualityPie";
+export { MapBenchmarkTransition } from "./MapBenchmarkTransition";
