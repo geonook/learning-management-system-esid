@@ -8,8 +8,15 @@
  */
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
-import { BENCHMARK_COLORS, getBenchmarkLabels } from "@/lib/map/benchmarks";
+import { Info } from "lucide-react";
+import { BENCHMARK_COLORS, getBenchmarkLabels, getBenchmarkThresholds } from "@/lib/map/benchmarks";
 import type { BenchmarkDistribution } from "@/lib/api/map-analytics";
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface MapBenchmarkDonutChartProps {
   data: BenchmarkDistribution | null;
@@ -29,6 +36,7 @@ export function MapBenchmarkDonutChart({
   }
 
   const labels = getBenchmarkLabels(data.grade);
+  const thresholds = getBenchmarkThresholds(data.grade);
 
   const chartData = [
     {
@@ -59,13 +67,34 @@ export function MapBenchmarkDonutChart({
   };
 
   return (
-    <div className="w-full">
-      <h4 className="text-sm font-medium mb-1 text-center">
-        G{data.grade} Benchmark Distribution
-      </h4>
-      <p className="text-xs text-muted-foreground text-center mb-2">
-        Based on Average ({formatTermLabel(data.termTested)})
-      </p>
+    <TooltipProvider>
+      <div className="w-full">
+        <div className="flex items-center justify-center gap-1 mb-1">
+          <h4 className="text-sm font-medium text-center">
+            G{data.grade} Benchmark Distribution
+          </h4>
+          <UITooltip>
+            <TooltipTrigger asChild>
+              <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent className="max-w-[280px]">
+              <p className="text-xs">
+                <strong>Benchmark 分類</strong>是根據學生 MAP 兩科平均分數
+                (Language Usage + Reading) ÷ 2 來判斷英文程度。
+              </p>
+              {thresholds && (
+                <ul className="text-xs mt-1 space-y-0.5">
+                  <li className="text-green-600">• E1 (Advanced): Average ≥ {thresholds.e1Threshold}</li>
+                  <li className="text-amber-600">• E2 (Intermediate): {thresholds.e2Threshold} ≤ Average &lt; {thresholds.e1Threshold}</li>
+                  <li className="text-red-600">• E3 (Developing): Average &lt; {thresholds.e2Threshold}</li>
+                </ul>
+              )}
+            </TooltipContent>
+          </UITooltip>
+        </div>
+        <p className="text-xs text-muted-foreground text-center mb-2">
+          Based on Average ({formatTermLabel(data.termTested)})
+        </p>
       <ResponsiveContainer width="100%" height={height}>
         <PieChart>
           <Pie
@@ -104,9 +133,21 @@ export function MapBenchmarkDonutChart({
           />
         </PieChart>
       </ResponsiveContainer>
-      <p className="text-xs text-muted-foreground text-center mt-1">
-        Total: {data.total} students
-      </p>
-    </div>
+        <p className="text-xs text-muted-foreground text-center mt-1">
+          Total: {data.total} students
+        </p>
+
+        {/* Explanation Box */}
+        <div className="mt-3 p-2 bg-muted/50 rounded-md text-xs text-muted-foreground">
+          <p className="mb-1">
+            <strong>說明：</strong>此圖表顯示學生依 MAP Average 分數
+            在 E1/E2/E3 三個程度的分佈比例。
+          </p>
+          <p>
+            分類依據最近一次 Spring 學期的測驗結果。G6 不適用此分類。
+          </p>
+        </div>
+      </div>
+    </TooltipProvider>
   );
 }
