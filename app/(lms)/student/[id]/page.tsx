@@ -118,42 +118,45 @@ export default function StudentDetailPage() {
         const gradeAverages: StudentDetails["grade_averages"] = [];
 
         // First, get all scores for this student with exam info
-        const { data: allScoresData } = await supabase
-          .from("scores")
-          .select(`
-            score,
-            exams!inner (
-              name,
-              class_id
-            )
-          `)
-          .eq("student_id", studentId)
-          .eq("exams.class_id", studentData.class_id);
-
+        // Only fetch if student has a class_id
         // Group scores by inferred course type
         const scoresByCourseType: Record<string, number[]> = { LT: [], IT: [], KCFS: [] };
 
-        if (allScoresData) {
-          for (const scoreData of allScoresData) {
-            if (scoreData.score == null || scoreData.score <= 0) continue;
-            // Handle both array and single object cases from Supabase
-            const examData = scoreData.exams as unknown as { name: string; class_id: string } | Array<{ name: string; class_id: string }>;
-            const exam = Array.isArray(examData) ? examData[0] : examData;
-            const examName = (exam?.name || "").toUpperCase();
+        if (studentData.class_id) {
+          const { data: allScoresData } = await supabase
+            .from("scores")
+            .select(`
+              score,
+              exams!inner (
+                name,
+                class_id
+              )
+            `)
+            .eq("student_id", studentId)
+            .eq("exams.class_id", studentData.class_id);
 
-            let courseType: string | null = null;
-            if (examName.startsWith("LT ") || examName.includes(" LT")) {
-              courseType = "LT";
-            } else if (examName.startsWith("IT ") || examName.includes(" IT")) {
-              courseType = "IT";
-            } else if (examName.startsWith("KCFS ") || examName.includes(" KCFS")) {
-              courseType = "KCFS";
-            }
+          if (allScoresData) {
+            for (const scoreData of allScoresData) {
+              if (scoreData.score == null || scoreData.score <= 0) continue;
+              // Handle both array and single object cases from Supabase
+              const examData = scoreData.exams as unknown as { name: string; class_id: string } | Array<{ name: string; class_id: string }>;
+              const exam = Array.isArray(examData) ? examData[0] : examData;
+              const examName = (exam?.name || "").toUpperCase();
 
-            if (courseType) {
-              const scores = scoresByCourseType[courseType];
-              if (scores) {
-                scores.push(scoreData.score);
+              let courseType: string | null = null;
+              if (examName.startsWith("LT ") || examName.includes(" LT")) {
+                courseType = "LT";
+              } else if (examName.startsWith("IT ") || examName.includes(" IT")) {
+                courseType = "IT";
+              } else if (examName.startsWith("KCFS ") || examName.includes(" KCFS")) {
+                courseType = "KCFS";
+              }
+
+              if (courseType) {
+                const scores = scoresByCourseType[courseType];
+                if (scores) {
+                  scores.push(scoreData.score);
+                }
               }
             }
           }
