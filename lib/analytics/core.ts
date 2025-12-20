@@ -250,10 +250,10 @@ export class AnalyticsEngine {
 
   /**
    * Get student scores with grade calculations
-   * Note: exams table may not have course_id column, so we infer course_type from exam name or class
+   * Uses nested join: exams -> courses to get course_type directly
    */
   private async getStudentScores(studentId: string, filters: AnalyticsFilters) {
-    // First, get scores with exam info (without course_id since it may not exist)
+    // Get scores with exam and course info using nested join
     const { data: rawScores, error } = await this.supabase
       .from('scores')
       .select(`
@@ -263,7 +263,17 @@ export class AnalyticsEngine {
           id,
           name,
           exam_date,
-          class_id
+          course_id,
+          courses!inner(
+            id,
+            class_id,
+            course_type,
+            classes!inner(
+              id,
+              grade,
+              track
+            )
+          )
         )
       `)
       .eq('student_id', studentId)
@@ -277,60 +287,28 @@ export class AnalyticsEngine {
       return []
     }
 
-    // Get unique class_ids from exams
-    const classIds = [...new Set(rawScores
-      .map(s => (s.exams as { class_id: string }).class_id)
-      .filter((id): id is string => !!id))]
-
-    // Fetch course types based on class_id
-    const classCoursesMap: Record<string, string[]> = {}
-    if (classIds.length > 0) {
-      const { data: coursesData } = await this.supabase
-        .from('courses')
-        .select('class_id, course_type')
-        .in('class_id', classIds)
-
-      coursesData?.forEach(c => {
-        if (!classCoursesMap[c.class_id]) {
-          classCoursesMap[c.class_id] = []
-        }
-        classCoursesMap[c.class_id].push(c.course_type)
-      })
-    }
-
-    // Fetch class info separately
-    const classInfoMap: Record<string, { grade: number; track: string | null }> = {}
-    if (classIds.length > 0) {
-      const { data: classesData } = await this.supabase
-        .from('classes')
-        .select('id, grade, track')
-        .in('id', classIds)
-
-      classesData?.forEach(c => {
-        classInfoMap[c.id] = { grade: c.grade, track: c.track }
-      })
-    }
-
-    // Transform and attach course/class info to scores
+    // Transform scores with course/class info from nested join
     return rawScores
       .filter(score => score.score !== null)
       .map(score => {
-        const exam = score.exams as { id: string; name: string; exam_date: string; class_id: string }
+        type ExamData = {
+          id: string;
+          name: string;
+          exam_date: string;
+          course_id: string;
+          courses: {
+            id: string;
+            class_id: string;
+            course_type: string;
+            classes: { id: string; grade: number; track: string | null };
+          };
+        };
+        const exam = score.exams as unknown as ExamData
+        const course = exam.courses
+        const classData = course.classes
 
-        // Infer course type from exam name or use first course type from class
-        let courseType: string | null = null
-        const examNameUpper = exam.name?.toUpperCase() || ''
-        if (examNameUpper.startsWith('LT ') || examNameUpper.includes(' LT')) {
-          courseType = 'LT'
-        } else if (examNameUpper.startsWith('IT ') || examNameUpper.includes(' IT')) {
-          courseType = 'IT'
-        } else if (examNameUpper.startsWith('KCFS ') || examNameUpper.includes(' KCFS')) {
-          courseType = 'KCFS'
-        } else if (classCoursesMap[exam.class_id]?.length === 1) {
-          courseType = classCoursesMap[exam.class_id][0]
-        }
-
-        const classInfo = classInfoMap[exam.class_id] || { grade: 0, track: null }
+        const courseType = course.course_type
+        const classInfo = { grade: classData.grade, track: classData.track }
 
         return {
           ...score,

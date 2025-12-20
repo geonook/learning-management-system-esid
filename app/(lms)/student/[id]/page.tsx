@@ -113,13 +113,10 @@ export default function StudentDetailPage() {
         }
 
         // Calculate grade averages per course type
-        // Since exams.course_id may not exist, we get all scores for the student's class
-        // and then infer course type from exam name
+        // Use nested join: scores -> exams -> courses to get course_type
         const gradeAverages: StudentDetails["grade_averages"] = [];
 
-        // First, get all scores for this student with exam info
-        // Only fetch if student has a class_id
-        // Group scores by inferred course type
+        // Get all scores for this student with course info
         const scoresByCourseType: Record<string, number[]> = { LT: [], IT: [], KCFS: [] };
 
         if (studentData.class_id) {
@@ -129,34 +126,35 @@ export default function StudentDetailPage() {
               score,
               exams!inner (
                 name,
-                class_id
+                course_id,
+                courses!inner (
+                  class_id,
+                  course_type
+                )
               )
             `)
             .eq("student_id", studentId)
-            .eq("exams.class_id", studentData.class_id);
+            .eq("exams.courses.class_id", studentData.class_id);
 
           if (allScoresData) {
             for (const scoreData of allScoresData) {
               if (scoreData.score == null || scoreData.score <= 0) continue;
               // Handle both array and single object cases from Supabase
-              const examData = scoreData.exams as unknown as { name: string; class_id: string } | Array<{ name: string; class_id: string }>;
+              type ExamWithCourse = {
+                name: string;
+                course_id: string;
+                courses: { class_id: string; course_type: string } | { class_id: string; course_type: string }[];
+              };
+              const examData = scoreData.exams as unknown as ExamWithCourse | ExamWithCourse[];
               const exam = Array.isArray(examData) ? examData[0] : examData;
-              const examName = (exam?.name || "").toUpperCase();
 
-              let courseType: string | null = null;
-              if (examName.startsWith("LT ") || examName.includes(" LT")) {
-                courseType = "LT";
-              } else if (examName.startsWith("IT ") || examName.includes(" IT")) {
-                courseType = "IT";
-              } else if (examName.startsWith("KCFS ") || examName.includes(" KCFS")) {
-                courseType = "KCFS";
-              }
+              // Get course_type from nested courses
+              const courseData = exam?.courses;
+              const course = Array.isArray(courseData) ? courseData[0] : courseData;
+              const courseType = course?.course_type;
 
-              if (courseType) {
-                const scores = scoresByCourseType[courseType];
-                if (scores) {
-                  scores.push(scoreData.score);
-                }
+              if (courseType && scoresByCourseType[courseType]) {
+                scoresByCourseType[courseType].push(scoreData.score);
               }
             }
           }

@@ -343,8 +343,7 @@ export class AnalyticsQueries {
     }
 
     try {
-      // Get all scores for the student in chronological order
-      // Note: exams table may not have course_id column, so we don't select it
+      // Get all scores for the student with course info using nested join
       const { data: scores, error } = await this.supabase
         .from('scores')
         .select(`
@@ -354,7 +353,10 @@ export class AnalyticsQueries {
             id,
             name,
             exam_date,
-            class_id
+            course_id,
+            courses!inner(
+              course_type
+            )
           )
         `)
         .eq('student_id', studentId)
@@ -368,50 +370,18 @@ export class AnalyticsQueries {
         return null
       }
 
-      // Fetch course types based on class_id since exams.course_id may not exist
-      const classIds = [...new Set(scores
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .map(s => (s.exams as any).class_id)
-        .filter((id: string | null): id is string => id !== null))]
+      // Transform scores with course_type from nested join
+      type ExamWithCourse = {
+        id: string;
+        name: string;
+        exam_date: string;
+        course_id: string;
+        courses: { course_type: string };
+      };
 
-      const classCoursesMap: Record<string, string[]> = {}
-      if (classIds.length > 0) {
-        const { data: coursesData } = await this.supabase
-          .from('courses')
-          .select('class_id, course_type')
-          .in('class_id', classIds)
-
-        coursesData?.forEach(c => {
-          if (!classCoursesMap[c.class_id]) {
-            classCoursesMap[c.class_id] = []
-          }
-          const courses = classCoursesMap[c.class_id]
-          if (courses) {
-            courses.push(c.course_type)
-          }
-        })
-      }
-
-      // Calculate percentiles for each assessment (simplified)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const assessments = scores.map((score) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const exam = score.exams as any
-        // Infer course type from exam name or use first course type from class
-        let courseType: string | null = null
-        const examNameUpper = exam.name?.toUpperCase() || ''
-        if (examNameUpper.startsWith('LT ') || examNameUpper.includes(' LT')) {
-          courseType = 'LT'
-        } else if (examNameUpper.startsWith('IT ') || examNameUpper.includes(' IT')) {
-          courseType = 'IT'
-        } else if (examNameUpper.startsWith('KCFS ') || examNameUpper.includes(' KCFS')) {
-          courseType = 'KCFS'
-        } else {
-          const classCourses = classCoursesMap[exam.class_id]
-          if (classCourses && classCourses.length === 1) {
-            courseType = classCourses[0] || null
-          }
-        }
+        const exam = score.exams as unknown as ExamWithCourse
+        const courseType = exam.courses.course_type
 
         return {
           examId: exam.id,
