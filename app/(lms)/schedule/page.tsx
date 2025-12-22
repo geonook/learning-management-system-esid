@@ -77,9 +77,14 @@ export default function SchedulePage() {
   }, [userId, isReady]);
 
   const handleCellClick = (entry: TimetableEntryWithPeriod) => {
-    // Navigate to class page if course_id exists
-    if (entry.course_id) {
+    if (!entry.course_id) return;
+
+    if (entry.course_type === "ev") {
+      // EV 課程：跳轉到課程頁面（無點名功能）
       window.location.href = `/class/${entry.course_id}`;
+    } else {
+      // English 課程：直接跳轉到點名頁面
+      window.location.href = `/class/${entry.course_id}/attendance`;
     }
   };
 

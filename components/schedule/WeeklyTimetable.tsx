@@ -112,7 +112,7 @@ export function WeeklyTimetable({
                     key={`${day}-${period.period_number}`}
                     className={cn(
                       "bg-surface-primary p-1.5 min-h-[64px]",
-                      isCurrentSlot && "bg-primary/5 ring-2 ring-primary ring-inset rounded-sm"
+                      isCurrentSlot && "bg-primary/5"
                     )}
                   >
                     {entry && (
