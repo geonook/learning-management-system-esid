@@ -21,6 +21,7 @@ interface Course {
   teacher_id: string;
   teacher?: {
     full_name: string | null;
+    email: string | null;
   };
   class?: {
     name: string;
@@ -44,10 +45,19 @@ export default function ClassAttendancePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isReady || !classId) return;
+    if (!isReady || !classId || !userId) return;
 
     async function loadData() {
       const supabase = createClient();
+
+      // Get current user's email (unique identifier)
+      const { data: currentUser } = await supabase
+        .from("users")
+        .select("email")
+        .eq("id", userId)
+        .single();
+
+      const userEmail = currentUser?.email?.toLowerCase();
 
       // Get class info
       const { data: classData } = await supabase
@@ -60,42 +70,38 @@ export default function ClassAttendancePage() {
         setClassInfo(classData);
       }
 
-      // Get courses for this class
-      // Filter based on role: admin/head sees all, teacher sees only their courses
-      let query = supabase
+      // Get all courses for this class with teacher email
+      const { data: coursesData } = await supabase
         .from("courses")
         .select(
           `
           id,
           course_type,
           teacher_id,
-          teacher:users!courses_teacher_id_fkey(full_name),
+          teacher:users!courses_teacher_id_fkey(full_name, email),
           class:classes!courses_class_id_fkey(name)
         `
         )
         .eq("class_id", classId)
         .order("course_type");
 
-      // Teachers only see their own courses
-      if (role === "teacher" && userId) {
-        query = query.eq("teacher_id", userId);
-      }
-
-      const { data: coursesData } = await query;
-
       if (coursesData) {
-        setCourses(coursesData as unknown as Course[]);
+        // Filter courses based on role using email matching
+        let filteredCourses = coursesData as unknown as Course[];
 
-        // Auto-select first course if only one, or teacher's course
-        if (coursesData.length === 1 && coursesData[0]) {
-          setSelectedCourseId(coursesData[0].id);
-        } else if (role === "teacher" && userId) {
-          const teacherCourse = coursesData.find(
-            (c) => c.teacher_id === userId
+        // Teachers and Head Teachers only see their own courses (matched by email)
+        if ((role === "teacher" || role === "head") && userEmail) {
+          filteredCourses = filteredCourses.filter(
+            (c) => c.teacher?.email?.toLowerCase() === userEmail
           );
-          if (teacherCourse) {
-            setSelectedCourseId(teacherCourse.id);
-          }
+        }
+        // Admin sees all courses
+
+        setCourses(filteredCourses);
+
+        // Auto-select the course (should be only one for teacher/head)
+        if (filteredCourses.length === 1 && filteredCourses[0]) {
+          setSelectedCourseId(filteredCourses[0].id);
         }
       }
 

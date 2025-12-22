@@ -22,9 +22,8 @@ import { createClient } from "@/lib/supabase/client";
 
 interface Student {
   id: string;
-  english_name: string;
-  chinese_name: string | null;
-  student_number: string | null;
+  full_name: string;
+  student_id: string | null;
 }
 
 interface AttendanceSheetProps {
@@ -69,14 +68,13 @@ export function AttendanceSheet({
         `
         student:students!inner(
           id,
-          english_name,
-          chinese_name,
-          student_number
+          full_name,
+          student_id
         )
       `
       )
       .eq("course_id", courseId)
-      .order("student(english_name)");
+      .order("student(full_name)");
 
     // Get existing attendance for this date
     const existingAttendance = await getAttendanceByDate(courseId, date);
@@ -98,9 +96,8 @@ export function AttendanceSheet({
     interface EnrollmentWithStudent {
       student: {
         id: string;
-        english_name: string;
-        chinese_name: string | null;
-        student_number: string | null;
+        full_name: string;
+        student_id: string | null;
       };
     }
 
@@ -323,11 +320,11 @@ export function AttendanceSheet({
               >
                 <div className="flex-1 min-w-0">
                   <div className="font-medium truncate">
-                    {row.student.english_name}
+                    {row.student.full_name}
                   </div>
-                  {row.student.chinese_name && (
+                  {row.student.student_id && (
                     <div className="text-sm text-muted-foreground">
-                      {row.student.chinese_name}
+                      #{row.student.student_id}
                     </div>
                   )}
                   {/* Behavior badges */}

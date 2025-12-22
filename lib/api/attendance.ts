@@ -28,9 +28,8 @@ export interface AttendanceRecord {
 export interface AttendanceWithStudent extends AttendanceRecord {
   student: {
     id: string;
-    english_name: string;
-    chinese_name: string | null;
-    student_number: string | null;
+    full_name: string;
+    student_id: string | null;
   };
 }
 
@@ -96,16 +95,15 @@ export async function getAttendanceByDate(
       *,
       student:students!inner(
         id,
-        english_name,
-        chinese_name,
-        student_number
+        full_name,
+        student_id
       )
     `
     )
     .eq("course_id", courseId)
     .eq("date", date)
     .eq("period", period)
-    .order("student(english_name)");
+    .order("student(full_name)");
 
   if (error) {
     console.error("Error fetching attendance:", error);
@@ -380,7 +378,7 @@ export async function getStudentBehaviors(
 export async function getBehaviorsByDate(
   courseId: string,
   date: string
-): Promise<(StudentBehavior & { student: { english_name: string } })[]> {
+): Promise<(StudentBehavior & { student: { full_name: string } })[]> {
   const supabase = createClient();
 
   const { data, error } = await supabase
@@ -389,7 +387,7 @@ export async function getBehaviorsByDate(
       `
       *,
       tag:behavior_tags(*),
-      student:students!inner(english_name)
+      student:students!inner(full_name)
     `
     )
     .eq("course_id", courseId)
@@ -401,7 +399,7 @@ export async function getBehaviorsByDate(
     return [];
   }
 
-  return (data || []) as (StudentBehavior & { student: { english_name: string } })[];
+  return (data || []) as (StudentBehavior & { student: { full_name: string } })[];
 }
 
 // ============================================================================
