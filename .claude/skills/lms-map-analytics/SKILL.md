@@ -91,6 +91,34 @@ GROUP BY student_number, academic_year, term, term_tested, grade;
 
 See `references/queries.md` for complete SQL examples.
 
+## Student-Level Analytics (Student Detail Page)
+
+The student detail page (`/student/[id]`) includes a MAP Analytics Tab for G3-G6 students with the following components:
+
+### Peer Comparison
+
+**Important**: As of v1.55.0, peer comparison uses **English Level (E1/E2/E3)** grouping instead of class grouping to avoid sharing class-specific averages with parents.
+
+| Comparison Type | Description |
+|-----------------|-------------|
+| **Level Rank** | Ranking within same grade + same English Level |
+| **Grade Rank** | Ranking within same grade (all levels) |
+| **vs Level Avg** | Difference from English Level average |
+| **vs Grade Avg** | Difference from grade average |
+| **vs NWEA Norm** | Difference from national norm |
+
+**Implementation**: `lib/api/map-student-analytics.ts`
+- `getStudentRankings()` - Calculates Level and Grade rankings
+- `extractEnglishLevel()` - Extracts E1/E2/E3 from class level (e.g., "G3E2" → "E2")
+
+### Other Components
+
+- **Benchmark Status**: E1/E2/E3 classification based on test grade thresholds
+- **Growth Index**: Fall → Spring growth compared to expected growth
+- **Goal Areas**: Reading/Language Usage goal performance vs overall RIT
+- **Lexile Level**: Lexile score band and recommended reading range
+- **Benchmark History**: Historical benchmark trend across terms
+
 ## Visualization
 
 See `references/charts.md` for chart specifications.

@@ -4,20 +4,21 @@
 > **Last Updated**: 2025-12-22
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School LMS with Next.js + TypeScript + Supabase Cloud
-> **Current Version**: v1.54.0 - MAP Analytics + KCFS Scoring + Schema Sync
+> **Current Version**: v1.55.0 - MAP Peer Comparison Privacy Update
 
 This file provides essential guidance to Claude Code when working with code in this repository.
 
 ## Current Status
 
-- **v1.54.0** - MAP Analytics, KCFS Scoring System, Schema Sync
+- **v1.55.0** - MAP Peer Comparison uses Level grouping instead of Class
 - **Production**: 84 classes, 504 courses (2 academic years), 1514 students
 - **Tech Stack**: Next.js 14 (App Router) + TypeScript + Tailwind + Supabase Cloud
 
 **Recent Additions**:
+- MAP Peer Comparison changed from Class to English Level (E1/E2/E3) grouping
+- Privacy improvement: avoids sharing class-specific averages with parents
 - MAP Analytics Tab on student detail page (G3-G6)
 - KCFS scoring system (0-5 scale with grade-specific categories)
-- Staging/Production database schema synchronized
 
 **Next Steps**:
 1. Sprint 7: Student historical grade reports
