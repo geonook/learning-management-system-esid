@@ -115,7 +115,7 @@ export async function getPeriodByNumber(
  */
 export async function getTeacherSchedule(
   teacherId: string,
-  academicYear: string = "2024-2025"
+  academicYear: string = "2025-2026"
 ): Promise<WeeklyTimetable> {
   const supabase = createClient();
 
@@ -160,11 +160,57 @@ export async function getTeacherSchedule(
 }
 
 /**
- * Get teacher's schedule by teacher_name (for users without teacher_id link)
+ * Get teacher's schedule by email (most reliable matching)
+ */
+export async function getTeacherScheduleByEmail(
+  email: string,
+  academicYear: string = "2025-2026"
+): Promise<WeeklyTimetable> {
+  const supabase = createClient();
+
+  const periods = await getPeriods();
+  const periodMap = new Map(periods.map((p) => [p.period_number, p]));
+
+  const { data, error } = await supabase
+    .from("timetable_entries")
+    .select("*")
+    .eq("teacher_email", email.toLowerCase())
+    .eq("academic_year", academicYear)
+    .order("period");
+
+  if (error) {
+    console.error("Error fetching teacher schedule by email:", error);
+  }
+
+  const weekly: WeeklyTimetable = {
+    Monday: {},
+    Tuesday: {},
+    Wednesday: {},
+    Thursday: {},
+    Friday: {},
+  };
+
+  if (data) {
+    for (const entry of data) {
+      const period = periodMap.get(entry.period);
+      const entryWithPeriod: TimetableEntryWithPeriod = {
+        ...entry,
+        start_time: period?.start_time || "",
+        end_time: period?.end_time || "",
+      };
+      weekly[entry.day as DayOfWeek][entry.period] = entryWithPeriod;
+    }
+  }
+
+  return weekly;
+}
+
+/**
+ * Get teacher's schedule by teacher_name (fallback for users without email match)
  */
 export async function getTeacherScheduleByName(
   teacherName: string,
-  academicYear: string = "2024-2025"
+  academicYear: string = "2025-2026"
 ): Promise<WeeklyTimetable> {
   const supabase = createClient();
 
@@ -211,7 +257,7 @@ export async function getTeacherScheduleByName(
 export async function getTodayClasses(
   teacherId: string,
   day: DayOfWeek,
-  academicYear: string = "2024-2025"
+  academicYear: string = "2025-2026"
 ): Promise<TimetableEntryWithPeriod[]> {
   const supabase = createClient();
 
@@ -242,18 +288,18 @@ export async function getTodayClasses(
 }
 
 /**
- * Get schedule statistics for a teacher
+ * Get schedule statistics for a teacher by email
  */
-export async function getTeacherScheduleStats(
-  teacherId: string,
-  academicYear: string = "2024-2025"
+export async function getTeacherScheduleStatsByEmail(
+  email: string,
+  academicYear: string = "2025-2026"
 ): Promise<TeacherScheduleStats> {
   const supabase = createClient();
 
   const { data, error } = await supabase
     .from("timetable_entries")
     .select("day, class_name, course_type")
-    .eq("teacher_id", teacherId)
+    .eq("teacher_email", email.toLowerCase())
     .eq("academic_year", academicYear);
 
   if (error || !data) {
@@ -356,10 +402,11 @@ export function getClassDisplayInfo(entry: TimetableEntry): {
 
 /**
  * Get current user's schedule (helper for pages)
+ * Priority: email > teacher_name > teacher_id
  */
 export async function getCurrentUserSchedule(
   userId: string,
-  academicYear: string = "2024-2025"
+  academicYear: string = "2025-2026"
 ): Promise<{
   weekly: WeeklyTimetable;
   stats: TeacherScheduleStats;
@@ -367,22 +414,37 @@ export async function getCurrentUserSchedule(
 } | null> {
   const supabase = createClient();
 
-  // First check if user has teacher_name set
+  // Get user's email and teacher_name
   const { data: user } = await supabase
     .from("users")
-    .select("teacher_name")
+    .select("email, teacher_name")
     .eq("id", userId)
     .single();
 
   let weekly: WeeklyTimetable;
+  let stats: TeacherScheduleStats;
 
-  if (user?.teacher_name) {
+  if (user?.email) {
+    // Primary: match by email (most reliable)
+    weekly = await getTeacherScheduleByEmail(user.email, academicYear);
+    stats = await getTeacherScheduleStatsByEmail(user.email, academicYear);
+  } else if (user?.teacher_name) {
+    // Fallback: match by teacher_name
     weekly = await getTeacherScheduleByName(user.teacher_name, academicYear);
+    stats = await getTeacherScheduleStatsByEmail("", academicYear); // won't match, returns empty
   } else {
+    // Last resort: match by teacher_id
     weekly = await getTeacherSchedule(userId, academicYear);
+    stats = {
+      totalPeriods: 0,
+      uniqueClasses: 0,
+      englishPeriods: 0,
+      homeroomPeriods: 0,
+      evPeriods: 0,
+      daysWithClasses: 0,
+    };
   }
 
-  const stats = await getTeacherScheduleStats(userId, academicYear);
   const periods = await getPeriods();
 
   return { weekly, stats, periods };

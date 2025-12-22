@@ -565,6 +565,7 @@ export type Database = {
           id: string
           teacher_id: string | null
           teacher_name: string
+          teacher_email: string | null
           day: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday'
           period: number
           class_name: string
@@ -579,6 +580,7 @@ export type Database = {
           id?: string
           teacher_id?: string | null
           teacher_name: string
+          teacher_email?: string | null
           day: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday'
           period: number
           class_name: string
@@ -593,6 +595,7 @@ export type Database = {
           id?: string
           teacher_id?: string | null
           teacher_name?: string
+          teacher_email?: string | null
           day?: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday'
           period?: number
           class_name?: string

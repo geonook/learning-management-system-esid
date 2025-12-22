@@ -14,8 +14,12 @@
  *   email, teacher_name, day, period, time, classroom, class_name, course_name
  */
 
+import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import * as fs from "fs";
+
+// Load environment variables from .env.local
+config({ path: ".env.local" });
 
 // Parse command line arguments
 const args = process.argv.slice(2);
@@ -29,7 +33,7 @@ const inputFile = getArg("file");
 const courseType = (getArg("type") || "english") as "english" | "homeroom" | "ev";
 const dryRun = hasFlag("dry-run");
 const verbose = hasFlag("verbose");
-const academicYear = getArg("year") || "2024-2025";
+const academicYear = getArg("year") || "2025-2026";
 const updateTeacherName = hasFlag("update-teacher-name");
 
 // Supabase client
@@ -121,6 +125,7 @@ async function importTimetable(filePath: string): Promise<void> {
 
   const entries: Array<{
     teacher_name: string;
+    teacher_email: string;
     day: string;
     period: number;
     class_name: string;
@@ -168,6 +173,7 @@ async function importTimetable(filePath: string): Promise<void> {
 
     entries.push({
       teacher_name: teacherName,
+      teacher_email: email,
       day,
       period,
       class_name: className,
