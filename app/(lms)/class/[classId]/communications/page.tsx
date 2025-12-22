@@ -750,7 +750,7 @@ export default function ClassCommunicationsPage() {
                       <SelectItem value="semester_start">Semester Start</SelectItem>
                       <SelectItem value="midterm">Midterm</SelectItem>
                       <SelectItem value="final">Final</SelectItem>
-                      <SelectItem value="ad_hoc">Ad-hoc</SelectItem>
+                      <SelectItem value="ad_hoc">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

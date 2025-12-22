@@ -192,7 +192,7 @@ export function formatContactPeriod(period: ContactPeriod | null): string {
     case 'final':
       return 'Final';
     case 'ad_hoc':
-      return 'Ad-hoc';
+      return 'Other';
     default:
       return 'Other';
   }
