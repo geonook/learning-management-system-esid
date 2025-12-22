@@ -111,56 +111,7 @@ export async function getPeriodByNumber(
 // ============================================================================
 
 /**
- * Get teacher's weekly schedule
- */
-export async function getTeacherSchedule(
-  teacherId: string,
-  academicYear: string = "2025-2026"
-): Promise<WeeklyTimetable> {
-  const supabase = createClient();
-
-  // Get periods for time info
-  const periods = await getPeriods();
-  const periodMap = new Map(periods.map((p) => [p.period_number, p]));
-
-  // Get timetable entries
-  const { data, error } = await supabase
-    .from("timetable_entries")
-    .select("*")
-    .eq("teacher_id", teacherId)
-    .eq("academic_year", academicYear)
-    .order("period");
-
-  if (error) {
-    console.error("Error fetching teacher schedule:", error);
-  }
-
-  // Build weekly grid
-  const weekly: WeeklyTimetable = {
-    Monday: {},
-    Tuesday: {},
-    Wednesday: {},
-    Thursday: {},
-    Friday: {},
-  };
-
-  if (data) {
-    for (const entry of data) {
-      const period = periodMap.get(entry.period);
-      const entryWithPeriod: TimetableEntryWithPeriod = {
-        ...entry,
-        start_time: period?.start_time || "",
-        end_time: period?.end_time || "",
-      };
-      weekly[entry.day as DayOfWeek][entry.period] = entryWithPeriod;
-    }
-  }
-
-  return weekly;
-}
-
-/**
- * Get teacher's schedule by email (most reliable matching)
+ * Get teacher's schedule by email (unique identifier)
  */
 export async function getTeacherScheduleByEmail(
   email: string,
@@ -207,88 +158,6 @@ export async function getTeacherScheduleByEmail(
   }
 
   return weekly;
-}
-
-/**
- * Get teacher's schedule by teacher_name (fallback for users without email match)
- */
-export async function getTeacherScheduleByName(
-  teacherName: string,
-  academicYear: string = "2025-2026"
-): Promise<WeeklyTimetable> {
-  const supabase = createClient();
-
-  const periods = await getPeriods();
-  const periodMap = new Map(periods.map((p) => [p.period_number, p]));
-
-  const { data, error } = await supabase
-    .from("timetable_entries")
-    .select("*")
-    .eq("teacher_name", teacherName)
-    .eq("academic_year", academicYear)
-    .order("period");
-
-  if (error) {
-    console.error("Error fetching teacher schedule by name:", error);
-  }
-
-  const weekly: WeeklyTimetable = {
-    Monday: {},
-    Tuesday: {},
-    Wednesday: {},
-    Thursday: {},
-    Friday: {},
-  };
-
-  if (data) {
-    for (const entry of data) {
-      const period = periodMap.get(entry.period);
-      const entryWithPeriod: TimetableEntryWithPeriod = {
-        ...entry,
-        start_time: period?.start_time || "",
-        end_time: period?.end_time || "",
-      };
-      weekly[entry.day as DayOfWeek][entry.period] = entryWithPeriod;
-    }
-  }
-
-  return weekly;
-}
-
-/**
- * Get teacher's classes for a specific day
- */
-export async function getTodayClasses(
-  teacherId: string,
-  day: DayOfWeek,
-  academicYear: string = "2025-2026"
-): Promise<TimetableEntryWithPeriod[]> {
-  const supabase = createClient();
-
-  const periods = await getPeriods();
-  const periodMap = new Map(periods.map((p) => [p.period_number, p]));
-
-  const { data, error } = await supabase
-    .from("timetable_entries")
-    .select("*")
-    .eq("teacher_id", teacherId)
-    .eq("day", day)
-    .eq("academic_year", academicYear)
-    .order("period");
-
-  if (error) {
-    console.error("Error fetching today's classes:", error);
-    return [];
-  }
-
-  return (data || []).map((entry) => {
-    const period = periodMap.get(entry.period);
-    return {
-      ...entry,
-      start_time: period?.start_time || "",
-      end_time: period?.end_time || "",
-    };
-  });
 }
 
 /**
@@ -403,7 +272,7 @@ export function getClassDisplayInfo(entry: TimetableEntry): {
 
 /**
  * Get current user's schedule (helper for pages)
- * Priority: email > teacher_name > teacher_id
+ * Uses email as the unique identifier for matching
  */
 export async function getCurrentUserSchedule(
   userId: string,
@@ -415,36 +284,31 @@ export async function getCurrentUserSchedule(
 } | null> {
   const supabase = createClient();
 
-  // Get user's email and teacher_name
+  // Get user's email (unique identifier)
   const { data: user } = await supabase
     .from("users")
-    .select("email, teacher_name")
+    .select("email")
     .eq("id", userId)
     .single();
 
-  let weekly: WeeklyTimetable;
-  let stats: TeacherScheduleStats;
-
-  if (user?.email) {
-    // Primary: match by email (most reliable)
-    weekly = await getTeacherScheduleByEmail(user.email, academicYear);
-    stats = await getTeacherScheduleStatsByEmail(user.email, academicYear);
-  } else if (user?.teacher_name) {
-    // Fallback: match by teacher_name
-    weekly = await getTeacherScheduleByName(user.teacher_name, academicYear);
-    stats = await getTeacherScheduleStatsByEmail("", academicYear); // won't match, returns empty
-  } else {
-    // Last resort: match by teacher_id
-    weekly = await getTeacherSchedule(userId, academicYear);
-    stats = {
-      totalPeriods: 0,
-      uniqueClasses: 0,
-      englishPeriods: 0,
-      evPeriods: 0,
-      daysWithClasses: 0,
+  if (!user?.email) {
+    console.error("User email not found for userId:", userId);
+    return {
+      weekly: { Monday: {}, Tuesday: {}, Wednesday: {}, Thursday: {}, Friday: {} },
+      stats: {
+        totalPeriods: 0,
+        uniqueClasses: 0,
+        englishPeriods: 0,
+        evPeriods: 0,
+        daysWithClasses: 0,
+      },
+      periods: await getPeriods(),
     };
   }
 
+  // Match by email (unique identifier)
+  const weekly = await getTeacherScheduleByEmail(user.email, academicYear);
+  const stats = await getTeacherScheduleStatsByEmail(user.email, academicYear);
   const periods = await getPeriods();
 
   return { weekly, stats, periods };

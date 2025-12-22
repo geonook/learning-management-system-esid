@@ -120,11 +120,11 @@ const handleCellClick = (entry: TimetableEntryWithPeriod) => {
 | KCFS | 167 | 167 | 100% |
 | EV | 56 | 0 | N/A (no attendance) |
 
-## Teacher Matching Priority
+## Teacher Matching
 
-1. **Email match** (most reliable): `timetable_entries.teacher_email = users.email`
-2. **Name match** (fallback): `timetable_entries.teacher_name = users.teacher_name`
-3. **ID match** (last resort): `timetable_entries.teacher_id = users.id`
+**Email is the unique identifier** for all teacher matching:
+- `timetable_entries.teacher_email = users.email`
+- No fallback to teacher_name or teacher_id
 
 ## UI Components
 
