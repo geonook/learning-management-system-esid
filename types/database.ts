@@ -536,6 +536,249 @@ export type Database = {
           }
         ]
       }
+      timetable_periods: {
+        Row: {
+          id: string
+          period_number: number
+          start_time: string
+          end_time: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          period_number: number
+          start_time: string
+          end_time: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          period_number?: number
+          start_time?: string
+          end_time?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      timetable_entries: {
+        Row: {
+          id: string
+          teacher_id: string | null
+          teacher_name: string
+          day: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday'
+          period: number
+          class_name: string
+          course_type: 'english' | 'homeroom' | 'ev'
+          course_name: string | null
+          classroom: string | null
+          course_id: string | null
+          academic_year: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          teacher_id?: string | null
+          teacher_name: string
+          day: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday'
+          period: number
+          class_name: string
+          course_type: 'english' | 'homeroom' | 'ev'
+          course_name?: string | null
+          classroom?: string | null
+          course_id?: string | null
+          academic_year?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          teacher_id?: string | null
+          teacher_name?: string
+          day?: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday'
+          period?: number
+          class_name?: string
+          course_type?: 'english' | 'homeroom' | 'ev'
+          course_name?: string | null
+          classroom?: string | null
+          course_id?: string | null
+          academic_year?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timetable_entries_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_entries_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      attendance: {
+        Row: {
+          id: string
+          student_id: string
+          course_id: string
+          recorded_by: string
+          date: string
+          period: number
+          status: 'P' | 'L' | 'A' | 'S'
+          note: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          student_id: string
+          course_id: string
+          recorded_by: string
+          date: string
+          period?: number
+          status: 'P' | 'L' | 'A' | 'S'
+          note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          student_id?: string
+          course_id?: string
+          recorded_by?: string
+          date?: string
+          period?: number
+          status?: 'P' | 'L' | 'A' | 'S'
+          note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      behavior_tags: {
+        Row: {
+          id: string
+          name: string
+          name_zh: string | null
+          type: 'positive' | 'negative'
+          icon: string | null
+          sort_order: number
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          name_zh?: string | null
+          type: 'positive' | 'negative'
+          icon?: string | null
+          sort_order?: number
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          name_zh?: string | null
+          type?: 'positive' | 'negative'
+          icon?: string | null
+          sort_order?: number
+          is_active?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
+      student_behaviors: {
+        Row: {
+          id: string
+          student_id: string
+          course_id: string
+          tag_id: string
+          recorded_by: string
+          date: string
+          period: number | null
+          note: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          student_id: string
+          course_id: string
+          tag_id: string
+          recorded_by: string
+          date: string
+          period?: number | null
+          note?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          student_id?: string
+          course_id?: string
+          tag_id?: string
+          recorded_by?: string
+          date?: string
+          period?: number | null
+          note?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_behaviors_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_behaviors_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_behaviors_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "behavior_tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_behaviors_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       student_grade_aggregates: {
