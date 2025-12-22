@@ -18,6 +18,7 @@ interface TodayScheduleProps {
 const COURSE_TYPE_COLORS: Record<string, string> = {
   english: "bg-blue-500",
   ev: "bg-purple-500",
+  kcfs: "bg-emerald-500",
 };
 
 export function TodaySchedule({

@@ -17,7 +17,7 @@ export type DayOfWeek =
   | "Thursday"
   | "Friday";
 
-export type CourseType = "english" | "homeroom" | "ev";
+export type CourseType = "english" | "homeroom" | "ev" | "kcfs";
 
 export interface TimetablePeriod {
   period_number: number;

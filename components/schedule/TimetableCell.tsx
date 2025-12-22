@@ -22,6 +22,12 @@ const COURSE_TYPE_STYLES = {
     text: "text-purple-700 dark:text-purple-300",
     hover: "hover:bg-purple-100 dark:hover:bg-purple-900/50",
   },
+  kcfs: {
+    accent: "bg-emerald-500",
+    bg: "bg-emerald-50/80 dark:bg-emerald-950/40",
+    text: "text-emerald-700 dark:text-emerald-300",
+    hover: "hover:bg-emerald-100 dark:hover:bg-emerald-900/50",
+  },
 };
 
 const DEFAULT_STYLES = COURSE_TYPE_STYLES.english;
