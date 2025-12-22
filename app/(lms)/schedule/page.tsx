@@ -66,8 +66,8 @@ export default function SchedulePage() {
       { period: 4, start: 11 * 60 + 5, end: 11 * 60 + 45 },
       { period: 5, start: 12 * 60 + 55, end: 13 * 60 + 35 },
       { period: 6, start: 13 * 60 + 40, end: 14 * 60 + 20 },
-      { period: 7, start: 14 * 60 + 25, end: 15 * 60 + 5 },
-      { period: 8, start: 15 * 60 + 10, end: 15 * 60 + 50 },
+      { period: 7, start: 14 * 60 + 40, end: 15 * 60 + 20 },
+      { period: 8, start: 15 * 60 + 25, end: 16 * 60 + 5 },
     ];
 
     const current = periodTimes.find(
