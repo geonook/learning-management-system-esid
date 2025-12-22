@@ -118,7 +118,7 @@ export default function ClassAttendancePage() {
       case "LT":
         return "Lead Teacher";
       case "IT":
-        return "Int'l Teacher";
+        return "International Teacher";
       case "KCFS":
         return "KCFS";
       default:
