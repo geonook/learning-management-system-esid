@@ -1,8 +1,9 @@
 # LMS Gradebook Skill
 
 > 成績計算公式、Gradebook 元件架構、Expectations 系統
+> Last Updated: 2025-12-22
 
-## Grade Calculation（唯一真相）
+## LT/IT Grade Calculation（英語課成績）
 
 ### Assessment Codes（評量代碼）
 
@@ -10,16 +11,25 @@
 |------|------|------|
 | FA1-FA8 | Formative Assessment | 0.0188 each (15% total) |
 | SA1-SA4 | Summative Assessment | 0.05 each (20% total) |
+| FINAL | Final Exam | 0.10 |
 | MID | Midterm | 0.10 |
-| FINAL | Final | 0.10 |
 
-**總權重**：0.15 + 0.20 + 0.10 + 0.10 = 0.55（目前只用到 0.45，FINAL 未實作）
+**注意**：FINAL 和 MID 兩個代碼都存在於資料庫中（共 14 個代碼）。
+
+### 兩個計算引擎
+
+系統有兩個獨立的計算引擎：
+
+| 引擎 | 檔案位置 | 使用的期末代碼 |
+|------|----------|----------------|
+| Core Grade | `lib/grade/calculations.ts` | **FINAL** |
+| Formula Engine | `lib/gradebook/FormulaEngine.ts` | **MID** |
 
 ### 計算規則
 
 1. **僅計入 >0 的分數**
 2. **全 0 → 平均 null**
-3. **四捨五入到小數 2 位**
+3. **四捨五入到小數 2 位**（lib/grade）或 1 位（FormulaEngine）
 
 ### 計算公式
 
@@ -30,15 +40,16 @@ FormativeAvg = avg(FA where FA > 0)
 // Summative 平均（SA1-SA4 中 >0 的平均）
 SummativeAvg = avg(SA where SA > 0)
 
-// 學期總分
-Semester = (FormativeAvg × 0.15 + SummativeAvg × 0.20 + MID × 0.10) ÷ 0.45
+// 學期總分（使用 FINAL 或 MID，取決於計算引擎）
+Semester = (FormativeAvg × 0.15 + SummativeAvg × 0.20 + FINAL/MID × 0.10) ÷ 0.45
 ```
 
 ### 程式碼位置
 
 ```
-/lib/grade/index.ts          - 核心計算函式
-/lib/gradebook/FormulaEngine.ts - 公式引擎
+/lib/grade/calculations.ts      - 核心計算函式（使用 FINAL）
+/lib/grade/kcfs-calculations.ts - KCFS 計算函式
+/lib/gradebook/FormulaEngine.ts - 公式引擎（使用 MID）
 ```
 
 ### 使用範例
@@ -46,7 +57,7 @@ Semester = (FormativeAvg × 0.15 + SummativeAvg × 0.20 + MID × 0.10) ÷ 0.45
 ```typescript
 import { FormulaEngine } from '@/lib/gradebook/FormulaEngine';
 
-// 計算學期總分
+// 計算學期總分（使用 MID）
 const termGrade = FormulaEngine.calculateTermGrade(scores);
 
 // 取得 Formative 平均
@@ -55,6 +66,58 @@ const faAvg = FormulaEngine.getFormativeAverage(scores);
 // 取得 Summative 平均
 const saAvg = FormulaEngine.getSummativeAverage(scores);
 ```
+
+---
+
+## KCFS Grade Calculation（康橋未來技能課程）
+
+### 分數範圍
+
+- **輸入範圍**：0-5（0.5 增量）
+- **輸出範圍**：50-100
+
+### 年級別類別與權重
+
+| 年級 | 類別代碼 | 類別數 | 每類權重 |
+|------|----------|--------|----------|
+| G1-2 | COMM, COLLAB, SD, CT | 4 | 2.5 |
+| G3-4 | COMM, COLLAB, SD, CT, BW | 5 | 2.0 |
+| G5-6 | COMM, COLLAB, SD, CT, PORT, PRES | 6 | 5/3 (1.667) |
+
+### 類別說明
+
+| 代碼 | 全名 | 年級 |
+|------|------|------|
+| COMM | Communication | 全年級 |
+| COLLAB | Collaboration | 全年級 |
+| SD | Self-Direction | 全年級 |
+| CT | Critical Thinking | 全年級 |
+| BW | Book Work | G3-4 only |
+| PORT | Portfolio | G5-6 only |
+| PRES | Presentation | G5-6 only |
+
+### KCFS 計算公式
+
+```typescript
+// KCFS Term Grade = 50 + Σ(category_score × weight)
+//
+// 範例（G3-4，5 類，權重 2.0）：
+// scores = { COMM: 4.5, COLLAB: 4.0, SD: 3.5, CT: 4.0, BW: 3.5 }
+// termGrade = 50 + (4.5 + 4.0 + 3.5 + 4.0 + 3.5) × 2.0 = 50 + 39 = 89
+
+import { FormulaEngine } from '@/lib/gradebook/FormulaEngine';
+
+// KCFS 計算（需要年級參數）
+const kcfsGrade = FormulaEngine.calculateKCFSTermGrade(scores, absentFlags, grade);
+```
+
+### KCFS 計算規則
+
+1. **所有數值分數（0-5）都計入**（不像 LT/IT 排除 0）
+2. **null 分數排除**（未輸入）
+3. **Absent 分數排除**（標記缺席）
+4. **至少需要 1 個有效分數**
+5. **四捨五入到小數 1 位**
 
 ---
 

@@ -1,7 +1,7 @@
 # LMS Database Skill
 
 > Supabase 資料庫查詢模式、RLS 政策、Migration 關鍵記錄
-> Last Updated: 2025-12-16
+> Last Updated: 2025-12-22
 
 ## Database Connection Strings
 
@@ -29,6 +29,8 @@ Supabase 的 `table!inner` 語法是透過 **外鍵（FK）** 連接，不是透
 scores → exam_id (FK) → exams → course_id (FK) → courses → class_id (FK) → classes
 ```
 
+**注意**：`exams` 表**沒有** `class_id` 欄位（Migration 035 已移除），只有 `course_id`。
+
 ### ✅ 正確模式
 
 ```typescript
@@ -50,7 +52,7 @@ const { data } = await supabase
   .in('student_id', studentIds)   // ← 限制查詢範圍
   .not('score', 'is', null);
 
-// 過濾時使用 course.class_id，不是 exam.class_id
+// 過濾時使用 exam.course.class_id
 const filtered = data.filter(s => {
   const examData = s.exam as { course_id: string; course: { class_id: string; ... } };
   return classIdSet.has(examData.course.class_id);  // ✅ 正確
@@ -61,18 +63,17 @@ const filtered = data.filter(s => {
 
 ```typescript
 exam:exams!inner(
-  class_id,                       // ← 這個欄位與 courses!inner 無關
-  course:courses!inner(...)       // ← join 是用 course_id FK
+  class_id,                       // ← 這個欄位已不存在！會返回 400 Error
+  course:courses!inner(...)
 )
-// 然後過濾 exam.class_id → 永遠不匹配！
 ```
 
 ### 為什麼這很重要
 
-- `exams` 表同時有 `class_id` 和 `course_id` 欄位
-- Supabase 的 `courses!inner` 只看 FK 關係（`course_id`）
-- 選取 `exam.class_id` 不會影響 join 行為
-- 如果需要 class_id，應該從 `course.class_id` 取得
+- `exams` 表只有 `course_id` 欄位（NOT NULL）
+- **`class_id` 已在 Migration 035 移除**
+- 如果需要 class_id，必須從 `exam.course.class_id` 取得
+- 直接查詢 `exams.class_id` 會返回 400 Bad Request
 
 ### 效能最佳實踐
 
@@ -148,6 +149,22 @@ USING (id = (SELECT auth.uid()));
 ### Migration 032: Gradebook Expectations
 - 建立 `gradebook_expectations` 表
 - Head Teacher 成績進度預期設定
+
+### Migration 033: KCFS Scoring System
+- 新增 KCFS 評量類別代碼（COMM, COLLAB, SD, CT, BW, PORT, PRES）
+- 新增 `scores.is_absent` 欄位
+- 支援 0-5 分制的 KCFS 評分
+
+### Migration 034: MAP Tables
+- 建立 `map_assessments` 表（MAP 測驗成績）
+- 建立 `map_goal_scores` 表（目標領域分數）
+- 支援 NWEA MAP Growth 數據分析
+
+### Migration 035: Sync Exams Schema
+- **移除** `exams.class_id` 欄位
+- 設定 `exams.course_id` 為 NOT NULL
+- 重命名 `is_published` 為 `is_active`
+- 同步 Staging 與 Production 資料庫結構
 
 ---
 

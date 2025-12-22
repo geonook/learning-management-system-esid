@@ -1,6 +1,7 @@
 # LMS Features Skill
 
-> Browse Gradebook、Course Kanban、Communications、Statistics Module
+> Browse Gradebook、Course Kanban、Communications、Statistics Module、MAP Analytics
+> Last Updated: 2025-12-22
 
 ## Browse Gradebook 架構
 
@@ -243,3 +244,136 @@ const statusColors = {
   completed: 'bg-blue-500',
 };
 ```
+
+---
+
+## MAP Analytics Module (v1.54.0)
+
+### 功能概述
+
+NWEA MAP Growth 數據分析系統：
+- **學生頁面 MAP Tab**：G3-G6 學生的 MAP 分析（G1-2 無 MAP 測驗）
+- **Benchmark Classification**：E1/E2/E3 分級
+- **Growth Index**：Fall → Spring 成長指數
+- **Goal Areas**：閱讀/語言能力目標領域分析
+- **Lexile Level**：閱讀等級追蹤
+
+### 資料表
+
+```sql
+-- MAP 測驗成績
+CREATE TABLE map_assessments (
+  id UUID PRIMARY KEY,
+  student_number TEXT NOT NULL,        -- 學號
+  student_id UUID REFERENCES students(id),
+  grade INTEGER NOT NULL,              -- 測驗時年級
+  course TEXT NOT NULL,                -- 'Reading' | 'Language Usage'
+  rit_score INTEGER NOT NULL,          -- RIT 分數（100-350）
+  lexile_score TEXT,                   -- Lexile（Reading only，如 '1190L'）
+  term_tested TEXT NOT NULL,           -- 'Fall 2024-2025' 格式
+  academic_year TEXT NOT NULL,
+  term TEXT NOT NULL,                  -- 'fall' | 'spring'
+  rapid_guessing_percent DECIMAL(5,2), -- 快速猜測百分比
+  UNIQUE(student_number, course, term_tested)
+);
+
+-- 目標領域分數
+CREATE TABLE map_goal_scores (
+  id UUID PRIMARY KEY,
+  assessment_id UUID REFERENCES map_assessments(id),
+  goal_name TEXT NOT NULL,             -- 如 'Informational Text'
+  goal_rit_range TEXT                  -- 如 '161-170'
+);
+```
+
+### Benchmark Classification（E1/E2/E3 分級）
+
+使用**兩科平均**判定學生程度：
+
+```typescript
+// 平均分 = (Language Usage RIT + Reading RIT) / 2
+// 使用「測驗年級」的門檻判定（不是當前年級）
+
+// G3 門檻
+const G3_THRESHOLDS = { E1: 206, E2: 183 };
+// G4 門檻
+const G4_THRESHOLDS = { E1: 213, E2: 191 };
+// G5 門檻
+const G5_THRESHOLDS = { E1: 218, E2: 194 };
+// G6：無分級（畢業年級）
+
+// 判定邏輯
+if (avg >= threshold.E1) return 'E1';
+if (avg >= threshold.E2) return 'E2';
+return 'E3';
+```
+
+### Growth Index（成長指數）
+
+```typescript
+// 成長指數 = 實際成長 / 期望成長
+const growthIndex = actualGrowth / expectedGrowth;
+
+// 判定
+if (growthIndex >= 1.0) return 'Above Expected';
+if (growthIndex >= 0.8) return 'Near Expected';
+return 'Below Expected';
+```
+
+### 學生頁面 MAP Tab 元件
+
+路徑：`app/(lms)/student/[id]/page.tsx`
+
+```typescript
+// 只有 G3-G6 學生顯示 MAP Tab
+{studentGrade >= 3 && (
+  <StudentMapAnalysisTab studentId={studentId} grade={studentGrade} />
+)}
+```
+
+元件位置：`components/map/student/`
+- `StudentBenchmarkStatus.tsx` - Benchmark 狀態卡
+- `StudentGrowthIndex.tsx` - 成長指數卡
+- `StudentGoalAreas.tsx` - 目標領域強弱項
+- `StudentLexileLevel.tsx` - Lexile 閱讀等級
+- `StudentBenchmarkHistory.tsx` - Benchmark 歷史圖表
+- `StudentPeerComparison.tsx` - 同儕比較
+
+### API 層
+
+```
+lib/api/map-student-analytics.ts  - 學生層級 MAP 分析
+lib/api/map-analytics.ts          - 學校層級 MAP 統計
+lib/map/benchmarks.ts             - Benchmark 分級邏輯
+lib/map/norms.ts                  - NWEA 國家常模
+lib/map/goals.ts                  - 目標領域定義
+lib/map/lexile.ts                 - Lexile 解析與分類
+```
+
+### Lexile 閱讀等級
+
+```typescript
+// Lexile 格式
+'1190L'   // 標準格式
+'BR400L'  // Beginning Reader 格式
+
+// 七個等級
+const LEXILE_BANDS = [
+  { range: 'BR', label: 'Beginning Reader' },
+  { range: '0-200', label: 'Early Reader' },
+  { range: '200-400', label: 'Developing' },
+  { range: '400-600', label: 'Intermediate' },
+  { range: '600-800', label: 'Fluent' },
+  { range: '800-1000', label: 'Advanced' },
+  { range: '1000+', label: 'Proficient' },
+];
+```
+
+### 權限控制
+
+| 角色 | 查看範圍 |
+|------|----------|
+| Admin | 全校學生 |
+| Office Member | 全校學生（唯讀）|
+| Head Teacher | 管轄年級學生 |
+| Teacher | 自己班級學生 |

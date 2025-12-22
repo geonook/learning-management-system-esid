@@ -1,18 +1,23 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 4.1
-> **Last Updated**: 2025-12-16
+> **Documentation Version**: 4.2
+> **Last Updated**: 2025-12-22
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School LMS with Next.js + TypeScript + Supabase Cloud
-> **Current Version**: v1.53.0 - Teacher Progress with Gradebook Expectations Integration
+> **Current Version**: v1.54.0 - MAP Analytics + KCFS Scoring + Schema Sync
 
 This file provides essential guidance to Claude Code when working with code in this repository.
 
 ## Current Status
 
-- **v1.53.0** - Teacher Progress now uses Head Teacher's Gradebook Expectations settings
+- **v1.54.0** - MAP Analytics, KCFS Scoring System, Schema Sync
 - **Production**: 84 classes, 504 courses (2 academic years), 1514 students
 - **Tech Stack**: Next.js 14 (App Router) + TypeScript + Tailwind + Supabase Cloud
+
+**Recent Additions**:
+- MAP Analytics Tab on student detail page (G3-G6)
+- KCFS scoring system (0-5 scale with grade-specific categories)
+- Staging/Production database schema synchronized
 
 **Next Steps**:
 1. Sprint 7: Student historical grade reports
@@ -121,10 +126,16 @@ psql "postgresql://postgres.piwbooidofbaqklhijup:geonook8588@aws-1-ap-southeast-
 
 ### Grade Calculation (唯一真相)
 ```typescript
-// Codes: FA1-8, SA1-4, MID, FINAL
+// LT/IT Codes: FA1-8, SA1-4, FINAL, MID（共 14 個代碼）
 // 僅計入 >0 分數；全 0 → null
-// Semester = (FA_avg × 0.15 + SA_avg × 0.20 + MID × 0.10) ÷ 0.45
-// 使用 /lib/grade 或 /lib/gradebook/FormulaEngine.ts
+// Semester = (FA_avg × 0.15 + SA_avg × 0.20 + FINAL/MID × 0.10) ÷ 0.45
+//
+// 兩個計算引擎：
+// - lib/grade/calculations.ts：使用 FINAL
+// - lib/gradebook/FormulaEngine.ts：使用 MID
+//
+// KCFS Codes: COMM, COLLAB, SD, CT, BW, PORT, PRES（依年級）
+// KCFS 公式：50 + Σ(category_score × weight)
 ```
 
 ### Auth Pattern (MANDATORY)
@@ -164,7 +175,7 @@ learning-management-system-esid/
 │   ├── grade/            # Grade calculations
 │   ├── api/              # Data fetching
 │   └── actions/          # Server actions
-├── db/migrations/         # SQL migrations (007-032)
+├── db/migrations/         # SQL migrations (007-035)
 ├── hooks/                 # Custom React hooks
 ├── types/                 # TypeScript definitions
 └── .claude/skills/        # LMS-specific knowledge

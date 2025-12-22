@@ -1,7 +1,7 @@
 # LMS Troubleshooting Skill
 
 > 已解決問題、常見錯誤、除錯技巧
-> Last Updated: 2025-12-16
+> Last Updated: 2025-12-22
 
 ## Statistics 頁面成績不顯示
 
@@ -254,4 +254,96 @@ if (error) {
 ```bash
 # 搜尋硬編碼的環境變數
 grep -r "supabase.co" .next/static/chunks/ | head -5
+```
+
+---
+
+## Staging/Production Schema 不一致
+
+### 問題描述
+
+- Staging 的 `exams` 表有 `class_id` 和 `course_id` 兩個欄位
+- Production 的 `exams` 表只有 `course_id` 欄位
+- 查詢 `exams.class_id` 在 Production 返回 400 Bad Request
+
+### 根本原因
+
+Production 資料庫先上線，結構是正確的（exams → courses → classes）。
+Staging 資料庫後來建立時，添加了冗餘的 `class_id` 欄位。
+
+### 解決方案
+
+**Migration 035**：同步 Staging 結構至 Production 標準
+
+```sql
+-- 刪除 class_id 欄位
+ALTER TABLE exams DROP COLUMN IF EXISTS class_id CASCADE;
+
+-- 設定 course_id 為 NOT NULL
+ALTER TABLE exams ALTER COLUMN course_id SET NOT NULL;
+
+-- 重命名 is_published 為 is_active
+ALTER TABLE exams RENAME COLUMN is_published TO is_active;
+```
+
+### 程式碼修正
+
+**所有使用 `exams.class_id` 的查詢需改為 nested join**：
+
+```typescript
+// ❌ 錯誤（Production 會返回 400）
+.select(`
+  exam:exams!inner(
+    class_id,
+    course:courses!inner(...)
+  )
+`)
+
+// ✅ 正確
+.select(`
+  exam:exams!inner(
+    course_id,
+    course:courses!inner(
+      class_id,
+      course_type
+    )
+  )
+`)
+```
+
+### 修改檔案清單
+
+- `app/(lms)/student/[id]/page.tsx`
+- `lib/analytics/core.ts`
+- `lib/analytics/queries.ts`
+
+---
+
+## 400 Error 查詢不存在的欄位
+
+### 問題描述
+
+查詢 Supabase 返回 400 Bad Request，錯誤訊息類似：
+```
+column exams.class_id does not exist
+```
+
+### 根本原因
+
+程式碼嘗試查詢不存在於資料庫中的欄位。
+
+### 解決方案
+
+1. 確認欄位是否存在於資料表中
+2. 檢查 Migration 035 是否已執行
+3. 如需 class_id，使用 nested join 從 courses 表取得
+
+### 檢查資料表結構
+
+```bash
+# 連接 Production 資料庫
+psql "postgresql://postgres.piwbooidofbaqklhijup:geonook8588@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres"
+
+# 檢查 exams 表結構
+\d exams
 ```

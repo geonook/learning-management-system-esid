@@ -1,6 +1,7 @@
 # LMS Architecture Skill
 
 > LMS-ESID 專案的核心架構知識，包含一班三師系統、課程架構、年段系統
+> Last Updated: 2025-12-22
 
 ## 一班三師系統 (One Class, Three Teachers)
 
@@ -159,9 +160,43 @@ scores         - 成績記錄
 ### 輔助資料表
 
 ```
-assessment_codes   - 評量代碼定義 (FA1-8, SA1-4, MID)
+assessment_codes   - 評量代碼定義 (FA1-8, SA1-4, FINAL, MID)
 assessment_titles  - 評量顯示名稱覆寫
 course_tasks       - 課程任務看板
 communications     - 家長通訊記錄
 gradebook_expectations - 成績預期設定
+```
+
+### MAP 資料表（NWEA MAP Growth）
+
+```
+map_assessments    - MAP 測驗成績
+                     student_number, grade, course, rit_score, lexile_score
+                     term_tested, academic_year, rapid_guessing_percent
+
+map_goal_scores    - 目標領域分數
+                     assessment_id, goal_name, goal_rit_range
+```
+
+### 資料表關聯圖
+
+```
+                    ┌─────────────┐
+                    │   classes   │
+                    │   (84 班)   │
+                    └──────┬──────┘
+                           │ 1:3
+                    ┌──────▼──────┐
+                    │   courses   │
+                    │  (252 課程) │
+                    └──────┬──────┘
+                           │ 1:N
+                    ┌──────▼──────┐
+                    │    exams    │
+                    │ (course_id) │  ← 注意：沒有 class_id
+                    └──────┬──────┘
+                           │ 1:N
+                    ┌──────▼──────┐
+                    │   scores    │
+                    └─────────────┘
 ```
