@@ -1,29 +1,30 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 4.2
+> **Documentation Version**: 4.3
 > **Last Updated**: 2025-12-22
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School LMS with Next.js + TypeScript + Supabase Cloud
-> **Current Version**: v1.55.0 - MAP Peer Comparison Privacy Update
+> **Current Version**: v1.56.0 - Teacher Schedule & Attendance System
 
 This file provides essential guidance to Claude Code when working with code in this repository.
 
 ## Current Status
 
-- **v1.55.0** - MAP Peer Comparison uses Level grouping instead of Class
+- **v1.56.0** - Teacher Schedule with click-to-attendance navigation
 - **Production**: 84 classes, 504 courses (2 academic years), 1514 students
 - **Tech Stack**: Next.js 14 (App Router) + TypeScript + Tailwind + Supabase Cloud
 
 **Recent Additions**:
-- MAP Peer Comparison changed from Class to English Level (E1/E2/E3) grouping
-- Privacy improvement: avoids sharing class-specific averages with parents
-- MAP Analytics Tab on student detail page (G3-G6)
-- KCFS scoring system (0-5 scale with grade-specific categories)
+- Teacher Schedule page (`/schedule`) with weekly timetable grid
+- Click-to-attendance: English courses → attendance page, EV/KCFS → course page
+- Three course types in timetable: English (blue), KCFS (emerald), EV (purple)
+- Current period highlighting with visual indicator
+- MAP Peer Comparison uses English Level (E1/E2/E3) grouping for privacy
 
 **Next Steps**:
 1. Sprint 7: Student historical grade reports
 2. Term 2 data import via CSV
-3. Teacher schedule view
+3. Attendance reports and analytics
 
 ---
 
@@ -213,6 +214,7 @@ git push origin develop  # Push to develop (auto-deploy)
 | [lms-auth](.claude/skills/lms-auth.md) | SSO、useAuthReady、權限 |
 | [lms-troubleshooting](.claude/skills/lms-troubleshooting.md) | 已解決問題、除錯技巧 |
 | [lms-features](.claude/skills/lms-features.md) | Browse、Kanban、Communications |
+| [lms-teacher-timetable](.claude/skills/lms-teacher-timetable.md) | 課表系統、點名導航、課程類型 |
 
 ### Documentation
 | 類別 | 位置 |

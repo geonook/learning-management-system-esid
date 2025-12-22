@@ -1,6 +1,6 @@
 # LMS Features Skill
 
-> Browse Gradebook、Course Kanban、Communications、Statistics Module、MAP Analytics
+> Browse Gradebook、Course Kanban、Communications、Statistics Module、MAP Analytics、Teacher Schedule
 > Last Updated: 2025-12-22
 
 ## Browse Gradebook 架構
@@ -377,3 +377,68 @@ const LEXILE_BANDS = [
 | Office Member | 全校學生（唯讀）|
 | Head Teacher | 管轄年級學生 |
 | Teacher | 自己班級學生 |
+
+---
+
+## Teacher Schedule System (v1.56.0)
+
+### 功能概述
+
+教師課表系統，支援週視圖和今日視圖：
+- **Weekly View**：5x8 格狀課表（週一到週五，8 節課）
+- **Today View**：垂直列表，適合手機
+- **Click-to-Navigate**：點擊課程直接進入點名或課程頁面
+- **Current Period Highlight**：當前節次高亮顯示
+
+### 頁面路徑
+
+```
+/schedule              # 教師課表頁面
+```
+
+### 課程類型與顏色
+
+| 類型 | 顏色 | 點擊行為 |
+|------|------|----------|
+| English | 藍色 (`bg-blue-500`) | → 點名頁面 |
+| KCFS | 翡翠綠 (`bg-emerald-500`) | → 課程頁面 |
+| EV | 紫色 (`bg-purple-500`) | → 課程頁面 |
+
+### 資料表
+
+```sql
+-- 課表項目
+timetable_entries (
+  teacher_email, teacher_name, day, period,
+  class_name, course_type, course_id, academic_year
+)
+
+-- 節次時間
+timetable_periods (
+  period_number, start_time, end_time
+)
+```
+
+### 相關檔案
+
+| 檔案 | 說明 |
+|------|------|
+| `app/(lms)/schedule/page.tsx` | 主頁面 |
+| `components/schedule/WeeklyTimetable.tsx` | 週視圖 |
+| `components/schedule/TodaySchedule.tsx` | 今日視圖 |
+| `components/schedule/TimetableCell.tsx` | 課表格子 |
+| `lib/api/timetable.ts` | API 函數 |
+
+### 權限控制
+
+| 角色 | 可見範圍 |
+|------|----------|
+| Teacher | 自己的課表 |
+| Head Teacher | 自己的課表 |
+| Admin | 自己的課表 |
+
+### 資料統計 (2025-2026)
+
+- English: 1,064 筆 (100% 有 course_id)
+- KCFS: 167 筆 (100% 有 course_id)
+- EV: 56 筆 (不需 course_id)
