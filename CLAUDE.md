@@ -208,6 +208,7 @@ git push origin develop  # Push to develop (auto-deploy)
 ### Claude Skills (詳細知識)
 | Skill | 內容 |
 |-------|------|
+| [kcis-school-config](.claude/skills/kcis-school-config.md) | **康橋專屬設定**：術語、角色、課程類型、時間 |
 | [lms-architecture](.claude/skills/lms-architecture.md) | 一班三師、課程架構、年段系統 |
 | [lms-database](.claude/skills/lms-database.md) | RLS、Migration、Nested Join 模式 |
 | [lms-gradebook](.claude/skills/lms-gradebook.md) | 成績計算、Expectations |
