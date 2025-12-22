@@ -133,26 +133,24 @@ export default function SchedulePage() {
           </div>
         </div>
 
-        {/* Stats cards */}
+        {/* Stats summary - inline with legend */}
         {stats && stats.totalPeriods > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
-            <div className="bg-surface-primary border border-border-default rounded-lg p-3">
-              <div className="text-2xl font-semibold text-text-primary">
-                {stats.totalPeriods}
-              </div>
-              <div className="text-xs text-text-secondary">Total Periods</div>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-4 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-text-tertiary">Weekly:</span>
+              <span className="font-semibold text-text-primary">{stats.totalPeriods} periods</span>
+              <span className="text-text-tertiary">·</span>
+              <span className="font-semibold text-text-primary">{stats.uniqueClasses} classes</span>
             </div>
-            <div className="bg-surface-primary border border-border-default rounded-lg p-3">
-              <div className="text-2xl font-semibold text-text-primary">
-                {stats.uniqueClasses}
+            <div className="flex items-center gap-3 text-xs">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-sm bg-blue-500" />
+                <span className="text-text-secondary">English</span>
               </div>
-              <div className="text-xs text-text-secondary">Classes</div>
-            </div>
-            <div className="bg-surface-primary border border-border-default rounded-lg p-3">
-              <div className="text-2xl font-semibold text-blue-600">
-                {stats.englishPeriods}
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-sm bg-purple-500" />
+                <span className="text-text-secondary">EV</span>
               </div>
-              <div className="text-xs text-text-secondary">English</div>
             </div>
           </div>
         )}
@@ -209,19 +207,6 @@ export default function SchedulePage() {
           </div>
         )}
 
-        {/* Legend */}
-        {!isLoading && stats && stats.totalPeriods > 0 && (
-          <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-text-secondary">
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded bg-blue-500" />
-              <span>English</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded bg-purple-500" />
-              <span>EV</span>
-            </div>
-          </div>
-        )}
       </div>
     </AuthGuard>
   );

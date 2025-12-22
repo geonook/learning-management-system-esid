@@ -2,93 +2,65 @@
 
 import { cn } from "@/lib/utils";
 import type { TimetableEntryWithPeriod } from "@/lib/api/timetable";
-import { MapPin } from "lucide-react";
 
 interface TimetableCellProps {
   entry: TimetableEntryWithPeriod;
   onClick?: (entry: TimetableEntryWithPeriod) => void;
   isActive?: boolean;
-  compact?: boolean;
 }
 
-const DEFAULT_STYLES = {
-  bg: "bg-blue-50 dark:bg-blue-900/20",
-  border: "border-blue-200 dark:border-blue-800",
-  badge: "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300",
-  text: "text-blue-900 dark:text-blue-100",
-};
-
-const COURSE_TYPE_STYLES: Record<string, typeof DEFAULT_STYLES> = {
-  english: DEFAULT_STYLES,
+const COURSE_TYPE_STYLES = {
+  english: {
+    accent: "bg-blue-500",
+    bg: "bg-blue-50/80 dark:bg-blue-950/40",
+    text: "text-blue-700 dark:text-blue-300",
+    hover: "hover:bg-blue-100 dark:hover:bg-blue-900/50",
+  },
   ev: {
-    bg: "bg-purple-50 dark:bg-purple-900/20",
-    border: "border-purple-200 dark:border-purple-800",
-    badge: "bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300",
-    text: "text-purple-900 dark:text-purple-100",
+    accent: "bg-purple-500",
+    bg: "bg-purple-50/80 dark:bg-purple-950/40",
+    text: "text-purple-700 dark:text-purple-300",
+    hover: "hover:bg-purple-100 dark:hover:bg-purple-900/50",
   },
 };
+
+const DEFAULT_STYLES = COURSE_TYPE_STYLES.english;
 
 export function TimetableCell({
   entry,
   onClick,
   isActive,
-  compact = false,
 }: TimetableCellProps) {
-  const styles = COURSE_TYPE_STYLES[entry.course_type] ?? DEFAULT_STYLES;
-
-  const handleClick = () => {
-    if (onClick) {
-      onClick(entry);
-    }
-  };
-
-  // Get badge text
-  const getBadgeText = () => {
-    if (entry.course_type === "ev") {
-      return "EV";
-    }
-    return "ENG";
-  };
+  const styles =
+    COURSE_TYPE_STYLES[entry.course_type as keyof typeof COURSE_TYPE_STYLES] ??
+    DEFAULT_STYLES;
 
   return (
     <button
-      onClick={handleClick}
+      onClick={() => onClick?.(entry)}
       className={cn(
-        "w-full p-2 rounded-md border text-left transition-all",
+        "group w-full h-full min-h-[52px] rounded-lg text-left transition-all duration-200",
+        "flex items-stretch overflow-hidden",
         styles.bg,
-        styles.border,
-        onClick ? "cursor-pointer hover:shadow-md" : "cursor-default",
-        isActive ? "ring-2 ring-primary" : ""
+        styles.hover,
+        onClick && "cursor-pointer active:scale-[0.98]",
+        isActive && "ring-2 ring-primary ring-offset-1"
       )}
     >
-      {/* Class name */}
-      <div className={cn("font-medium text-sm truncate", styles.text)}>
-        {entry.class_name}
-      </div>
+      {/* Color accent bar */}
+      <div className={cn("w-1 shrink-0", styles.accent)} />
 
-      {!compact && (
-        <>
-          {/* Badge */}
-          <div className="mt-1">
-            <span
-              className={cn(
-                "inline-block px-1.5 py-0.5 rounded text-[10px] font-medium",
-                styles.badge
-              )}
-            >
-              {getBadgeText()}
-            </span>
+      {/* Content */}
+      <div className="flex-1 px-2.5 py-2 min-w-0">
+        <div className={cn("font-medium text-[13px] leading-tight truncate", styles.text)}>
+          {entry.class_name}
+        </div>
+        {entry.classroom && (
+          <div className="text-[11px] text-text-tertiary mt-0.5 truncate opacity-70 group-hover:opacity-100 transition-opacity">
+            {entry.classroom}
           </div>
-
-          {/* Classroom */}
-          {entry.classroom && (
-            <div className="mt-1 flex items-center gap-1 text-xs text-text-tertiary">
-              <MapPin className="w-3 h-3" />
-              <span className="truncate">{entry.classroom}</span>
-            </div>
-          )}
-        </>
-      )}
+        )}
+      </div>
     </button>
   );
 }

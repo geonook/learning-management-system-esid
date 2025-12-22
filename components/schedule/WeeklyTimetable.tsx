@@ -41,53 +41,65 @@ export function WeeklyTimetable({
   onCellClick,
 }: WeeklyTimetableProps) {
   const formatTime = (time: string) => {
-    // time format: "08:25:00" or "08:25"
     return time.substring(0, 5);
   };
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-sm">
-        <thead>
-          <tr>
-            <th className="w-20 p-2 border border-border-default bg-surface-secondary text-text-secondary font-medium">
+    <div className="overflow-x-auto -mx-px">
+      <div className="min-w-[640px]">
+        {/* Header row */}
+        <div className="grid grid-cols-[72px_repeat(5,1fr)] gap-px bg-border-default">
+          {/* Period header */}
+          <div className="bg-surface-secondary py-3 px-2 text-center">
+            <span className="text-xs font-medium text-text-tertiary uppercase tracking-wider">
               Period
-            </th>
-            {DAYS.map((day) => (
-              <th
-                key={day}
+            </span>
+          </div>
+          {/* Day headers */}
+          {DAYS.map((day) => (
+            <div
+              key={day}
+              className={cn(
+                "py-3 px-2 text-center transition-colors",
+                currentDay === day
+                  ? "bg-primary/10"
+                  : "bg-surface-secondary"
+              )}
+            >
+              <span
                 className={cn(
-                  "p-2 border border-border-default font-medium text-center",
-                  currentDay === day
-                    ? "bg-primary/10 text-primary"
-                    : "bg-surface-secondary text-text-secondary"
+                  "text-sm font-semibold",
+                  currentDay === day ? "text-primary" : "text-text-primary"
                 )}
               >
                 <span className="hidden sm:inline">{day}</span>
                 <span className="sm:hidden">{DAY_SHORT[day]}</span>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Body rows */}
+        <div className="bg-border-default">
           {periods.map((period) => (
-            <tr key={period.period_number}>
-              {/* Period number and time */}
-              <td
+            <div
+              key={period.period_number}
+              className="grid grid-cols-[72px_repeat(5,1fr)] gap-px"
+            >
+              {/* Period cell */}
+              <div
                 className={cn(
-                  "p-2 border border-border-default bg-surface-secondary text-center",
-                  currentPeriod === period.period_number
-                    ? "bg-primary/10"
-                    : ""
+                  "bg-surface-secondary py-3 px-2 text-center flex flex-col justify-center",
+                  currentPeriod === period.period_number && "bg-primary/5"
                 )}
               >
-                <div className="font-medium text-text-primary">
+                <div className="text-base font-semibold text-text-primary">
                   {period.period_number}
                 </div>
-                <div className="text-xs text-text-tertiary">
+                <div className="text-[11px] text-text-tertiary mt-0.5">
                   {formatTime(period.start_time)}
                 </div>
-              </td>
+              </div>
 
               {/* Day cells */}
               {DAYS.map((day) => {
@@ -96,27 +108,27 @@ export function WeeklyTimetable({
                   currentDay === day && currentPeriod === period.period_number;
 
                 return (
-                  <td
+                  <div
                     key={`${day}-${period.period_number}`}
                     className={cn(
-                      "p-1 border border-border-default",
-                      isCurrentSlot ? "bg-primary/5 ring-2 ring-primary ring-inset" : ""
+                      "bg-surface-primary p-1.5 min-h-[64px]",
+                      isCurrentSlot && "bg-primary/5 ring-2 ring-primary ring-inset rounded-sm"
                     )}
                   >
-                    {entry ? (
+                    {entry && (
                       <TimetableCell
                         entry={entry}
                         onClick={onCellClick}
                         isActive={isCurrentSlot}
                       />
-                    ) : null}
-                  </td>
+                    )}
+                  </div>
                 );
               })}
-            </tr>
+            </div>
           ))}
-        </tbody>
-      </table>
+        </div>
+      </div>
     </div>
   );
 }
