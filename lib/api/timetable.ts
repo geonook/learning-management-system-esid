@@ -56,7 +56,6 @@ export interface TeacherScheduleStats {
   totalPeriods: number;
   uniqueClasses: number;
   englishPeriods: number;
-  homeroomPeriods: number;
   evPeriods: number;
   daysWithClasses: number;
 }
@@ -308,7 +307,6 @@ export async function getTeacherScheduleStatsByEmail(
       totalPeriods: 0,
       uniqueClasses: 0,
       englishPeriods: 0,
-      homeroomPeriods: 0,
       evPeriods: 0,
       daysWithClasses: 0,
     };
@@ -321,7 +319,6 @@ export async function getTeacherScheduleStatsByEmail(
     totalPeriods: data.length,
     uniqueClasses,
     englishPeriods: data.filter((d) => d.course_type === "english").length,
-    homeroomPeriods: data.filter((d) => d.course_type === "homeroom").length,
     evPeriods: data.filter((d) => d.course_type === "ev").length,
     daysWithClasses: uniqueDays,
   };
@@ -379,14 +376,13 @@ export function getClassDisplayInfo(entry: TimetableEntry): {
       badge = "ENG";
       badgeColor = "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
       break;
-    case "homeroom":
-      badge = entry.course_name || "HR";
-      badgeColor = "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
-      break;
     case "ev":
       badge = "EV";
       badgeColor = "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400";
       break;
+    default:
+      badge = "ENG";
+      badgeColor = "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
   }
 
   return {
@@ -439,7 +435,6 @@ export async function getCurrentUserSchedule(
       totalPeriods: 0,
       uniqueClasses: 0,
       englishPeriods: 0,
-      homeroomPeriods: 0,
       evPeriods: 0,
       daysWithClasses: 0,
     };

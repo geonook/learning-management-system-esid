@@ -15,9 +15,8 @@ interface TodayScheduleProps {
   onClassClick?: (entry: TimetableEntryWithPeriod) => void;
 }
 
-const COURSE_TYPE_COLORS = {
+const COURSE_TYPE_COLORS: Record<string, string> = {
   english: "bg-blue-500",
-  homeroom: "bg-green-500",
   ev: "bg-purple-500",
 };
 
@@ -63,7 +62,7 @@ export function TodaySchedule({
             <div
               className={cn(
                 "w-1 h-12 rounded-full",
-                COURSE_TYPE_COLORS[entry.course_type]
+                COURSE_TYPE_COLORS[entry.course_type] || COURSE_TYPE_COLORS.english
               )}
             />
 
@@ -83,9 +82,6 @@ export function TodaySchedule({
                 {entry.class_name}
               </div>
               <div className="flex items-center gap-3 text-xs text-text-secondary mt-0.5">
-                {entry.course_type === "homeroom" && entry.course_name && (
-                  <span>{entry.course_name}</span>
-                )}
                 {entry.classroom && (
                   <span className="flex items-center gap-1">
                     <MapPin className="w-3 h-3" />
@@ -151,7 +147,7 @@ export function TodayScheduleCard({
               <div
                 className={cn(
                   "w-1 h-8 rounded-full",
-                  COURSE_TYPE_COLORS[entry.course_type]
+                  COURSE_TYPE_COLORS[entry.course_type] || COURSE_TYPE_COLORS.english
                 )}
               />
               <div className="flex-1 min-w-0">

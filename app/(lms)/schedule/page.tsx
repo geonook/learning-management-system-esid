@@ -135,7 +135,7 @@ export default function SchedulePage() {
 
         {/* Stats cards */}
         {stats && stats.totalPeriods > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
             <div className="bg-surface-primary border border-border-default rounded-lg p-3">
               <div className="text-2xl font-semibold text-text-primary">
                 {stats.totalPeriods}
@@ -153,12 +153,6 @@ export default function SchedulePage() {
                 {stats.englishPeriods}
               </div>
               <div className="text-xs text-text-secondary">English</div>
-            </div>
-            <div className="bg-surface-primary border border-border-default rounded-lg p-3">
-              <div className="text-2xl font-semibold text-green-600">
-                {stats.homeroomPeriods}
-              </div>
-              <div className="text-xs text-text-secondary">Homeroom</div>
             </div>
           </div>
         )}
@@ -221,10 +215,6 @@ export default function SchedulePage() {
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded bg-blue-500" />
               <span>English</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded bg-green-500" />
-              <span>Homeroom</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded bg-purple-500" />

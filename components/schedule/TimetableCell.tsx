@@ -11,19 +11,15 @@ interface TimetableCellProps {
   compact?: boolean;
 }
 
-const COURSE_TYPE_STYLES = {
-  english: {
-    bg: "bg-blue-50 dark:bg-blue-900/20",
-    border: "border-blue-200 dark:border-blue-800",
-    badge: "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300",
-    text: "text-blue-900 dark:text-blue-100",
-  },
-  homeroom: {
-    bg: "bg-green-50 dark:bg-green-900/20",
-    border: "border-green-200 dark:border-green-800",
-    badge: "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300",
-    text: "text-green-900 dark:text-green-100",
-  },
+const DEFAULT_STYLES = {
+  bg: "bg-blue-50 dark:bg-blue-900/20",
+  border: "border-blue-200 dark:border-blue-800",
+  badge: "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300",
+  text: "text-blue-900 dark:text-blue-100",
+};
+
+const COURSE_TYPE_STYLES: Record<string, typeof DEFAULT_STYLES> = {
+  english: DEFAULT_STYLES,
   ev: {
     bg: "bg-purple-50 dark:bg-purple-900/20",
     border: "border-purple-200 dark:border-purple-800",
@@ -38,7 +34,7 @@ export function TimetableCell({
   isActive,
   compact = false,
 }: TimetableCellProps) {
-  const styles = COURSE_TYPE_STYLES[entry.course_type];
+  const styles = COURSE_TYPE_STYLES[entry.course_type] ?? DEFAULT_STYLES;
 
   const handleClick = () => {
     if (onClick) {
@@ -48,9 +44,6 @@ export function TimetableCell({
 
   // Get badge text
   const getBadgeText = () => {
-    if (entry.course_type === "homeroom" && entry.course_name) {
-      return entry.course_name;
-    }
     if (entry.course_type === "ev") {
       return "EV";
     }
