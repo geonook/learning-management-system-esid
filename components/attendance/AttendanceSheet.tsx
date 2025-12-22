@@ -61,9 +61,9 @@ export function AttendanceSheet({
     setLoading(true);
     const supabase = createClient();
 
-    // Get enrolled students
+    // Get enrolled students from student_courses table
     const { data: enrollments } = await supabase
-      .from("enrollments")
+      .from("student_courses")
       .select(
         `
         student:students!inner(
@@ -74,6 +74,7 @@ export function AttendanceSheet({
       `
       )
       .eq("course_id", courseId)
+      .eq("is_active", true)
       .order("student(full_name)");
 
     // Get existing attendance for this date
