@@ -114,16 +114,8 @@ export default function ClassAttendancePage() {
   const selectedCourse = courses.find((c) => c.id === selectedCourseId);
 
   const getCourseTypeLabel = (type: string) => {
-    switch (type) {
-      case "LT":
-        return "Lead Teacher";
-      case "IT":
-        return "International Teacher";
-      case "KCFS":
-        return "KCFS";
-      default:
-        return type;
-    }
+    // Simply return the course type code (LT, IT, KCFS)
+    return type;
   };
 
   if (loading) {
