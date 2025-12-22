@@ -102,9 +102,9 @@ export default function DevLoginPage() {
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'LT': return 'bg-green-600'
+      case 'LT': return 'bg-blue-600'
       case 'IT': return 'bg-blue-600'
-      case 'KCFS': return 'bg-purple-600'
+      case 'KCFS': return 'bg-emerald-600'
       case 'Office': return 'bg-slate-600'
       case 'Admin': return 'bg-red-600'
       default: return 'bg-slate-600'

@@ -21,19 +21,19 @@ const teacherTypes = [
     id: "IT" as const,
     title: "International Teacher",
     icon: Globe,
-    color: "from-green-500 to-green-600",
-    bgColor: "bg-green-50 dark:bg-green-950/30",
-    borderColor: "border-green-200 dark:border-green-800",
-    hoverColor: "hover:border-green-400 dark:hover:border-green-600"
+    color: "from-blue-500 to-blue-600",
+    bgColor: "bg-blue-50 dark:bg-blue-950/30",
+    borderColor: "border-blue-200 dark:border-blue-800",
+    hoverColor: "hover:border-blue-400 dark:hover:border-blue-600"
   },
   {
     id: "KCFS" as const,
     title: "KCFS Teacher",
     icon: Lightbulb,
-    color: "from-purple-500 to-purple-600",
-    bgColor: "bg-purple-50 dark:bg-purple-950/30",
-    borderColor: "border-purple-200 dark:border-purple-800",
-    hoverColor: "hover:border-purple-400 dark:hover:border-purple-600"
+    color: "from-emerald-500 to-emerald-600",
+    bgColor: "bg-emerald-50 dark:bg-emerald-950/30",
+    borderColor: "border-emerald-200 dark:border-emerald-800",
+    hoverColor: "hover:border-emerald-400 dark:hover:border-emerald-600"
   }
 ]
 
