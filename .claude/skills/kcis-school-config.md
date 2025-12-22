@@ -124,12 +124,23 @@ KCFS 學期成績 = 50 + Σ(類別分數 × 權重)
 - 格式: `YYYY-YYYY` (例: `2025-2026`)
 - 當前學年: `2025-2026`
 
-### 學期 (Term)
+### 學期 (Semester)
 
-| Term | 中文 | 月份 |
-|------|------|------|
-| Term 1 | 第一學期 | 9月 - 1月 |
-| Term 2 | 第二學期 | 2月 - 6月 |
+| Semester | 中文 | 月份 |
+|----------|------|------|
+| Fall (1) | 秋季學期 | 9月 - 1月 |
+| Spring (2) | 春季學期 | 2月 - 6月 |
+
+### 學期階段 (Term)
+
+每個 Semester 包含 2 個 Term（期中、期末）：
+
+| Term | Semester | 中文 | 說明 |
+|------|----------|------|------|
+| Term 1 | Fall | 秋季期中 | Fall Midterm |
+| Term 2 | Fall | 秋季期末 | Fall Final |
+| Term 3 | Spring | 春季期中 | Spring Midterm |
+| Term 4 | Spring | 春季期末 | Spring Final |
 
 ### 課表節次
 
