@@ -17,11 +17,13 @@ import { Loader2, BookOpen } from "lucide-react";
 
 interface Course {
   id: string;
-  name: string;
   course_type: string;
   teacher_id: string;
   teacher?: {
-    display_name: string | null;
+    full_name: string | null;
+  };
+  class?: {
+    name: string;
   };
 }
 
@@ -65,10 +67,10 @@ export default function ClassAttendancePage() {
         .select(
           `
           id,
-          name,
           course_type,
           teacher_id,
-          teacher:users!courses_teacher_id_fkey(display_name)
+          teacher:users!courses_teacher_id_fkey(full_name),
+          class:classes!courses_class_id_fkey(name)
         `
         )
         .eq("class_id", classId)
@@ -170,10 +172,10 @@ export default function ClassAttendancePage() {
                     >
                       {course.course_type}
                     </span>
-                    {course.name}
-                    {course.teacher?.display_name && (
+                    {course.class?.name || "Course"}
+                    {course.teacher?.full_name && (
                       <span className="text-muted-foreground">
-                        - {course.teacher.display_name}
+                        - {course.teacher.full_name}
                       </span>
                     )}
                   </span>
@@ -188,7 +190,7 @@ export default function ClassAttendancePage() {
       {selectedCourseId && selectedCourse ? (
         <AttendanceSheet
           courseId={selectedCourseId}
-          courseName={`${getCourseTypeLabel(selectedCourse.course_type)} - ${selectedCourse.name}`}
+          courseName={`${getCourseTypeLabel(selectedCourse.course_type)} - ${selectedCourse.class?.name || classInfo?.name || ""}`}
           className={classInfo?.name || ""}
         />
       ) : (
