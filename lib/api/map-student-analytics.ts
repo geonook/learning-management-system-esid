@@ -122,23 +122,24 @@ export interface BenchmarkHistoryPoint {
 
 export interface StudentRankings {
   termTested: string;
+  level: string | null; // E1/E2/E3
   reading: {
     score: number;
-    classRank: number;
-    classTotal: number;
+    levelRank: number;
+    levelTotal: number;
     gradeRank: number;
     gradeTotal: number;
-    classAvg: number;
+    levelAvg: number;
     gradeAvg: number;
     norm: number | null;
   } | null;
   languageUsage: {
     score: number;
-    classRank: number;
-    classTotal: number;
+    levelRank: number;
+    levelTotal: number;
     gradeRank: number;
     gradeTotal: number;
-    classAvg: number;
+    levelAvg: number;
     gradeAvg: number;
     norm: number | null;
   } | null;
@@ -541,7 +542,18 @@ export async function getStudentBenchmarkHistory(
 }
 
 /**
+ * 從 class level (如 "G3E2") 提取 English Level (如 "E2")
+ */
+function extractEnglishLevel(classLevel: string | null): string | null {
+  if (!classLevel) return null;
+  const match = classLevel.match(/E[1-3]$/);
+  return match ? match[0] : null;
+}
+
+/**
  * 取得學生排名比較
+ * - Level 排名：同年級 + 同 English Level (E1/E2/E3) 的學生
+ * - Grade 排名：同年級所有學生
  */
 export async function getStudentRankings(
   studentNumber: string,
@@ -579,7 +591,18 @@ export async function getStudentRankings(
   const studentReading = studentData.find((d) => d.course === "Reading")?.rit_score ?? null;
   const studentLU = studentData.find((d) => d.course === "Language Usage")?.rit_score ?? null;
 
-  // 取得年級所有學生的成績（使用學生目前年級）
+  // 取得該學生的 level（從 students 表或 classes 表）
+  let studentLevel: string | null = null;
+  if (classId) {
+    const { data: classData } = await supabase
+      .from("classes")
+      .select("level")
+      .eq("id", classId)
+      .single();
+    studentLevel = extractEnglishLevel(classData?.level ?? null);
+  }
+
+  // 取得年級所有學生的成績（包含 level 資訊）
   const { data: gradeData } = await supabase
     .from("map_assessments")
     .select(`
@@ -589,7 +612,10 @@ export async function getStudentRankings(
       students:student_id (
         grade,
         class_id,
-        is_active
+        is_active,
+        classes:class_id (
+          level
+        )
       )
     `)
     .eq("term_tested", targetTerm)
@@ -599,7 +625,12 @@ export async function getStudentRankings(
 
   // 過濾活躍學生和該年級
   const filteredData = gradeData.filter((d) => {
-    const student = d.students as unknown as { grade: number; class_id: string; is_active: boolean } | null;
+    const student = d.students as unknown as {
+      grade: number;
+      class_id: string;
+      is_active: boolean;
+      classes: { level: string | null } | null;
+    } | null;
     return student?.is_active === true && student?.grade === grade;
   });
 
@@ -616,20 +647,23 @@ export async function getStudentRankings(
       ? gradeScores.reduce((a, b) => a + b, 0) / gradeScores.length
       : 0;
 
-    // 班級排名
-    let classRank = 0;
-    let classTotal = 0;
-    let classAvg = 0;
-    if (classId) {
-      const classData = courseData.filter((d) => {
-        const student = d.students as unknown as { class_id: string } | null;
-        return student?.class_id === classId;
+    // Level 排名（同年級 + 同 English Level）
+    let levelRank = 0;
+    let levelTotal = 0;
+    let levelAvg = 0;
+    if (studentLevel) {
+      const levelData = courseData.filter((d) => {
+        const student = d.students as unknown as {
+          classes: { level: string | null } | null
+        } | null;
+        const classLevel = student?.classes?.level ?? null;
+        return extractEnglishLevel(classLevel) === studentLevel;
       });
-      const classScores = classData.map((d) => d.rit_score).sort((a, b) => b - a);
-      classRank = classScores.findIndex((s) => s === studentScore) + 1;
-      classTotal = classScores.length;
-      classAvg = classScores.length > 0
-        ? classScores.reduce((a, b) => a + b, 0) / classScores.length
+      const levelScores = levelData.map((d) => d.rit_score).sort((a, b) => b - a);
+      levelRank = levelScores.findIndex((s) => s === studentScore) + 1;
+      levelTotal = levelScores.length;
+      levelAvg = levelScores.length > 0
+        ? levelScores.reduce((a, b) => a + b, 0) / levelScores.length
         : 0;
     }
 
@@ -641,11 +675,11 @@ export async function getStudentRankings(
 
     return {
       score: studentScore,
-      classRank: classRank || 1,
-      classTotal: classTotal || 1,
+      levelRank: levelRank || 1,
+      levelTotal: levelTotal || 1,
       gradeRank: gradeRank || 1,
       gradeTotal: gradeScores.length,
-      classAvg: Math.round(classAvg * 10) / 10,
+      levelAvg: Math.round(levelAvg * 10) / 10,
       gradeAvg: Math.round(gradeAvg * 10) / 10,
       norm,
     };
@@ -653,6 +687,7 @@ export async function getStudentRankings(
 
   return {
     termTested: targetTerm,
+    level: studentLevel,
     reading: calculateRankings("Reading", studentReading),
     languageUsage: calculateRankings("Language Usage", studentLU),
   };

@@ -7,6 +7,20 @@ interface StudentPeerComparisonProps {
   data: RankingsData | null;
 }
 
+// Level badge colors
+const getLevelBadgeStyle = (level: string | null) => {
+  switch (level) {
+    case "E1":
+      return "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400";
+    case "E2":
+      return "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400";
+    case "E3":
+      return "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400";
+    default:
+      return "bg-gray-100 text-gray-700 dark:bg-gray-500/20 dark:text-gray-400";
+  }
+};
+
 export function StudentPeerComparison({ data }: StudentPeerComparisonProps) {
   if (!data) {
     return (
@@ -20,7 +34,7 @@ export function StudentPeerComparison({ data }: StudentPeerComparisonProps) {
     );
   }
 
-  const { termTested, reading, languageUsage } = data;
+  const { termTested, level, reading, languageUsage } = data;
 
   const getDiffIndicator = (diff: number) => {
     if (diff > 0) return { icon: TrendingUp, color: "text-green-600 dark:text-green-400", prefix: "+" };
@@ -47,16 +61,16 @@ export function StudentPeerComparison({ data }: StudentPeerComparisonProps) {
     subject: string;
     subjectData: NonNullable<RankingsData["reading"]>;
   }) => {
-    const classPercentile = getRankPercentile(subjectData.classRank, subjectData.classTotal);
+    const levelPercentile = getRankPercentile(subjectData.levelRank, subjectData.levelTotal);
     const gradePercentile = getRankPercentile(subjectData.gradeRank, subjectData.gradeTotal);
 
-    const vsClass = Math.round((subjectData.score - subjectData.classAvg) * 10) / 10;
+    const vsLevel = Math.round((subjectData.score - subjectData.levelAvg) * 10) / 10;
     const vsGrade = Math.round((subjectData.score - subjectData.gradeAvg) * 10) / 10;
     const vsNorm = subjectData.norm !== null
       ? Math.round((subjectData.score - subjectData.norm) * 10) / 10
       : null;
 
-    const classIndicator = getDiffIndicator(vsClass);
+    const levelIndicator = getDiffIndicator(vsLevel);
     const gradeIndicator = getDiffIndicator(vsGrade);
     const normIndicator = vsNorm !== null ? getDiffIndicator(vsNorm) : null;
 
@@ -72,19 +86,26 @@ export function StudentPeerComparison({ data }: StudentPeerComparisonProps) {
 
         {/* Rankings */}
         <div className="space-y-3 mb-4">
-          {/* Class Rank */}
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-text-secondary">Class Rank</span>
-            <div className="flex items-center gap-2">
-              <span className={`font-medium ${getRankColor(classPercentile)}`}>
-                {subjectData.classRank} / {subjectData.classTotal}
-              </span>
-              {classPercentile <= 10 && <Trophy className="w-4 h-4 text-amber-500" />}
-              <span className="text-xs text-text-tertiary">
-                (Top {classPercentile}%)
-              </span>
+          {/* Level Rank */}
+          {level && subjectData.levelTotal > 0 && (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-text-secondary">Level Rank</span>
+                <span className={`text-xs px-1.5 py-0.5 rounded ${getLevelBadgeStyle(level)}`}>
+                  {level}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`font-medium ${getRankColor(levelPercentile)}`}>
+                  {subjectData.levelRank} / {subjectData.levelTotal}
+                </span>
+                {levelPercentile <= 10 && <Trophy className="w-4 h-4 text-amber-500" />}
+                <span className="text-xs text-text-tertiary">
+                  (Top {levelPercentile}%)
+                </span>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Grade Rank */}
           <div className="flex items-center justify-between">
@@ -103,16 +124,18 @@ export function StudentPeerComparison({ data }: StudentPeerComparisonProps) {
 
         {/* Comparisons */}
         <div className="pt-3 border-t border-border-subtle space-y-2">
-          {/* vs Class */}
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-text-tertiary">vs Class Avg ({subjectData.classAvg})</span>
-            <div className="flex items-center gap-1">
-              <classIndicator.icon className={`w-3 h-3 ${classIndicator.color}`} />
-              <span className={classIndicator.color}>
-                {classIndicator.prefix}{vsClass}
-              </span>
+          {/* vs Level */}
+          {level && subjectData.levelTotal > 0 && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-text-tertiary">vs {level} Avg ({subjectData.levelAvg})</span>
+              <div className="flex items-center gap-1">
+                <levelIndicator.icon className={`w-3 h-3 ${levelIndicator.color}`} />
+                <span className={levelIndicator.color}>
+                  {levelIndicator.prefix}{vsLevel}
+                </span>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* vs Grade */}
           <div className="flex items-center justify-between text-sm">
@@ -160,7 +183,14 @@ export function StudentPeerComparison({ data }: StudentPeerComparisonProps) {
   return (
     <div className="bg-surface-elevated rounded-xl border border-border-default p-6 shadow-sm">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-text-primary">Comparison with Peers</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-text-primary">Comparison with Peers</h3>
+          {level && (
+            <span className={`text-xs px-2 py-1 rounded-full ${getLevelBadgeStyle(level)}`}>
+              {level}
+            </span>
+          )}
+        </div>
         <span className="text-sm text-text-tertiary">{termTested}</span>
       </div>
 
