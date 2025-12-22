@@ -89,14 +89,23 @@ export function WeeklyTimetable({
               {/* Period cell */}
               <div
                 className={cn(
-                  "bg-surface-secondary py-3 px-2 text-center flex flex-col justify-center",
-                  currentPeriod === period.period_number && "bg-primary/5"
+                  "bg-surface-secondary py-3 px-2 text-center flex flex-col justify-center relative",
+                  currentPeriod === period.period_number && "bg-primary/10"
                 )}
               >
-                <div className="text-base font-semibold text-text-primary">
+                {currentPeriod === period.period_number && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r" />
+                )}
+                <div className={cn(
+                  "text-base font-semibold",
+                  currentPeriod === period.period_number ? "text-primary" : "text-text-primary"
+                )}>
                   {period.period_number}
                 </div>
-                <div className="text-[11px] text-text-tertiary mt-0.5">
+                <div className={cn(
+                  "text-[11px] mt-0.5",
+                  currentPeriod === period.period_number ? "text-primary/70" : "text-text-tertiary"
+                )}>
                   {formatTime(period.start_time)}
                 </div>
               </div>

@@ -44,7 +44,7 @@ export function TimetableCell({
         styles.bg,
         styles.hover,
         onClick && "cursor-pointer active:scale-[0.98]",
-        isActive && "ring-1 ring-primary"
+        isActive && "shadow-[0_0_0_2px] shadow-primary/50"
       )}
     >
       {/* Color accent bar */}
