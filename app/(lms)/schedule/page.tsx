@@ -77,14 +77,14 @@ export default function SchedulePage() {
   }, [userId, isReady]);
 
   const handleCellClick = (entry: TimetableEntryWithPeriod) => {
-    if (!entry.course_id) return;
+    if (!entry.class_id) return;
 
     if (entry.course_type === "ev" || entry.course_type === "kcfs") {
       // EV/KCFS 課程：跳轉到課程頁面（無點名功能）
-      window.location.href = `/class/${entry.course_id}`;
+      window.location.href = `/class/${entry.class_id}`;
     } else {
       // English 課程：直接跳轉到點名頁面
-      window.location.href = `/class/${entry.course_id}/attendance`;
+      window.location.href = `/class/${entry.class_id}/attendance`;
     }
   };
 

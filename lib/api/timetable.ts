@@ -36,6 +36,7 @@ export interface TimetableEntry {
   course_name: string | null;
   classroom: string | null;
   course_id: string | null;
+  class_id: string | null;
   academic_year: string;
 }
 
@@ -172,7 +173,10 @@ export async function getTeacherScheduleByEmail(
 
   const { data, error } = await supabase
     .from("timetable_entries")
-    .select("*")
+    .select(`
+      *,
+      course:courses!timetable_entries_course_id_fkey(class_id)
+    `)
     .eq("teacher_email", email.toLowerCase())
     .eq("academic_year", academicYear)
     .order("period");
@@ -194,6 +198,7 @@ export async function getTeacherScheduleByEmail(
       const period = periodMap.get(entry.period);
       const entryWithPeriod: TimetableEntryWithPeriod = {
         ...entry,
+        class_id: entry.course?.class_id || null,
         start_time: period?.start_time || "",
         end_time: period?.end_time || "",
       };
