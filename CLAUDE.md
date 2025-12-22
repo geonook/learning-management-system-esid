@@ -1,6 +1,6 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 4.3
+> **Documentation Version**: 4.4
 > **Last Updated**: 2025-12-22
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School LMS with Next.js + TypeScript + Supabase Cloud
@@ -16,10 +16,10 @@ This file provides essential guidance to Claude Code when working with code in t
 
 **Recent Additions**:
 - Teacher Schedule page (`/schedule`) with weekly timetable grid
-- Click-to-attendance: English courses → attendance page, EV/KCFS → course page
-- Three course types in timetable: English (blue), KCFS (emerald), EV (purple)
-- Current period highlighting with visual indicator
-- MAP Peer Comparison uses English Level (E1/E2/E3) grouping for privacy
+- Attendance system with P/L/A/S status and behavior tags
+- Click-to-attendance: English → attendance page, EV/KCFS → course page
+- Email-only teacher matching (unique identifier)
+- MAP Peer Comparison uses English Level grouping for privacy
 
 **Next Steps**:
 1. Sprint 7: Student historical grade reports

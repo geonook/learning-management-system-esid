@@ -75,13 +75,10 @@ lib/api/
 ### lib/api/timetable.ts
 
 ```typescript
-// Get schedule by email (primary matching method)
+// Get schedule by email (唯一匹配方式)
 getTeacherScheduleByEmail(email: string, academicYear?: string): Promise<WeeklyTimetable>
 
-// Get schedule by name (fallback)
-getTeacherScheduleByName(teacherName: string, academicYear?: string): Promise<WeeklyTimetable>
-
-// Get current user's schedule (auto-detect matching method)
+// Get current user's schedule (使用 email 匹配)
 getCurrentUserSchedule(userId: string, academicYear?: string): Promise<{
   weekly: WeeklyTimetable;
   stats: TeacherScheduleStats;

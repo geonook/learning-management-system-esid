@@ -442,3 +442,68 @@ timetable_periods (
 - English: 1,064 筆 (100% 有 course_id)
 - KCFS: 167 筆 (100% 有 course_id)
 - EV: 56 筆 (不需 course_id)
+
+---
+
+## Attendance System (v1.56.0)
+
+### 功能概述
+
+課程點名系統，從課表點擊進入：
+- **點名頁面**：顯示課程學生列表
+- **狀態選擇**：P (出席) / L (遲到) / A (缺席) / S (病假)
+- **行為標籤**：正向/負向行為記錄
+- **批次儲存**：自動儲存點名狀態
+
+### 頁面路徑
+
+```
+/class/[classId]/attendance    # 點名頁面（從課表進入）
+```
+
+### 點名狀態
+
+| 代碼 | 英文 | 顏色 |
+|------|------|------|
+| P | Present | 綠色 |
+| L | Late | 黃色 |
+| A | Absent | 紅色 |
+| S | Sick | 藍色 |
+
+### 相關檔案
+
+| 檔案 | 說明 |
+|------|------|
+| `app/(lms)/class/[classId]/attendance/page.tsx` | 點名頁面 |
+| `components/attendance/AttendanceSheet.tsx` | 點名表元件 |
+| `components/attendance/AttendanceStatusButton.tsx` | 狀態按鈕 |
+| `components/attendance/BehaviorTagPicker.tsx` | 行為標籤選擇 |
+| `lib/api/attendance.ts` | API 函數 |
+
+### 權限控制
+
+| 角色 | 可見範圍 |
+|------|----------|
+| Teacher | 自己的課程 |
+| Head Teacher | 自己的課程 |
+| Admin | 所有課程 |
+
+### 資料表
+
+```sql
+-- 點名記錄
+attendance (
+  student_id, course_id, date, period,
+  status, recorded_by, note
+)
+
+-- 行為標籤
+behavior_tags (
+  name, name_zh, type, icon, sort_order
+)
+
+-- 學生行為記錄
+student_behaviors (
+  student_id, course_id, tag_id, date, recorded_by
+)
+```

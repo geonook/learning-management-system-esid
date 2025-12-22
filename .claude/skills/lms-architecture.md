@@ -68,16 +68,13 @@ CREATE TABLE courses (
 
 **格式**：`G[1-6]E[1-3]`
 
-| Level | 說明 |
-|-------|------|
-| G1E1 | 一年級頂尖 |
-| G1E2 | 一年級中等 |
-| G1E3 | 一年級基礎 |
-| G4E2 | 四年級中等 |
-| G6E3 | 六年級基礎 |
+| Level |
+|-------|
+| E1 |
+| E2 |
+| E3 |
 
-**重要**：不同年級的 E1 能力標準不同
-- G1E1（一年級頂尖）≠ G4E1（四年級頂尖）
+**重要**：不同年級的 E1 能力標準不同，只在同年級內比較 Level
 
 **資料庫欄位**：TEXT 型別，帶 CHECK 約束驗證格式
 
@@ -167,7 +164,7 @@ communications     - 家長通訊記錄
 gradebook_expectations - 成績預期設定
 ```
 
-### MAP 資料表（NWEA MAP Growth）
+### MAP 資料表（NWEA MAP Growth，G3-G6 only）
 
 ```
 map_assessments    - MAP 測驗成績
@@ -176,6 +173,29 @@ map_assessments    - MAP 測驗成績
 
 map_goal_scores    - 目標領域分數
                      assessment_id, goal_name, goal_rit_range
+```
+
+### 點名系統資料表
+
+```
+attendance         - 點名記錄
+                     student_id, course_id, date, period, status (P/L/A/S)
+
+behavior_tags      - 行為標籤定義
+                     name, type (positive/negative)
+
+student_behaviors  - 學生行為記錄
+                     student_id, course_id, tag_id, date
+```
+
+### 課表系統資料表
+
+```
+timetable_entries  - 課表項目
+                     teacher_email, day, period, class_name, course_type, course_id
+
+timetable_periods  - 節次時間定義
+                     period_number, start_time, end_time
 ```
 
 ### 資料表關聯圖

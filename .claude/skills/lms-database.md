@@ -1,7 +1,9 @@
 # LMS Database Skill
 
-> Supabase 資料庫查詢模式、RLS 政策、Migration 關鍵記錄
+> Supabase 資料庫查詢模式、RLS 政策、Migration 記錄
 > Last Updated: 2025-12-22
+>
+> **相關 Skill**: [kcis-school-config.md](kcis-school-config.md) - 學校專屬設定
 
 ## Database Connection Strings
 
