@@ -16,7 +16,7 @@ Statistical analysis framework for NWEA MAP Growth data at KCIS, enabling compar
 | **Grade** | G3, G4, G5, G6 |
 | **English Level** | E1 (Advanced), E2 (Intermediate), E3 (Developing) |
 | **Course** | Reading, Language Usage |
-| **MapTerm** | Fall, Winter, Spring (distinct from ELA Term 1-4) |
+| **MapTerm** | fall, winter, spring (distinct from ELA Term 1-4) |
 | **Metrics** | RIT Score, Average (両科平均) |
 
 ## Key Statistics
@@ -111,13 +111,32 @@ The student detail page (`/student/[id]`) includes a MAP Analytics Tab for G3-G6
 - `getStudentRankings()` - Calculates Level and Grade rankings
 - `extractEnglishLevel()` - Extracts E1/E2/E3 from class level (e.g., "G3E2" → "E2")
 
-### Other Components
+### UI Components (v1.57.0+)
 
-- **Benchmark Status**: E1/E2/E3 classification based on test grade thresholds
-- **Growth Index**: Fall → Spring growth compared to expected growth
-- **Goal Areas**: Reading/Language Usage goal performance vs overall RIT
-- **Lexile Level**: Lexile score band and recommended reading range
-- **Benchmark History**: Historical benchmark trend across terms
+All components include teacher-friendly explanations for non-technical users.
+
+| Component | Description |
+|-----------|-------------|
+| **ScoreSummaryCards** | Hero cards with RIT, Percentile, Achievement Status |
+| **ProjectedProficiency** | Spring projection (On Track / Exceeding / Needs Support) |
+| **StudentGrowthIndex** | Official Growth Index, Met/Not Met, Growth Quintile |
+| **StudentBenchmarkStatus** | E1/E2/E3 classification with progress bar |
+| **StudentGoalAreas** | Instructional areas with ★ Strength / ◆ Focus markers |
+| **StudentPeerComparison** | Level/Grade ranks and averages comparison |
+| **StudentLexileLevel** | Lexile score, band, recommended book range |
+| **TestValidityWarning** | Rapid Guessing alerts (>15%, >25% thresholds) |
+| **StudentBenchmarkHistory** | Historical benchmark trend across terms |
+
+### Data Sources
+
+Components prioritize **official CDF data** when available:
+- `test_percentile` → Official percentile (over calculated)
+- `achievement_quintile` → Official quintile (Low/LoAvg/Avg/HiAvg/High)
+- `conditional_growth_index` → Official growth index
+- `growth_quintile` → Official growth quintile
+- `met_projected_growth` → Official met/not met status
+
+Falls back to calculated values when CDF data is not available.
 
 ## Visualization
 

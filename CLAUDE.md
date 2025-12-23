@@ -1,25 +1,26 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 4.4
-> **Last Updated**: 2025-12-22
+> **Documentation Version**: 4.5
+> **Last Updated**: 2025-12-23
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School LMS with Next.js + TypeScript + Supabase Cloud
-> **Current Version**: v1.56.0 - Teacher Schedule & Attendance System
+> **Current Version**: v1.57.0 - MAP Official CDF Data & Teacher-Friendly Explanations
 
 This file provides essential guidance to Claude Code when working with code in this repository.
 
 ## Current Status
 
-- **v1.56.0** - Teacher Schedule with click-to-attendance navigation
+- **v1.57.0** - MAP CDF import with official NWEA data + UI explanations
 - **Production**: 84 classes, 504 courses (2 academic years), 1514 students
 - **Tech Stack**: Next.js 14 (App Router) + TypeScript + Tailwind + Supabase Cloud
 
 **Recent Additions**:
+- **NWEA MAP CDF Import**: Official Combined Data File (140+ fields) import script
+- **Official NWEA Data**: Achievement Quintile, Percentile, Growth Index from CDF
+- **Teacher-Friendly Explanations**: All MAP components now include explanatory text
+- **Test Validity Warning**: Rapid Guessing alerts (>15%, >25% thresholds)
 - Teacher Schedule page (`/schedule`) with weekly timetable grid
 - Attendance system with P/L/A/S status and behavior tags
-- Click-to-attendance: English → attendance page, EV/KCFS → course page
-- Email-only teacher matching (unique identifier)
-- MAP Peer Comparison uses English Level grouping for privacy
 
 **Next Steps**:
 1. Sprint 7: Student historical grade reports
@@ -216,6 +217,8 @@ git push origin develop  # Push to develop (auto-deploy)
 | [lms-troubleshooting](.claude/skills/lms-troubleshooting.md) | 已解決問題、除錯技巧 |
 | [lms-features](.claude/skills/lms-features.md) | Browse、Kanban、Communications |
 | [lms-teacher-timetable](.claude/skills/lms-teacher-timetable.md) | 課表系統、點名導航、課程類型 |
+| [lms-nwea-map](.claude/skills/lms-nwea-map/) | **MAP 系統**：CDF 匯入、成績分析、Benchmarks |
+| [lms-map-analytics](.claude/skills/lms-map-analytics/) | **MAP 分析**：UI 組件、官方資料、圖表 |
 
 ### Documentation
 | 類別 | 位置 |
