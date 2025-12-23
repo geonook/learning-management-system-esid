@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, Activity, TrendingUp, Target, History } from "lucide-react";
 import {
   getStudentMapAnalytics,
   getStudentProgressHistory,
   type StudentMapAnalytics,
   type ProgressHistoryPoint,
 } from "@/lib/api/map-student-analytics";
+import { CollapsibleSection } from "./CollapsibleSection";
 import { ScoreSummaryCards } from "./ScoreSummaryCards";
 import { ProjectedProficiency } from "./ProjectedProficiency";
 import { StudentBenchmarkStatus } from "./StudentBenchmarkStatus";
@@ -129,78 +130,105 @@ export function StudentMapAnalysisTab({
     );
   }
 
+  // 取得最新考試資料（用於 Test Validity Warning）
+  const latestData = progressHistory.length > 0
+    ? progressHistory[progressHistory.length - 1]
+    : null;
+
   return (
     <div className="space-y-8">
       {/* ============================================================ */}
-      {/* 第一層：這學期表現如何？ */}
+      {/* Section 1: Current Performance - 現在表現如何？ */}
       {/* ============================================================ */}
-
-      {/* 1. Score Summary - 現在幾分？在哪個百分位？ */}
-      {progressHistory.length > 0 && (
-        <ScoreSummaryCards
-          progressHistory={progressHistory}
-          rankings={rankings}
-        />
-      )}
-
-      {/* 2. Benchmark Status - 屬於 E1/E2/E3 哪一級？ */}
-      <StudentBenchmarkStatus data={benchmarkStatus} />
-
-      {/* 3. Test Validity Warning - 分數是否可信？ */}
-      {progressHistory.length > 0 && (() => {
-        const latestData = progressHistory[progressHistory.length - 1];
-        return (
-          <CombinedTestValidityWarning
-            readingRapidGuessing={latestData?.reading?.rapidGuessingPercent ?? null}
-            languageUsageRapidGuessing={latestData?.languageUsage?.rapidGuessingPercent ?? null}
-          />
-        );
-      })()}
-
-      {/* ============================================================ */}
-      {/* 第二層：跟過去/同儕比較 */}
-      {/* ============================================================ */}
-
-      {/* 4. Growth Index - 有沒有達到預期成長？ */}
-      <StudentGrowthIndex data={growthRecords} />
-
-      {/* 5. Progress Charts - 歷史趨勢視覺化 */}
-      {progressHistory.length > 0 && (
-        <StudentProgressCharts
-          data={progressHistory}
-          showPercentileBands
-          showProjection
-        />
-      )}
-
-      {/* 6. Peer Comparison - 跟同儕相比如何？ */}
-      <StudentPeerComparison data={rankings} />
-
-      {/* ============================================================ */}
-      {/* 第三層：具體哪裡強/弱？ */}
-      {/* ============================================================ */}
-
-      {/* 7. Goal Areas - 哪些技能強、哪些需加強？ */}
-      <StudentGoalAreas data={goalPerformance} />
-
-      {/* 8. Projected Proficiency - Spring 預測（僅 Fall） */}
-      {progressHistory.length > 0 && (
-        <ProjectedProficiency progressHistory={progressHistory} />
-      )}
-
-      {/* ============================================================ */}
-      {/* 第四層：補充資訊 */}
-      {/* ============================================================ */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* 9. Lexile Level - 適合讀什麼程度的書？ */}
-        <StudentLexileLevel data={lexileStatus} />
-        {/* 10. Benchmark History - 歷史分級變化 */}
-        <StudentBenchmarkHistory data={benchmarkHistory} currentGrade={grade} />
-        {/* 11. Assessment Tables - 原始數據 */}
+      <CollapsibleSection
+        title="Current Performance"
+        subtitle="Latest assessment results and benchmark status"
+        icon={<Activity className="w-5 h-5" />}
+        defaultOpen={true}
+      >
+        {/* Score Summary - RIT 分數、Percentile、Achievement Quintile */}
         {progressHistory.length > 0 && (
-          <StudentAssessmentTables data={progressHistory} collapsible />
+          <ScoreSummaryCards
+            progressHistory={progressHistory}
+            rankings={rankings}
+          />
         )}
-      </div>
+
+        {/* Benchmark Status - E1/E2/E3 分級 */}
+        <StudentBenchmarkStatus data={benchmarkStatus} />
+
+        {/* Test Validity Warning - Rapid Guessing 警示 */}
+        {latestData && (
+          <CombinedTestValidityWarning
+            readingRapidGuessing={latestData.reading?.rapidGuessingPercent ?? null}
+            languageUsageRapidGuessing={latestData.languageUsage?.rapidGuessingPercent ?? null}
+          />
+        )}
+      </CollapsibleSection>
+
+      {/* ============================================================ */}
+      {/* Section 2: Growth & Progress - 成長趨勢 */}
+      {/* ============================================================ */}
+      <CollapsibleSection
+        title="Growth & Progress"
+        subtitle="Historical trends and growth metrics"
+        icon={<TrendingUp className="w-5 h-5" />}
+        defaultOpen={true}
+      >
+        {/* Progress Charts - 圖表（仿官方報告） */}
+        {progressHistory.length > 0 && (
+          <StudentProgressCharts
+            data={progressHistory}
+            showPercentileBands
+            showProjection
+          />
+        )}
+
+        {/* Growth Index - Growth Index、Met/Not Met */}
+        <StudentGrowthIndex data={growthRecords} />
+
+        {/* Projected Proficiency - 下次考試預測 */}
+        {progressHistory.length > 0 && (
+          <ProjectedProficiency progressHistory={progressHistory} />
+        )}
+
+        {/* Peer Comparison - 同儕比較 */}
+        <StudentPeerComparison data={rankings} />
+      </CollapsibleSection>
+
+      {/* ============================================================ */}
+      {/* Section 3: Instructional Focus - 教學診斷 */}
+      {/* ============================================================ */}
+      <CollapsibleSection
+        title="Instructional Focus"
+        subtitle="Skill areas and reading level recommendations"
+        icon={<Target className="w-5 h-5" />}
+        defaultOpen={true}
+      >
+        {/* Goal Areas - 各技能領域表現 */}
+        <StudentGoalAreas data={goalPerformance} />
+
+        {/* Lexile Level - Lexile 分數、建議書籍 */}
+        <StudentLexileLevel data={lexileStatus} />
+      </CollapsibleSection>
+
+      {/* ============================================================ */}
+      {/* Section 4: Historical Data - 歷史資料（預設收合） */}
+      {/* ============================================================ */}
+      <CollapsibleSection
+        title="Historical Data"
+        subtitle="Complete assessment history and benchmark trends"
+        icon={<History className="w-5 h-5" />}
+        defaultOpen={false}
+      >
+        {/* Benchmark History - E1/E2/E3 歷史變化 */}
+        <StudentBenchmarkHistory data={benchmarkHistory} currentGrade={grade} />
+
+        {/* Assessment Tables - 完整原始數據表 */}
+        {progressHistory.length > 0 && (
+          <StudentAssessmentTables data={progressHistory} collapsible={false} />
+        )}
+      </CollapsibleSection>
     </div>
   );
 }

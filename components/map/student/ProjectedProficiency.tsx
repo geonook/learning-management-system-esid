@@ -68,9 +68,10 @@ export function ProjectedProficiency({
     return null;
   }
 
-  // 學年格式化
+  // 學年格式化（使用簡短格式：SP25）
   const yearParts = academicYear.split("-");
-  const springLabel = `Spring ${yearParts[0]}-${yearParts[1]}`;
+  const shortYear = yearParts[1]?.slice(-2) ?? "";
+  const springLabel = `SP${shortYear} (G${latestFallData.grade})`;
 
   return (
     <div className="bg-surface-elevated rounded-xl border border-border-default p-6 shadow-sm">
