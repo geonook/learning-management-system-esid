@@ -132,42 +132,39 @@ export function StudentMapAnalysisTab({
   return (
     <div className="space-y-8">
       {/* ============================================================ */}
-      {/* HERO: Score Summary Cards */}
-      {/* 兩張大卡片顯示最新 RIT 分數、成長、比較數據 */}
-      {/* 包含 Achievement Status 標籤和 Percentile 顯示 */}
+      {/* 第一層：這學期表現如何？ */}
       {/* ============================================================ */}
+
+      {/* 1. Score Summary - 現在幾分？在哪個百分位？ */}
       {progressHistory.length > 0 && (
-        <>
-          <ScoreSummaryCards
-            progressHistory={progressHistory}
-            rankings={rankings}
+        <ScoreSummaryCards
+          progressHistory={progressHistory}
+          rankings={rankings}
+        />
+      )}
+
+      {/* 2. Benchmark Status - 屬於 E1/E2/E3 哪一級？ */}
+      <StudentBenchmarkStatus data={benchmarkStatus} />
+
+      {/* 3. Test Validity Warning - 分數是否可信？ */}
+      {progressHistory.length > 0 && (() => {
+        const latestData = progressHistory[progressHistory.length - 1];
+        return (
+          <CombinedTestValidityWarning
+            readingRapidGuessing={latestData?.reading?.rapidGuessingPercent ?? null}
+            languageUsageRapidGuessing={latestData?.languageUsage?.rapidGuessingPercent ?? null}
           />
-          {/* Test Validity Warning - 顯示 Rapid Guessing 警告 */}
-          {(() => {
-            const latestData = progressHistory[progressHistory.length - 1];
-            return (
-              <CombinedTestValidityWarning
-                readingRapidGuessing={latestData?.reading?.rapidGuessingPercent ?? null}
-                languageUsageRapidGuessing={latestData?.languageUsage?.rapidGuessingPercent ?? null}
-              />
-            );
-          })()}
-        </>
-      )}
+        );
+      })()}
 
       {/* ============================================================ */}
-      {/* PROJECTED PROFICIENCY (僅 Fall 學期顯示) */}
-      {/* 預測學生在 Spring 是否能達到年級標準 */}
+      {/* 第二層：跟過去/同儕比較 */}
       {/* ============================================================ */}
-      {progressHistory.length > 0 && (
-        <ProjectedProficiency progressHistory={progressHistory} />
-      )}
 
-      {/* ============================================================ */}
-      {/* PRIMARY: Growth Trend Chart */}
-      {/* 全寬區域圖顯示 RIT 歷程、Grade Average、NWEA Norm */}
-      {/* 包含 Percentile Bands 背景和 Growth Projection 虛線 */}
-      {/* ============================================================ */}
+      {/* 4. Growth Index - 有沒有達到預期成長？ */}
+      <StudentGrowthIndex data={growthIndex} />
+
+      {/* 5. Progress Charts - 歷史趨勢視覺化 */}
       {progressHistory.length > 0 && (
         <StudentProgressCharts
           data={progressHistory}
@@ -176,31 +173,30 @@ export function StudentMapAnalysisTab({
         />
       )}
 
-      {/* ============================================================ */}
-      {/* SECONDARY: Analysis Grid */}
-      {/* Row 1: Growth Index | Benchmark Status (2 columns) */}
-      {/* Row 2: Goal Areas (full width) */}
-      {/* Row 3: Peer Comparison (full width) */}
-      {/* ============================================================ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <StudentGrowthIndex data={growthIndex} />
-        <StudentBenchmarkStatus data={benchmarkStatus} />
-      </div>
-
-      {/* Goal Areas - 全寬獨立區塊 */}
-      <StudentGoalAreas data={goalPerformance} />
-
-      {/* Peer Comparison - 全寬獨立區塊 */}
+      {/* 6. Peer Comparison - 跟同儕相比如何？ */}
       <StudentPeerComparison data={rankings} />
 
       {/* ============================================================ */}
-      {/* TERTIARY: Additional Information (3 columns) */}
-      {/* Lexile Level | Benchmark History | Assessment Details */}
+      {/* 第三層：具體哪裡強/弱？ */}
+      {/* ============================================================ */}
+
+      {/* 7. Goal Areas - 哪些技能強、哪些需加強？ */}
+      <StudentGoalAreas data={goalPerformance} />
+
+      {/* 8. Projected Proficiency - Spring 預測（僅 Fall） */}
+      {progressHistory.length > 0 && (
+        <ProjectedProficiency progressHistory={progressHistory} />
+      )}
+
+      {/* ============================================================ */}
+      {/* 第四層：補充資訊 */}
       {/* ============================================================ */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* 9. Lexile Level - 適合讀什麼程度的書？ */}
         <StudentLexileLevel data={lexileStatus} />
+        {/* 10. Benchmark History - 歷史分級變化 */}
         <StudentBenchmarkHistory data={benchmarkHistory} currentGrade={grade} />
-        {/* Assessment Table 移到這裡，設為可收合 */}
+        {/* 11. Assessment Tables - 原始數據 */}
         {progressHistory.length > 0 && (
           <StudentAssessmentTables data={progressHistory} collapsible />
         )}
