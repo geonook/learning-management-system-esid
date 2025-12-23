@@ -79,11 +79,13 @@ function parseArgs(): {
   filePath: string;
   dryRun: boolean;
   verbose: boolean;
+  parseOnly: boolean;
 } {
   const args = process.argv.slice(2);
   let filePath = "";
   let dryRun = false;
   let verbose = false;
+  let parseOnly = false;
 
   for (const arg of args) {
     if (arg.startsWith("--file=")) {
@@ -92,10 +94,12 @@ function parseArgs(): {
       dryRun = true;
     } else if (arg === "--verbose") {
       verbose = true;
+    } else if (arg === "--parse-only") {
+      parseOnly = true;
     }
   }
 
-  return { filePath, dryRun, verbose };
+  return { filePath, dryRun, verbose, parseOnly };
 }
 
 // ============================================================
@@ -436,7 +440,7 @@ async function main(): Promise<void> {
   console.log("=".repeat(50));
 
   // Parse arguments
-  const { filePath, dryRun, verbose } = parseArgs();
+  const { filePath, dryRun, verbose, parseOnly } = parseArgs();
 
   if (!filePath) {
     console.error("❌ Error: --file argument is required");
@@ -445,6 +449,7 @@ async function main(): Promise<void> {
     console.log("  npx tsx scripts/import-map-cdf.ts --file=data/cdf.csv --dry-run");
     console.log("  npx tsx scripts/import-map-cdf.ts --file=data/cdf.csv --staging");
     console.log("  npx tsx scripts/import-map-cdf.ts --file=data/cdf.csv --verbose");
+    console.log("  npx tsx scripts/import-map-cdf.ts --file=data/cdf.csv --parse-only");
     process.exit(1);
   }
 
@@ -456,24 +461,17 @@ async function main(): Promise<void> {
   }
 
   console.log(`📁 File: ${absolutePath}`);
-  console.log(`🌐 Environment: ${useStaging ? "STAGING" : "PRODUCTION"}`);
-  console.log(`🔄 Mode: ${dryRun ? "DRY RUN" : "LIVE"}`);
+  console.log(`🌐 Environment: ${parseOnly ? "N/A (parse-only)" : useStaging ? "STAGING" : "PRODUCTION"}`);
+  console.log(`🔄 Mode: ${parseOnly ? "PARSE ONLY" : dryRun ? "DRY RUN" : "LIVE"}`);
   console.log(`📝 Verbose: ${verbose ? "ON" : "OFF"}`);
 
-  // Validate service key
-  if (!SUPABASE_SERVICE_KEY) {
+  // Validate service key (skip for parse-only mode)
+  if (!parseOnly && !SUPABASE_SERVICE_KEY) {
     console.error("❌ Error: SUPABASE_SERVICE_ROLE_KEY environment variable is not set");
     console.log("   For production, set the environment variable or use --staging");
+    console.log("   Use --parse-only to test CSV parsing without database connection");
     process.exit(1);
   }
-
-  // Create Supabase client
-  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
 
   // Read and parse CSV
   console.log("\n📄 Reading CSV file...");
@@ -505,6 +503,21 @@ async function main(): Promise<void> {
       console.log(`   Projected Proficiency: ${sample!.projected_proficiency.map(p => `${p.study}: ${p.level}`).join(", ")}`);
     }
   }
+
+  // Exit early for parse-only mode
+  if (parseOnly) {
+    console.log("\n✅ Parse-only mode complete. CSV parsing successful!");
+    console.log("   Use --dry-run or remove --parse-only to test database operations.\n");
+    return;
+  }
+
+  // Create Supabase client (only needed for non-parse-only mode)
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 
   // Confirm before live import
   if (!dryRun) {
