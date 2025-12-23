@@ -140,3 +140,4 @@ test-*.html
 * 2.md
 # Import data (sensitive)
 data/
+*.csv

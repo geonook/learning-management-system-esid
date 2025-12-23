@@ -160,6 +160,13 @@ export function StudentLexileLevel({ data }: StudentLexileLevelProps) {
           <p className="text-xs text-text-tertiary">{band.description}</p>
         </div>
       )}
+
+      {/* Explanation */}
+      <div className="mt-4 pt-3 border-t border-border-subtle text-xs text-text-tertiary space-y-1">
+        <p><strong>Lexile</strong>: A measure of text complexity and reading ability (from BR to 1400L+).</p>
+        <p><strong>Recommended Range</strong>: Books within 50L below to 100L above the student&apos;s level.</p>
+        <p className="italic">Use Lexile scores to match students with appropriately challenging reading materials.</p>
+      </div>
     </div>
   );
 }

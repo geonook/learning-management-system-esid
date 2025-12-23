@@ -172,6 +172,14 @@ export function StudentBenchmarkStatus({ data }: StudentBenchmarkStatusProps) {
           <span className="font-medium text-text-primary">{data.reading ?? "N/A"}</span>
         </div>
       </div>
+
+      {/* Explanation */}
+      <div className="mt-4 pt-3 border-t border-border-subtle text-xs text-text-tertiary space-y-1">
+        <p><strong>E1</strong>: Ready for next grade&apos;s advanced English level (highest tier).</p>
+        <p><strong>E2</strong>: Ready for next grade&apos;s standard English level.</p>
+        <p><strong>E3</strong>: May need additional support to meet next grade&apos;s expectations.</p>
+        <p className="italic">Average = (Reading RIT + Language Usage RIT) ÷ 2</p>
+      </div>
     </div>
   );
 }

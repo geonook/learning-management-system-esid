@@ -222,6 +222,14 @@ export function StudentGoalAreas({ data }: StudentGoalAreasProps) {
         </p>
       </div>
 
+      {/* Detailed Explanation */}
+      <div className="mt-3 text-xs text-text-tertiary space-y-1">
+        <p><strong>Instructional Areas</strong>: Specific skill domains within each subject.</p>
+        <p><strong>★ Relative Strength</strong>: Areas where student performs above their own average.</p>
+        <p><strong>◆ Suggested Focus</strong>: Areas that could benefit from additional practice.</p>
+        <p className="italic">Use these insights to personalize instruction and target specific skills.</p>
+      </div>
+
       {/* Empty state */}
       {!reading && !languageUsage && (
         <div className="text-center py-4 text-text-tertiary text-sm">

@@ -233,6 +233,21 @@ function ScoreCard({ data, level }: { data: CourseScoreData; level: string | nul
           />
         )}
       </div>
+
+      {/* Explanation Footer */}
+      <div className="mt-4 pt-3 border-t border-border-default/30 text-xs text-text-tertiary space-y-1">
+        <p>
+          <strong>RIT</strong>: Rasch Unit - a stable scale measuring academic achievement across grades.
+        </p>
+        <p>
+          <strong>Percentile</strong>: National ranking (e.g., 72nd = higher than 72% of same-grade students in the US).
+        </p>
+        {achievementInfo && (
+          <p>
+            <strong>{achievementInfo.shortLabel}</strong>: {achievementInfo.description}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

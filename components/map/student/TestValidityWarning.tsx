@@ -74,6 +74,16 @@ export function TestValidityWarning({
             ? " (>25% threshold). Consider retesting for accurate assessment."
             : " (>15% threshold). Results may not fully reflect ability."}
         </p>
+        <p
+          className={cn(
+            "text-xs mt-2 italic",
+            isSevere
+              ? "text-red-500 dark:text-red-500"
+              : "text-amber-500 dark:text-amber-500"
+          )}
+        >
+          Rapid guessing = answering faster than possible to read and consider the question.
+        </p>
       </div>
     </div>
   );

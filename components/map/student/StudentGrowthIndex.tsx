@@ -285,6 +285,13 @@ export function StudentGrowthIndex({ data }: StudentGrowthIndexProps) {
           )}
         </div>
       )}
+
+      {/* Explanation */}
+      <div className="mt-4 pt-3 border-t border-border-subtle text-xs text-text-tertiary space-y-1">
+        <p><strong>Growth Index</strong>: Compares actual growth to expected growth (1.0 = met expectations).</p>
+        <p><strong>Met/Not Met</strong>: Whether the student achieved NWEA&apos;s projected growth target.</p>
+        <p><strong>Quintile</strong>: Growth compared to similar students nationally (High = top 20%, Low = bottom 20%).</p>
+      </div>
     </div>
   );
 }

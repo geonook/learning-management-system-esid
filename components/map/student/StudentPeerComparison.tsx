@@ -220,6 +220,14 @@ export function StudentPeerComparison({ data }: StudentPeerComparisonProps) {
           </div>
         </div>
       </div>
+
+      {/* Explanation */}
+      <div className="mt-3 text-xs text-text-tertiary space-y-1">
+        <p><strong>Level Rank</strong>: Ranking within students of the same English level (E1/E2/E3).</p>
+        <p><strong>Grade Rank</strong>: Ranking within all students in the same grade.</p>
+        <p><strong>vs Level/Grade Avg</strong>: Difference from the group average score.</p>
+        <p><strong>vs NWEA Norm</strong>: Difference from the US national average for this grade.</p>
+      </div>
     </div>
   );
 }

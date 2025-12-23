@@ -99,10 +99,18 @@ export function ProjectedProficiency({
         )}
       </div>
 
-      {/* Footer Note */}
-      <p className="mt-4 text-xs text-text-tertiary text-center">
-        Projections are based on NWEA typical growth expectations
-      </p>
+      {/* Footer Note with Explanation */}
+      <div className="mt-4 pt-3 border-t border-border-subtle text-xs text-text-tertiary space-y-2">
+        <p className="text-center font-medium">How to interpret this projection:</p>
+        <ul className="space-y-1 list-disc list-inside">
+          <li><strong>On Track</strong>: Student is expected to meet grade-level standards by Spring.</li>
+          <li><strong>Exceeding</strong>: Student is projected to exceed grade-level expectations.</li>
+          <li><strong>Needs Support</strong>: Additional intervention may help student reach grade-level goals.</li>
+        </ul>
+        <p className="text-center italic">
+          Projections are based on NWEA typical growth expectations for students at similar achievement levels.
+        </p>
+      </div>
     </div>
   );
 }
