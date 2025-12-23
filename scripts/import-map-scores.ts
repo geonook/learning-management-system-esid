@@ -145,7 +145,7 @@ async function upsertAssessment(
     school: row.school,
     term_tested: row.term_tested,
     academic_year: row.academic_year,
-    term: row.term,
+    map_term: row.map_term,
     course: row.course,
     test_name: row.test_name,
     rit_score: row.rit_score,

@@ -25,7 +25,8 @@ interface SDData {
 
 // NWEA 標準差估計值 (基於 2025 norms 研究)
 // SD 在低年級較大，高年級較小
-const SD_DATA: Record<number, Record<MapTerm, SDData>> = {
+// 注意：winter 資料目前未使用，故為 Partial
+const SD_DATA: Record<number, Partial<Record<MapTerm, SDData>>> = {
   3: {
     fall: { reading: 17, languageUsage: 16 },
     spring: { reading: 17, languageUsage: 16 },
@@ -46,7 +47,8 @@ const SD_DATA: Record<number, Record<MapTerm, SDData>> = {
 
 // 50th percentile (mean) RIT scores - 2025 Norms
 // 這些值與 norms.ts 中的常模一致
-const MEAN_RIT: Record<string, Record<number, Record<MapTerm, SDData>>> = {
+// 注意：winter 資料目前未使用，故為 Partial
+const MEAN_RIT: Record<string, Record<number, Partial<Record<MapTerm, SDData>>>> = {
   "2024-2025": {
     3: {
       fall: { reading: 187, languageUsage: 188 },

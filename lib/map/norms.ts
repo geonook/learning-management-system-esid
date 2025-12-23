@@ -20,9 +20,10 @@ export type Course = "Language Usage" | "Reading";
 // For backward compatibility during migration
 export type Term = MapTerm;
 
-// NWEA 常模數據 (按學年 > 年級 > 學期)
+// NWEA 常模數據 (按學年 > 年級 > MAP 測驗期)
 // 資料來源：NWEA 2025 Norms (116 million scores from 13.8 million students, Fall 2022 - Spring 2024)
-const MAP_NORMS: Record<string, Record<number, Record<MapTerm, NormData>>> = {
+// 注意：winter 資料目前未使用，故為 Partial
+const MAP_NORMS: Record<string, Record<number, Partial<Record<MapTerm, NormData>>>> = {
   // 2024-2025 學年使用舊版常模
   "2024-2025": {
     3: {
@@ -172,7 +173,7 @@ export function getAvailableAcademicYears(): string[] {
  */
 export function getYearNorms(
   academicYear: string
-): Record<number, Record<MapTerm, NormData>> | null {
+): Record<number, Partial<Record<MapTerm, NormData>>> | null {
   return MAP_NORMS[academicYear] || null;
 }
 
