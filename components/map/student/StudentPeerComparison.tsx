@@ -88,19 +88,19 @@ export function StudentPeerComparison({ data }: StudentPeerComparisonProps) {
         <div className="space-y-3 mb-4">
           {/* Level Rank */}
           {level && subjectData.levelTotal > 0 && (
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-1">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-text-secondary">Level Rank</span>
                 <span className={`text-xs px-1.5 py-0.5 rounded ${getLevelBadgeStyle(level)}`}>
                   {level}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <span className={`font-medium ${getRankColor(levelPercentile)}`}>
-                  {subjectData.levelRank} / {subjectData.levelTotal}
+                  {subjectData.levelRank}/{subjectData.levelTotal}
                 </span>
-                {levelPercentile <= 10 && <Trophy className="w-4 h-4 text-amber-500" />}
-                <span className="text-xs text-text-tertiary">
+                {levelPercentile <= 10 && <Trophy className="w-3.5 h-3.5 text-amber-500" />}
+                <span className="text-xs text-text-tertiary whitespace-nowrap">
                   (Top {levelPercentile}%)
                 </span>
               </div>
@@ -108,14 +108,14 @@ export function StudentPeerComparison({ data }: StudentPeerComparisonProps) {
           )}
 
           {/* Grade Rank */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-1">
             <span className="text-sm text-text-secondary">Grade Rank</span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <span className={`font-medium ${getRankColor(gradePercentile)}`}>
-                {subjectData.gradeRank} / {subjectData.gradeTotal}
+                {subjectData.gradeRank}/{subjectData.gradeTotal}
               </span>
-              {gradePercentile <= 10 && <Trophy className="w-4 h-4 text-amber-500" />}
-              <span className="text-xs text-text-tertiary">
+              {gradePercentile <= 10 && <Trophy className="w-3.5 h-3.5 text-amber-500" />}
+              <span className="text-xs text-text-tertiary whitespace-nowrap">
                 (Top {gradePercentile}%)
               </span>
             </div>
