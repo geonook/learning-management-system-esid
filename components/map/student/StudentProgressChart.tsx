@@ -168,20 +168,22 @@ function NWEABarChart({
     return { chartData: points, tableData: points };
   }, [data, course, showProjection]);
 
-  // 計算 Y 軸範圍
+  // 計算 Y 軸範圍（仿 NWEA 官方報告風格）
   const { minY, maxY } = useMemo(() => {
     const allValues = chartData.flatMap((d) => [d.rit, d.levelAvg, d.norm, d.projection])
       .filter((v): v is number => v !== null && v !== undefined);
 
     if (allValues.length === 0) {
-      return { minY: 150, maxY: 250 };
+      return { minY: 100, maxY: 250 };
     }
 
     const min = Math.min(...allValues);
     const max = Math.max(...allValues);
 
-    // 留出適當空間給 LabelList
-    const calcMinY = Math.floor((min - 15) / 10) * 10;
+    // Y 軸最小值：比最小數據低 20，但至少從 100 開始（符合 NWEA 報告風格）
+    // 這樣柱狀圖高度才能正確反映 RIT 分數的相對差異
+    const calcMinY = Math.max(100, Math.floor((min - 20) / 10) * 10);
+    // Y 軸最大值：比最大數據高 15，給 LabelList 留空間
     const calcMaxY = Math.ceil((max + 15) / 10) * 10;
 
     return { minY: calcMinY, maxY: calcMaxY };
