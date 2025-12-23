@@ -157,7 +157,7 @@ async function upsertAssessment(
     // Term info
     term_tested: row.term_tested,
     academic_year: row.academic_year,
-    map_term: row.map_term,
+    term: row.map_term, // Database column is 'term', parser returns 'map_term'
     course: row.course,
     test_name: row.test_name,
 
