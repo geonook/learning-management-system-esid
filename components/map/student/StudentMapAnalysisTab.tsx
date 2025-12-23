@@ -100,7 +100,7 @@ export function StudentMapAnalysisTab({
 
   const {
     benchmarkStatus,
-    growthIndex,
+    growthRecords,
     goalPerformance,
     lexileStatus,
     benchmarkHistory,
@@ -110,7 +110,7 @@ export function StudentMapAnalysisTab({
   // 檢查是否有任何資料
   const hasAnyData =
     benchmarkStatus ||
-    growthIndex ||
+    growthRecords.length > 0 ||
     goalPerformance ||
     lexileStatus ||
     benchmarkHistory.length > 0 ||
@@ -162,7 +162,7 @@ export function StudentMapAnalysisTab({
       {/* ============================================================ */}
 
       {/* 4. Growth Index - 有沒有達到預期成長？ */}
-      <StudentGrowthIndex data={growthIndex} />
+      <StudentGrowthIndex data={growthRecords} />
 
       {/* 5. Progress Charts - 歷史趨勢視覺化 */}
       {progressHistory.length > 0 && (
