@@ -177,16 +177,21 @@ export function StudentMapAnalysisTab({
       )}
 
       {/* ============================================================ */}
-      {/* SECONDARY: Analysis Grid (2x2) */}
-      {/* Growth Index | Benchmark Status */}
-      {/* Goal Areas   | Peer Comparison  */}
+      {/* SECONDARY: Analysis Grid */}
+      {/* Row 1: Growth Index | Benchmark Status (2 columns) */}
+      {/* Row 2: Goal Areas (full width) */}
+      {/* Row 3: Peer Comparison (full width) */}
       {/* ============================================================ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <StudentGrowthIndex data={growthIndex} />
         <StudentBenchmarkStatus data={benchmarkStatus} />
-        <StudentGoalAreas data={goalPerformance} />
-        <StudentPeerComparison data={rankings} />
       </div>
+
+      {/* Goal Areas - 全寬獨立區塊 */}
+      <StudentGoalAreas data={goalPerformance} />
+
+      {/* Peer Comparison - 全寬獨立區塊 */}
+      <StudentPeerComparison data={rankings} />
 
       {/* ============================================================ */}
       {/* TERTIARY: Additional Information (3 columns) */}
