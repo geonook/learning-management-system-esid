@@ -8,6 +8,7 @@ import {
   type StudentMapAnalytics,
   type ProgressHistoryPoint,
 } from "@/lib/api/map-student-analytics";
+import { ScoreSummaryCards } from "./ScoreSummaryCards";
 import { StudentBenchmarkStatus } from "./StudentBenchmarkStatus";
 import { StudentGrowthIndex } from "./StudentGrowthIndex";
 import { StudentGoalAreas } from "./StudentGoalAreas";
@@ -127,33 +128,49 @@ export function StudentMapAnalysisTab({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Section 1: Score Summary Cards (Future: add ScoreSummaryCards here) */}
+    <div className="space-y-8">
+      {/* ============================================================ */}
+      {/* HERO: Score Summary Cards */}
+      {/* 兩張大卡片顯示最新 RIT 分數、成長、比較數據 */}
+      {/* ============================================================ */}
+      {progressHistory.length > 0 && (
+        <ScoreSummaryCards
+          progressHistory={progressHistory}
+          rankings={rankings}
+        />
+      )}
 
-      {/* Section 2: Growth Over Time Charts */}
+      {/* ============================================================ */}
+      {/* PRIMARY: Growth Trend Chart */}
+      {/* 全寬區域圖顯示 RIT 歷程、Grade Average、NWEA Norm */}
+      {/* ============================================================ */}
       {progressHistory.length > 0 && (
         <StudentProgressCharts data={progressHistory} />
       )}
 
-      {/* Section 3: Assessment History Tables */}
-      {progressHistory.length > 0 && (
-        <StudentAssessmentTables data={progressHistory} />
-      )}
-
-      {/* Section 4: Growth & Achievement Analysis */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* ============================================================ */}
+      {/* SECONDARY: Analysis Grid (2x2) */}
+      {/* Growth Index | Benchmark Status */}
+      {/* Goal Areas   | Peer Comparison  */}
+      {/* ============================================================ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <StudentGrowthIndex data={growthIndex} />
         <StudentBenchmarkStatus data={benchmarkStatus} />
+        <StudentGoalAreas data={goalPerformance} />
+        <StudentPeerComparison data={rankings} />
       </div>
 
-      {/* Section 5: Instructional Areas (Goal Performance) */}
-      <StudentGoalAreas data={goalPerformance} />
-
-      {/* Section 6: Additional Information */}
+      {/* ============================================================ */}
+      {/* TERTIARY: Additional Information (3 columns) */}
+      {/* Lexile Level | Benchmark History | Assessment Details */}
+      {/* ============================================================ */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StudentLexileLevel data={lexileStatus} />
-        <StudentPeerComparison data={rankings} />
         <StudentBenchmarkHistory data={benchmarkHistory} currentGrade={grade} />
+        {/* Assessment Table 移到這裡，設為可收合 */}
+        {progressHistory.length > 0 && (
+          <StudentAssessmentTables data={progressHistory} collapsible />
+        )}
       </div>
     </div>
   );
