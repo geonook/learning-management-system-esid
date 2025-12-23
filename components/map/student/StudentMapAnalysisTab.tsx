@@ -128,33 +128,33 @@ export function StudentMapAnalysisTab({
 
   return (
     <div className="space-y-6">
-      {/* Progress Charts - Primary Visual (NEW) */}
+      {/* Section 1: Score Summary Cards (Future: add ScoreSummaryCards here) */}
+
+      {/* Section 2: Growth Over Time Charts */}
       {progressHistory.length > 0 && (
         <StudentProgressCharts data={progressHistory} />
       )}
 
-      {/* Assessment History Tables (NEW) */}
+      {/* Section 3: Assessment History Tables */}
       {progressHistory.length > 0 && (
         <StudentAssessmentTables data={progressHistory} />
       )}
 
-      {/* Row 1: Benchmark Status & Growth Index */}
+      {/* Section 4: Growth & Achievement Analysis */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <StudentBenchmarkStatus data={benchmarkStatus} />
         <StudentGrowthIndex data={growthIndex} />
+        <StudentBenchmarkStatus data={benchmarkStatus} />
       </div>
 
-      {/* Row 2: Goal Areas (Full Width) */}
+      {/* Section 5: Instructional Areas (Goal Performance) */}
       <StudentGoalAreas data={goalPerformance} />
 
-      {/* Row 3: Lexile & Benchmark History */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Section 6: Additional Information */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StudentLexileLevel data={lexileStatus} />
+        <StudentPeerComparison data={rankings} />
         <StudentBenchmarkHistory data={benchmarkHistory} currentGrade={grade} />
       </div>
-
-      {/* Row 4: Peer Comparison (Full Width) */}
-      <StudentPeerComparison data={rankings} />
     </div>
   );
 }
