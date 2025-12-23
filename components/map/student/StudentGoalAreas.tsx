@@ -139,23 +139,10 @@ export function StudentGoalAreas({ data }: StudentGoalAreasProps) {
               </TooltipContent>
             </Tooltip>
           )}
-          {/* Goal 名稱 */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="text-sm text-text-secondary truncate cursor-help">
-                {goalName}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-[280px]">
-              <p className="text-sm font-medium">{goalName}</p>
-              {isStrength && (
-                <p className="text-xs text-green-600 dark:text-green-400 mt-1">★ Relative Strength</p>
-              )}
-              {isFocus && (
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">◆ Suggested Focus</p>
-              )}
-            </TooltipContent>
-          </Tooltip>
+          {/* Goal 名稱 - 不截斷，完整顯示 */}
+          <span className="text-sm text-text-secondary">
+            {goalName}
+          </span>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           {/* RIT Score */}
