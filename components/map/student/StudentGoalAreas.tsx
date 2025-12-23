@@ -110,24 +110,24 @@ export function StudentGoalAreas({ data }: StudentGoalAreasProps) {
     const quintile = getQuintile(vsOverall);
 
     return (
-      <div className="flex items-center justify-between py-2 border-b border-border-subtle last:border-0">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
+      <div className="flex items-start justify-between py-2 border-b border-border-subtle last:border-0 gap-2">
+        <div className="flex items-start gap-1.5 flex-1 min-w-0">
           {/* Strength/Focus 標記 */}
           {isStrength && (
-            <span className="text-green-500 text-xs" title="Relative Strength">
+            <span className="text-green-500 text-xs mt-0.5 flex-shrink-0" title="Relative Strength">
               ★
             </span>
           )}
           {isFocus && (
-            <span className="text-amber-500 text-xs" title="Suggested Area of Focus">
+            <span className="text-amber-500 text-xs mt-0.5 flex-shrink-0" title="Suggested Area of Focus">
               ◆
             </span>
           )}
-          <span className="text-sm text-text-secondary truncate">{goalName}</span>
+          <span className="text-sm text-text-secondary leading-snug">{goalName}</span>
         </div>
-        <div className="flex items-center gap-3 ml-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {/* RIT Score */}
-          <span className="font-mono text-sm font-medium text-text-primary w-10 text-right">
+          <span className="font-mono text-sm font-medium text-text-primary w-12 text-right">
             {midpoint !== null ? midpoint : "—"}
           </span>
           {/* Quintile 標籤 */}
