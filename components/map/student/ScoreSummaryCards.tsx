@@ -3,6 +3,11 @@
 import { TrendingUp, TrendingDown, Minus, BookOpen, Languages } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ProgressHistoryPoint, StudentRankings } from "@/lib/api/map-student-analytics";
+import {
+  getAchievementStatusInfo,
+  formatPercentile,
+  type AchievementStatusInfo,
+} from "@/lib/map/achievement";
 
 interface ScoreSummaryCardsProps {
   progressHistory: ProgressHistoryPoint[];
@@ -16,6 +21,8 @@ interface CourseScoreData {
   fromTerm: string | null;
   vsLevelAvg: number | null;
   vsNorm: number | null;
+  norm: number | null;
+  percentile: number | null;
   termTested: string;
 }
 
@@ -48,6 +55,8 @@ export function ScoreSummaryCards({ progressHistory, rankings }: ScoreSummaryCar
         vsNorm: latestData.reading.norm
           ? Math.round((latestData.reading.rit - latestData.reading.norm) * 10) / 10
           : null,
+        norm: latestData.reading.norm,
+        percentile: latestData.reading.percentile?.mid ?? null,
         termTested: latestData.termShort,
       }
     : null;
@@ -65,6 +74,8 @@ export function ScoreSummaryCards({ progressHistory, rankings }: ScoreSummaryCar
         vsNorm: latestData.languageUsage.norm
           ? Math.round((latestData.languageUsage.rit - latestData.languageUsage.norm) * 10) / 10
           : null,
+        norm: latestData.languageUsage.norm,
+        percentile: latestData.languageUsage.percentile?.mid ?? null,
         termTested: latestData.termShort,
       }
     : null;
@@ -88,6 +99,10 @@ export function ScoreSummaryCards({ progressHistory, rankings }: ScoreSummaryCar
  */
 function ScoreCard({ data, level }: { data: CourseScoreData; level: string | null }) {
   const isReading = data.course === "Reading";
+
+  // 計算 Achievement Status（需要 norm）
+  const achievementInfo: AchievementStatusInfo | null =
+    data.norm !== null ? getAchievementStatusInfo(data.rit, data.norm) : null;
 
   // 課程專屬配色
   const colorScheme = isReading
@@ -130,15 +145,31 @@ function ScoreCard({ data, level }: { data: CourseScoreData; level: string | nul
             <span className="text-xs text-text-tertiary">{data.termTested}</span>
           </div>
         </div>
-        {level && (
-          <span className={cn(
-            "px-2.5 py-1 rounded-lg text-xs font-medium",
-            colorScheme.accentBg,
-            colorScheme.iconColor
-          )}>
-            {level}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Achievement Status Badge */}
+          {achievementInfo && (
+            <span
+              className={cn(
+                "px-2.5 py-1 rounded-lg text-xs font-medium",
+                achievementInfo.bgColor,
+                achievementInfo.textColor
+              )}
+              title={achievementInfo.description}
+            >
+              {achievementInfo.shortLabel}
+            </span>
+          )}
+          {/* Level Badge */}
+          {level && (
+            <span className={cn(
+              "px-2.5 py-1 rounded-lg text-xs font-medium",
+              colorScheme.accentBg,
+              colorScheme.iconColor
+            )}>
+              {level}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Main Score */}
@@ -153,6 +184,18 @@ function ScoreCard({ data, level }: { data: CourseScoreData; level: string | nul
           <GrowthBadge growth={data.growth} fromTerm={data.fromTerm} />
         )}
       </div>
+
+      {/* Percentile Display */}
+      {data.percentile !== null && (
+        <div className="mb-4">
+          <span className="text-sm text-text-secondary">
+            National Percentile:{" "}
+            <span className="font-semibold text-text-primary">
+              {formatPercentile(data.percentile)}
+            </span>
+          </span>
+        </div>
+      )}
 
       {/* Comparison Stats */}
       <div className="flex flex-wrap gap-3">

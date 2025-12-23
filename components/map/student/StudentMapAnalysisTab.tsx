@@ -9,6 +9,7 @@ import {
   type ProgressHistoryPoint,
 } from "@/lib/api/map-student-analytics";
 import { ScoreSummaryCards } from "./ScoreSummaryCards";
+import { ProjectedProficiency } from "./ProjectedProficiency";
 import { StudentBenchmarkStatus } from "./StudentBenchmarkStatus";
 import { StudentGrowthIndex } from "./StudentGrowthIndex";
 import { StudentGoalAreas } from "./StudentGoalAreas";
@@ -132,6 +133,7 @@ export function StudentMapAnalysisTab({
       {/* ============================================================ */}
       {/* HERO: Score Summary Cards */}
       {/* 兩張大卡片顯示最新 RIT 分數、成長、比較數據 */}
+      {/* 包含 Achievement Status 標籤和 Percentile 顯示 */}
       {/* ============================================================ */}
       {progressHistory.length > 0 && (
         <ScoreSummaryCards
@@ -141,11 +143,24 @@ export function StudentMapAnalysisTab({
       )}
 
       {/* ============================================================ */}
-      {/* PRIMARY: Growth Trend Chart */}
-      {/* 全寬區域圖顯示 RIT 歷程、Grade Average、NWEA Norm */}
+      {/* PROJECTED PROFICIENCY (僅 Fall 學期顯示) */}
+      {/* 預測學生在 Spring 是否能達到年級標準 */}
       {/* ============================================================ */}
       {progressHistory.length > 0 && (
-        <StudentProgressCharts data={progressHistory} />
+        <ProjectedProficiency progressHistory={progressHistory} />
+      )}
+
+      {/* ============================================================ */}
+      {/* PRIMARY: Growth Trend Chart */}
+      {/* 全寬區域圖顯示 RIT 歷程、Grade Average、NWEA Norm */}
+      {/* 包含 Percentile Bands 背景和 Growth Projection 虛線 */}
+      {/* ============================================================ */}
+      {progressHistory.length > 0 && (
+        <StudentProgressCharts
+          data={progressHistory}
+          showPercentileBands
+          showProjection
+        />
       )}
 
       {/* ============================================================ */}

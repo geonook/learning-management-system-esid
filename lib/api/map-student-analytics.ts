@@ -141,6 +141,8 @@ export interface ProgressCourseData {
 export interface ProgressHistoryPoint {
   termTested: string;
   termShort: string;  // e.g., "FA25", "SP26"
+  academicYear: string; // e.g., "2025-2026"
+  mapTerm: "fall" | "winter" | "spring";
   grade: number;
   reading: ProgressCourseData | null;
   languageUsage: ProgressCourseData | null;
@@ -921,6 +923,8 @@ export async function getStudentProgressHistory(
     results.push({
       termTested,
       termShort: formatTermShort(termTested),
+      academicYear: parsed?.academicYear ?? "",
+      mapTerm: parsed?.mapTerm ?? "fall",
       grade: termData.grade,
       reading: termData.reading !== null ? {
         rit: termData.reading,
