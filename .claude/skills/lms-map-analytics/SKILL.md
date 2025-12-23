@@ -111,7 +111,7 @@ The student detail page (`/student/[id]`) includes a MAP Analytics Tab for G3-G6
 - `getStudentRankings()` - Calculates Level and Grade rankings
 - `extractEnglishLevel()` - Extracts E1/E2/E3 from class level (e.g., "G3E2" → "E2")
 
-### UI Components (v1.57.0+)
+### UI Components (v1.58.0+)
 
 All components include teacher-friendly explanations for non-technical users.
 
@@ -119,13 +119,32 @@ All components include teacher-friendly explanations for non-technical users.
 |-----------|-------------|
 | **ScoreSummaryCards** | Hero cards with RIT, Percentile, Achievement Status |
 | **ProjectedProficiency** | Spring projection (On Track / Exceeding / Needs Support) |
-| **StudentGrowthIndex** | Official Growth Index, Met/Not Met, Growth Quintile |
+| **StudentGrowthIndex** | All historical Fall→Spring growth records with Official Growth Index, Met/Not Met, Growth Quintile |
+| **StudentProgressCharts** | NWEA-style Growth Over Time charts with stacked percentile color bands (separate Reading/Language Usage) |
 | **StudentBenchmarkStatus** | E1/E2/E3 classification with progress bar |
 | **StudentGoalAreas** | Instructional areas with ★ Strength / ◆ Focus markers |
 | **StudentPeerComparison** | Level/Grade ranks and averages comparison |
 | **StudentLexileLevel** | Lexile score, band, recommended book range |
 | **TestValidityWarning** | Rapid Guessing alerts (>15%, >25% thresholds) |
 | **StudentBenchmarkHistory** | Historical benchmark trend across terms |
+
+### StudentProgressCharts (v1.58.0+)
+
+NWEA-style "Growth Over Time" visualization:
+- **Separate charts** for Reading and Language Usage
+- **Stacked percentile color bands**: Red (1-20%), Orange (21-40%), Yellow (41-60%), Lime (61-80%), Green (81-100%)
+- **Student data**: Dark blue dashed line with dots
+- **X-axis format**: "Fall 25 (Gr 4)"
+- **Collapsible panel** for expand/collapse
+- **Tooltip** showing Student RIT, Projected, Grade Avg, NWEA Norm
+
+### StudentGrowthIndex (v1.58.0+)
+
+Multi-year growth history:
+- **Shows ALL academic years** with Fall+Spring data pairs
+- **Displays**: Growth (actual), Expected, Growth Index, Met/Not Met status
+- **Official NWEA Growth Quintile**: High, HiAvg, Avg, LoAvg, Low
+- **Sorted** newest-first for easy comparison
 
 ### Data Sources
 
