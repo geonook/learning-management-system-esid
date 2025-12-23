@@ -22,6 +22,7 @@ import {
 } from "@/lib/map/norms";
 import { parseRitRange } from "@/lib/map/goals";
 import { parseLexile, getLexileBand, formatLexile } from "@/lib/map/lexile";
+import { getPercentileRange } from "@/lib/map/percentiles";
 
 // ============================================================
 // Types
@@ -121,6 +122,12 @@ export interface BenchmarkHistoryPoint {
 }
 
 // Progress History Types for Charts and Tables
+export interface PercentileRange {
+  low: number;
+  mid: number;
+  high: number;
+}
+
 export interface ProgressCourseData {
   rit: number;
   gradeAvg: number | null;
@@ -128,6 +135,7 @@ export interface ProgressCourseData {
   growth: number | null;
   expectedGrowth: number | null;
   projection: number | null;
+  percentile: PercentileRange | null;
 }
 
 export interface ProgressHistoryPoint {
@@ -902,6 +910,14 @@ export async function getStudentProgressHistory(
       }
     }
 
+    // 計算 Percentile Range
+    const readingPercentile = parsed && termData.reading !== null
+      ? getPercentileRange(termData.reading, termData.grade, parsed.term, "Reading", parsed.academicYear)
+      : null;
+    const luPercentile = parsed && termData.languageUsage !== null
+      ? getPercentileRange(termData.languageUsage, termData.grade, parsed.term, "Language Usage", parsed.academicYear)
+      : null;
+
     results.push({
       termTested,
       termShort: formatTermShort(termTested),
@@ -913,6 +929,7 @@ export async function getStudentProgressHistory(
         growth: readingGrowth,
         expectedGrowth: expectedReadingGrowth,
         projection: readingProjection,
+        percentile: readingPercentile,
       } : null,
       languageUsage: termData.languageUsage !== null ? {
         rit: termData.languageUsage,
@@ -921,6 +938,7 @@ export async function getStudentProgressHistory(
         growth: luGrowth,
         expectedGrowth: expectedLUGrowth,
         projection: luProjection,
+        percentile: luPercentile,
       } : null,
     });
 
