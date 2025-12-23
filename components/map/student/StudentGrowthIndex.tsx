@@ -43,10 +43,10 @@ function formatGrowth(growth: number | null) {
 }
 
 /**
- * 單一成長紀錄卡片
+ * Fall → Spring 完整成長卡片（顯示 Growth, Expected, Index, Met, Quintile）
  */
-function GrowthRecordCard({ record }: { record: GrowthRecord }) {
-  const { languageUsage, reading, fromTerm, toTerm, grade } = record;
+function FallToSpringCard({ record }: { record: GrowthRecord }) {
+  const { languageUsage, reading, fromTermLabel, toTermLabel, grade } = record;
 
   const luIndicator = getGrowthIndicator(languageUsage);
   const rdIndicator = getGrowthIndicator(reading);
@@ -55,15 +55,11 @@ function GrowthRecordCard({ record }: { record: GrowthRecord }) {
   const luQuintileInfo = getQuintileInfo(languageUsage.officialGrowthQuintile);
   const rdQuintileInfo = getQuintileInfo(reading.officialGrowthQuintile);
 
-  // 取得顯示用的 growth index（優先官方）
+  // 取得顯示用的值（優先官方）
   const getLUDisplayIndex = () => languageUsage.officialConditionalGrowthIndex ?? languageUsage.growthIndex;
   const getRDDisplayIndex = () => reading.officialConditionalGrowthIndex ?? reading.growthIndex;
-
-  // 取得顯示用的 growth（優先官方）
   const getLUDisplayGrowth = () => languageUsage.officialObservedGrowth ?? languageUsage.actualGrowth;
   const getRDDisplayGrowth = () => reading.officialObservedGrowth ?? reading.actualGrowth;
-
-  // 取得顯示用的 expected growth（優先官方）
   const getLUExpectedGrowth = () => languageUsage.officialProjectedGrowth ?? languageUsage.expectedGrowth;
   const getRDExpectedGrowth = () => reading.officialProjectedGrowth ?? reading.expectedGrowth;
 
@@ -76,9 +72,8 @@ function GrowthRecordCard({ record }: { record: GrowthRecord }) {
       {/* Term Range Header */}
       <div className="flex items-center justify-between mb-4 pb-2 border-b border-border-subtle">
         <span className="text-sm font-medium text-text-primary">
-          {fromTerm} → {toTerm}
+          {fromTermLabel} → {toTermLabel} (G{grade})
         </span>
-        <span className="text-xs text-text-tertiary">Grade {grade}</span>
       </div>
 
       {/* Growth Cards */}
@@ -223,6 +218,96 @@ function GrowthRecordCard({ record }: { record: GrowthRecord }) {
   );
 }
 
+/**
+ * Spring → Fall 簡化成長卡片（只顯示 Growth）
+ */
+function SpringToFallCard({ record }: { record: GrowthRecord }) {
+  const { languageUsage, reading, fromTermLabel, toTermLabel, grade } = record;
+
+  // 只計算 Growth（無官方資料）
+  const luGrowth = languageUsage.actualGrowth;
+  const rdGrowth = reading.actualGrowth;
+
+  // 檢查是否有足夠資料
+  const hasLUData = languageUsage.fromScore !== null && languageUsage.toScore !== null;
+  const hasRDData = reading.fromScore !== null && reading.toScore !== null;
+
+  return (
+    <div className="bg-surface-secondary rounded-lg p-4">
+      {/* Term Range Header */}
+      <div className="flex items-center justify-between mb-4 pb-2 border-b border-border-subtle">
+        <span className="text-sm font-medium text-text-primary">
+          {fromTermLabel} → {toTermLabel} (G{grade})
+        </span>
+      </div>
+
+      {/* Growth Cards - 簡化版，只顯示 Growth */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Language Usage */}
+        <div className="bg-surface-elevated rounded-lg p-3">
+          <div className="mb-2">
+            <span className="text-xs text-text-tertiary">Language Usage</span>
+          </div>
+
+          {hasLUData ? (
+            <div className="flex justify-between items-center">
+              <span className="text-text-secondary text-xs">Growth:</span>
+              <span className={cn(
+                "text-lg font-bold",
+                luGrowth !== null && luGrowth >= 0
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-red-600 dark:text-red-400"
+              )}>
+                {formatGrowth(luGrowth)}
+              </span>
+            </div>
+          ) : (
+            <div className="text-center py-2 text-text-tertiary text-xs">
+              Missing data
+            </div>
+          )}
+        </div>
+
+        {/* Reading */}
+        <div className="bg-surface-elevated rounded-lg p-3">
+          <div className="mb-2">
+            <span className="text-xs text-text-tertiary">Reading</span>
+          </div>
+
+          {hasRDData ? (
+            <div className="flex justify-between items-center">
+              <span className="text-text-secondary text-xs">Growth:</span>
+              <span className={cn(
+                "text-lg font-bold",
+                rdGrowth !== null && rdGrowth >= 0
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-red-600 dark:text-red-400"
+              )}>
+                {formatGrowth(rdGrowth)}
+              </span>
+            </div>
+          ) : (
+            <div className="text-center py-2 text-text-tertiary text-xs">
+              Missing data
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 單一成長紀錄卡片（根據類型選擇渲染方式）
+ */
+function GrowthRecordCard({ record }: { record: GrowthRecord }) {
+  if (record.growthType === "fallToSpring") {
+    return <FallToSpringCard record={record} />;
+  } else {
+    return <SpringToFallCard record={record} />;
+  }
+}
+
 export function StudentGrowthIndex({ data }: StudentGrowthIndexProps) {
   if (!data || data.length === 0) {
     return (
@@ -230,14 +315,26 @@ export function StudentGrowthIndex({ data }: StudentGrowthIndexProps) {
         <h3 className="text-lg font-semibold text-text-primary mb-4">Personal Growth Index</h3>
         <div className="text-center py-8 text-text-tertiary">
           <p>No growth data available</p>
-          <p className="text-sm mt-2">Need both Fall and Spring term data to calculate growth</p>
+          <p className="text-sm mt-2">Need at least two consecutive test results to calculate growth</p>
         </div>
       </div>
     );
   }
 
-  // 按學年排序（新到舊顯示）
-  const sortedRecords = [...data].sort((a, b) => b.academicYear.localeCompare(a.academicYear));
+  // 按時間排序（新到舊顯示）- 使用 fromTerm 比較
+  const sortedRecords = [...data].sort((a, b) => {
+    // 比較 toTerm（目標測驗），較新的在前面
+    // 簡單比較：先比學年，再比學期
+    const aYear = a.academicYear;
+    const bYear = b.academicYear;
+    if (aYear !== bYear) return bYear.localeCompare(aYear);
+    // 同學年內，Spring 比 Fall 新
+    const aIsSpring = a.toTermLabel.startsWith("SP");
+    const bIsSpring = b.toTermLabel.startsWith("SP");
+    if (aIsSpring && !bIsSpring) return -1;
+    if (!aIsSpring && bIsSpring) return 1;
+    return 0;
+  });
 
   return (
     <div className="bg-surface-elevated rounded-xl border border-border-default p-6 shadow-sm">
@@ -245,14 +342,15 @@ export function StudentGrowthIndex({ data }: StudentGrowthIndexProps) {
 
       {/* Growth Records */}
       <div className="space-y-4">
-        {sortedRecords.map((record) => (
-          <GrowthRecordCard key={record.academicYear} record={record} />
+        {sortedRecords.map((record, index) => (
+          <GrowthRecordCard key={`${record.fromTermLabel}-${record.toTermLabel}-${index}`} record={record} />
         ))}
       </div>
 
       {/* Explanation */}
       <div className="mt-4 pt-3 border-t border-border-subtle text-xs text-text-tertiary space-y-1">
-        <p><strong>Growth Index</strong>: Compares actual growth to expected growth (1.0 = met expectations).</p>
+        <p><strong>Growth</strong>: RIT score change between consecutive tests.</p>
+        <p><strong>Expected/Index</strong>: Only available for Fall → Spring (official NWEA data).</p>
         <p><strong>Met/Not Met</strong>: Whether the student achieved NWEA&apos;s projected growth target.</p>
         <p><strong>Quintile</strong>: Growth compared to similar students nationally (High = top 20%, Low = bottom 20%).</p>
       </div>

@@ -73,12 +73,21 @@ export interface StudentGrowthIndex {
 
 /**
  * 成長紀錄（用於歷史成長列表）
+ * 支援兩種成長類型：
+ * - fallToSpring: 同學年 Fall → Spring（有官方 CDF 資料）
+ * - springToFall: 跨學年 Spring → Fall（只有計算值，無 Expected/Index）
  */
 export interface GrowthRecord {
-  academicYear: string;
-  fromTerm: string;  // "Fall 2024-2025"
-  toTerm: string;    // "Spring 2024-2025"
-  grade: number;     // 測驗時的年級
+  // 成長類型
+  growthType: "fallToSpring" | "springToFall";
+  // 顯示用標籤
+  fromTermLabel: string;  // "FA24" or "SP25"
+  toTermLabel: string;    // "SP25" or "FA25"
+  // 原有欄位（向後相容）
+  academicYear: string;   // 目標測驗的學年
+  fromTerm: string;       // "Fall 2024-2025" or "Spring 2024-2025"
+  toTerm: string;         // "Spring 2024-2025" or "Fall 2025-2026"
+  grade: number;          // 目標測驗時的年級
   languageUsage: CourseGrowthData;
   reading: CourseGrowthData;
 }
@@ -394,8 +403,10 @@ export async function getStudentGrowthIndex(
 }
 
 /**
- * 取得學生所有 Fall → Spring 成長紀錄
- * 遍歷所有學年，找出有 Fall+Spring 配對的資料
+ * 取得學生所有連續測驗之間的成長紀錄
+ * 支援：
+ * - Fall → Spring（同學年，有官方 CDF 資料）
+ * - Spring → Fall（跨學年，只有計算值）
  */
 export async function getStudentAllGrowthRecords(
   studentNumber: string
@@ -422,8 +433,11 @@ export async function getStudentAllGrowthRecords(
 
   if (error || !data || data.length === 0) return [];
 
-  // 2. 按學年分組
+  // 2. 按 term_tested 分組，建立時間序列
   interface TermData {
+    termTested: string;
+    academicYear: string;
+    mapTerm: MapTerm;
     grade: number;
     reading: {
       rit: number;
@@ -445,24 +459,26 @@ export async function getStudentAllGrowthRecords(
     } | null;
   }
 
-  // 按 academicYear + mapTerm 分組
-  const yearTermMap = new Map<string, Map<MapTerm, TermData>>();
+  const termDataMap = new Map<string, TermData>();
 
   for (const row of data) {
     const parsed = parseTermTested(row.term_tested);
     if (!parsed) continue;
 
     const { academicYear, mapTerm } = parsed;
+    const key = row.term_tested;
 
-    if (!yearTermMap.has(academicYear)) {
-      yearTermMap.set(academicYear, new Map());
+    if (!termDataMap.has(key)) {
+      termDataMap.set(key, {
+        termTested: row.term_tested,
+        academicYear,
+        mapTerm,
+        grade: row.grade,
+        reading: null,
+        languageUsage: null,
+      });
     }
-    const termMap = yearTermMap.get(academicYear)!;
-
-    if (!termMap.has(mapTerm)) {
-      termMap.set(mapTerm, { grade: row.grade, reading: null, languageUsage: null });
-    }
-    const termData = termMap.get(mapTerm)!;
+    const termData = termDataMap.get(key)!;
 
     const courseData = {
       rit: row.rit_score,
@@ -481,86 +497,147 @@ export async function getStudentAllGrowthRecords(
     }
   }
 
-  // 3. 找出有 Fall+Spring 配對的學年，計算成長指標
+  // 3. 按時間排序（使用 compareTermTested）
+  const sortedTerms = Array.from(termDataMap.values()).sort((a, b) =>
+    compareTermTested(a.termTested, b.termTested)
+  );
+
+  // 4. 找出連續的測驗對，計算成長
   const results: GrowthRecord[] = [];
   const parseMetProjectedGrowth = (value: string | null): boolean | null => {
     if (value === null) return null;
-    return value.toLowerCase() === 'yes';
+    return value.toLowerCase() === "yes";
   };
 
-  for (const [academicYear, termMap] of yearTermMap) {
-    const fallData = termMap.get("fall");
-    const springData = termMap.get("spring");
+  // 格式化 term label: "Fall 2024-2025" → "FA24"
+  const formatTermLabel = (termTested: string): string => {
+    const parsed = parseTermTested(termTested);
+    if (!parsed) return termTested;
+    const { academicYear, mapTerm } = parsed;
+    const yearParts = academicYear.split("-");
+    const shortYear = mapTerm === "fall"
+      ? yearParts[0]?.slice(-2) ?? ""
+      : yearParts[1]?.slice(-2) ?? "";
+    const prefix = mapTerm === "fall" ? "FA" : "SP";
+    return `${prefix}${shortYear}`;
+  };
 
-    // 必須同時有 Fall 和 Spring 資料才能計算成長
-    if (!fallData || !springData) continue;
+  for (let i = 1; i < sortedTerms.length; i++) {
+    const fromData = sortedTerms[i - 1];
+    const toData = sortedTerms[i];
 
-    const grade = fallData.grade;
-    const fromTerm = `Fall ${academicYear}`;
-    const toTerm = `Spring ${academicYear}`;
+    // Skip if data is missing (should not happen but TypeScript requires check)
+    if (!fromData || !toData) continue;
 
-    // 計算 Expected Growth
-    const expectedLU = getExpectedGrowth(academicYear, grade, "Language Usage");
-    const expectedRD = getExpectedGrowth(academicYear, grade, "Reading");
+    // 判斷成長類型
+    const growthType: "fallToSpring" | "springToFall" =
+      fromData.mapTerm === "fall" && toData.mapTerm === "spring"
+        ? "fallToSpring"
+        : "springToFall";
+
+    // Fall → Spring: 使用官方 CDF 和計算值
+    // Spring → Fall: 只計算 Growth，不計算 Expected/Index
+    const isFallToSpring = growthType === "fallToSpring";
+
+    // 計算 Expected Growth（只有 Fall → Spring 才計算）
+    const expectedLU = isFallToSpring
+      ? getExpectedGrowth(toData.academicYear, fromData.grade, "Language Usage")
+      : null;
+    const expectedRD = isFallToSpring
+      ? getExpectedGrowth(toData.academicYear, fromData.grade, "Reading")
+      : null;
 
     // Language Usage 成長
-    const fallLURit = fallData.languageUsage?.rit ?? null;
-    const springLURit = springData.languageUsage?.rit ?? null;
-    const actualLUGrowth = fallLURit !== null && springLURit !== null
-      ? springLURit - fallLURit
-      : null;
-    const luIndex = actualLUGrowth !== null && expectedLU !== null && expectedLU !== 0
-      ? actualLUGrowth / expectedLU
-      : null;
+    const fromLURit = fromData.languageUsage?.rit ?? null;
+    const toLURit = toData.languageUsage?.rit ?? null;
+    const actualLUGrowth =
+      fromLURit !== null && toLURit !== null ? toLURit - fromLURit : null;
+    const luIndex =
+      isFallToSpring &&
+      actualLUGrowth !== null &&
+      expectedLU !== null &&
+      expectedLU !== 0
+        ? actualLUGrowth / expectedLU
+        : null;
 
     // Reading 成長
-    const fallRDRit = fallData.reading?.rit ?? null;
-    const springRDRit = springData.reading?.rit ?? null;
-    const actualRDGrowth = fallRDRit !== null && springRDRit !== null
-      ? springRDRit - fallRDRit
-      : null;
-    const rdIndex = actualRDGrowth !== null && expectedRD !== null && expectedRD !== 0
-      ? actualRDGrowth / expectedRD
-      : null;
+    const fromRDRit = fromData.reading?.rit ?? null;
+    const toRDRit = toData.reading?.rit ?? null;
+    const actualRDGrowth =
+      fromRDRit !== null && toRDRit !== null ? toRDRit - fromRDRit : null;
+    const rdIndex =
+      isFallToSpring &&
+      actualRDGrowth !== null &&
+      expectedRD !== null &&
+      expectedRD !== 0
+        ? actualRDGrowth / expectedRD
+        : null;
 
     results.push({
-      academicYear,
-      fromTerm,
-      toTerm,
-      grade,
+      growthType,
+      fromTermLabel: formatTermLabel(fromData.termTested),
+      toTermLabel: formatTermLabel(toData.termTested),
+      academicYear: toData.academicYear,
+      fromTerm: fromData.termTested,
+      toTerm: toData.termTested,
+      grade: toData.grade,
       languageUsage: {
-        fromScore: fallLURit,
-        toScore: springLURit,
+        fromScore: fromLURit,
+        toScore: toLURit,
         actualGrowth: actualLUGrowth,
         expectedGrowth: expectedLU,
         growthIndex: luIndex !== null ? Math.round(luIndex * 100) / 100 : null,
-        // Official CDF data (from Spring assessment)
-        officialConditionalGrowthIndex: springData.languageUsage?.conditionalGrowthIndex ?? null,
-        officialGrowthQuintile: springData.languageUsage?.growthQuintile ?? null,
-        officialMetProjectedGrowth: parseMetProjectedGrowth(springData.languageUsage?.metProjectedGrowth ?? null),
-        officialProjectedGrowth: springData.languageUsage?.projectedGrowth ?? null,
-        officialObservedGrowth: springData.languageUsage?.observedGrowth ?? null,
-        officialTypicalGrowth: springData.languageUsage?.typicalGrowth ?? null,
+        // Official CDF data (only available for Fall → Spring from Spring assessment)
+        officialConditionalGrowthIndex: isFallToSpring
+          ? (toData.languageUsage?.conditionalGrowthIndex ?? null)
+          : null,
+        officialGrowthQuintile: isFallToSpring
+          ? (toData.languageUsage?.growthQuintile ?? null)
+          : null,
+        officialMetProjectedGrowth: isFallToSpring
+          ? parseMetProjectedGrowth(toData.languageUsage?.metProjectedGrowth ?? null)
+          : null,
+        officialProjectedGrowth: isFallToSpring
+          ? (toData.languageUsage?.projectedGrowth ?? null)
+          : null,
+        officialObservedGrowth: isFallToSpring
+          ? (toData.languageUsage?.observedGrowth ?? null)
+          : null,
+        officialTypicalGrowth: isFallToSpring
+          ? (toData.languageUsage?.typicalGrowth ?? null)
+          : null,
       },
       reading: {
-        fromScore: fallRDRit,
-        toScore: springRDRit,
+        fromScore: fromRDRit,
+        toScore: toRDRit,
         actualGrowth: actualRDGrowth,
         expectedGrowth: expectedRD,
         growthIndex: rdIndex !== null ? Math.round(rdIndex * 100) / 100 : null,
-        // Official CDF data (from Spring assessment)
-        officialConditionalGrowthIndex: springData.reading?.conditionalGrowthIndex ?? null,
-        officialGrowthQuintile: springData.reading?.growthQuintile ?? null,
-        officialMetProjectedGrowth: parseMetProjectedGrowth(springData.reading?.metProjectedGrowth ?? null),
-        officialProjectedGrowth: springData.reading?.projectedGrowth ?? null,
-        officialObservedGrowth: springData.reading?.observedGrowth ?? null,
-        officialTypicalGrowth: springData.reading?.typicalGrowth ?? null,
+        // Official CDF data (only available for Fall → Spring from Spring assessment)
+        officialConditionalGrowthIndex: isFallToSpring
+          ? (toData.reading?.conditionalGrowthIndex ?? null)
+          : null,
+        officialGrowthQuintile: isFallToSpring
+          ? (toData.reading?.growthQuintile ?? null)
+          : null,
+        officialMetProjectedGrowth: isFallToSpring
+          ? parseMetProjectedGrowth(toData.reading?.metProjectedGrowth ?? null)
+          : null,
+        officialProjectedGrowth: isFallToSpring
+          ? (toData.reading?.projectedGrowth ?? null)
+          : null,
+        officialObservedGrowth: isFallToSpring
+          ? (toData.reading?.observedGrowth ?? null)
+          : null,
+        officialTypicalGrowth: isFallToSpring
+          ? (toData.reading?.typicalGrowth ?? null)
+          : null,
       },
     });
   }
 
-  // 4. 按學年排序（舊到新）
-  results.sort((a, b) => a.academicYear.localeCompare(b.academicYear));
+  // 5. 按時間排序（舊到新）- 使用 fromTerm 排序
+  results.sort((a, b) => compareTermTested(a.fromTerm, b.fromTerm));
 
   return results;
 }
