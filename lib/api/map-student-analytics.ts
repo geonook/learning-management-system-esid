@@ -120,6 +120,24 @@ export interface BenchmarkHistoryPoint {
   grade: number;
 }
 
+// Progress History Types for Charts and Tables
+export interface ProgressCourseData {
+  rit: number;
+  gradeAvg: number | null;
+  norm: number | null;
+  growth: number | null;
+  expectedGrowth: number | null;
+  projection: number | null;
+}
+
+export interface ProgressHistoryPoint {
+  termTested: string;
+  termShort: string;  // e.g., "FA25", "SP26"
+  grade: number;
+  reading: ProgressCourseData | null;
+  languageUsage: ProgressCourseData | null;
+}
+
 export interface StudentRankings {
   termTested: string;
   level: string | null; // E1/E2/E3
@@ -727,4 +745,189 @@ export async function getStudentMapAnalytics(
     benchmarkHistory,
     rankings,
   };
+}
+
+/**
+ * 格式化 term_tested 為短格式 (e.g., "Fall 2025-2026" -> "FA26")
+ */
+function formatTermShort(termTested: string): string {
+  const parsed = parseTermTested(termTested);
+  if (!parsed) return termTested;
+
+  const prefix = parsed.term === "fall" ? "FA" : "SP";
+  // Extract ending year from "2025-2026" -> "26"
+  const yearPart = parsed.academicYear.split("-")[1]?.slice(2) || "";
+  return `${prefix}${yearPart}`;
+}
+
+/**
+ * 取得學生 Progress History 資料（含 Grade Average、Norm、Projection）
+ * 用於繪製 RIT 歷史圖表和詳細測驗表格
+ */
+export async function getStudentProgressHistory(
+  studentNumber: string,
+  currentGrade: number
+): Promise<ProgressHistoryPoint[]> {
+  const supabase = createClient();
+
+  // 1. 取得該學生所有 MAP 評量資料
+  const { data: studentData, error } = await supabase
+    .from("map_assessments")
+    .select("term_tested, course, rit_score, grade")
+    .eq("student_number", studentNumber)
+    .in("course", ["Reading", "Language Usage"]);
+
+  if (error || !studentData || studentData.length === 0) return [];
+
+  // 2. 按學期分組學生資料
+  const termMap = new Map<string, {
+    grade: number;
+    reading: number | null;
+    languageUsage: number | null;
+  }>();
+
+  for (const row of studentData) {
+    let termData = termMap.get(row.term_tested);
+    if (!termData) {
+      termData = { grade: row.grade, reading: null, languageUsage: null };
+      termMap.set(row.term_tested, termData);
+    }
+    if (row.course === "Reading") {
+      termData.reading = row.rit_score;
+    } else if (row.course === "Language Usage") {
+      termData.languageUsage = row.rit_score;
+    }
+  }
+
+  // 取得所有唯一的學期
+  const allTerms = Array.from(termMap.keys()).sort(compareTermTested);
+
+  // 3. 取得各學期的年級平均分數（Grade Average）
+  const gradeAvgMap = new Map<string, { reading: number; languageUsage: number }>();
+
+  for (const termTested of allTerms) {
+    const termData = termMap.get(termTested);
+    if (!termData) continue;
+
+    const testGrade = termData.grade;
+
+    // 查詢該學期該年級所有學生的成績
+    const { data: gradeData } = await supabase
+      .from("map_assessments")
+      .select(`
+        course,
+        rit_score,
+        students:student_id (
+          grade,
+          is_active
+        )
+      `)
+      .eq("term_tested", termTested)
+      .in("course", ["Reading", "Language Usage"])
+      .not("student_id", "is", null);
+
+    if (gradeData) {
+      // 過濾活躍學生和該年級
+      const filteredData = gradeData.filter((d) => {
+        const student = d.students as unknown as {
+          grade: number;
+          is_active: boolean;
+        } | null;
+        return student?.is_active === true && student?.grade === testGrade;
+      });
+
+      const readingScores = filteredData
+        .filter((d) => d.course === "Reading")
+        .map((d) => d.rit_score);
+      const luScores = filteredData
+        .filter((d) => d.course === "Language Usage")
+        .map((d) => d.rit_score);
+
+      gradeAvgMap.set(termTested, {
+        reading: readingScores.length > 0
+          ? readingScores.reduce((a, b) => a + b, 0) / readingScores.length
+          : 0,
+        languageUsage: luScores.length > 0
+          ? luScores.reduce((a, b) => a + b, 0) / luScores.length
+          : 0,
+      });
+    }
+  }
+
+  // 4. 建構 Progress History 結果
+  const results: ProgressHistoryPoint[] = [];
+  let prevReading: number | null = null;
+  let prevLU: number | null = null;
+
+  for (let i = 0; i < allTerms.length; i++) {
+    const termTested = allTerms[i]!;
+    const termData = termMap.get(termTested)!;
+    const gradeAvg = gradeAvgMap.get(termTested);
+    const parsed = parseTermTested(termTested);
+
+    // 取得 NWEA Norm
+    const readingNorm = parsed
+      ? getNorm(parsed.academicYear, termData.grade, parsed.term, "Reading")
+      : null;
+    const luNorm = parsed
+      ? getNorm(parsed.academicYear, termData.grade, parsed.term, "Language Usage")
+      : null;
+
+    // 計算 Growth（與前次比較）
+    const readingGrowth = prevReading !== null && termData.reading !== null
+      ? termData.reading - prevReading
+      : null;
+    const luGrowth = prevLU !== null && termData.languageUsage !== null
+      ? termData.languageUsage - prevLU
+      : null;
+
+    // 計算 Expected Growth（Fall -> Spring 的預期成長）
+    const expectedReadingGrowth = parsed
+      ? getExpectedGrowth(parsed.academicYear, termData.grade, "Reading")
+      : null;
+    const expectedLUGrowth = parsed
+      ? getExpectedGrowth(parsed.academicYear, termData.grade, "Language Usage")
+      : null;
+
+    // 計算 Projection（僅對 Fall 有效：Fall RIT + Expected Growth）
+    let readingProjection: number | null = null;
+    let luProjection: number | null = null;
+
+    if (parsed?.term === "fall") {
+      if (termData.reading !== null && expectedReadingGrowth !== null) {
+        readingProjection = termData.reading + expectedReadingGrowth;
+      }
+      if (termData.languageUsage !== null && expectedLUGrowth !== null) {
+        luProjection = termData.languageUsage + expectedLUGrowth;
+      }
+    }
+
+    results.push({
+      termTested,
+      termShort: formatTermShort(termTested),
+      grade: termData.grade,
+      reading: termData.reading !== null ? {
+        rit: termData.reading,
+        gradeAvg: gradeAvg ? Math.round(gradeAvg.reading * 10) / 10 : null,
+        norm: readingNorm,
+        growth: readingGrowth,
+        expectedGrowth: expectedReadingGrowth,
+        projection: readingProjection,
+      } : null,
+      languageUsage: termData.languageUsage !== null ? {
+        rit: termData.languageUsage,
+        gradeAvg: gradeAvg ? Math.round(gradeAvg.languageUsage * 10) / 10 : null,
+        norm: luNorm,
+        growth: luGrowth,
+        expectedGrowth: expectedLUGrowth,
+        projection: luProjection,
+      } : null,
+    });
+
+    // 更新 previous 值
+    if (termData.reading !== null) prevReading = termData.reading;
+    if (termData.languageUsage !== null) prevLU = termData.languageUsage;
+  }
+
+  return results;
 }

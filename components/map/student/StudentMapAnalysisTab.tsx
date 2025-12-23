@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { Loader2, AlertCircle } from "lucide-react";
 import {
   getStudentMapAnalytics,
+  getStudentProgressHistory,
   type StudentMapAnalytics,
+  type ProgressHistoryPoint,
 } from "@/lib/api/map-student-analytics";
 import { StudentBenchmarkStatus } from "./StudentBenchmarkStatus";
 import { StudentGrowthIndex } from "./StudentGrowthIndex";
@@ -12,6 +14,8 @@ import { StudentGoalAreas } from "./StudentGoalAreas";
 import { StudentLexileLevel } from "./StudentLexileLevel";
 import { StudentBenchmarkHistory } from "./StudentBenchmarkHistory";
 import { StudentPeerComparison } from "./StudentPeerComparison";
+import { StudentProgressCharts } from "./StudentProgressChart";
+import { StudentAssessmentTables } from "./StudentAssessmentTable";
 
 interface StudentMapAnalysisTabProps {
   studentId: string;
@@ -27,6 +31,7 @@ export function StudentMapAnalysisTab({
   classId,
 }: StudentMapAnalysisTabProps) {
   const [analytics, setAnalytics] = useState<StudentMapAnalytics | null>(null);
+  const [progressHistory, setProgressHistory] = useState<ProgressHistoryPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,13 +40,13 @@ export function StudentMapAnalysisTab({
       setLoading(true);
       setError(null);
       try {
-        const data = await getStudentMapAnalytics(
-          studentId,
-          studentNumber,
-          grade,
-          classId
-        );
-        setAnalytics(data);
+        // Fetch both analytics and progress history in parallel
+        const [analyticsData, historyData] = await Promise.all([
+          getStudentMapAnalytics(studentId, studentNumber, grade, classId),
+          getStudentProgressHistory(studentNumber, grade),
+        ]);
+        setAnalytics(analyticsData);
+        setProgressHistory(historyData);
       } catch (err) {
         console.error("Failed to fetch MAP analytics:", err);
         setError(err instanceof Error ? err.message : "Failed to load MAP analytics");
@@ -106,7 +111,8 @@ export function StudentMapAnalysisTab({
     goalPerformance ||
     lexileStatus ||
     benchmarkHistory.length > 0 ||
-    rankings;
+    rankings ||
+    progressHistory.length > 0;
 
   if (!hasAnyData) {
     return (
@@ -122,6 +128,16 @@ export function StudentMapAnalysisTab({
 
   return (
     <div className="space-y-6">
+      {/* Progress Charts - Primary Visual (NEW) */}
+      {progressHistory.length > 0 && (
+        <StudentProgressCharts data={progressHistory} />
+      )}
+
+      {/* Assessment History Tables (NEW) */}
+      {progressHistory.length > 0 && (
+        <StudentAssessmentTables data={progressHistory} />
+      )}
+
       {/* Row 1: Benchmark Status & Growth Index */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <StudentBenchmarkStatus data={benchmarkStatus} />
