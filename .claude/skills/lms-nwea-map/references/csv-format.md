@@ -44,17 +44,21 @@
 
 ## Term Parsing Logic
 
-Extract `academic_year` and `term` from `term_tested`:
+Extract `academic_year` and `map_term` from `term_tested`:
 
 ```typescript
-function parseTermTested(termTested: string): { academicYear: string; term: string } {
+// MapTerm: NWEA testing period (fall/winter/spring)
+// Note: Distinct from ELA Term (1/2/3/4) in types/academic-year.ts
+type MapTerm = 'fall' | 'winter' | 'spring';
+
+function parseTermTested(termTested: string): { academicYear: string; mapTerm: MapTerm } {
   // Input: "Fall 2025-2026" or "Spring 2025-2026"
-  const match = termTested.match(/^(Fall|Spring)\s+(\d{4}-\d{4})$/i);
+  const match = termTested.match(/^(Fall|Winter|Spring)\s+(\d{4}-\d{4})$/i);
   if (!match) throw new Error(`Invalid term format: ${termTested}`);
-  
+
   return {
-    term: match[1].toLowerCase(),      // 'fall' or 'spring'
-    academicYear: match[2]              // '2025-2026'
+    mapTerm: match[1].toLowerCase() as MapTerm,  // 'fall', 'winter', or 'spring'
+    academicYear: match[2]                        // '2025-2026'
   };
 }
 ```
@@ -84,7 +88,7 @@ interface MapAssessmentRow {
   school: string;
   term_tested: string;
   academic_year: string;
-  term: string;
+  map_term: MapTerm;  // 'fall', 'winter', or 'spring'
   course: string;
   test_name: string;
   rit_score: number;
@@ -96,7 +100,7 @@ interface MapAssessmentRow {
 }
 
 function transformRow(row: Record<string, string>): MapAssessmentRow {
-  const { term, academicYear } = parseTermTested(row['Term Tested']);
+  const { mapTerm, academicYear } = parseTermTested(row['Term Tested']);
   
   // Extract goals based on course
   const goals: Array<{ goal_name: string; goal_rit_range: string }> = [];
@@ -125,7 +129,7 @@ function transformRow(row: Record<string, string>): MapAssessmentRow {
     school: row['School']?.trim() || null,
     term_tested: row['Term Tested'].trim(),
     academic_year: academicYear,
-    term: term,
+    map_term: mapTerm,
     course: row['Course'].trim(),
     test_name: row['Test Name']?.trim() || null,
     rit_score: parseInt(row['RIT Score'], 10),

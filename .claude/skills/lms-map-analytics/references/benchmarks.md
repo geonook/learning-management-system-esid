@@ -104,7 +104,7 @@ WITH student_averages AS (
       MAX(CASE WHEN ma.course = 'Reading' THEN ma.rit_score END)
     ) / 2.0, 2) as average
   FROM map_assessments ma
-  WHERE ma.term = 'spring'
+  WHERE ma.map_term = 'spring'
     AND ma.academic_year = '2024-2025'
   GROUP BY ma.student_number, ma.grade
   HAVING
@@ -140,7 +140,7 @@ WITH student_averages AS (
       MAX(CASE WHEN ma.course = 'Reading' THEN ma.rit_score END)
     ) / 2.0, 2) as average
   FROM map_assessments ma
-  WHERE ma.term = 'spring'
+  WHERE ma.map_term = 'spring'
     AND ma.academic_year = '2024-2025'
     AND ma.grade IN (3, 4, 5)
   GROUP BY ma.student_number, ma.grade

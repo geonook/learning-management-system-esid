@@ -36,20 +36,20 @@ NWEA provides national normative data based on millions of US student test recor
 CREATE TABLE map_norms (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   academic_year TEXT NOT NULL,        -- '2024-2025'
-  term TEXT NOT NULL,                 -- 'fall', 'spring'
+  map_term TEXT NOT NULL,             -- 'fall', 'winter', 'spring' (distinct from ELA term 1-4)
   grade INTEGER NOT NULL,             -- 3, 4, 5, 6
   course TEXT NOT NULL,               -- 'Reading', 'Language Usage'
   norm_rit INTEGER NOT NULL,          -- National average RIT
   created_at TIMESTAMPTZ DEFAULT now(),
-  
-  UNIQUE(academic_year, term, grade, course)
+
+  UNIQUE(academic_year, map_term, grade, course)
 );
 ```
 
 ## Seed Data
 
 ```sql
-INSERT INTO map_norms (academic_year, term, grade, course, norm_rit) VALUES
+INSERT INTO map_norms (academic_year, map_term, grade, course, norm_rit) VALUES
 -- Grade 3
 ('2024-2025', 'fall', 3, 'Language Usage', 188),
 ('2024-2025', 'fall', 3, 'Reading', 187),
@@ -75,9 +75,12 @@ interface NormData {
   reading: number;
 }
 
-type TermNorms = Record<'fall' | 'spring', NormData>;
+// MapTerm: NWEA testing period (fall/winter/spring)
+// Note: Distinct from ELA Term (1/2/3/4) in types/academic-year.ts
+type MapTerm = 'fall' | 'winter' | 'spring';
+type MapTermNorms = Partial<Record<MapTerm, NormData>>;
 
-const MAP_NORMS_2024_2025: Record<number, TermNorms> = {
+const MAP_NORMS_2024_2025: Record<number, MapTermNorms> = {
   3: {
     fall: { languageUsage: 188, reading: 187 },
     spring: { languageUsage: 198, reading: 197 },
@@ -94,15 +97,17 @@ const MAP_NORMS_2024_2025: Record<number, TermNorms> = {
 
 function getNorm(
   grade: number,
-  term: 'fall' | 'spring',
+  mapTerm: MapTerm,
   course: 'Language Usage' | 'Reading'
 ): number | null {
   const gradeNorms = MAP_NORMS_2024_2025[grade];
   if (!gradeNorms) return null;
-  
-  const termNorms = gradeNorms[term];
-  return course === 'Language Usage' 
-    ? termNorms.languageUsage 
+
+  const termNorms = gradeNorms[mapTerm];
+  if (!termNorms) return null;
+
+  return course === 'Language Usage'
+    ? termNorms.languageUsage
     : termNorms.reading;
 }
 ```
@@ -111,23 +116,23 @@ function getNorm(
 
 ```sql
 -- Compare school average vs national norm
-SELECT 
+SELECT
   ma.grade,
-  ma.term,
+  ma.map_term,
   ma.course,
   COUNT(*) as student_count,
   ROUND(AVG(ma.rit_score), 1) as school_avg,
   n.norm_rit as national_norm,
   ROUND(AVG(ma.rit_score) - n.norm_rit, 1) as diff_from_norm
 FROM map_assessments ma
-JOIN map_norms n ON 
-  n.academic_year = ma.academic_year 
-  AND n.term = ma.term 
-  AND n.grade = ma.grade 
+JOIN map_norms n ON
+  n.academic_year = ma.academic_year
+  AND n.map_term = ma.map_term
+  AND n.grade = ma.grade
   AND n.course = ma.course
 WHERE ma.academic_year = '2024-2025'
-GROUP BY ma.grade, ma.term, ma.course, n.norm_rit
-ORDER BY ma.grade, ma.term, ma.course;
+GROUP BY ma.grade, ma.map_term, ma.course, n.norm_rit
+ORDER BY ma.grade, ma.map_term, ma.course;
 ```
 
 ## Expected Growth Calculation

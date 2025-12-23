@@ -2,12 +2,12 @@
 
 ## 1. Group Averages
 
-### By English Level × Grade × Term
+### By English Level × Grade × MapTerm
 
 ```sql
-SELECT 
+SELECT
   ma.academic_year,
-  ma.term,
+  ma.map_term,
   ma.grade,
   s.english_level,
   ma.course,
@@ -16,16 +16,16 @@ SELECT
 FROM map_assessments ma
 JOIN students s ON s.id = ma.student_id
 WHERE ma.academic_year = '2024-2025'
-GROUP BY ma.academic_year, ma.term, ma.grade, s.english_level, ma.course
-ORDER BY ma.grade, s.english_level, ma.course, ma.term;
+GROUP BY ma.academic_year, ma.map_term, ma.grade, s.english_level, ma.course
+ORDER BY ma.grade, s.english_level, ma.course, ma.map_term;
 ```
 
 ### Grade-Level Totals
 
 ```sql
-SELECT 
+SELECT
   ma.academic_year,
-  ma.term,
+  ma.map_term,
   ma.grade,
   ma.course,
   COUNT(*) as student_count,
@@ -34,8 +34,8 @@ SELECT
   MAX(ma.rit_score) as max_rit
 FROM map_assessments ma
 WHERE ma.academic_year = '2024-2025'
-GROUP BY ma.academic_year, ma.term, ma.grade, ma.course
-ORDER BY ma.grade, ma.course, ma.term;
+GROUP BY ma.academic_year, ma.map_term, ma.grade, ma.course
+ORDER BY ma.grade, ma.course, ma.map_term;
 ```
 
 ## 2. Combined Student Scores
@@ -43,14 +43,14 @@ ORDER BY ma.grade, ma.course, ma.term;
 ### Create Pivot Table (Language Usage + Reading + Average)
 
 ```sql
-SELECT 
+SELECT
   ma.student_number,
   s.chinese_name,
   s.english_name,
   s.english_level,
   s.homeroom,
   ma.academic_year,
-  ma.term,
+  ma.map_term,
   ma.term_tested,
   ma.grade,
   MAX(CASE WHEN ma.course = 'Language Usage' THEN ma.rit_score END) as language_usage,
@@ -62,33 +62,33 @@ SELECT
 FROM map_assessments ma
 JOIN students s ON s.id = ma.student_id
 WHERE ma.academic_year = '2024-2025'
-GROUP BY 
-  ma.student_number, s.chinese_name, s.english_name, 
+GROUP BY
+  ma.student_number, s.chinese_name, s.english_name,
   s.english_level, s.homeroom,
-  ma.academic_year, ma.term, ma.term_tested, ma.grade
-ORDER BY ma.grade, s.english_level, ma.student_number, ma.term;
+  ma.academic_year, ma.map_term, ma.term_tested, ma.grade
+ORDER BY ma.grade, s.english_level, ma.student_number, ma.map_term;
 ```
 
-## 3. Term-over-Term Growth
+## 3. MapTerm-over-MapTerm Growth
 
 ### Individual Student Growth
 
 ```sql
 WITH fall_scores AS (
-  SELECT 
+  SELECT
     student_number,
     course,
     rit_score as fall_rit
   FROM map_assessments
-  WHERE term = 'fall' AND academic_year = '2024-2025'
+  WHERE map_term = 'fall' AND academic_year = '2024-2025'
 ),
 spring_scores AS (
-  SELECT 
+  SELECT
     student_number,
     course,
     rit_score as spring_rit
   FROM map_assessments
-  WHERE term = 'spring' AND academic_year = '2024-2025'
+  WHERE map_term = 'spring' AND academic_year = '2024-2025'
 )
 SELECT 
   f.student_number,
@@ -119,8 +119,8 @@ WITH growth_data AS (
     AND ma_fall.course = ma_spring.course
     AND ma_fall.academic_year = ma_spring.academic_year
   JOIN students s ON s.id = ma_fall.student_id
-  WHERE ma_fall.term = 'fall' 
-    AND ma_spring.term = 'spring'
+  WHERE ma_fall.map_term = 'fall'
+    AND ma_spring.map_term = 'spring'
     AND ma_fall.academic_year = '2024-2025'
 )
 SELECT 
@@ -153,7 +153,7 @@ WITH student_averages AS (
       MAX(CASE WHEN ma.course = 'Reading' THEN ma.rit_score END)
     ) / 2.0, 2) as average
   FROM map_assessments ma
-  WHERE ma.term = 'spring'
+  WHERE ma.map_term = 'spring'
     AND ma.academic_year = '2024-2025'
     AND ma.grade IN (3, 4, 5)
   GROUP BY ma.student_number, ma.grade
@@ -190,27 +190,27 @@ ORDER BY grade, benchmark;
 ### School vs National Average
 
 ```sql
-SELECT 
+SELECT
   ma.grade,
-  ma.term,
+  ma.map_term,
   ma.course,
   COUNT(*) as student_count,
   ROUND(AVG(ma.rit_score), 1) as school_avg,
   n.norm_rit as national_norm,
   ROUND(AVG(ma.rit_score) - n.norm_rit, 1) as difference,
-  CASE 
+  CASE
     WHEN AVG(ma.rit_score) >= n.norm_rit THEN 'Above Norm'
     ELSE 'Below Norm'
   END as status
 FROM map_assessments ma
-JOIN map_norms n ON 
-  n.academic_year = ma.academic_year 
-  AND n.term = ma.term 
-  AND n.grade = ma.grade 
+JOIN map_norms n ON
+  n.academic_year = ma.academic_year
+  AND n.map_term = ma.map_term
+  AND n.grade = ma.grade
   AND n.course = ma.course
 WHERE ma.academic_year = '2024-2025'
-GROUP BY ma.grade, ma.term, ma.course, n.norm_rit
-ORDER BY ma.grade, ma.term, ma.course;
+GROUP BY ma.grade, ma.map_term, ma.course, n.norm_rit
+ORDER BY ma.grade, ma.map_term, ma.course;
 ```
 
 ## 6. Overview Report Query
@@ -219,10 +219,10 @@ ORDER BY ma.grade, ma.term, ma.course;
 
 ```sql
 WITH student_combined AS (
-  SELECT 
+  SELECT
     ma.student_number,
     ma.academic_year,
-    ma.term,
+    ma.map_term,
     ma.term_tested,
     ma.grade,
     s.english_level,
@@ -230,18 +230,18 @@ WITH student_combined AS (
     MAX(CASE WHEN ma.course = 'Reading' THEN ma.rit_score END) as reading
   FROM map_assessments ma
   JOIN students s ON s.id = ma.student_id
-  GROUP BY ma.student_number, ma.academic_year, ma.term, ma.term_tested, ma.grade, s.english_level
+  GROUP BY ma.student_number, ma.academic_year, ma.map_term, ma.term_tested, ma.grade, s.english_level
 )
-SELECT 
+SELECT
   grade,
   english_level,
-  term,
+  map_term,
   COUNT(*) as student_count,
   ROUND(AVG(language_usage), 2) as avg_language_usage,
   ROUND(AVG(reading), 2) as avg_reading,
   ROUND((AVG(language_usage) + AVG(reading)) / 2, 2) as avg_map_average
 FROM student_combined
 WHERE language_usage IS NOT NULL AND reading IS NOT NULL
-GROUP BY grade, english_level, term
-ORDER BY grade, english_level, term;
+GROUP BY grade, english_level, map_term
+ORDER BY grade, english_level, map_term;
 ```

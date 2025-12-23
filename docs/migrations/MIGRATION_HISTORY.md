@@ -24,6 +24,7 @@
 | 030 | Four-Term System | 2025-12-12 | ✅ |
 | 031 | 2026-2027 Academic Year | 2025-12-12 | ✅ |
 | 032 | Gradebook Expectations | 2025-12-14 | ✅ |
+| 038 | MAP term → map_term | 2025-12-22 | ✅ |
 
 ---
 
@@ -241,6 +242,33 @@ CREATE TABLE gradebook_expectations (
 
 ---
 
+## Migration 038: MAP term → map_term
+
+**目的**：避免 MAP `term` 與 ELA `term` 混淆
+
+**背景**：
+- MAP `term`: 'fall', 'winter', 'spring'（NWEA 測驗週期）
+- ELA `term`: 1, 2, 3, 4（學校成績週期）
+
+**變更**：
+```sql
+-- 重命名欄位
+ALTER TABLE map_assessments
+  RENAME COLUMN term TO map_term;
+
+-- 更新索引
+DROP INDEX IF EXISTS idx_map_assessments_term;
+CREATE INDEX idx_map_assessments_map_term ON map_assessments(map_term);
+```
+
+**型別定義**：
+```typescript
+// MapTerm: NWEA testing period (distinct from ELA Term 1-4)
+type MapTerm = 'fall' | 'winter' | 'spring';
+```
+
+---
+
 ## 驗證腳本
 
 ```sql
@@ -248,4 +276,8 @@ CREATE TABLE gradebook_expectations (
 SELECT COUNT(*) FROM courses;  -- 預期：504
 SELECT COUNT(*) FROM classes WHERE academic_year = '2025-2026';  -- 預期：84
 SELECT COUNT(*) FROM gradebook_expectations;  -- 看有多少設定
+
+-- 驗證 map_term 重命名
+SELECT column_name FROM information_schema.columns
+WHERE table_name = 'map_assessments' AND column_name = 'map_term';
 ```

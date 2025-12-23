@@ -48,10 +48,14 @@ function calculateGrowth(
 ### Growth Trend (All Available Terms)
 
 ```typescript
+// MapTerm: NWEA testing period (fall/winter/spring)
+// Note: Distinct from ELA Term (1/2/3/4) in types/academic-year.ts
+type MapTerm = 'fall' | 'winter' | 'spring';
+
 interface TrendPoint {
   termTested: string;
   academicYear: string;
-  term: string;
+  mapTerm: MapTerm;
   ritScore: number;
   sortOrder: number;  // For chronological sorting
 }
@@ -72,7 +76,7 @@ function getGrowthTrend(
     .map(a => ({
       termTested: a.term_tested,
       academicYear: a.academic_year,
-      term: a.term,
+      mapTerm: a.map_term,
       ritScore: a.rit_score,
       sortOrder: termOrder[a.term_tested] || 99
     }))
@@ -123,10 +127,10 @@ function formatTermLabel(termTested: string): string {
 ### Get Student's Complete MAP History
 
 ```sql
-SELECT 
+SELECT
   ma.term_tested,
   ma.academic_year,
-  ma.term,
+  ma.map_term,
   ma.course,
   ma.rit_score,
   ma.lexile_score,
@@ -140,9 +144,9 @@ FROM map_assessments ma
 LEFT JOIN map_goal_scores mg ON mg.assessment_id = ma.id
 WHERE ma.student_number = 'LE12001'
 GROUP BY ma.id
-ORDER BY 
+ORDER BY
   ma.academic_year,
-  CASE ma.term WHEN 'fall' THEN 1 WHEN 'spring' THEN 2 END;
+  CASE ma.map_term WHEN 'fall' THEN 1 WHEN 'winter' THEN 2 WHEN 'spring' THEN 3 END;
 ```
 
 ### Get Class Average by Term
