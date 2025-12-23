@@ -2,6 +2,12 @@
 
 import { Target } from "lucide-react";
 import { type StudentGoalPerformance as GoalPerformanceData } from "@/lib/api/map-student-analytics";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface StudentGoalAreasProps {
   data: GoalPerformanceData | null;
@@ -114,21 +120,42 @@ export function StudentGoalAreas({ data }: StudentGoalAreasProps) {
         <div className="flex items-center gap-1.5 flex-1 min-w-0">
           {/* Strength/Focus 標記 */}
           {isStrength && (
-            <span className="text-green-500 text-xs flex-shrink-0" title="Relative Strength">
-              ★
-            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-green-500 text-xs flex-shrink-0 cursor-help">★</span>
+              </TooltipTrigger>
+              <TooltipContent side="left">
+                <p className="text-xs">Relative Strength</p>
+              </TooltipContent>
+            </Tooltip>
           )}
           {isFocus && (
-            <span className="text-amber-500 text-xs flex-shrink-0" title="Suggested Area of Focus">
-              ◆
-            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-amber-500 text-xs flex-shrink-0 cursor-help">◆</span>
+              </TooltipTrigger>
+              <TooltipContent side="left">
+                <p className="text-xs">Suggested Area of Focus</p>
+              </TooltipContent>
+            </Tooltip>
           )}
-          <span
-            className="text-sm text-text-secondary truncate cursor-help"
-            title={goalName}
-          >
-            {goalName}
-          </span>
+          {/* Goal 名稱 */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="text-sm text-text-secondary truncate cursor-help">
+                {goalName}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-[280px]">
+              <p className="text-sm font-medium">{goalName}</p>
+              {isStrength && (
+                <p className="text-xs text-green-600 dark:text-green-400 mt-1">★ Relative Strength</p>
+              )}
+              {isFocus && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">◆ Suggested Focus</p>
+              )}
+            </TooltipContent>
+          </Tooltip>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           {/* RIT Score */}
@@ -136,111 +163,119 @@ export function StudentGoalAreas({ data }: StudentGoalAreasProps) {
             {midpoint !== null ? midpoint : "—"}
           </span>
           {/* Quintile 標籤 */}
-          <span
-            className={`px-2 py-0.5 rounded text-xs font-medium w-14 text-center ${quintile.bgColor} ${quintile.textColor}`}
-            title={quintile.description}
-          >
-            {quintile.label}
-          </span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                className={`px-2 py-0.5 rounded text-xs font-medium w-14 text-center cursor-help ${quintile.bgColor} ${quintile.textColor}`}
+              >
+                {quintile.label}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              <p className="text-xs">{quintile.description}</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
     );
   };
 
   return (
-    <div className="bg-surface-elevated rounded-xl border border-border-default p-6 shadow-sm">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-text-primary">Instructional Areas</h3>
-        <span className="text-sm text-text-tertiary">{termTested}</span>
-      </div>
-
-      {/* Legend */}
-      <div className="flex flex-wrap gap-3 mb-4 text-xs">
-        <div className="flex items-center gap-1">
-          <span className="text-green-500">★</span>
-          <span className="text-text-tertiary">Relative Strength</span>
+    <TooltipProvider>
+      <div className="bg-surface-elevated rounded-xl border border-border-default p-6 shadow-sm">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-text-primary">Instructional Areas</h3>
+          <span className="text-sm text-text-tertiary">{termTested}</span>
         </div>
-        <div className="flex items-center gap-1">
-          <span className="text-amber-500">◆</span>
-          <span className="text-text-tertiary">Suggested Focus</span>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Reading Goals */}
-        {reading && reading.goals.length > 0 && (
-          <div className="bg-surface-secondary rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3 pb-2 border-b border-border-subtle">
-              <span className="text-sm font-semibold text-text-primary">Reading</span>
-              <span className="text-xs text-text-tertiary font-mono">RIT {reading.overallRit}</span>
+        {/* Legend */}
+        <div className="flex flex-wrap gap-3 mb-4 text-xs">
+          <div className="flex items-center gap-1">
+            <span className="text-green-500">★</span>
+            <span className="text-text-tertiary">Relative Strength</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-amber-500">◆</span>
+            <span className="text-text-tertiary">Suggested Focus</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Reading Goals */}
+          {reading && reading.goals.length > 0 && (
+            <div className="bg-surface-secondary rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-border-subtle">
+                <span className="text-sm font-semibold text-text-primary">Reading</span>
+                <span className="text-xs text-text-tertiary font-mono">RIT {reading.overallRit}</span>
+              </div>
+              <div>
+                {reading.goals.map((goal) => (
+                  <GoalRow
+                    key={goal.goalName}
+                    goalName={goal.goalName}
+                    midpoint={goal.midpoint}
+                    vsOverall={goal.vsOverall}
+                    isStrength={strengths.includes(goal.goalName)}
+                    isFocus={weaknesses.includes(goal.goalName)}
+                  />
+                ))}
+              </div>
             </div>
-            <div>
-              {reading.goals.map((goal) => (
-                <GoalRow
-                  key={goal.goalName}
-                  goalName={goal.goalName}
-                  midpoint={goal.midpoint}
-                  vsOverall={goal.vsOverall}
-                  isStrength={strengths.includes(goal.goalName)}
-                  isFocus={weaknesses.includes(goal.goalName)}
-                />
-              ))}
+          )}
+
+          {/* Language Usage Goals */}
+          {languageUsage && languageUsage.goals.length > 0 && (
+            <div className="bg-surface-secondary rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-border-subtle">
+                <span className="text-sm font-semibold text-text-primary">Language Usage</span>
+                <span className="text-xs text-text-tertiary font-mono">RIT {languageUsage.overallRit}</span>
+              </div>
+              <div>
+                {languageUsage.goals.map((goal) => (
+                  <GoalRow
+                    key={goal.goalName}
+                    goalName={goal.goalName}
+                    midpoint={goal.midpoint}
+                    vsOverall={goal.vsOverall}
+                    isStrength={strengths.includes(goal.goalName)}
+                    isFocus={weaknesses.includes(goal.goalName)}
+                  />
+                ))}
+              </div>
             </div>
+          )}
+        </div>
+
+        {/* Quintile 說明 */}
+        <div className="mt-4 pt-3 border-t border-border-subtle">
+          <div className="flex flex-wrap justify-center gap-2 text-xs">
+            <span className="px-2 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">Low</span>
+            <span className="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">LoAvg</span>
+            <span className="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">Avg</span>
+            <span className="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">HiAvg</span>
+            <span className="px-2 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">High</span>
+          </div>
+          <p className="text-center text-xs text-text-tertiary mt-2">
+            Performance relative to overall RIT score
+          </p>
+        </div>
+
+        {/* Detailed Explanation */}
+        <div className="mt-3 text-xs text-text-tertiary space-y-1">
+          <p><strong>Instructional Areas</strong>: Specific skill domains within each subject.</p>
+          <p><strong>★ Relative Strength</strong>: Areas where student performs above their own average.</p>
+          <p><strong>◆ Suggested Focus</strong>: Areas that could benefit from additional practice.</p>
+          <p className="italic">Use these insights to personalize instruction and target specific skills.</p>
+        </div>
+
+        {/* Empty state */}
+        {!reading && !languageUsage && (
+          <div className="text-center py-4 text-text-tertiary text-sm">
+            No goal area data available for this term
           </div>
         )}
-
-        {/* Language Usage Goals */}
-        {languageUsage && languageUsage.goals.length > 0 && (
-          <div className="bg-surface-secondary rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3 pb-2 border-b border-border-subtle">
-              <span className="text-sm font-semibold text-text-primary">Language Usage</span>
-              <span className="text-xs text-text-tertiary font-mono">RIT {languageUsage.overallRit}</span>
-            </div>
-            <div>
-              {languageUsage.goals.map((goal) => (
-                <GoalRow
-                  key={goal.goalName}
-                  goalName={goal.goalName}
-                  midpoint={goal.midpoint}
-                  vsOverall={goal.vsOverall}
-                  isStrength={strengths.includes(goal.goalName)}
-                  isFocus={weaknesses.includes(goal.goalName)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
       </div>
-
-      {/* Quintile 說明 */}
-      <div className="mt-4 pt-3 border-t border-border-subtle">
-        <div className="flex flex-wrap justify-center gap-2 text-xs">
-          <span className="px-2 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">Low</span>
-          <span className="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">LoAvg</span>
-          <span className="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">Avg</span>
-          <span className="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">HiAvg</span>
-          <span className="px-2 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">High</span>
-        </div>
-        <p className="text-center text-xs text-text-tertiary mt-2">
-          Performance relative to overall RIT score
-        </p>
-      </div>
-
-      {/* Detailed Explanation */}
-      <div className="mt-3 text-xs text-text-tertiary space-y-1">
-        <p><strong>Instructional Areas</strong>: Specific skill domains within each subject.</p>
-        <p><strong>★ Relative Strength</strong>: Areas where student performs above their own average.</p>
-        <p><strong>◆ Suggested Focus</strong>: Areas that could benefit from additional practice.</p>
-        <p className="italic">Use these insights to personalize instruction and target specific skills.</p>
-      </div>
-
-      {/* Empty state */}
-      {!reading && !languageUsage && (
-        <div className="text-center py-4 text-text-tertiary text-sm">
-          No goal area data available for this term
-        </div>
-      )}
-    </div>
+    </TooltipProvider>
   );
 }
