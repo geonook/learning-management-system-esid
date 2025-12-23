@@ -17,7 +17,7 @@ import {
   getExpectedGrowth,
   parseTermTested,
   compareTermTested,
-  type Term,
+  type MapTerm,
   type Course,
 } from "@/lib/map/norms";
 import { parseRitRange } from "@/lib/map/goals";
@@ -696,7 +696,7 @@ export async function getStudentRankings(
     // 取得常模
     const parsed = parseTermTested(targetTerm);
     const norm = parsed
-      ? getNorm(parsed.academicYear, grade, parsed.term, course)
+      ? getNorm(parsed.academicYear, grade, parsed.mapTerm, course)
       : null;
 
     return {
@@ -762,7 +762,7 @@ function formatTermShort(termTested: string): string {
   const parsed = parseTermTested(termTested);
   if (!parsed) return termTested;
 
-  const prefix = parsed.term === "fall" ? "FA" : "SP";
+  const prefix = parsed.mapTerm === "fall" ? "FA" : "SP";
   // Extract ending year from "2025-2026" -> "26"
   const yearPart = parsed.academicYear.split("-")[1]?.slice(2) || "";
   return `${prefix}${yearPart}`;
@@ -875,10 +875,10 @@ export async function getStudentProgressHistory(
 
     // 取得 NWEA Norm
     const readingNorm = parsed
-      ? getNorm(parsed.academicYear, termData.grade, parsed.term, "Reading")
+      ? getNorm(parsed.academicYear, termData.grade, parsed.mapTerm, "Reading")
       : null;
     const luNorm = parsed
-      ? getNorm(parsed.academicYear, termData.grade, parsed.term, "Language Usage")
+      ? getNorm(parsed.academicYear, termData.grade, parsed.mapTerm, "Language Usage")
       : null;
 
     // 計算 Growth（與前次比較）
@@ -901,7 +901,7 @@ export async function getStudentProgressHistory(
     let readingProjection: number | null = null;
     let luProjection: number | null = null;
 
-    if (parsed?.term === "fall") {
+    if (parsed?.mapTerm === "fall") {
       if (termData.reading !== null && expectedReadingGrowth !== null) {
         readingProjection = termData.reading + expectedReadingGrowth;
       }
@@ -912,10 +912,10 @@ export async function getStudentProgressHistory(
 
     // 計算 Percentile Range
     const readingPercentile = parsed && termData.reading !== null
-      ? getPercentileRange(termData.reading, termData.grade, parsed.term, "Reading", parsed.academicYear)
+      ? getPercentileRange(termData.reading, termData.grade, parsed.mapTerm, "Reading", parsed.academicYear)
       : null;
     const luPercentile = parsed && termData.languageUsage !== null
-      ? getPercentileRange(termData.languageUsage, termData.grade, parsed.term, "Language Usage", parsed.academicYear)
+      ? getPercentileRange(termData.languageUsage, termData.grade, parsed.mapTerm, "Language Usage", parsed.academicYear)
       : null;
 
     results.push({
