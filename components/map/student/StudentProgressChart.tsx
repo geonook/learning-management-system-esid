@@ -37,12 +37,13 @@ interface NWEAChartDataPoint {
   growth?: number | null;
 }
 
-// NWEA 官方配色
+// NWEA 風格配色（柔和版本）
+// 維持官方色系但調低飽和度，視覺更協調
 const NWEA_COLORS = {
-  studentRit: "#4472C4",   // 藍色 - Student RIT
-  levelMean: "#FFC000",    // 黃色 - Level Mean
-  norm: "#1F3864",         // 深藍色 - Norm
-  projection: "#4472C4",   // 預測用同色但斜線填充
+  studentRit: "#5B8BD9",   // 柔和藍色 - Student RIT（原 #4472C4 調亮）
+  levelMean: "#E6B800",    // 柔和金黃 - Level Mean（原 #FFC000 調暗）
+  norm: "#3D5A80",         // 灰藍色 - Norm（原 #1F3864 調亮）
+  projection: "#5B8BD9",   // 預測用同色但斜線填充
   gridLine: "#e5e7eb",
 };
 
