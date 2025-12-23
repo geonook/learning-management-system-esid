@@ -1089,28 +1089,29 @@ export async function getStudentProgressHistory(
     const testGrade = termData.grade;
 
     // 查詢該學期該年級所有學生的成績
+    // 注意：使用 map_assessments.grade（測驗時年級）而非 students.grade（當前年級）
     const { data: gradeData } = await supabase
       .from("map_assessments")
       .select(`
         course,
         rit_score,
+        grade,
         students:student_id (
-          grade,
           is_active
         )
       `)
       .eq("term_tested", termTested)
+      .eq("grade", testGrade)
       .in("course", ["Reading", "Language Usage"])
       .not("student_id", "is", null);
 
     if (gradeData) {
-      // 過濾活躍學生和該年級
+      // 過濾活躍學生（使用 map_assessments.grade 已在查詢中過濾年級）
       const filteredData = gradeData.filter((d) => {
         const student = d.students as unknown as {
-          grade: number;
           is_active: boolean;
         } | null;
-        return student?.is_active === true && student?.grade === testGrade;
+        return student?.is_active === true;
       });
 
       const readingScores = filteredData
