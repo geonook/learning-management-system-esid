@@ -10,12 +10,19 @@ export interface NormData {
   reading: number;
 }
 
-export type Term = "fall" | "spring";
+/**
+ * MapTerm: NWEA MAP testing period (fall/winter/spring)
+ * Note: This is distinct from ELA 'Term' (1/2/3/4) in types/academic-year.ts
+ */
+export type MapTerm = "fall" | "winter" | "spring";
 export type Course = "Language Usage" | "Reading";
+
+// For backward compatibility during migration
+export type Term = MapTerm;
 
 // NWEA 常模數據 (按學年 > 年級 > 學期)
 // 資料來源：NWEA 2025 Norms (116 million scores from 13.8 million students, Fall 2022 - Spring 2024)
-const MAP_NORMS: Record<string, Record<number, Record<Term, NormData>>> = {
+const MAP_NORMS: Record<string, Record<number, Record<MapTerm, NormData>>> = {
   // 2024-2025 學年使用舊版常模
   "2024-2025": {
     3: {
@@ -57,12 +64,12 @@ const MAP_NORMS: Record<string, Record<number, Record<Term, NormData>>> = {
 };
 
 /**
- * 取得特定學年、年級、學期、課程的國家常模
+ * 取得特定學年、年級、MAP 測驗期、課程的國家常模
  */
 export function getNorm(
   academicYear: string,
   grade: number,
-  term: Term,
+  mapTerm: MapTerm,
   course: Course
 ): number | null {
   const yearNorms = MAP_NORMS[academicYear];
@@ -71,7 +78,7 @@ export function getNorm(
   const gradeNorms = yearNorms[grade];
   if (!gradeNorms) return null;
 
-  const termNorms = gradeNorms[term];
+  const termNorms = gradeNorms[mapTerm];
   if (!termNorms) return null;
 
   return course === "Language Usage"
@@ -80,12 +87,12 @@ export function getNorm(
 }
 
 /**
- * 取得特定學年、年級、學期的常模資料
+ * 取得特定學年、年級、MAP 測驗期的常模資料
  */
 export function getNormData(
   academicYear: string,
   grade: number,
-  term: Term
+  mapTerm: MapTerm
 ): NormData | null {
   const yearNorms = MAP_NORMS[academicYear];
   if (!yearNorms) return null;
@@ -93,7 +100,7 @@ export function getNormData(
   const gradeNorms = yearNorms[grade];
   if (!gradeNorms) return null;
 
-  return gradeNorms[term] || null;
+  return gradeNorms[mapTerm] || null;
 }
 
 /**
@@ -102,9 +109,9 @@ export function getNormData(
 export function getNormAverage(
   academicYear: string,
   grade: number,
-  term: Term
+  mapTerm: MapTerm
 ): number | null {
-  const normData = getNormData(academicYear, grade, term);
+  const normData = getNormData(academicYear, grade, mapTerm);
   if (!normData) return null;
 
   return (normData.languageUsage + normData.reading) / 2;
@@ -165,34 +172,38 @@ export function getAvailableAcademicYears(): string[] {
  */
 export function getYearNorms(
   academicYear: string
-): Record<number, Record<Term, NormData>> | null {
+): Record<number, Record<MapTerm, NormData>> | null {
   return MAP_NORMS[academicYear] || null;
 }
 
 /**
- * 解析 term_tested 字串 (如 "Fall 2024-2025") 為 term 和 academicYear
+ * 解析 term_tested 字串 (如 "Fall 2024-2025") 為 mapTerm 和 academicYear
  */
 export function parseTermTested(
   termTested: string
-): { term: Term; academicYear: string } | null {
-  const match = termTested.match(/(Fall|Spring)\s+(\d{4}-\d{4})/);
+): { mapTerm: MapTerm; academicYear: string } | null {
+  const match = termTested.match(/(Fall|Winter|Spring)\s+(\d{4}-\d{4})/i);
   if (!match) return null;
 
   const season = match[1];
   const academicYear = match[2];
   if (!season || !academicYear) return null;
 
-  const term: Term = season.toLowerCase() as Term;
+  const mapTerm: MapTerm = season.toLowerCase() as MapTerm;
 
-  return { term, academicYear };
+  return { mapTerm, academicYear };
 }
 
 /**
- * 格式化 term 和 academicYear 為 term_tested 字串
+ * 格式化 mapTerm 和 academicYear 為 term_tested 字串
  */
-export function formatTermTested(term: Term, academicYear: string): string {
-  const season = term === "fall" ? "Fall" : "Spring";
-  return `${season} ${academicYear}`;
+export function formatTermTested(mapTerm: MapTerm, academicYear: string): string {
+  const seasonMap: Record<MapTerm, string> = {
+    fall: "Fall",
+    winter: "Winter",
+    spring: "Spring",
+  };
+  return `${seasonMap[mapTerm]} ${academicYear}`;
 }
 
 /**
@@ -210,7 +221,7 @@ export function compareTermTested(a: string, b: string): number {
     return parsedA.academicYear.localeCompare(parsedB.academicYear);
   }
 
-  // 同學年，Fall 在 Spring 之前
-  if (parsedA.term === parsedB.term) return 0;
-  return parsedA.term === "fall" ? -1 : 1;
+  // 同學年，按 fall -> winter -> spring 順序排列
+  const order: Record<MapTerm, number> = { fall: 0, winter: 1, spring: 2 };
+  return order[parsedA.mapTerm] - order[parsedB.mapTerm];
 }

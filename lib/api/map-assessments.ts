@@ -28,7 +28,7 @@ export interface MapGrowthData {
 export interface MapTrendPoint {
   termTested: string;
   academicYear: string;
-  term: string;
+  mapTerm: string;
   ritScore: number;
   lexileScore: string | null;
   sortOrder: number;
@@ -220,7 +220,7 @@ export function getGrowthTrend(
     .map((a) => ({
       termTested: a.term_tested,
       academicYear: a.academic_year,
-      term: a.term,
+      mapTerm: a.map_term,
       ritScore: a.rit_score,
       lexileScore: a.lexile_score,
       sortOrder: getTermOrder(a.term_tested),
@@ -372,12 +372,12 @@ export async function getGradeMapStatistics(
 
   if (!data || data.length === 0) return [];
 
-  // Group by course and term
-  const grouped = new Map<string, { scores: number[]; course: string; term: string }>();
+  // Group by course and term_tested
+  const grouped = new Map<string, { scores: number[]; course: string; termTested: string }>();
 
   for (const row of data) {
     const key = `${row.course}-${row.term_tested}`;
-    const existing = grouped.get(key) || { scores: [] as number[], course: row.course, term: row.term_tested };
+    const existing = grouped.get(key) || { scores: [] as number[], course: row.course, termTested: row.term_tested };
     existing.scores.push(row.rit_score);
     grouped.set(key, existing);
   }
@@ -390,7 +390,7 @@ export async function getGradeMapStatistics(
     return {
       grade,
       course: group.course as "Reading" | "Language Usage",
-      termTested: group.term,
+      termTested: group.termTested,
       studentCount: scores.length,
       avgRit: Math.round(avg * 10) / 10,
       minRit: Math.min(...scores),

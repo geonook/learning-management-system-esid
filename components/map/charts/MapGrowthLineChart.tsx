@@ -76,9 +76,9 @@ export function MapGrowthLineChart({
     if (!parsed) return null;
 
     if (data.course === "Average") {
-      return getNormAverage(parsed.academicYear, data.grade, parsed.term);
+      return getNormAverage(parsed.academicYear, data.grade, parsed.mapTerm);
     }
-    return getNorm(parsed.academicYear, data.grade, parsed.term, data.course as Course);
+    return getNorm(parsed.academicYear, data.grade, parsed.mapTerm, data.course as Course);
   };
 
   // 格式化學期標籤

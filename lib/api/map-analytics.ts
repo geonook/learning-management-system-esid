@@ -17,7 +17,7 @@ import {
   getNormAverage,
   parseTermTested,
   compareTermTested,
-  type Term,
+  type MapTerm,
   type Course,
 } from "@/lib/map/norms";
 
@@ -31,7 +31,7 @@ export interface MapGroupAverage {
   course: Course | "Average";
   termTested: string;
   academicYear: string;
-  term: Term;
+  mapTerm: MapTerm;
   studentCount: number;
   avgRit: number;
 }
@@ -59,7 +59,7 @@ export interface TermGrowthStats {
 
 export interface NormComparison {
   grade: number;
-  term: Term;
+  mapTerm: MapTerm;
   termTested: string;
   course: Course;
   schoolAvg: number;
@@ -138,7 +138,7 @@ export async function getMapGroupAverages(params: {
       course,
       term_tested,
       academic_year,
-      term,
+      map_term,
       rit_score,
       student_id,
       students:student_id (
@@ -181,7 +181,7 @@ export async function getMapGroupAverages(params: {
     course: string;
     termTested: string;
     academicYear: string;
-    term: string;
+    mapTerm: string;
   }
   const groups = new Map<GroupKey, GroupData>();
 
@@ -205,7 +205,7 @@ export async function getMapGroupAverages(params: {
         course: row.course,
         termTested: row.term_tested,
         academicYear: row.academic_year,
-        term: row.term,
+        mapTerm: row.map_term,
       };
       groups.set(levelKey, levelGroup);
     }
@@ -222,7 +222,7 @@ export async function getMapGroupAverages(params: {
         course: row.course,
         termTested: row.term_tested,
         academicYear: row.academic_year,
-        term: row.term,
+        mapTerm: row.map_term,
       };
       groups.set(allKey, allGroup);
     }
@@ -241,7 +241,7 @@ export async function getMapGroupAverages(params: {
       course: group.course as Course,
       termTested: group.termTested,
       academicYear: group.academicYear,
-      term: group.term as Term,
+      mapTerm: group.mapTerm as MapTerm,
       studentCount: group.scores.length,
       avgRit: Math.round(avg * 100) / 100,
     });
@@ -523,7 +523,7 @@ export async function getNormComparison(params: {
     const norm = getNorm(
       avg.academicYear,
       avg.grade,
-      avg.term,
+      avg.mapTerm,
       avg.course as Course
     );
 
@@ -531,7 +531,7 @@ export async function getNormComparison(params: {
 
     results.push({
       grade: avg.grade,
-      term: avg.term,
+      mapTerm: avg.mapTerm,
       termTested: avg.termTested,
       course: avg.course as Course,
       schoolAvg: avg.avgRit,
@@ -1552,7 +1552,7 @@ export async function getCohortTracking(params: {
     // 取得常模
     const parsed = parseTermTested(termTested);
     const normAvg = parsed
-      ? getNormAverage(parsed.academicYear, termData.grade, parsed.term)
+      ? getNormAverage(parsed.academicYear, termData.grade, parsed.mapTerm)
       : null;
 
     terms.push({

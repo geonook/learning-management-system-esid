@@ -435,7 +435,7 @@ export type Database = {
           school: string | null
           term_tested: string
           academic_year: string
-          term: 'fall' | 'spring'
+          map_term: 'fall' | 'winter' | 'spring'
           course: 'Reading' | 'Language Usage'
           test_name: string | null
           rit_score: number
@@ -458,7 +458,7 @@ export type Database = {
           school?: string | null
           term_tested: string
           academic_year: string
-          term: 'fall' | 'spring'
+          map_term: 'fall' | 'winter' | 'spring'
           course: 'Reading' | 'Language Usage'
           test_name?: string | null
           rit_score: number
@@ -481,7 +481,7 @@ export type Database = {
           school?: string | null
           term_tested?: string
           academic_year?: string
-          term?: 'fall' | 'spring'
+          map_term?: 'fall' | 'winter' | 'spring'
           course?: 'Reading' | 'Language Usage'
           test_name?: string | null
           rit_score?: number

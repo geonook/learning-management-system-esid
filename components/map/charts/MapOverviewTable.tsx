@@ -65,9 +65,9 @@ export function MapOverviewTable({
     if (!parsed) return null;
 
     if (course === "Average") {
-      return getNormAverage(parsed.academicYear, grade, parsed.term);
+      return getNormAverage(parsed.academicYear, grade, parsed.mapTerm);
     }
-    return getNorm(parsed.academicYear, grade, parsed.term, course);
+    return getNorm(parsed.academicYear, grade, parsed.mapTerm, course);
   };
 
   // 取得分數樣式 (與常模比較)

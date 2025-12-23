@@ -12,10 +12,10 @@
  * SD 約為 15-18 RIT points，因年級和科目而異。
  */
 
-import type { Term, Course } from "./norms";
+import type { MapTerm, Course } from "./norms";
 
 /**
- * 標準差數據 (按年級、學期、科目)
+ * 標準差數據 (按年級、MAP 測驗期、科目)
  * 來源：NWEA Norms 統計分析，SD 範圍約 15-18
  */
 interface SDData {
@@ -25,7 +25,7 @@ interface SDData {
 
 // NWEA 標準差估計值 (基於 2025 norms 研究)
 // SD 在低年級較大，高年級較小
-const SD_DATA: Record<number, Record<Term, SDData>> = {
+const SD_DATA: Record<number, Record<MapTerm, SDData>> = {
   3: {
     fall: { reading: 17, languageUsage: 16 },
     spring: { reading: 17, languageUsage: 16 },
@@ -46,7 +46,7 @@ const SD_DATA: Record<number, Record<Term, SDData>> = {
 
 // 50th percentile (mean) RIT scores - 2025 Norms
 // 這些值與 norms.ts 中的常模一致
-const MEAN_RIT: Record<string, Record<number, Record<Term, SDData>>> = {
+const MEAN_RIT: Record<string, Record<number, Record<MapTerm, SDData>>> = {
   "2024-2025": {
     3: {
       fall: { reading: 187, languageUsage: 188 },
@@ -111,7 +111,7 @@ function normalCDF(z: number): number {
  *
  * @param rit - RIT 分數
  * @param grade - 年級 (3-6)
- * @param term - 學期 (fall/spring)
+ * @param mapTerm - MAP 測驗期 (fall/winter/spring)
  * @param course - 科目 (Reading/Language Usage)
  * @param academicYear - 學年 (預設 "2024-2025")
  * @returns Percentile (1-99)
@@ -119,7 +119,7 @@ function normalCDF(z: number): number {
 export function ritToPercentile(
   rit: number,
   grade: number,
-  term: Term,
+  mapTerm: MapTerm,
   course: Course,
   academicYear: string = "2024-2025"
 ): number {
@@ -130,10 +130,10 @@ export function ritToPercentile(
   const gradeData = yearData[grade];
   if (!gradeData) return 50;
 
-  const termData = gradeData[term];
+  const termData = gradeData[mapTerm];
   if (!termData) return 50;
 
-  const sdData = SD_DATA[grade]?.[term];
+  const sdData = SD_DATA[grade]?.[mapTerm];
   if (!sdData) return 50;
 
   // 取得 mean 和 SD
@@ -156,7 +156,7 @@ export function ritToPercentile(
  *
  * @param rit - RIT 分數
  * @param grade - 年級 (3-6)
- * @param term - 學期 (fall/spring)
+ * @param mapTerm - MAP 測驗期 (fall/winter/spring)
  * @param course - 科目 (Reading/Language Usage)
  * @param academicYear - 學年
  * @param stdError - 標準誤差 (預設 3)
@@ -165,14 +165,14 @@ export function ritToPercentile(
 export function getPercentileRange(
   rit: number,
   grade: number,
-  term: Term,
+  mapTerm: MapTerm,
   course: Course,
   academicYear: string = "2024-2025",
   stdError: number = 3
 ): { low: number; mid: number; high: number } {
-  const low = ritToPercentile(rit - stdError, grade, term, course, academicYear);
-  const mid = ritToPercentile(rit, grade, term, course, academicYear);
-  const high = ritToPercentile(rit + stdError, grade, term, course, academicYear);
+  const low = ritToPercentile(rit - stdError, grade, mapTerm, course, academicYear);
+  const mid = ritToPercentile(rit, grade, mapTerm, course, academicYear);
+  const high = ritToPercentile(rit + stdError, grade, mapTerm, course, academicYear);
 
   return { low, mid, high };
 }

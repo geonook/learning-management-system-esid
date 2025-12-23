@@ -17,7 +17,7 @@ export interface MapAssessmentRow {
   school: string | null;
   term_tested: string;
   academic_year: string;
-  term: 'fall' | 'spring';
+  map_term: 'fall' | 'winter' | 'spring';
   course: 'Reading' | 'Language Usage';
   test_name: string | null;
   rit_score: number;
@@ -98,17 +98,17 @@ const GOAL_COLUMNS: Record<string, { name: string; course: 'Reading' | 'Language
 // ============================================================
 
 /**
- * Parse term_tested string to extract academic_year and term
- * @example "Fall 2025-2026" -> { academicYear: "2025-2026", term: "fall" }
+ * Parse term_tested string to extract academic_year and mapTerm
+ * @example "Fall 2025-2026" -> { academicYear: "2025-2026", mapTerm: "fall" }
  */
-export function parseTermTested(termTested: string): { academicYear: string; term: 'fall' | 'spring' } {
-  const match = termTested.match(/^(Fall|Spring)\s+(\d{4}-\d{4})$/i);
+export function parseTermTested(termTested: string): { academicYear: string; mapTerm: 'fall' | 'winter' | 'spring' } {
+  const match = termTested.match(/^(Fall|Winter|Spring)\s+(\d{4}-\d{4})$/i);
   if (!match || !match[1] || !match[2]) {
     throw new Error(`Invalid term format: ${termTested}`);
   }
 
   return {
-    term: match[1].toLowerCase() as 'fall' | 'spring',
+    mapTerm: match[1].toLowerCase() as 'fall' | 'winter' | 'spring',
     academicYear: match[2],
   };
 }
@@ -332,11 +332,11 @@ export function parseMapCSV(csvContent: string): MapParseResult {
 
     // Parse term
     let academicYear: string;
-    let term: 'fall' | 'spring';
+    let mapTerm: 'fall' | 'winter' | 'spring';
     try {
       const parsed = parseTermTested(termTested!);
       academicYear = parsed.academicYear;
-      term = parsed.term;
+      mapTerm = parsed.mapTerm;
     } catch (e) {
       errors.push({ row: rowNum, field: 'Term Tested', value: termTested!, message: (e as Error).message });
       stats.invalid++;
@@ -377,7 +377,7 @@ export function parseMapCSV(csvContent: string): MapParseResult {
       school,
       term_tested: termTested!,
       academic_year: academicYear,
-      term,
+      map_term: mapTerm,
       course: course as 'Reading' | 'Language Usage',
       test_name: testName,
       rit_score: ritScore!,
