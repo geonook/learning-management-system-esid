@@ -272,7 +272,7 @@ CREATE TABLE map_assessments (
   lexile_score TEXT,                   -- Lexile（Reading only，如 '1190L'）
   term_tested TEXT NOT NULL,           -- 'Fall 2024-2025' 格式
   academic_year TEXT NOT NULL,
-  term TEXT NOT NULL,                  -- 'fall' | 'spring'
+  map_term TEXT NOT NULL,              -- 'fall' | 'winter' | 'spring' (distinct from ELA term 1-4)
   rapid_guessing_percent DECIMAL(5,2), -- 快速猜測百分比
   UNIQUE(student_number, course, term_tested)
 );

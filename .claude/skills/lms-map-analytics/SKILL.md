@@ -16,7 +16,7 @@ Statistical analysis framework for NWEA MAP Growth data at KCIS, enabling compar
 | **Grade** | G3, G4, G5, G6 |
 | **English Level** | E1 (Advanced), E2 (Intermediate), E3 (Developing) |
 | **Course** | Reading, Language Usage |
-| **Term** | Fall, Spring |
+| **MapTerm** | Fall, Winter, Spring (distinct from ELA Term 1-4) |
 | **Metrics** | RIT Score, Average (両科平均) |
 
 ## Key Statistics
@@ -51,9 +51,9 @@ See `references/norms.md` for norm values.
 
 ```sql
 CREATE VIEW map_analytics_summary AS
-SELECT 
+SELECT
   ma.academic_year,
-  ma.term,
+  ma.map_term,
   ma.grade,
   s.english_level,
   ma.course,
@@ -64,17 +64,17 @@ SELECT
   ROUND(STDDEV(ma.rit_score), 2) as stddev_rit
 FROM map_assessments ma
 JOIN students s ON s.id = ma.student_id
-GROUP BY ma.academic_year, ma.term, ma.grade, s.english_level, ma.course;
+GROUP BY ma.academic_year, ma.map_term, ma.grade, s.english_level, ma.course;
 ```
 
 ### Student Combined Scores View
 
 ```sql
 CREATE VIEW map_student_combined AS
-SELECT 
+SELECT
   student_number,
   academic_year,
-  term,
+  map_term,
   term_tested,
   grade,
   MAX(CASE WHEN course = 'Language Usage' THEN rit_score END) as language_usage,
@@ -84,7 +84,7 @@ SELECT
     MAX(CASE WHEN course = 'Reading' THEN rit_score END)
   ) / 2.0, 1) as average
 FROM map_assessments
-GROUP BY student_number, academic_year, term, term_tested, grade;
+GROUP BY student_number, academic_year, map_term, term_tested, grade;
 ```
 
 ## Analysis Queries

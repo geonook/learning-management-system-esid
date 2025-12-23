@@ -65,7 +65,7 @@ CREATE TABLE map_assessments (
   -- Term identification
   term_tested TEXT NOT NULL,              -- 'Fall 2025-2026'
   academic_year TEXT NOT NULL,            -- '2025-2026'
-  term TEXT NOT NULL,                     -- 'fall', 'spring'
+  map_term TEXT NOT NULL,                 -- 'fall', 'winter', 'spring' (distinct from ELA term 1-4)
   
   -- Course & test info
   course TEXT NOT NULL,                   -- 'Reading', 'Language Usage'
@@ -113,7 +113,7 @@ CREATE TABLE map_goal_scores (
 CREATE INDEX idx_map_assessments_student_id ON map_assessments(student_id);
 CREATE INDEX idx_map_assessments_student_number ON map_assessments(student_number);
 CREATE INDEX idx_map_assessments_academic_year ON map_assessments(academic_year);
-CREATE INDEX idx_map_assessments_term ON map_assessments(term);
+CREATE INDEX idx_map_assessments_map_term ON map_assessments(map_term);
 CREATE INDEX idx_map_assessments_course ON map_assessments(course);
 CREATE INDEX idx_map_assessments_grade ON map_assessments(grade);
 CREATE INDEX idx_map_goal_scores_assessment ON map_goal_scores(assessment_id);
