@@ -120,21 +120,21 @@ function NWEAStyleChart({
     return points;
   }, [data, course, showProjection]);
 
-  // 計算 Y 軸範圍（根據實際資料）
+  // 計算 Y 軸範圍（根據實際資料，緊貼數據範圍）
   const { minY, maxY, bandRanges } = useMemo(() => {
     const allValues = chartData.flatMap((d) => [d.rit, d.gradeAvg, d.norm, d.projection])
       .filter((v): v is number => v !== null && v !== undefined);
 
     if (allValues.length === 0) {
       return {
-        minY: 150,
-        maxY: 250,
+        minY: 170,
+        maxY: 220,
         bandRanges: [
-          { y1: 150, y2: 170 },
-          { y1: 170, y2: 190 },
-          { y1: 190, y2: 210 },
-          { y1: 210, y2: 230 },
-          { y1: 230, y2: 250 },
+          { y1: 170, y2: 180 },
+          { y1: 180, y2: 190 },
+          { y1: 190, y2: 200 },
+          { y1: 200, y2: 210 },
+          { y1: 210, y2: 220 },
         ]
       };
     }
@@ -142,9 +142,9 @@ function NWEAStyleChart({
     const min = Math.min(...allValues);
     const max = Math.max(...allValues);
 
-    // 向下/上取整到 10 的倍數，留出一些空間
-    const calcMinY = Math.floor(min / 10) * 10 - 20;
-    const calcMaxY = Math.ceil(max / 10) * 10 + 20;
+    // 只留少量 padding（5 分），讓圖表更緊湊
+    const calcMinY = Math.floor((min - 5) / 5) * 5;
+    const calcMaxY = Math.ceil((max + 5) / 5) * 5;
 
     // 計算每個百分位色帶的範圍（等分 5 份）
     const range = calcMaxY - calcMinY;
