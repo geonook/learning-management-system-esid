@@ -350,8 +350,9 @@ export function StudentGrowthIndex({ data }: StudentGrowthIndexProps) {
       {/* Explanation */}
       <div className="mt-4 pt-3 border-t border-border-subtle text-xs text-text-tertiary space-y-1">
         <p><strong>Growth</strong>: RIT score change between consecutive tests.</p>
-        <p><strong>Expected/Index</strong>: Only available for Fall → Spring (official NWEA data).</p>
-        <p><strong>Met/Not Met</strong>: Whether the student achieved NWEA&apos;s projected growth target.</p>
+        <p><strong>Fall → Spring</strong>: Full metrics available (Growth, Expected, Index, Met/Not Met, Quintile) from official NWEA data.</p>
+        <p><strong>Spring → Fall</strong>: Only Growth shown (no official NWEA benchmarks for summer growth).</p>
+        <p><strong>Index</strong>: Actual growth ÷ Expected growth. ≥1.0 means exceeded expectations.</p>
         <p><strong>Quintile</strong>: Growth compared to similar students nationally (High = top 20%, Low = bottom 20%).</p>
       </div>
     </div>
