@@ -18,6 +18,7 @@ import { StudentBenchmarkHistory } from "./StudentBenchmarkHistory";
 import { StudentPeerComparison } from "./StudentPeerComparison";
 import { StudentProgressCharts } from "./StudentProgressChart";
 import { StudentAssessmentTables } from "./StudentAssessmentTable";
+import { CombinedTestValidityWarning } from "./TestValidityWarning";
 
 interface StudentMapAnalysisTabProps {
   studentId: string;
@@ -136,10 +137,22 @@ export function StudentMapAnalysisTab({
       {/* 包含 Achievement Status 標籤和 Percentile 顯示 */}
       {/* ============================================================ */}
       {progressHistory.length > 0 && (
-        <ScoreSummaryCards
-          progressHistory={progressHistory}
-          rankings={rankings}
-        />
+        <>
+          <ScoreSummaryCards
+            progressHistory={progressHistory}
+            rankings={rankings}
+          />
+          {/* Test Validity Warning - 顯示 Rapid Guessing 警告 */}
+          {(() => {
+            const latestData = progressHistory[progressHistory.length - 1];
+            return (
+              <CombinedTestValidityWarning
+                readingRapidGuessing={latestData?.reading?.rapidGuessingPercent ?? null}
+                languageUsageRapidGuessing={latestData?.languageUsage?.rapidGuessingPercent ?? null}
+              />
+            );
+          })()}
+        </>
       )}
 
       {/* ============================================================ */}

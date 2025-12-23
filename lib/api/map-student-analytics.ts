@@ -44,24 +44,27 @@ export interface StudentBenchmarkStatus {
   distanceToE3: number | null;
 }
 
+export interface CourseGrowthData {
+  fromScore: number | null;
+  toScore: number | null;
+  actualGrowth: number | null;
+  expectedGrowth: number | null;
+  growthIndex: number | null;
+  // Official CDF growth data
+  officialConditionalGrowthIndex: number | null;
+  officialGrowthQuintile: string | null;
+  officialMetProjectedGrowth: boolean | null;
+  officialProjectedGrowth: number | null;
+  officialObservedGrowth: number | null;
+  officialTypicalGrowth: number | null;
+}
+
 export interface StudentGrowthIndex {
   academicYear: string;
   fromTerm: string;
   toTerm: string;
-  languageUsage: {
-    fromScore: number | null;
-    toScore: number | null;
-    actualGrowth: number | null;
-    expectedGrowth: number | null;
-    growthIndex: number | null;
-  };
-  reading: {
-    fromScore: number | null;
-    toScore: number | null;
-    actualGrowth: number | null;
-    expectedGrowth: number | null;
-    growthIndex: number | null;
-  };
+  languageUsage: CourseGrowthData;
+  reading: CourseGrowthData;
   gradeAverage: {
     languageUsageIndex: number | null;
     readingIndex: number | null;
@@ -136,6 +139,14 @@ export interface ProgressCourseData {
   expectedGrowth: number | null;
   projection: number | null;
   percentile: PercentileRange | null;
+
+  // Official NWEA CDF data (Phase 3)
+  officialPercentile: number | null;        // Official percentile from CDF
+  achievementQuintile: string | null;       // Low/LoAvg/Avg/HiAvg/High
+  rapidGuessingPercent: number | null;      // For test validity warning
+  conditionalGrowthIndex: number | null;    // Official growth index
+  growthQuintile: string | null;            // Official growth quintile
+  metProjectedGrowth: boolean | null;       // Whether student met projected growth
 }
 
 export interface ProgressHistoryPoint {
@@ -281,25 +292,40 @@ export async function getStudentGrowthIndex(
 
   const { data, error } = await supabase
     .from("map_assessments")
-    .select("term_tested, course, rit_score")
+    .select(`
+      term_tested,
+      course,
+      rit_score,
+      conditional_growth_index,
+      growth_quintile,
+      met_projected_growth,
+      projected_growth,
+      observed_growth,
+      typical_growth
+    `)
     .eq("student_number", studentNumber)
     .in("term_tested", [fromTerm, toTerm])
     .in("course", ["Reading", "Language Usage"]);
 
   if (error || !data) return null;
 
-  // 取得各學期各科成績
-  const fallReading = data.find((d) => d.term_tested === fromTerm && d.course === "Reading")?.rit_score ?? null;
-  const fallLU = data.find((d) => d.term_tested === fromTerm && d.course === "Language Usage")?.rit_score ?? null;
-  const springReading = data.find((d) => d.term_tested === toTerm && d.course === "Reading")?.rit_score ?? null;
-  const springLU = data.find((d) => d.term_tested === toTerm && d.course === "Language Usage")?.rit_score ?? null;
+  // 取得各學期各科資料
+  const fallReading = data.find((d) => d.term_tested === fromTerm && d.course === "Reading");
+  const fallLU = data.find((d) => d.term_tested === fromTerm && d.course === "Language Usage");
+  const springReading = data.find((d) => d.term_tested === toTerm && d.course === "Reading");
+  const springLU = data.find((d) => d.term_tested === toTerm && d.course === "Language Usage");
 
-  // 計算成長
+  // 計算成長（計算版）
   const expectedLU = getExpectedGrowth(year, grade, "Language Usage");
   const expectedRD = getExpectedGrowth(year, grade, "Reading");
 
-  const actualLUGrowth = fallLU !== null && springLU !== null ? springLU - fallLU : null;
-  const actualRDGrowth = fallReading !== null && springReading !== null ? springReading - fallReading : null;
+  const fallLURit = fallLU?.rit_score ?? null;
+  const springLURit = springLU?.rit_score ?? null;
+  const fallRDRit = fallReading?.rit_score ?? null;
+  const springRDRit = springReading?.rit_score ?? null;
+
+  const actualLUGrowth = fallLURit !== null && springLURit !== null ? springLURit - fallLURit : null;
+  const actualRDGrowth = fallRDRit !== null && springRDRit !== null ? springRDRit - fallRDRit : null;
 
   const luIndex = actualLUGrowth !== null && expectedLU !== null && expectedLU !== 0
     ? actualLUGrowth / expectedLU
@@ -308,23 +334,44 @@ export async function getStudentGrowthIndex(
     ? actualRDGrowth / expectedRD
     : null;
 
+  // 取得官方 CDF 資料（從 Spring 測驗）
+  // 因為 CDF 的成長資料是在 Spring 測驗時計算的 (Fall to Spring)
+  const parseMetProjectedGrowth = (value: string | null): boolean | null => {
+    if (value === null) return null;
+    return value.toLowerCase() === 'yes';
+  };
+
   return {
     academicYear: year,
     fromTerm,
     toTerm,
     languageUsage: {
-      fromScore: fallLU,
-      toScore: springLU,
+      fromScore: fallLURit,
+      toScore: springLURit,
       actualGrowth: actualLUGrowth,
       expectedGrowth: expectedLU,
       growthIndex: luIndex !== null ? Math.round(luIndex * 100) / 100 : null,
+      // Official CDF data (from Spring assessment)
+      officialConditionalGrowthIndex: springLU?.conditional_growth_index ?? null,
+      officialGrowthQuintile: springLU?.growth_quintile ?? null,
+      officialMetProjectedGrowth: parseMetProjectedGrowth(springLU?.met_projected_growth ?? null),
+      officialProjectedGrowth: springLU?.projected_growth ?? null,
+      officialObservedGrowth: springLU?.observed_growth ?? null,
+      officialTypicalGrowth: springLU?.typical_growth ?? null,
     },
     reading: {
-      fromScore: fallReading,
-      toScore: springReading,
+      fromScore: fallRDRit,
+      toScore: springRDRit,
       actualGrowth: actualRDGrowth,
       expectedGrowth: expectedRD,
       growthIndex: rdIndex !== null ? Math.round(rdIndex * 100) / 100 : null,
+      // Official CDF data (from Spring assessment)
+      officialConditionalGrowthIndex: springReading?.conditional_growth_index ?? null,
+      officialGrowthQuintile: springReading?.growth_quintile ?? null,
+      officialMetProjectedGrowth: parseMetProjectedGrowth(springReading?.met_projected_growth ?? null),
+      officialProjectedGrowth: springReading?.projected_growth ?? null,
+      officialObservedGrowth: springReading?.observed_growth ?? null,
+      officialTypicalGrowth: springReading?.typical_growth ?? null,
     },
     gradeAverage: {
       languageUsageIndex: null, // TODO: Calculate from grade data
@@ -780,20 +827,43 @@ export async function getStudentProgressHistory(
 ): Promise<ProgressHistoryPoint[]> {
   const supabase = createClient();
 
-  // 1. 取得該學生所有 MAP 評量資料
+  // 1. 取得該學生所有 MAP 評量資料（包含 CDF 官方資料欄位）
   const { data: studentData, error } = await supabase
     .from("map_assessments")
-    .select("term_tested, course, rit_score, grade")
+    .select(`
+      term_tested,
+      course,
+      rit_score,
+      grade,
+      test_percentile,
+      achievement_quintile,
+      rapid_guessing_percent,
+      conditional_growth_index,
+      conditional_growth_percentile,
+      growth_quintile,
+      met_projected_growth
+    `)
     .eq("student_number", studentNumber)
     .in("course", ["Reading", "Language Usage"]);
 
   if (error || !studentData || studentData.length === 0) return [];
 
+  // 定義課程資料結構（含官方 CDF 欄位）
+  interface CourseAssessmentData {
+    rit: number;
+    officialPercentile: number | null;
+    achievementQuintile: string | null;
+    rapidGuessingPercent: number | null;
+    conditionalGrowthIndex: number | null;
+    growthQuintile: string | null;
+    metProjectedGrowth: string | null;
+  }
+
   // 2. 按學期分組學生資料
   const termMap = new Map<string, {
     grade: number;
-    reading: number | null;
-    languageUsage: number | null;
+    reading: CourseAssessmentData | null;
+    languageUsage: CourseAssessmentData | null;
   }>();
 
   for (const row of studentData) {
@@ -802,10 +872,19 @@ export async function getStudentProgressHistory(
       termData = { grade: row.grade, reading: null, languageUsage: null };
       termMap.set(row.term_tested, termData);
     }
+    const courseData: CourseAssessmentData = {
+      rit: row.rit_score,
+      officialPercentile: row.test_percentile,
+      achievementQuintile: row.achievement_quintile,
+      rapidGuessingPercent: row.rapid_guessing_percent,
+      conditionalGrowthIndex: row.conditional_growth_index,
+      growthQuintile: row.growth_quintile,
+      metProjectedGrowth: row.met_projected_growth,
+    };
     if (row.course === "Reading") {
-      termData.reading = row.rit_score;
+      termData.reading = courseData;
     } else if (row.course === "Language Usage") {
-      termData.languageUsage = row.rit_score;
+      termData.languageUsage = courseData;
     }
   }
 
@@ -885,10 +964,10 @@ export async function getStudentProgressHistory(
 
     // 計算 Growth（與前次比較）
     const readingGrowth = prevReading !== null && termData.reading !== null
-      ? termData.reading - prevReading
+      ? termData.reading.rit - prevReading
       : null;
     const luGrowth = prevLU !== null && termData.languageUsage !== null
-      ? termData.languageUsage - prevLU
+      ? termData.languageUsage.rit - prevLU
       : null;
 
     // 計算 Expected Growth（Fall -> Spring 的預期成長）
@@ -905,19 +984,19 @@ export async function getStudentProgressHistory(
 
     if (parsed?.mapTerm === "fall") {
       if (termData.reading !== null && expectedReadingGrowth !== null) {
-        readingProjection = termData.reading + expectedReadingGrowth;
+        readingProjection = termData.reading.rit + expectedReadingGrowth;
       }
       if (termData.languageUsage !== null && expectedLUGrowth !== null) {
-        luProjection = termData.languageUsage + expectedLUGrowth;
+        luProjection = termData.languageUsage.rit + expectedLUGrowth;
       }
     }
 
     // 計算 Percentile Range
     const readingPercentile = parsed && termData.reading !== null
-      ? getPercentileRange(termData.reading, termData.grade, parsed.mapTerm, "Reading", parsed.academicYear)
+      ? getPercentileRange(termData.reading.rit, termData.grade, parsed.mapTerm, "Reading", parsed.academicYear)
       : null;
     const luPercentile = parsed && termData.languageUsage !== null
-      ? getPercentileRange(termData.languageUsage, termData.grade, parsed.mapTerm, "Language Usage", parsed.academicYear)
+      ? getPercentileRange(termData.languageUsage.rit, termData.grade, parsed.mapTerm, "Language Usage", parsed.academicYear)
       : null;
 
     results.push({
@@ -927,28 +1006,42 @@ export async function getStudentProgressHistory(
       mapTerm: parsed?.mapTerm ?? "fall",
       grade: termData.grade,
       reading: termData.reading !== null ? {
-        rit: termData.reading,
+        rit: termData.reading.rit,
         gradeAvg: gradeAvg ? Math.round(gradeAvg.reading * 10) / 10 : null,
         norm: readingNorm,
         growth: readingGrowth,
         expectedGrowth: expectedReadingGrowth,
         projection: readingProjection,
         percentile: readingPercentile,
+        // Official CDF data
+        officialPercentile: termData.reading.officialPercentile,
+        achievementQuintile: termData.reading.achievementQuintile,
+        rapidGuessingPercent: termData.reading.rapidGuessingPercent,
+        conditionalGrowthIndex: termData.reading.conditionalGrowthIndex,
+        growthQuintile: termData.reading.growthQuintile,
+        metProjectedGrowth: termData.reading.metProjectedGrowth === "Yes",
       } : null,
       languageUsage: termData.languageUsage !== null ? {
-        rit: termData.languageUsage,
+        rit: termData.languageUsage.rit,
         gradeAvg: gradeAvg ? Math.round(gradeAvg.languageUsage * 10) / 10 : null,
         norm: luNorm,
         growth: luGrowth,
         expectedGrowth: expectedLUGrowth,
         projection: luProjection,
         percentile: luPercentile,
+        // Official CDF data
+        officialPercentile: termData.languageUsage.officialPercentile,
+        achievementQuintile: termData.languageUsage.achievementQuintile,
+        rapidGuessingPercent: termData.languageUsage.rapidGuessingPercent,
+        conditionalGrowthIndex: termData.languageUsage.conditionalGrowthIndex,
+        growthQuintile: termData.languageUsage.growthQuintile,
+        metProjectedGrowth: termData.languageUsage.metProjectedGrowth === "Yes",
       } : null,
     });
 
     // 更新 previous 值
-    if (termData.reading !== null) prevReading = termData.reading;
-    if (termData.languageUsage !== null) prevLU = termData.languageUsage;
+    if (termData.reading !== null) prevReading = termData.reading.rit;
+    if (termData.languageUsage !== null) prevLU = termData.languageUsage.rit;
   }
 
   return results;

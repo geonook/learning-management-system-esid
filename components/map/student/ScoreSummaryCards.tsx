@@ -6,6 +6,7 @@ import type { ProgressHistoryPoint, StudentRankings } from "@/lib/api/map-studen
 import {
   getAchievementStatusInfo,
   formatPercentile,
+  getAchievementInfoFromQuintile,
   type AchievementStatusInfo,
 } from "@/lib/map/achievement";
 
@@ -24,6 +25,10 @@ interface CourseScoreData {
   norm: number | null;
   percentile: number | null;
   termTested: string;
+  // Official CDF data
+  officialPercentile: number | null;
+  achievementQuintile: string | null;
+  rapidGuessingPercent: number | null;
 }
 
 /**
@@ -58,6 +63,10 @@ export function ScoreSummaryCards({ progressHistory, rankings }: ScoreSummaryCar
         norm: latestData.reading.norm,
         percentile: latestData.reading.percentile?.mid ?? null,
         termTested: latestData.termShort,
+        // Official CDF data
+        officialPercentile: latestData.reading.officialPercentile ?? null,
+        achievementQuintile: latestData.reading.achievementQuintile ?? null,
+        rapidGuessingPercent: latestData.reading.rapidGuessingPercent ?? null,
       }
     : null;
 
@@ -77,6 +86,10 @@ export function ScoreSummaryCards({ progressHistory, rankings }: ScoreSummaryCar
         norm: latestData.languageUsage.norm,
         percentile: latestData.languageUsage.percentile?.mid ?? null,
         termTested: latestData.termShort,
+        // Official CDF data
+        officialPercentile: latestData.languageUsage.officialPercentile ?? null,
+        achievementQuintile: latestData.languageUsage.achievementQuintile ?? null,
+        rapidGuessingPercent: latestData.languageUsage.rapidGuessingPercent ?? null,
       }
     : null;
 
@@ -100,9 +113,13 @@ export function ScoreSummaryCards({ progressHistory, rankings }: ScoreSummaryCar
 function ScoreCard({ data, level }: { data: CourseScoreData; level: string | null }) {
   const isReading = data.course === "Reading";
 
-  // 計算 Achievement Status（需要 norm）
+  // 優先使用官方 Achievement Quintile，fallback 到計算版
   const achievementInfo: AchievementStatusInfo | null =
-    data.norm !== null ? getAchievementStatusInfo(data.rit, data.norm) : null;
+    getAchievementInfoFromQuintile(data.achievementQuintile) ??
+    (data.norm !== null ? getAchievementStatusInfo(data.rit, data.norm) : null);
+
+  // 優先使用官方 Percentile，fallback 到計算版
+  const displayPercentile = data.officialPercentile ?? data.percentile;
 
   // 課程專屬配色
   const colorScheme = isReading
@@ -186,13 +203,17 @@ function ScoreCard({ data, level }: { data: CourseScoreData; level: string | nul
       </div>
 
       {/* Percentile Display */}
-      {data.percentile !== null && (
+      {displayPercentile !== null && (
         <div className="mb-4">
           <span className="text-sm text-text-secondary">
             National Percentile:{" "}
             <span className="font-semibold text-text-primary">
-              {formatPercentile(data.percentile)}
+              {formatPercentile(displayPercentile)}
             </span>
+            {/* 標記是否為官方資料 */}
+            {data.officialPercentile !== null && (
+              <span className="ml-1.5 text-xs text-text-tertiary">(Official)</span>
+            )}
           </span>
         </div>
       )}

@@ -142,6 +142,55 @@ export function formatPercentile(percentile: number): string {
 }
 
 /**
+ * NWEA 官方 Achievement Quintile 類型
+ * CDF 格式：Low, LoAvg, Avg, HiAvg, High
+ */
+export type OfficialQuintile = "Low" | "LoAvg" | "Avg" | "HiAvg" | "High";
+
+/**
+ * 將官方 Achievement Quintile 對應到我們的 AchievementStatus
+ */
+const QUINTILE_TO_STATUS: Record<OfficialQuintile, AchievementStatus> = {
+  High: "High",
+  HiAvg: "Above Grade Level",
+  Avg: "At Grade Level",
+  LoAvg: "Below Grade Level",
+  Low: "Low",
+};
+
+/**
+ * 根據官方 NWEA Achievement Quintile 取得 AchievementStatusInfo
+ *
+ * @param quintile - 官方 quintile 值（Low, LoAvg, Avg, HiAvg, High）
+ * @returns AchievementStatusInfo 或 null（如果 quintile 無效）
+ */
+export function getAchievementInfoFromQuintile(
+  quintile: string | null
+): AchievementStatusInfo | null {
+  if (!quintile) return null;
+
+  // 標準化 quintile 值（處理大小寫差異）
+  const normalizedQuintile = quintile.trim();
+  const status = QUINTILE_TO_STATUS[normalizedQuintile as OfficialQuintile];
+
+  if (!status) {
+    // 嘗試模糊匹配
+    const lowerQuintile = normalizedQuintile.toLowerCase();
+    if (lowerQuintile === "low") return ACHIEVEMENT_STATUS_CONFIG["Low"];
+    if (lowerQuintile === "loavg" || lowerQuintile === "lo avg")
+      return ACHIEVEMENT_STATUS_CONFIG["Below Grade Level"];
+    if (lowerQuintile === "avg")
+      return ACHIEVEMENT_STATUS_CONFIG["At Grade Level"];
+    if (lowerQuintile === "hiavg" || lowerQuintile === "hi avg")
+      return ACHIEVEMENT_STATUS_CONFIG["Above Grade Level"];
+    if (lowerQuintile === "high") return ACHIEVEMENT_STATUS_CONFIG["High"];
+    return null;
+  }
+
+  return ACHIEVEMENT_STATUS_CONFIG[status];
+}
+
+/**
  * Projected Proficiency 狀態類型
  * 用於預測學生在 Spring 是否能達到年級標準
  */
