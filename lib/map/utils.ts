@@ -218,6 +218,18 @@ export const CHART_EXPLANATIONS = {
     en: "Growth Index = Actual Growth ÷ Expected Growth. NWEA Quintile: High (≥1.5), HiAvg (≥1.1), Avg (≥0.9), LoAvg (≥0.5), Low (<0.5). Target = 1.0.",
     zh: "成長指數 = 實際成長 ÷ 預期成長。NWEA 五分位：High (≥1.5)、HiAvg (≥1.1)、Avg (≥0.9)、LoAvg (≥0.5)、Low (<0.5)。目標 = 1.0。",
   },
+  withinYear: {
+    en: "Within-Year Growth: Measures student progress from Fall to Spring within the same academic year. Uses NWEA projected growth norms for the grade level.",
+    zh: "學年內成長：衡量學生在同一學年從秋季到春季的進步。使用該年級的 NWEA 預期成長常模。",
+  },
+  yearOverYear: {
+    en: "Year-over-Year Growth: Measures student progress from Fall (previous year) to Fall (current year). Uses CDF official FallToFall projected growth for accurate comparison.",
+    zh: "跨學年成長：衡量學生從上學年秋季到本學年秋季的進步。使用 CDF 官方 FallToFall 預期成長進行精準比較。",
+  },
+  consecutive: {
+    en: "Consecutive Growth: Shows growth between adjacent test terms. Spring→Fall has no NWEA projected growth norm (summer break), so only actual growth is displayed.",
+    zh: "連續成長：顯示相鄰測驗學期間的成長。春季→秋季無 NWEA 預期成長常模（暑假期間），僅顯示實際成長。",
+  },
   benchmark: {
     en: "Students are classified into E1 (Advanced), E2 (Intermediate), or E3 (Developing) based on their Spring semester Average RIT score. Average = (Language Usage + Reading) / 2. Used for next year's English Level placement.",
     zh: "學生依據春季學期兩科平均 RIT（語言使用 + 閱讀）分類為 E1（進階）、E2（中級）或 E3（發展中），用於下學年英文分級。",
