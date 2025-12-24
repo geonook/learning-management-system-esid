@@ -22,6 +22,8 @@ import {
   BookOpen,
   Shield,
   ArrowLeftRight,
+  LayoutGrid,
+  Square,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -73,6 +75,9 @@ const ANALYSIS_TABS = [
   { id: "transitions", label: "Transitions", icon: ArrowLeftRight },
 ];
 
+// Chart view mode for Overview tab
+type ChartViewMode = "grid" | "single";
+
 // Transition period options
 type TransitionPeriod = "fall-to-spring" | "spring-to-fall";
 
@@ -103,6 +108,10 @@ export default function MapAnalysisPage() {
   const [growthType, setGrowthType] = useState<ExtendedGrowthType>("within-year");
   // Transition period selection
   const [transitionPeriod, setTransitionPeriod] = useState<TransitionPeriod>("fall-to-spring");
+  // Chart view mode for Overview tab
+  const [chartViewMode, setChartViewMode] = useState<ChartViewMode>("grid");
+  // Selected course for single view mode
+  const [selectedChartCourse, setSelectedChartCourse] = useState<string>("Language Usage");
 
   // Data states
   const [overviewData, setOverviewData] = useState<MapAnalyticsData | null>(null);
@@ -506,16 +515,62 @@ export default function MapAnalysisPage() {
           {errorStates.overview && renderError(errorStates.overview)}
           {!loadingStates.overview && !errorStates.overview && overviewData && (
             <>
-              {/* Growth Trend Charts */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {overviewData.chartData.map((chart) => (
-                  <Card key={`${chart.grade}-${chart.course}`}>
-                    <CardContent className="pt-4">
-                      <MapGrowthLineChart data={chart} showNorm />
-                    </CardContent>
-                  </Card>
-                ))}
+              {/* View Mode Toggle */}
+              <div className="flex justify-end">
+                <div className="flex gap-1 p-1 bg-muted rounded-lg">
+                  <Button
+                    variant={chartViewMode === "grid" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setChartViewMode("grid")}
+                    title="Grid view - show all charts"
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant={chartViewMode === "single" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setChartViewMode("single")}
+                    title="Single view - one chart at a time"
+                  >
+                    <Square className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
+
+              {/* Growth Trend Charts - Grid Mode */}
+              {chartViewMode === "grid" && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {overviewData.chartData.map((chart) => (
+                    <Card key={`${chart.grade}-${chart.course}`}>
+                      <CardContent className="pt-4">
+                        <MapGrowthLineChart data={chart} showNorm height={280} />
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+
+              {/* Growth Trend Charts - Single Mode with Tabs */}
+              {chartViewMode === "single" && (
+                <Card>
+                  <CardContent className="pt-4">
+                    <Tabs value={selectedChartCourse} onValueChange={setSelectedChartCourse}>
+                      <TabsList className="mb-4">
+                        <TabsTrigger value="Language Usage">Language Usage</TabsTrigger>
+                        <TabsTrigger value="Reading">Reading</TabsTrigger>
+                        <TabsTrigger value="Average">Average</TabsTrigger>
+                      </TabsList>
+                      {overviewData.chartData
+                        .filter((c) => c.course === selectedChartCourse)
+                        .map((chart) => (
+                          <TabsContent key={chart.course} value={chart.course} className="mt-0">
+                            <MapGrowthLineChart data={chart} showNorm height={420} />
+                          </TabsContent>
+                        ))}
+                    </Tabs>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Benchmark + Overview Table */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
