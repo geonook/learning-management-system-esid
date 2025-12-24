@@ -90,6 +90,6 @@ export function isBenchmarkSupported(grade: number): boolean {
 // Benchmark 顏色配置
 export const BENCHMARK_COLORS: Record<BenchmarkLevel, string> = {
   E1: "#22c55e", // green-500
-  E2: "#f59e0b", // amber-500
+  E2: "#f97316", // orange-500 (統一與 ENGLISH_LEVEL_COLORS 一致)
   E3: "#ef4444", // red-500
 };

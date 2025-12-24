@@ -27,7 +27,7 @@ export const NWEA_COLORS = {
  */
 export const BENCHMARK_COLORS = {
   E1: "#22c55e", // green-500
-  E2: "#f59e0b", // amber-500
+  E2: "#f97316", // orange-500 (統一配色)
   E3: "#ef4444", // red-500
 } as const;
 
