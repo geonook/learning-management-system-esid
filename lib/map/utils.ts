@@ -219,8 +219,8 @@ export const CHART_EXPLANATIONS = {
     zh: "成長指數 = 實際成長 ÷ 預期成長。≥1.0 表示達到或超越成長預期。",
   },
   benchmark: {
-    en: "Students are classified into E1 (Advanced), E2 (Intermediate), or E3 (Developing) based on their average RIT score (Reading + Language Usage).",
-    zh: "學生依據兩科平均 RIT（閱讀 + 語言使用）分類為 E1（進階）、E2（中級）或 E3（發展中）。",
+    en: "Students are classified into E1 (Advanced), E2 (Intermediate), or E3 (Developing) based on their Spring semester Average RIT score. Average = (Language Usage + Reading) / 2. Used for next year's English Level placement.",
+    zh: "學生依據春季學期兩科平均 RIT（語言使用 + 閱讀）分類為 E1（進階）、E2（中級）或 E3（發展中），用於下學年英文分級。",
   },
   goalAreas: {
     en: "Goal performance compared to overall RIT. ★ indicates relative strength, ◆ indicates suggested focus area.",

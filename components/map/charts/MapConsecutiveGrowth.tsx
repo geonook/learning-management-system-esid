@@ -373,7 +373,7 @@ export function MapConsecutiveGrowth({ data }: MapConsecutiveGrowthProps) {
 
         {/* Explanation */}
         <div className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
-          <p>{CHART_EXPLANATIONS.growthIndex.zh}</p>
+          <p>{CHART_EXPLANATIONS.growthIndex.en}</p>
         </div>
       </div>
     </TooltipProvider>

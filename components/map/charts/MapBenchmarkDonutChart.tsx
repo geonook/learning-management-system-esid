@@ -134,7 +134,7 @@ export function MapBenchmarkDonutChart({
 
         {/* Explanation Box */}
         <div className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
-          <p>{CHART_EXPLANATIONS.benchmark.zh}</p>
+          <p>{CHART_EXPLANATIONS.benchmark.en}</p>
         </div>
       </div>
     </TooltipProvider>

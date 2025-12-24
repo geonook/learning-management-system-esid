@@ -271,7 +271,7 @@ export function MapGrowthLineChart({
 
       {/* 解釋文字 */}
       <div className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
-        <p>{CHART_EXPLANATIONS.growthTrend.zh}</p>
+        <p>{CHART_EXPLANATIONS.growthTrend.en}</p>
       </div>
     </div>
   );

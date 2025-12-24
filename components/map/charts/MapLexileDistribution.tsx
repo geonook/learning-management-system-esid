@@ -138,7 +138,7 @@ export function MapLexileDistribution({
 
         {/* Explanation Box */}
         <div className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
-          <p>{CHART_EXPLANATIONS.lexile.zh}</p>
+          <p>{CHART_EXPLANATIONS.lexile.en}</p>
         </div>
       </div>
     </TooltipProvider>
