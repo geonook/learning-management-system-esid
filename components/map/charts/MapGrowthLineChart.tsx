@@ -1,7 +1,11 @@
 "use client";
 
 /**
- * MAP Growth Line Chart (v1.64.0)
+ * MAP Growth Line Chart (v1.65.0)
+ *
+ * 提供兩種視圖切換：
+ * 1. 時間趨勢 (Trend): X 軸為學期，比較各 Level 的長期趨勢
+ * 2. Level 比較 (Compare): X 軸為 Level，比較 Fall vs Spring 的差異
  *
  * Clean Chart Layout:
  * - Full-width line chart with end-point labels
@@ -13,7 +17,7 @@
  * Lines: English Levels (E1, E2, E3, All)
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   LineChart,
   Line,
@@ -34,11 +38,17 @@ import {
 } from "@/lib/map/norms";
 import { ENGLISH_LEVEL_COLORS, NWEA_COLORS } from "@/lib/map/colors";
 import { formatTermStats, calculateYAxisRange } from "@/lib/map/utils";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MapLevelCompareChart } from "./MapLevelCompareChart";
+
+type ViewMode = "trend" | "compare";
 
 interface MapGrowthLineChartProps {
   data: MapAnalyticsChartData;
   showNorm?: boolean;
   height?: number;
+  /** 預設視圖模式 */
+  defaultViewMode?: ViewMode;
 }
 
 // Custom Label for Line End Points
@@ -85,11 +95,48 @@ function EndLabel({
   );
 }
 
+/**
+ * 檢查是否有足夠資料顯示 Level 比較視圖
+ * 需要至少一個學年有 Fall 或 Spring 資料
+ */
+function hasCompareData(terms: string[]): boolean {
+  const yearMap = new Map<string, { fall: boolean; spring: boolean }>();
+
+  terms.forEach((term) => {
+    const parsed = parseTermTested(term);
+    if (!parsed) return;
+
+    const year = parsed.academicYear;
+    if (!yearMap.has(year)) {
+      yearMap.set(year, { fall: false, spring: false });
+    }
+
+    const entry = yearMap.get(year)!;
+    if (parsed.mapTerm === "fall") entry.fall = true;
+    if (parsed.mapTerm === "spring") entry.spring = true;
+  });
+
+  // 至少有一個學年有 Fall 或 Spring
+  return Array.from(yearMap.values()).some((y) => y.fall || y.spring);
+}
+
 export function MapGrowthLineChart({
   data,
   showNorm = true,
   height = 300,
+  defaultViewMode = "trend",
 }: MapGrowthLineChartProps) {
+  // 檢查是否可以顯示 Level 比較
+  const canShowCompare = useMemo(
+    () => hasCompareData(data?.terms || []),
+    [data?.terms]
+  );
+
+  // 視圖模式狀態
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    canShowCompare ? defaultViewMode : "trend"
+  );
+
   if (!data || data.terms.length === 0 || data.data.length === 0) {
     return (
       <div className="flex items-center justify-center h-[300px] text-muted-foreground">
@@ -163,8 +210,53 @@ export function MapGrowthLineChart({
     );
   };
 
+  // 如果是 Level 比較模式，直接渲染 MapLevelCompareChart
+  if (viewMode === "compare" && canShowCompare) {
+    return (
+      <div className="w-full">
+        {/* View Mode Tabs */}
+        <div className="flex items-center justify-center mb-3">
+          <Tabs
+            value={viewMode}
+            onValueChange={(v) => setViewMode(v as ViewMode)}
+          >
+            <TabsList className="h-7">
+              <TabsTrigger value="trend" className="text-xs px-3 py-1">
+                Time Trend
+              </TabsTrigger>
+              <TabsTrigger value="compare" className="text-xs px-3 py-1">
+                Level Compare
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+
+        <MapLevelCompareChart data={data} showNorm={showNorm} height={height} />
+      </div>
+    );
+  }
+
   return (
     <div className="w-full">
+      {/* View Mode Tabs */}
+      {canShowCompare && (
+        <div className="flex items-center justify-center mb-2">
+          <Tabs
+            value={viewMode}
+            onValueChange={(v) => setViewMode(v as ViewMode)}
+          >
+            <TabsList className="h-7">
+              <TabsTrigger value="trend" className="text-xs px-3 py-1">
+                Time Trend
+              </TabsTrigger>
+              <TabsTrigger value="compare" className="text-xs px-3 py-1">
+                Level Compare
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+      )}
+
       <h4 className="text-sm font-medium mb-3 text-center">
         G{data.grade} MAP {courseTitle}
       </h4>

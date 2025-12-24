@@ -70,6 +70,23 @@ export const TERM_SEQUENCE_COLORS = [
 ] as const;
 
 /**
+ * 學期比較圖配色
+ * 用於 Level 比較柱狀圖（Fall vs Spring）
+ */
+export const TERM_COMPARE_COLORS = {
+  fall: {
+    fill: "#f97316",    // 橙色
+    stroke: "#ea580c",  // 深橙色
+    label: "Fall",
+  },
+  spring: {
+    fill: "#3b82f6",    // 藍色
+    stroke: "#2563eb",  // 深藍色
+    label: "Spring",
+  },
+} as const;
+
+/**
  * English Level 配色
  * 用於成長趨勢圖，每個 Level 一個顏色
  */
