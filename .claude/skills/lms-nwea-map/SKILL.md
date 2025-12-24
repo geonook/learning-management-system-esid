@@ -181,24 +181,34 @@ See `references/csv-format.md` for complete field mapping and import logic.
 
 See `references/growth-tracking.md` for growth calculation and visualization requirements.
 
-## UI Components
+## UI Components (v1.60.0+)
 
-The student detail page includes rich MAP analysis components with teacher-friendly explanations:
+The student detail page includes rich MAP analysis components organized in 4 collapsible sections with teacher-friendly explanations.
 
 ### Score Summary Cards (Hero)
 - Large RIT scores with achievement status
-- Official percentile from CDF data
+- Official percentile from CDF data (priority over calculated)
 - Achievement Quintile badges (Low/LoAvg/Avg/HiAvg/High)
+- Growth from previous term
 - Explanation footer for teachers
 
 ### Projected Proficiency
 - Spring projection based on Fall + expected growth
+- Dynamic title: `SP25 (G4) Projection`
 - Status: On Track / Exceeding / Needs Support
-- Only shown for Fall term data
+- Only shown for Fall term data (hidden when Spring data exists)
 
-### Growth Index
-- Official `conditional_growth_index` from CDF
-- Met/Not Met projected growth indicator
+### Growth Index (v1.60.0+)
+
+**支援連續測驗成長（含跨學年）**：
+
+| 成長類型 | 顯示內容 | 數據來源 |
+|---------|---------|---------|
+| `fallToSpring` | Growth, Expected, Index, Met/Not Met, Quintile | 官方 CDF |
+| `springToFall` | 僅 Growth | 計算值 |
+
+- Label format: `FA24 → SP25 (G3)` or `SP25 → FA25 (G4)`
+- Official `conditional_growth_index` from CDF (priority)
 - Growth Quintile badge
 - Explanation of 1.0 = met expectations
 
@@ -208,14 +218,26 @@ The student detail page includes rich MAP analysis components with teacher-frien
 - Distance to E1 and buffer from E3
 - Based on Average = (Reading + Language Usage) / 2
 
+### Progress Charts (v1.60.0+)
+
+**NWEA 官方風格柱狀圖**：
+- Three Bar groups: Student RIT (blue #5B8BD9), Level Avg (yellow #E6B800), Norm (navy #3D5A80)
+- X-axis format: `FA25 (G4)`
+- Projection uses diagonal stripe pattern
+- Side table: Term, RIT, Growth, Percentile
+- Separate charts for Reading and Language Usage
+
 ### Instructional Areas (Goal Areas)
 - Per-subject goal performance vs overall RIT
 - ★ Relative Strength / ◆ Suggested Focus markers
-- Quintile badges per goal
+- Quintile badges per goal (Low/LoAvg/Avg/HiAvg/High)
+- Tooltip explanations
 
-### Peer Comparison
-- Level Rank (within English Level E1/E2/E3)
-- Grade Rank (within grade)
+### Peer Comparison (v1.55.0+)
+
+**Privacy Design**: Uses English Level grouping (not class)
+- Level Rank (within same grade + English Level)
+- Grade Rank (within same grade, all levels)
 - Comparison vs Level/Grade averages and NWEA Norm
 
 ### Lexile Level (Reading only)
@@ -224,5 +246,29 @@ The student detail page includes rich MAP analysis components with teacher-frien
 - Growth from previous term
 
 ### Test Validity Warning
-- Shown when `rapid_guessing_percent > 15%`
+- Shown when `rapid_guessing_percent > 15%` (yellow) or > 25% (red)
+- Combined version shows both subjects
 - Alerts teachers to potential test validity concerns
+
+### Page Structure (4 Sections)
+
+```
+Section 1: Current Performance (default: open)
+├── ScoreSummaryCards
+├── StudentBenchmarkStatus
+└── CombinedTestValidityWarning
+
+Section 2: Growth & Progress (default: open)
+├── StudentProgressCharts
+├── StudentGrowthIndex
+├── ProjectedProficiency
+└── StudentPeerComparison
+
+Section 3: Instructional Focus (default: open)
+├── StudentGoalAreas
+└── StudentLexileLevel
+
+Section 4: Historical Data (default: collapsed)
+├── StudentBenchmarkHistory
+└── StudentAssessmentTables
+```

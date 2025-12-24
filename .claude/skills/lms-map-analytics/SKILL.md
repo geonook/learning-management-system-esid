@@ -111,40 +111,79 @@ The student detail page (`/student/[id]`) includes a MAP Analytics Tab for G3-G6
 - `getStudentRankings()` - Calculates Level and Grade rankings
 - `extractEnglishLevel()` - Extracts E1/E2/E3 from class level (e.g., "G3E2" → "E2")
 
-### UI Components (v1.58.0+)
+### UI Components (v1.60.0+)
 
 All components include teacher-friendly explanations for non-technical users.
 
 | Component | Description |
 |-----------|-------------|
-| **ScoreSummaryCards** | Hero cards with RIT, Percentile, Achievement Status |
-| **ProjectedProficiency** | Spring projection (On Track / Exceeding / Needs Support) |
-| **StudentGrowthIndex** | All historical Fall→Spring growth records with Official Growth Index, Met/Not Met, Growth Quintile |
-| **StudentProgressCharts** | NWEA-style Growth Over Time charts with stacked percentile color bands (separate Reading/Language Usage) |
+| **ScoreSummaryCards** | Hero cards with RIT, Percentile, Achievement Status, Growth |
+| **ProjectedProficiency** | Spring projection with dynamic title (On Track / Exceeding / Needs Support) |
+| **StudentGrowthIndex** | Consecutive test growth including cross-year SP→FA transitions |
+| **StudentProgressCharts** | NWEA-style bar charts with Student RIT, Level Avg, Norm |
 | **StudentBenchmarkStatus** | E1/E2/E3 classification with progress bar |
 | **StudentGoalAreas** | Instructional areas with ★ Strength / ◆ Focus markers |
-| **StudentPeerComparison** | Level/Grade ranks and averages comparison |
+| **StudentPeerComparison** | Level/Grade ranks (uses English Level grouping for privacy) |
 | **StudentLexileLevel** | Lexile score, band, recommended book range |
 | **TestValidityWarning** | Rapid Guessing alerts (>15%, >25% thresholds) |
 | **StudentBenchmarkHistory** | Historical benchmark trend across terms |
+| **StudentAssessmentTables** | Complete raw assessment data tables |
+| **CollapsibleSection** | UI wrapper for organizing 4 page sections |
 
-### StudentProgressCharts (v1.58.0+)
+### StudentProgressCharts (v1.60.0+)
 
-NWEA-style "Growth Over Time" visualization:
-- **Separate charts** for Reading and Language Usage
-- **Stacked percentile color bands**: Red (1-20%), Orange (21-40%), Yellow (41-60%), Lime (61-80%), Green (81-100%)
-- **Student data**: Dark blue dashed line with dots
-- **X-axis format**: "Fall 25 (Gr 4)"
-- **Collapsible panel** for expand/collapse
-- **Tooltip** showing Student RIT, Projected, Grade Avg, NWEA Norm
+**NWEA 官方風格柱狀圖**（非折線圖）：
 
-### StudentGrowthIndex (v1.58.0+)
+**視覺設計**：
+- **柱狀圖** with three data series
+- Student RIT: Blue (#5B8BD9)
+- Level Avg: Yellow (#E6B800) - English Level 分組平均
+- NWEA Norm: Navy (#3D5A80)
+- Projection: Same blue with diagonal stripe pattern
 
-Multi-year growth history:
-- **Shows ALL academic years** with Fall+Spring data pairs
-- **Displays**: Growth (actual), Expected, Growth Index, Met/Not Met status
-- **Official NWEA Growth Quintile**: High, HiAvg, Avg, LoAvg, Low
-- **Sorted** newest-first for easy comparison
+**X 軸格式**：
+- `FA25 (G4)` - 簡短格式
+- 格式函數：`formatTermLabel(termTested, grade)`
+
+**資料表格**（右側）：
+
+| Term | RIT | Growth | Percentile |
+|------|-----|--------|------------|
+| FA25 (G4) | 215 | +8 | 65 |
+| SP25 (G3) | 207 | +12 | 58 |
+
+**Y 軸設計**：
+- 最小值：100 或 (最小數據 - 20)，取較大者
+- 最大值：(最大數據 + 15)，預留標籤空間
+
+### StudentGrowthIndex (v1.60.0+)
+
+**連續測驗成長歷史**（含跨學年）：
+
+| 成長類型 | 時間跨度 | 官方資料 | 顯示內容 |
+|---------|---------|---------|---------|
+| `fallToSpring` | ~6 個月 | ✅ 有 CDF | Growth, Expected, Index, Met/Not Met, Quintile |
+| `springToFall` | ~4 個月 | ❌ 無 CDF | 僅 Growth |
+
+**計算邏輯**：
+- Fall → Spring: 優先使用官方 `observed_growth`, `conditional_growth_index`
+- Spring → Fall: 計算 `toRit - fromRit`，不計算 Expected/Index（無官方基準）
+
+**顯示格式**：
+- `FA24 → SP25 (G3)` - 同學年，完整顯示
+- `SP25 → FA25 (G4)` - 跨學年，簡化顯示
+- 按時間倒序排列（最新在上）
+
+**UI 設計**：
+- `FallToSpringCard`: 完整顯示（有官方 CDF）
+- `SpringToFallCard`: 簡化顯示（僅 Growth，較大字體）
+
+**解釋文字**：
+- Growth: RIT score change between consecutive tests.
+- Fall → Spring: Full metrics available from official NWEA data.
+- Spring → Fall: Only Growth shown (no official NWEA benchmarks for summer growth).
+- Index: Actual growth ÷ Expected growth. ≥1.0 means exceeded expectations.
+- Quintile: Growth compared to similar students nationally (High = top 20%, Low = bottom 20%).
 
 ### Data Sources
 
@@ -156,6 +195,8 @@ Components prioritize **official CDF data** when available:
 - `met_projected_growth` → Official met/not met status
 
 Falls back to calculated values when CDF data is not available.
+
+See `references/student-components.md` for complete component specifications.
 
 ## Visualization
 
