@@ -23,7 +23,7 @@ import type {
   ConsecutiveGrowthRecord,
   ConsecutiveGrowthLevelData,
 } from "@/lib/api/map-analytics";
-import { GROWTH_INDEX_COLORS, getGrowthIndexColor } from "@/lib/map/colors";
+import { GROWTH_INDEX_COLORS, GROWTH_INDEX_THRESHOLDS, getGrowthIndexColor } from "@/lib/map/colors";
 import { CHART_EXPLANATIONS } from "@/lib/map/utils";
 
 interface MapConsecutiveGrowthProps {
@@ -38,9 +38,9 @@ function formatGrowth(growth: number | null): string {
 
 function getGrowthIndicator(index: number | null) {
   if (index === null) return null;
-  if (index >= 1.0) {
+  if (index >= GROWTH_INDEX_THRESHOLDS.ON_TARGET) {
     return { icon: TrendingUp, color: "text-green-600 dark:text-green-400", label: "Above Expected" };
-  } else if (index >= 0.8) {
+  } else if (index >= GROWTH_INDEX_THRESHOLDS.NEAR_EXPECTED) {
     return { icon: Minus, color: "text-amber-600 dark:text-amber-400", label: "Near Expected" };
   } else {
     return { icon: TrendingDown, color: "text-red-600 dark:text-red-400", label: "Below Expected" };
@@ -287,12 +287,16 @@ function SpringToFallCard({ record }: { record: ConsecutiveGrowthRecord }) {
         ))}
       </div>
 
-      {/* Student Count */}
-      {allData && (
-        <div className="mt-3 pt-2 border-t border-border text-xs text-muted-foreground">
-          Students: {allData.languageUsage.studentCount} (LU), {allData.reading.studentCount} (RD)
-        </div>
-      )}
+      {/* Student Count + Explanation */}
+      <div className="mt-3 pt-2 border-t border-border text-xs text-muted-foreground space-y-1">
+        {allData && (
+          <p>Students: {allData.languageUsage.studentCount} (LU), {allData.reading.studentCount} (RD)</p>
+        )}
+        <p className="italic">
+          Note: NWEA does not provide expected growth benchmarks for summer (Spring → Fall).
+          Only actual growth is shown.
+        </p>
+      </div>
     </div>
   );
 }
@@ -349,15 +353,15 @@ export function MapConsecutiveGrowth({ data }: MapConsecutiveGrowthProps) {
         <div className="flex items-center gap-4 justify-center text-xs text-muted-foreground mb-4">
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 rounded" style={{ backgroundColor: GROWTH_INDEX_COLORS.above }}></div>
-            <span>Above Expected (&gt; 1.0)</span>
+            <span>Above Expected (≥ {GROWTH_INDEX_THRESHOLDS.ON_TARGET})</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 rounded" style={{ backgroundColor: GROWTH_INDEX_COLORS.atTarget }}></div>
-            <span>On Target (= 1.0)</span>
+            <span>Near Expected (≥ {GROWTH_INDEX_THRESHOLDS.NEAR_EXPECTED})</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 rounded" style={{ backgroundColor: GROWTH_INDEX_COLORS.below }}></div>
-            <span>Below Expected (&lt; 1.0)</span>
+            <span>Below Expected (&lt; {GROWTH_INDEX_THRESHOLDS.NEAR_EXPECTED})</span>
           </div>
         </div>
 

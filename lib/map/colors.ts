@@ -32,6 +32,17 @@ export const BENCHMARK_COLORS = {
 } as const;
 
 /**
+ * Growth Index 閾值常數
+ * 用於判斷成長是否達到預期
+ */
+export const GROWTH_INDEX_THRESHOLDS = {
+  /** 達到預期 (Index >= 1.0) */
+  ON_TARGET: 1.0,
+  /** 接近預期 (Index >= 0.8) */
+  NEAR_EXPECTED: 0.8,
+} as const;
+
+/**
  * 成長指數配色
  * 用於 Growth Index 圖表
  */
@@ -63,9 +74,9 @@ export const TERM_SEQUENCE_COLORS = [
  * 用於成長趨勢圖，每個 Level 一個顏色
  */
 export const ENGLISH_LEVEL_COLORS: Record<string, { color: string; stroke: string }> = {
-  E1: { color: "#22c55e", stroke: "#22c55e" }, // 綠色
-  E2: { color: "#3b82f6", stroke: "#3b82f6" }, // 藍色
-  E3: { color: "#f97316", stroke: "#f97316" }, // 橙色
+  E1: { color: "#22c55e", stroke: "#22c55e" }, // 綠色 (Advanced)
+  E2: { color: "#f97316", stroke: "#f97316" }, // 橙色 (Intermediate) - 與 BENCHMARK_COLORS 一致
+  E3: { color: "#ef4444", stroke: "#ef4444" }, // 紅色 (Developing) - 與 BENCHMARK_COLORS 一致
   All: { color: "#a855f7", stroke: "#a855f7" }, // 紫色
 } as const;
 

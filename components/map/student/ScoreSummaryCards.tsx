@@ -1,7 +1,13 @@
 "use client";
 
-import { TrendingUp, TrendingDown, Minus, BookOpen, Languages } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, BookOpen, Languages, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { ProgressHistoryPoint, StudentRankings } from "@/lib/api/map-student-analytics";
 import {
   getAchievementStatusInfo,
@@ -163,18 +169,40 @@ function ScoreCard({ data, level }: { data: CourseScoreData; level: string | nul
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {/* Achievement Status Badge */}
+          {/* Achievement Status Badge with Tooltip */}
           {achievementInfo && (
-            <span
-              className={cn(
-                "px-2.5 py-1 rounded-lg text-xs font-medium",
-                achievementInfo.bgColor,
-                achievementInfo.textColor
-              )}
-              title={achievementInfo.description}
-            >
-              {achievementInfo.shortLabel}
-            </span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className={cn(
+                      "px-2.5 py-1 rounded-lg text-xs font-medium cursor-help flex items-center gap-1",
+                      achievementInfo.bgColor,
+                      achievementInfo.textColor
+                    )}
+                  >
+                    {achievementInfo.shortLabel}
+                    <Info className="w-3 h-3 opacity-70" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-[280px]">
+                  <div className="text-xs space-y-1">
+                    <p className="font-medium">{achievementInfo.label}</p>
+                    <p className="text-muted-foreground">{achievementInfo.description}</p>
+                    <p className="pt-1 border-t border-border text-muted-foreground">
+                      Achievement Quintile 是 NWEA 根據全美學生表現的五分位排名：
+                    </p>
+                    <ul className="text-muted-foreground pl-2">
+                      <li>High = 前 20%</li>
+                      <li>HiAvg = 20-40%</li>
+                      <li>Avg = 40-60%</li>
+                      <li>LoAvg = 60-80%</li>
+                      <li>Low = 後 20%</li>
+                    </ul>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
           {/* Level Badge */}
           {level && (

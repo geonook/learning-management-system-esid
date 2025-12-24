@@ -122,9 +122,14 @@ export function MapBenchmarkDonutChart({
             layout="horizontal"
             verticalAlign="bottom"
             align="center"
-            formatter={(value) => (
-              <span className="text-xs text-foreground">{value}</span>
-            )}
+            formatter={(value, entry) => {
+              const item = chartData.find((d) => d.name === value);
+              return (
+                <span className="text-xs text-foreground">
+                  {value}: {item?.percentage}% ({item?.value}人)
+                </span>
+              );
+            }}
           />
         </PieChart>
       </ResponsiveContainer>

@@ -203,6 +203,12 @@ export function MapGoalTable({
                           getDifferenceStyle(vsOverall)
                         )}
                       >
+                        {vsOverall !== null && vsOverall >= 5 && (
+                          <span className="mr-0.5" title="Relative Strength">★</span>
+                        )}
+                        {vsOverall !== null && vsOverall <= -5 && (
+                          <span className="mr-0.5" title="Suggested Focus">◆</span>
+                        )}
                         {formatDifference(vsOverall)}
                       </TableCell>,
                     ];

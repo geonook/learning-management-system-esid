@@ -66,18 +66,21 @@ export function MapLexileDistribution({
             <TooltipTrigger asChild>
               <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
             </TooltipTrigger>
-            <TooltipContent className="max-w-[280px]">
+            <TooltipContent className="max-w-[320px]">
               <p className="text-xs">
                 <strong>Lexile Framework</strong> measures reading ability and text complexity.
                 Higher scores indicate advanced reading levels.
               </p>
               <ul className="text-xs mt-1 space-y-0.5">
-                <li>• BR: Beginning Reader (below 0L)</li>
+                <li>• <strong>BR</strong>: Beginning Reader - students still developing foundational reading skills. BR codes like BR400 indicate a Lexile measure of negative 400L.</li>
                 <li>• 0-200L: Early Reader</li>
                 <li>• 200-600L: Transitional</li>
                 <li>• 600-1000L: Intermediate to Advanced</li>
                 <li>• 1000L+: Proficient</li>
               </ul>
+              <p className="text-xs mt-2 pt-1 border-t border-border text-muted-foreground">
+                Note: Many primary students (G3-G4) are expected to be in BR-400L range.
+              </p>
             </TooltipContent>
           </UITooltip>
         </div>

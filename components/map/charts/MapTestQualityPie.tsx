@@ -96,6 +96,22 @@ export function MapTestQualityPie({
         <p className="text-xs text-muted-foreground text-center mb-2">
           Based on Rapid Guessing % ({formatTermLabel(data.termTested)})
         </p>
+
+        {/* Threshold Legend */}
+        <div className="flex items-center justify-center gap-4 text-xs mb-2">
+          <span className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: QUALITY_COLORS.normal }}></span>
+            <span>≤15%</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: QUALITY_COLORS.caution }}></span>
+            <span>15-30%</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: QUALITY_COLORS.flagged }}></span>
+            <span>&gt;30%</span>
+          </span>
+        </div>
         <ResponsiveContainer width="100%" height={height}>
           <PieChart>
             <Pie

@@ -1,8 +1,15 @@
 "use client";
 
-import { TrendingUp, TrendingDown, Minus, CheckCircle, AlertCircle } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, CheckCircle, AlertCircle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { type GrowthRecord, type CourseGrowthData } from "@/lib/api/map-student-analytics";
+import { GROWTH_INDEX_THRESHOLDS } from "@/lib/map/colors";
 
 interface StudentGrowthIndexProps {
   data: GrowthRecord[];
@@ -28,9 +35,9 @@ function getGrowthIndicator(courseData: CourseGrowthData) {
   // 優先使用官方 Growth Index
   const index = courseData.officialConditionalGrowthIndex ?? courseData.growthIndex;
   if (index === null) return null;
-  if (index >= 1.0) {
+  if (index >= GROWTH_INDEX_THRESHOLDS.ON_TARGET) {
     return { icon: TrendingUp, color: "text-green-600 dark:text-green-400", label: "Above Expected" };
-  } else if (index >= 0.8) {
+  } else if (index >= GROWTH_INDEX_THRESHOLDS.NEAR_EXPECTED) {
     return { icon: Minus, color: "text-amber-600 dark:text-amber-400", label: "Near Expected" };
   } else {
     return { icon: TrendingDown, color: "text-red-600 dark:text-red-400", label: "Below Expected" };
@@ -119,7 +126,24 @@ function FallToSpringCard({ record }: { record: GrowthRecord }) {
                 </span>
               </div>
               <div className="flex justify-between items-center border-t border-border-subtle pt-1.5 mt-1.5">
-                <span className="text-text-secondary text-xs">Index:</span>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-text-secondary text-xs cursor-help flex items-center gap-0.5">
+                        Index
+                        <Info className="w-2.5 h-2.5 opacity-60" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-[220px]">
+                      <p className="text-xs">
+                        <strong>Growth Index</strong> = 實際成長 ÷ 預期成長<br/>
+                        ≥1.0 表示達到或超越預期<br/>
+                        0.8-0.99 表示接近預期<br/>
+                        &lt;0.8 表示低於預期
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <div className="flex items-center gap-1">
                   <span className={cn("text-sm font-bold", luIndicator?.color || "text-text-primary")}>
                     {getLUDisplayIndex() !== null ? getLUDisplayIndex()!.toFixed(2) : "N/A"}
@@ -187,7 +211,24 @@ function FallToSpringCard({ record }: { record: GrowthRecord }) {
                 </span>
               </div>
               <div className="flex justify-between items-center border-t border-border-subtle pt-1.5 mt-1.5">
-                <span className="text-text-secondary text-xs">Index:</span>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-text-secondary text-xs cursor-help flex items-center gap-0.5">
+                        Index
+                        <Info className="w-2.5 h-2.5 opacity-60" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-[220px]">
+                      <p className="text-xs">
+                        <strong>Growth Index</strong> = 實際成長 ÷ 預期成長<br/>
+                        ≥1.0 表示達到或超越預期<br/>
+                        0.8-0.99 表示接近預期<br/>
+                        &lt;0.8 表示低於預期
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <div className="flex items-center gap-1">
                   <span className={cn("text-sm font-bold", rdIndicator?.color || "text-text-primary")}>
                     {getRDDisplayIndex() !== null ? getRDDisplayIndex()!.toFixed(2) : "N/A"}

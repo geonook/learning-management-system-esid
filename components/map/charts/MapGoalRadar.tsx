@@ -206,7 +206,8 @@ export function MapGoalRadar({
         </ResponsiveContainer>
 
         {/* Explanation Box */}
-        <div className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
+        <div className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground space-y-1">
+          <p><strong>How to read:</strong> Each axis represents a skill area. Points further from center indicate higher RIT scores.</p>
           <p>{CHART_EXPLANATIONS.goalAreas.en}</p>
         </div>
       </div>

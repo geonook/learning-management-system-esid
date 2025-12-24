@@ -397,16 +397,22 @@ lib/map/
 ### 配色系統
 
 ```typescript
-// English Level 顏色
-E1: "#22c55e" (green-500)
-E2: "#3b82f6" (blue-500)
-E3: "#f97316" (orange-500)
-All: "#6b7280" (gray-500)
+// English Level 顏色（與 BENCHMARK_COLORS 一致）
+E1: "#22c55e" (green-500)  // Advanced - 綠色
+E2: "#f97316" (orange-500) // Intermediate - 橙色
+E3: "#ef4444" (red-500)    // Developing - 紅色
+All: "#a855f7" (purple-500) // 總體 - 紫色
 
 // NWEA 風格顏色
 studentRit: "#5B8BD9"  // 柔和藍
 levelMean: "#E6B800"   // 柔和金黃
 norm: "#3D5A80"        // 灰藍
+
+// Growth Index 閾值
+GROWTH_INDEX_THRESHOLDS = {
+  ON_TARGET: 1.0,      // 達到預期
+  NEAR_EXPECTED: 0.8,  // 接近預期
+}
 ```
 
 ### 版本歷程
