@@ -133,9 +133,12 @@ export default function UserManagementPage() {
 
     setSaving(true);
     try {
+      // Enforce constraint: teacher_type must be NULL when role != 'teacher'
+      const teacherType = editForm.role === 'teacher' ? editForm.teacher_type : null;
+
       await updateUser(userId, {
         role: editForm.role as UserRole,
-        teacher_type: editForm.teacher_type,
+        teacher_type: teacherType,
         grade: editForm.grade,
         grade_band: editForm.grade_band,
         track: editForm.track as "LT" | "IT" | "KCFS" | null
