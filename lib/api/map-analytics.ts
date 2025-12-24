@@ -1095,11 +1095,8 @@ export async function getConsecutiveGrowthAnalysis(params: {
     }
 
     // 計算年級
-    // Fall → Spring: 同年級
-    // Spring → Fall: 升一年級
-    const fromGrade = params.grade;
-    const toGrade = growthType === "springToFall" ? params.grade : params.grade;
-    // 注意：對於 Spring → Fall，fromGrade 應該是前一個年級
+    // Fall → Spring: 同年級，學生 grade 不變
+    // Spring → Fall: 升一年級，用 toTerm 的學生 grade 來篩選目標年級
     const actualFromGrade = growthType === "springToFall" ? params.grade - 1 : params.grade;
 
     // 3. 取得兩個學期的完整資料（所有課程）
@@ -1124,7 +1121,25 @@ export async function getConsecutiveGrowthAnalysis(params: {
 
     if (fullError || !fullData) continue;
 
-    // 過濾學生：from 時是 actualFromGrade，to 時是 params.grade
+    // 策略說明：
+    // - 資料庫中 student.grade 是學生「目前」的年級
+    // - Fall → Spring: 學生年級不變，直接用 params.grade 篩選
+    // - Spring → Fall:
+    //   - toTerm (Fall) 時學生是 params.grade
+    //   - fromTerm (Spring) 時學生是 params.grade - 1，但資料庫中 grade 已是 params.grade
+    //   - 解法：用 toTerm 的學生清單來決定哪些學生要納入，fromTerm 不額外篩選年級
+
+    // Step 1: 先收集 toTerm 中目標年級的學生
+    const toTermStudents = new Set<string>();
+    for (const row of fullData) {
+      const studentRaw = row.students;
+      const student = (Array.isArray(studentRaw) ? studentRaw[0] : studentRaw) as StudentData | null;
+      if (!student || !student.is_active) continue;
+      if (row.term_tested === toTerm && student.grade === params.grade) {
+        toTermStudents.add(row.student_number);
+      }
+    }
+
     // 建立學生資料映射
     const studentDataMap = new Map<string, {
       level: string;
@@ -1151,8 +1166,10 @@ export async function getConsecutiveGrowthAnalysis(params: {
       const isFromTerm = row.term_tested === fromTerm;
       const isToTerm = row.term_tested === toTerm;
 
-      // 檢查年級
-      if (isFromTerm && student.grade !== actualFromGrade) continue;
+      // 篩選邏輯：只納入 toTerm 中目標年級的學生
+      if (!toTermStudents.has(studentNumber)) continue;
+
+      // 額外檢查：toTerm 時年級必須是 params.grade
       if (isToTerm && student.grade !== params.grade) continue;
 
       if (!studentDataMap.has(studentNumber)) {
