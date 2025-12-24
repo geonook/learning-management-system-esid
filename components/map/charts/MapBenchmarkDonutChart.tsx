@@ -9,7 +9,9 @@
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { Info } from "lucide-react";
-import { BENCHMARK_COLORS, getBenchmarkLabels, getBenchmarkThresholds } from "@/lib/map/benchmarks";
+import { getBenchmarkLabels, getBenchmarkThresholds } from "@/lib/map/benchmarks";
+import { BENCHMARK_COLORS } from "@/lib/map/colors";
+import { formatTermStats, CHART_EXPLANATIONS } from "@/lib/map/utils";
 import type { BenchmarkDistribution } from "@/lib/api/map-analytics";
 import {
   Tooltip as UITooltip,
@@ -59,13 +61,6 @@ export function MapBenchmarkDonutChart({
     },
   ];
 
-  // 格式化學期標籤
-  const formatTermLabel = (term: string): string => {
-    const match = term.match(/^(Fall|Spring)\s+(\d{4})-(\d{4})$/);
-    if (!match) return term;
-    return `${match[1]} ${match[2]?.slice(2)}-${match[3]?.slice(2)}`;
-  };
-
   return (
     <TooltipProvider>
       <div className="w-full">
@@ -93,7 +88,7 @@ export function MapBenchmarkDonutChart({
           </UITooltip>
         </div>
         <p className="text-xs text-muted-foreground text-center mb-2">
-          Based on Average ({formatTermLabel(data.termTested)})
+          Based on Average ({formatTermStats(data.termTested)})
         </p>
       <ResponsiveContainer width="100%" height={height}>
         <PieChart>
@@ -138,14 +133,8 @@ export function MapBenchmarkDonutChart({
         </p>
 
         {/* Explanation Box */}
-        <div className="mt-3 p-2 bg-muted/50 rounded-md text-xs text-muted-foreground">
-          <p className="mb-1">
-            <strong>Note:</strong> This chart shows the distribution of students
-            across E1/E2/E3 proficiency levels based on MAP Average score.
-          </p>
-          <p>
-            Classification is based on the most recent Spring term results. G6 does not have benchmark classification.
-          </p>
+        <div className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
+          <p>{CHART_EXPLANATIONS.benchmark.zh}</p>
         </div>
       </div>
     </TooltipProvider>

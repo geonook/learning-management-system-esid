@@ -26,6 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { OverviewTableRow, NormComparison } from "@/lib/api/map-analytics";
 import { getNorm, getNormAverage, parseTermTested, type Course } from "@/lib/map/norms";
+import { formatTermStats, CHART_EXPLANATIONS } from "@/lib/map/utils";
 
 interface MapOverviewTableProps {
   data: OverviewTableRow[];
@@ -48,13 +49,6 @@ export function MapOverviewTable({
 
   // 取得所有 terms
   const terms = data[0]?.termData.map((t) => t.termTested) || [];
-
-  // 格式化學期標籤
-  const formatTermLabel = (term: string): string => {
-    const match = term.match(/^(Fall|Spring)\s+(\d{4})-(\d{4})$/);
-    if (!match) return term;
-    return `${match[1] === "Fall" ? "F" : "S"} ${match[2]?.slice(2)}-${match[3]?.slice(2)}`;
-  };
 
   // 取得常模值
   const getNormValue = (
@@ -148,7 +142,7 @@ export function MapOverviewTable({
                   idx < terms.length - 1 && "border-r"
                 )}
               >
-                {formatTermLabel(term)}
+                {formatTermStats(term)}
               </TableHead>
             ))}
           </TableRow>
@@ -253,10 +247,10 @@ export function MapOverviewTable({
         </div>
 
         {/* Footer Explanation */}
-        <div className="p-2 bg-muted/50 rounded-md text-xs text-muted-foreground space-y-1">
+        <div className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground space-y-1">
           <p>
             <strong>Term Codes:</strong>{" "}
-            F = Fall, S = Spring. e.g. &quot;F 24-25&quot; = Fall 2024-2025.
+            FA = Fall, SP = Spring. e.g. &quot;FA 24-25&quot; = Fall 2024-2025.
           </p>
           <p>
             <strong>RIT Score:</strong>{" "}

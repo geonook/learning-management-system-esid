@@ -22,19 +22,13 @@ import {
   Cell,
 } from "recharts";
 import type { GrowthAnalysisData } from "@/lib/api/map-analytics";
+import { GROWTH_INDEX_COLORS, NWEA_COLORS, getGrowthIndexColor } from "@/lib/map/colors";
+import { formatTermStats, CHART_EXPLANATIONS } from "@/lib/map/utils";
 
 interface MapGrowthIndexChartProps {
   data: GrowthAnalysisData | null;
   height?: number;
 }
-
-// Growth Index 顏色判斷
-const getGrowthIndexColor = (index: number | null): string => {
-  if (index === null) return "#94a3b8"; // gray for null
-  if (index > 1.0) return "#22c55e"; // green
-  if (index === 1.0) return "#3b82f6"; // blue
-  return "#ef4444"; // red
-};
 
 export function MapGrowthIndexChart({
   data,
@@ -130,7 +124,7 @@ export function MapGrowthIndexChart({
           data={chartData}
           margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
         >
-          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+          <CartesianGrid strokeDasharray="3 3" stroke={NWEA_COLORS.gridLine} />
           <XAxis
             dataKey="level"
             tick={{ fontSize: 12 }}
@@ -158,13 +152,13 @@ export function MapGrowthIndexChart({
           {/* Reference Line at 1.0 */}
           <ReferenceLine
             y={1.0}
-            stroke="#9ca3af"
+            stroke={NWEA_COLORS.norm}
             strokeDasharray="5 5"
             label={{
               value: "Expected (1.0)",
               position: "right",
               fontSize: 10,
-              fill: "#9ca3af",
+              fill: NWEA_COLORS.norm,
             }}
           />
 
@@ -183,21 +177,24 @@ export function MapGrowthIndexChart({
       </ResponsiveContainer>
 
       {/* Legend explanation */}
-      <div className="mt-3 p-2 bg-muted/50 rounded-md text-xs text-muted-foreground">
-        <div className="flex items-center gap-4 justify-center">
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded" style={{ backgroundColor: "#22c55e" }}></div>
-            <span>Above Expected (&gt; 1.0)</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded" style={{ backgroundColor: "#3b82f6" }}></div>
-            <span>On Target (= 1.0)</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded" style={{ backgroundColor: "#ef4444" }}></div>
-            <span>Below Expected (&lt; 1.0)</span>
-          </div>
+      <div className="mt-3 flex items-center gap-4 justify-center text-xs text-muted-foreground">
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded" style={{ backgroundColor: GROWTH_INDEX_COLORS.above }}></div>
+          <span>Above Expected (&gt; 1.0)</span>
         </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded" style={{ backgroundColor: GROWTH_INDEX_COLORS.atTarget }}></div>
+          <span>On Target (= 1.0)</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded" style={{ backgroundColor: GROWTH_INDEX_COLORS.below }}></div>
+          <span>Below Expected (&lt; 1.0)</span>
+        </div>
+      </div>
+
+      {/* 解釋文字 */}
+      <div className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
+        <p>{CHART_EXPLANATIONS.growthIndex.zh}</p>
       </div>
     </div>
   );

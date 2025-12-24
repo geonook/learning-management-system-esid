@@ -27,13 +27,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { GoalPerformanceData } from "@/lib/api/map-analytics";
+import { BENCHMARK_COLORS, NWEA_COLORS } from "@/lib/map/colors";
+import { formatTermStats, CHART_EXPLANATIONS } from "@/lib/map/utils";
 
-// English Level 顏色配置
+// English Level 顏色配置（使用共用 Benchmark 顏色）
 const LEVEL_COLORS: Record<string, string> = {
-  E1: "#22c55e", // 綠色
-  E2: "#f59e0b", // 橙色
-  E3: "#ef4444", // 紅色
-  All: "#3b82f6", // 藍色
+  E1: BENCHMARK_COLORS.E1, // 綠色
+  E2: BENCHMARK_COLORS.E2, // 橙色
+  E3: BENCHMARK_COLORS.E3, // 紅色
+  All: NWEA_COLORS.studentRit, // 藍色
 };
 
 // Goal 短名稱映射
@@ -106,13 +108,6 @@ export function MapGoalRadar({
     Math.ceil((maxScore + 10) / 10) * 10,
   ];
 
-  // 格式化學期標籤
-  const formatTermLabel = (term: string): string => {
-    const match = term.match(/^(Fall|Spring)\s+(\d{4})-(\d{4})$/);
-    if (!match) return term;
-    return `${match[1] === "Fall" ? "F" : "S"} ${match[2]?.slice(2)}-${match[3]?.slice(2)}`;
-  };
-
   const courseTitle = data.course === "Reading" ? "Reading" : "Language Usage";
 
   return (
@@ -141,12 +136,12 @@ export function MapGoalRadar({
           </UITooltip>
         </div>
         <p className="text-xs text-muted-foreground text-center mb-2">
-          {formatTermLabel(data.termTested)}
+          {formatTermStats(data.termTested)}
         </p>
 
         <ResponsiveContainer width="100%" height={height}>
           <RadarChart data={chartData}>
-            <PolarGrid className="stroke-muted" />
+            <PolarGrid stroke={NWEA_COLORS.gridLine} />
             <PolarAngleAxis
               dataKey="goal"
               tick={{ fontSize: 11 }}
@@ -211,24 +206,8 @@ export function MapGoalRadar({
         </ResponsiveContainer>
 
         {/* Explanation Box */}
-        <div className="mt-3 p-2 bg-muted/50 rounded-md text-xs text-muted-foreground">
-          <p className="mb-1">
-            <strong>Note:</strong> Each axis represents a specific goal area within the{" "}
-            {courseTitle} assessment. Scores are based on the midpoint of each goal&apos;s RIT range.
-          </p>
-          <p>
-            {data.course === "Reading" ? (
-              <>
-                <strong>Reading Goals:</strong> Informational Text (non-fiction),
-                Literary Text (fiction), and Vocabulary.
-              </>
-            ) : (
-              <>
-                <strong>Language Usage Goals:</strong> Grammar and Usage, Mechanics
-                (punctuation/spelling), and Writing.
-              </>
-            )}
-          </p>
+        <div className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
+          <p>{CHART_EXPLANATIONS.goalAreas.zh}</p>
         </div>
       </div>
     </TooltipProvider>

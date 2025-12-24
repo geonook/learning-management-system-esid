@@ -26,6 +26,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { NWEA_COLORS } from "@/lib/map/colors";
+import { formatTermStats, CHART_EXPLANATIONS } from "@/lib/map/utils";
 
 interface MapLexileDistributionProps {
   data: LexileAnalysisData | null;
@@ -52,13 +54,6 @@ export function MapLexileDistribution({
     color: d.color,
     description: d.description,
   }));
-
-  // Format term label
-  const formatTermLabel = (term: string): string => {
-    const match = term.match(/^(Fall|Spring)\s+(\d{4})-(\d{4})$/);
-    if (!match) return term;
-    return `${match[1]} ${match[2]?.slice(2)}-${match[3]?.slice(2)}`;
-  };
 
   return (
     <TooltipProvider>
@@ -87,14 +82,14 @@ export function MapLexileDistribution({
           </UITooltip>
         </div>
         <p className="text-xs text-muted-foreground text-center mb-2">
-          Based on Reading ({formatTermLabel(data.termTested)})
+          Based on Reading ({formatTermStats(data.termTested)})
         </p>
         <ResponsiveContainer width="100%" height={height}>
           <BarChart
             data={chartData}
             margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
           >
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+            <CartesianGrid strokeDasharray="3 3" stroke={NWEA_COLORS.gridLine} />
             <XAxis
               dataKey="band"
               tick={{ fontSize: 12 }}
@@ -142,14 +137,8 @@ export function MapLexileDistribution({
         </p>
 
         {/* Explanation Box */}
-        <div className="mt-3 p-2 bg-muted/50 rounded-md text-xs text-muted-foreground">
-          <p className="mb-1">
-            <strong>Note:</strong> Lexile scores are derived from MAP Reading assessments.
-            They provide a standardized measure for matching students with appropriate reading materials.
-          </p>
-          <p>
-            BR (Beginning Reader) represents scores below 0L. Not all students may have Lexile scores available.
-          </p>
+        <div className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
+          <p>{CHART_EXPLANATIONS.lexile.zh}</p>
         </div>
       </div>
     </TooltipProvider>

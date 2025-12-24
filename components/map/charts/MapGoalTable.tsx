@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { GoalPerformanceData } from "@/lib/api/map-analytics";
+import { formatTermStats, CHART_EXPLANATIONS } from "@/lib/map/utils";
 
 // Goal 短名稱映射 (用於表頭)
 const GOAL_SHORT_NAMES: Record<string, string> = {
@@ -60,13 +61,6 @@ export function MapGoalTable({
 
   // 取得課程的所有 Goal 名稱
   const goalNames = data.allStudents.map((g) => g.goalName);
-
-  // 格式化學期標籤
-  const formatTermLabel = (term: string): string => {
-    const match = term.match(/^(Fall|Spring)\s+(\d{4})-(\d{4})$/);
-    if (!match) return term;
-    return `${match[1] === "Fall" ? "F" : "S"} ${match[2]?.slice(2)}-${match[3]?.slice(2)}`;
-  };
 
   // 格式化分數
   const formatScore = (score: number | null): string => {
@@ -122,7 +116,7 @@ export function MapGoalTable({
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Term: {formatTermLabel(data.termTested)}
+          Term: {formatTermStats(data.termTested)}
         </p>
 
         {/* Color Legend */}
@@ -239,25 +233,8 @@ export function MapGoalTable({
         </div>
 
         {/* Footer Explanation */}
-        <div className="p-2 bg-muted/50 rounded-md text-xs text-muted-foreground space-y-1">
-          <p>
-            <strong>Overall RIT:</strong> The student&apos;s total RIT score for this course.
-          </p>
-          <p>
-            <strong>Goal Scores:</strong> Each goal area has its own RIT range. The &quot;vs Overall&quot;
-            column shows how the goal average compares to the overall RIT.
-          </p>
-          <p className="mt-1">
-            {data.course === "Reading" ? (
-              <>
-                <strong>Reading Goals:</strong> Informational Text (non-fiction), Literary Text (fiction), Vocabulary.
-              </>
-            ) : (
-              <>
-                <strong>Language Usage Goals:</strong> Grammar and Usage, Mechanics, Writing.
-              </>
-            )}
-          </p>
+        <div className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
+          <p>{CHART_EXPLANATIONS.goalAreas.zh}</p>
         </div>
       </div>
     </TooltipProvider>
