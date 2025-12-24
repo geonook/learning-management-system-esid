@@ -56,6 +56,7 @@ import {
   type BenchmarkTransitionData,
 } from "@/lib/api/map-analytics";
 import { isBenchmarkSupported } from "@/lib/map/benchmarks";
+import { formatTermStats } from "@/lib/map/utils";
 
 const SUPPORTED_GRADES = [3, 4, 5, 6];
 
@@ -524,13 +525,7 @@ export default function MapAnalysisPage() {
               {overviewData.terms.length > 0 && (
                 <p className="text-xs text-muted-foreground text-center">
                   Data includes {overviewData.terms.length} term(s):{" "}
-                  {overviewData.terms
-                    .map((t) => {
-                      const match = t.match(/^(Fall|Spring)\s+(\d{4})-(\d{4})$/);
-                      if (!match) return t;
-                      return `${match[1]} ${match[2]?.slice(2)}-${match[3]?.slice(2)}`;
-                    })
-                    .join(", ")}
+                  {overviewData.terms.map(formatTermStats).join(", ")}
                 </p>
               )}
             </>
