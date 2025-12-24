@@ -10,3 +10,4 @@ export { MapGrowthIndexChart } from "./MapGrowthIndexChart";
 export { MapGrowthDistribution } from "./MapGrowthDistribution";
 export { MapGoalRadar } from "./MapGoalRadar";
 export { MapGoalTable } from "./MapGoalTable";
+export { MapConsecutiveGrowth } from "./MapConsecutiveGrowth";

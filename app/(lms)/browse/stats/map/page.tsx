@@ -39,6 +39,7 @@ import {
   MapLexileStats,
   MapTestQualityPie,
   MapBenchmarkTransition,
+  MapConsecutiveGrowth,
 } from "@/components/map/charts";
 import {
   getMapAnalyticsData,
@@ -47,6 +48,7 @@ import {
   getLexileAnalysis,
   getTestQualityReport,
   getBenchmarkTransition,
+  getConsecutiveGrowthAnalysis,
   type MapAnalyticsData,
   type GrowthAnalysisData,
   type GrowthType,
@@ -54,6 +56,7 @@ import {
   type LexileAnalysisData,
   type TestQualityData,
   type BenchmarkTransitionData,
+  type ConsecutiveGrowthAnalysisData,
 } from "@/lib/api/map-analytics";
 import { isBenchmarkSupported } from "@/lib/map/benchmarks";
 import { formatTermStats } from "@/lib/map/utils";
@@ -95,8 +98,9 @@ export default function MapAnalysisPage() {
   const [selectedGrade, setSelectedGrade] = useState(5);
   // Analysis tab selection
   const [selectedTab, setSelectedTab] = useState("overview");
-  // Growth type selection
-  const [growthType, setGrowthType] = useState<GrowthType>("within-year");
+  // Growth type selection (extended to include "consecutive")
+  type ExtendedGrowthType = GrowthType | "consecutive";
+  const [growthType, setGrowthType] = useState<ExtendedGrowthType>("within-year");
   // Transition period selection
   const [transitionPeriod, setTransitionPeriod] = useState<TransitionPeriod>("fall-to-spring");
 
@@ -104,8 +108,11 @@ export default function MapAnalysisPage() {
   const [overviewData, setOverviewData] = useState<MapAnalyticsData | null>(null);
   // Growth data per grade and type: key = `${grade}-${type}`
   const [growthDataCache, setGrowthDataCache] = useState<Record<string, GrowthAnalysisData | null>>({});
+  // Consecutive growth data per grade
+  const [consecutiveGrowthCache, setConsecutiveGrowthCache] = useState<Record<number, ConsecutiveGrowthAnalysisData | null>>({});
   // Derived growthData for current selection
-  const growthData = growthDataCache[`${selectedGrade}-${growthType}`] ?? null;
+  const growthData = growthType !== "consecutive" ? growthDataCache[`${selectedGrade}-${growthType}`] ?? null : null;
+  const consecutiveGrowthData = consecutiveGrowthCache[selectedGrade] ?? null;
   const [goalData, setGoalData] = useState<{
     reading: GoalPerformanceData | null;
     languageUsage: GoalPerformanceData | null;
@@ -162,7 +169,7 @@ export default function MapAnalysisPage() {
     }
   }, []);
 
-  // Fetch Growth Data
+  // Fetch Growth Data (within-year or year-over-year)
   const fetchGrowthData = useCallback(async (grade: number, type: GrowthType) => {
     setLoading("growth", true);
     setError("growth", null);
@@ -192,6 +199,21 @@ export default function MapAnalysisPage() {
     } catch (err) {
       console.error("Error fetching growth data:", err);
       setError("growth", "Failed to load growth data");
+    } finally {
+      setLoading("growth", false);
+    }
+  }, []);
+
+  // Fetch Consecutive Growth Data (all consecutive term pairs)
+  const fetchConsecutiveGrowthData = useCallback(async (grade: number) => {
+    setLoading("growth", true);
+    setError("growth", null);
+    try {
+      const result = await getConsecutiveGrowthAnalysis({ grade });
+      setConsecutiveGrowthCache(prev => ({ ...prev, [grade]: result }));
+    } catch (err) {
+      console.error("Error fetching consecutive growth data:", err);
+      setError("growth", "Failed to load consecutive growth data");
     } finally {
       setLoading("growth", false);
     }
@@ -310,7 +332,11 @@ export default function MapAnalysisPage() {
           await fetchOverviewData(selectedGrade);
           break;
         case "growth":
-          await fetchGrowthData(selectedGrade, growthType);
+          if (growthType === "consecutive") {
+            await fetchConsecutiveGrowthData(selectedGrade);
+          } else {
+            await fetchGrowthData(selectedGrade, growthType);
+          }
           break;
         case "goals":
           await fetchGoalData(selectedGrade);
@@ -340,6 +366,7 @@ export default function MapAnalysisPage() {
     loadedTabs,
     fetchOverviewData,
     fetchGrowthData,
+    fetchConsecutiveGrowthData,
     fetchGoalData,
     fetchLexileData,
     fetchQualityData,
@@ -347,7 +374,7 @@ export default function MapAnalysisPage() {
   ]);
 
   // Handle growth type change - trigger reload
-  const handleGrowthTypeChange = (type: GrowthType) => {
+  const handleGrowthTypeChange = (type: ExtendedGrowthType) => {
     setGrowthType(type);
     // Reset loaded tabs to trigger reload for growth tab
     const tabKey = `growth-${selectedGrade}-${type}`;
@@ -547,10 +574,12 @@ export default function MapAnalysisPage() {
                   <p className="text-xs text-muted-foreground">
                     {growthType === "within-year"
                       ? "Measures student progress within a single academic year (Fall → Spring)"
-                      : "Measures student progress over one year (Fall → Fall of next year)"}
+                      : growthType === "year-over-year"
+                        ? "Measures student progress over one year (Fall → Fall of next year)"
+                        : "Shows all consecutive test growths (Fall→Spring and Spring→Fall)"}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Button
                     size="sm"
                     variant={growthType === "within-year" ? "default" : "outline"}
@@ -567,6 +596,14 @@ export default function MapAnalysisPage() {
                   >
                     Year-over-Year
                   </Button>
+                  <Button
+                    size="sm"
+                    variant={growthType === "consecutive" ? "default" : "outline"}
+                    onClick={() => handleGrowthTypeChange("consecutive")}
+                    disabled={loadingStates.growth}
+                  >
+                    Consecutive
+                  </Button>
                 </div>
               </div>
 
@@ -578,6 +615,9 @@ export default function MapAnalysisPage() {
                 <p>
                   <strong>Year-over-Year:</strong> Fall 2024-2025 → Fall 2025-2026 (advance one grade)
                 </p>
+                <p>
+                  <strong>Consecutive:</strong> All consecutive tests (FA→SP with full metrics, SP→FA with growth only)
+                </p>
                 <p className="text-muted-foreground">
                   Growth Index = Actual Growth ÷ Expected Growth | 1.0 = on target | &gt; 1.0 = above expected | &lt; 1.0 = below expected
                 </p>
@@ -587,7 +627,9 @@ export default function MapAnalysisPage() {
 
           {loadingStates.growth && renderSkeleton(2)}
           {errorStates.growth && renderError(errorStates.growth)}
-          {!loadingStates.growth && !errorStates.growth && growthData && (
+
+          {/* Within-Year or Year-over-Year View */}
+          {!loadingStates.growth && !errorStates.growth && growthType !== "consecutive" && growthData && (
             <>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Growth Index Chart */}
@@ -630,10 +672,27 @@ export default function MapAnalysisPage() {
               </Card>
             </>
           )}
+
+          {/* Consecutive Growth View */}
+          {!loadingStates.growth && !errorStates.growth && growthType === "consecutive" && consecutiveGrowthData && (
+            <Card>
+              <CardContent className="pt-4">
+                <MapConsecutiveGrowth data={consecutiveGrowthData} />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* No Data States */}
           {!loadingStates.growth &&
             !errorStates.growth &&
+            growthType !== "consecutive" &&
             (!growthData || growthData.byLevel.length === 0) &&
             renderNoData(`No growth data for Grade ${selectedGrade}`)}
+          {!loadingStates.growth &&
+            !errorStates.growth &&
+            growthType === "consecutive" &&
+            (!consecutiveGrowthData || consecutiveGrowthData.records.length === 0) &&
+            renderNoData(`No consecutive growth data for Grade ${selectedGrade}`)}
         </TabsContent>
 
         {/* Goals Tab */}

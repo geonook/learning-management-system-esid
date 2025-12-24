@@ -971,6 +971,328 @@ export async function getGrowthAnalysis(params: {
 }
 
 // ============================================================
+// Consecutive Growth Analysis API (for stats page)
+// ============================================================
+
+/**
+ * 連續成長分析資料類型
+ * 用於統計頁面顯示連續測驗成長（含跨學年）
+ */
+export type ConsecutiveGrowthType = "fallToSpring" | "springToFall";
+
+export interface ConsecutiveGrowthLevelData {
+  englishLevel: string;
+  languageUsage: {
+    avgFrom: number | null;
+    avgTo: number | null;
+    actualGrowth: number | null;
+    expectedGrowth: number | null;  // Only for fallToSpring
+    growthIndex: number | null;     // Only for fallToSpring
+    studentCount: number;
+  };
+  reading: {
+    avgFrom: number | null;
+    avgTo: number | null;
+    actualGrowth: number | null;
+    expectedGrowth: number | null;  // Only for fallToSpring
+    growthIndex: number | null;     // Only for fallToSpring
+    studentCount: number;
+  };
+}
+
+export interface ConsecutiveGrowthRecord {
+  growthType: ConsecutiveGrowthType;
+  fromTerm: string;           // "Fall 2024-2025" or "Spring 2024-2025"
+  toTerm: string;             // "Spring 2024-2025" or "Fall 2025-2026"
+  fromTermLabel: string;      // "FA 24-25" or "SP 24-25"
+  toTermLabel: string;        // "SP 24-25" or "FA 25-26"
+  fromGrade: number;          // Grade at fromTerm
+  toGrade: number;            // Grade at toTerm
+  byLevel: ConsecutiveGrowthLevelData[];
+}
+
+export interface ConsecutiveGrowthAnalysisData {
+  grade: number;
+  records: ConsecutiveGrowthRecord[];
+}
+
+/**
+ * 取得連續成長分析資料
+ *
+ * 找出所有連續的測驗對（Fall→Spring 和 Spring→Fall）
+ * 並按 English Level 分組計算平均成長
+ */
+export async function getConsecutiveGrowthAnalysis(params: {
+  grade: number;
+}): Promise<ConsecutiveGrowthAnalysisData | null> {
+  const supabase = createClient();
+
+  // 1. 取得該年級所有學生的 MAP 資料
+  const { data, error } = await supabase
+    .from("map_assessments")
+    .select(`
+      id,
+      student_number,
+      term_tested,
+      academic_year,
+      map_term,
+      course,
+      rit_score,
+      observed_growth,
+      projected_growth,
+      conditional_growth_index,
+      students:student_id (
+        grade,
+        level,
+        is_active
+      )
+    `)
+    .eq("course", "Reading")  // 只抓 Reading 來判斷學期（避免重複）
+    .not("student_id", "is", null);
+
+  if (error) {
+    console.error("Error fetching consecutive growth data:", error);
+    return null;
+  }
+
+  // 過濾出該年級學生
+  type StudentData = { grade: number; level: string | null; is_active: boolean };
+  const gradeData = data?.filter((d) => {
+    // Handle both single object and array from Supabase nested join
+    const studentRaw = d.students;
+    const student = (Array.isArray(studentRaw) ? studentRaw[0] : studentRaw) as StudentData | null;
+    return student && student.is_active;
+  }) ?? [];
+
+  // 找出所有不重複的 term_tested
+  const uniqueTerms = [...new Set(gradeData.map((d) => d.term_tested))];
+  const sortedTerms = uniqueTerms.sort((a, b) => compareTermTested(a, b));
+
+  if (sortedTerms.length < 2) {
+    return { grade: params.grade, records: [] };
+  }
+
+  // 2. 對於每一對連續測驗，計算成長
+  const records: ConsecutiveGrowthRecord[] = [];
+
+  for (let i = 0; i < sortedTerms.length - 1; i++) {
+    const fromTerm = sortedTerms[i];
+    const toTerm = sortedTerms[i + 1];
+
+    const fromParsed = parseTermTested(fromTerm);
+    const toParsed = parseTermTested(toTerm);
+
+    if (!fromParsed || !toParsed) continue;
+
+    // 判斷成長類型
+    let growthType: ConsecutiveGrowthType;
+    if (fromParsed.mapTerm === "fall" && toParsed.mapTerm === "spring") {
+      growthType = "fallToSpring";
+    } else if (fromParsed.mapTerm === "spring" && toParsed.mapTerm === "fall") {
+      growthType = "springToFall";
+    } else {
+      continue; // 跳過其他組合（如 fall → fall）
+    }
+
+    // 計算年級
+    // Fall → Spring: 同年級
+    // Spring → Fall: 升一年級
+    const fromGrade = params.grade;
+    const toGrade = growthType === "springToFall" ? params.grade : params.grade;
+    // 注意：對於 Spring → Fall，fromGrade 應該是前一個年級
+    const actualFromGrade = growthType === "springToFall" ? params.grade - 1 : params.grade;
+
+    // 3. 取得兩個學期的完整資料（所有課程）
+    const { data: fullData, error: fullError } = await supabase
+      .from("map_assessments")
+      .select(`
+        student_number,
+        term_tested,
+        course,
+        rit_score,
+        observed_growth,
+        projected_growth,
+        conditional_growth_index,
+        students:student_id (
+          grade,
+          level,
+          is_active
+        )
+      `)
+      .in("term_tested", [fromTerm, toTerm])
+      .not("student_id", "is", null);
+
+    if (fullError || !fullData) continue;
+
+    // 過濾學生：from 時是 actualFromGrade，to 時是 params.grade
+    // 建立學生資料映射
+    const studentDataMap = new Map<string, {
+      level: string;
+      from: { languageUsage: number | null; reading: number | null };
+      to: { languageUsage: number | null; reading: number | null };
+      official: {
+        luObservedGrowth: number | null;
+        luProjectedGrowth: number | null;
+        luGrowthIndex: number | null;
+        rdObservedGrowth: number | null;
+        rdProjectedGrowth: number | null;
+        rdGrowthIndex: number | null;
+      };
+    }>();
+
+    for (const row of fullData) {
+      // Handle both single object and array from Supabase nested join
+      const studentRaw = row.students;
+      const student = (Array.isArray(studentRaw) ? studentRaw[0] : studentRaw) as StudentData | null;
+      if (!student || !student.is_active) continue;
+
+      const studentNumber = row.student_number;
+      const level = student.level || "Unknown";
+      const isFromTerm = row.term_tested === fromTerm;
+      const isToTerm = row.term_tested === toTerm;
+
+      // 檢查年級
+      if (isFromTerm && student.grade !== actualFromGrade) continue;
+      if (isToTerm && student.grade !== params.grade) continue;
+
+      if (!studentDataMap.has(studentNumber)) {
+        studentDataMap.set(studentNumber, {
+          level,
+          from: { languageUsage: null, reading: null },
+          to: { languageUsage: null, reading: null },
+          official: {
+            luObservedGrowth: null,
+            luProjectedGrowth: null,
+            luGrowthIndex: null,
+            rdObservedGrowth: null,
+            rdProjectedGrowth: null,
+            rdGrowthIndex: null,
+          },
+        });
+      }
+
+      const studentData = studentDataMap.get(studentNumber)!;
+
+      if (isFromTerm) {
+        if (row.course === "Language Usage") {
+          studentData.from.languageUsage = row.rit_score;
+        } else if (row.course === "Reading") {
+          studentData.from.reading = row.rit_score;
+        }
+      } else if (isToTerm) {
+        if (row.course === "Language Usage") {
+          studentData.to.languageUsage = row.rit_score;
+          // 官方成長資料（來自 to term）
+          studentData.official.luObservedGrowth = row.observed_growth;
+          studentData.official.luProjectedGrowth = row.projected_growth;
+          studentData.official.luGrowthIndex = row.conditional_growth_index;
+        } else if (row.course === "Reading") {
+          studentData.to.reading = row.rit_score;
+          studentData.official.rdObservedGrowth = row.observed_growth;
+          studentData.official.rdProjectedGrowth = row.projected_growth;
+          studentData.official.rdGrowthIndex = row.conditional_growth_index;
+        }
+      }
+    }
+
+    // 4. 按 English Level 分組計算
+    const levels = ["E1", "E2", "E3", "All"];
+    const byLevel: ConsecutiveGrowthLevelData[] = [];
+
+    for (const level of levels) {
+      const levelStudents = Array.from(studentDataMap.entries()).filter(([, data]) => {
+        if (level === "All") return true;
+        return data.level === level;
+      });
+
+      // 計算有完整資料的學生
+      const luStudents = levelStudents.filter(
+        ([, data]) => data.from.languageUsage !== null && data.to.languageUsage !== null
+      );
+      const rdStudents = levelStudents.filter(
+        ([, data]) => data.from.reading !== null && data.to.reading !== null
+      );
+
+      if (luStudents.length === 0 && rdStudents.length === 0) continue;
+
+      // 計算平均值
+      const luFromSum = luStudents.reduce((sum, [, s]) => sum + (s.from.languageUsage ?? 0), 0);
+      const luToSum = luStudents.reduce((sum, [, s]) => sum + (s.to.languageUsage ?? 0), 0);
+      const rdFromSum = rdStudents.reduce((sum, [, s]) => sum + (s.from.reading ?? 0), 0);
+      const rdToSum = rdStudents.reduce((sum, [, s]) => sum + (s.to.reading ?? 0), 0);
+
+      const luAvgFrom = luStudents.length > 0 ? luFromSum / luStudents.length : null;
+      const luAvgTo = luStudents.length > 0 ? luToSum / luStudents.length : null;
+      const rdAvgFrom = rdStudents.length > 0 ? rdFromSum / rdStudents.length : null;
+      const rdAvgTo = rdStudents.length > 0 ? rdToSum / rdStudents.length : null;
+
+      const luActualGrowth = luAvgFrom !== null && luAvgTo !== null ? luAvgTo - luAvgFrom : null;
+      const rdActualGrowth = rdAvgFrom !== null && rdAvgTo !== null ? rdAvgTo - rdAvgFrom : null;
+
+      // Expected Growth and Index (only for fallToSpring)
+      let luExpectedGrowth: number | null = null;
+      let luGrowthIndex: number | null = null;
+      let rdExpectedGrowth: number | null = null;
+      let rdGrowthIndex: number | null = null;
+
+      if (growthType === "fallToSpring") {
+        luExpectedGrowth = getExpectedGrowth(fromParsed.academicYear, params.grade, "Language Usage");
+        rdExpectedGrowth = getExpectedGrowth(fromParsed.academicYear, params.grade, "Reading");
+
+        if (luActualGrowth !== null && luExpectedGrowth !== null && luExpectedGrowth !== 0) {
+          luGrowthIndex = luActualGrowth / luExpectedGrowth;
+        }
+        if (rdActualGrowth !== null && rdExpectedGrowth !== null && rdExpectedGrowth !== 0) {
+          rdGrowthIndex = rdActualGrowth / rdExpectedGrowth;
+        }
+      }
+
+      byLevel.push({
+        englishLevel: level,
+        languageUsage: {
+          avgFrom: luAvgFrom !== null ? Math.round(luAvgFrom * 10) / 10 : null,
+          avgTo: luAvgTo !== null ? Math.round(luAvgTo * 10) / 10 : null,
+          actualGrowth: luActualGrowth !== null ? Math.round(luActualGrowth * 10) / 10 : null,
+          expectedGrowth: luExpectedGrowth,
+          growthIndex: luGrowthIndex !== null ? Math.round(luGrowthIndex * 100) / 100 : null,
+          studentCount: luStudents.length,
+        },
+        reading: {
+          avgFrom: rdAvgFrom !== null ? Math.round(rdAvgFrom * 10) / 10 : null,
+          avgTo: rdAvgTo !== null ? Math.round(rdAvgTo * 10) / 10 : null,
+          actualGrowth: rdActualGrowth !== null ? Math.round(rdActualGrowth * 10) / 10 : null,
+          expectedGrowth: rdExpectedGrowth,
+          growthIndex: rdGrowthIndex !== null ? Math.round(rdGrowthIndex * 100) / 100 : null,
+          studentCount: rdStudents.length,
+        },
+      });
+    }
+
+    // 格式化 term labels
+    const { formatTermStats } = await import("@/lib/map/utils");
+
+    records.push({
+      growthType,
+      fromTerm,
+      toTerm,
+      fromTermLabel: formatTermStats(fromTerm),
+      toTermLabel: formatTermStats(toTerm),
+      fromGrade: actualFromGrade,
+      toGrade: params.grade,
+      byLevel,
+    });
+  }
+
+  // 按時間排序（新到舊）
+  records.sort((a, b) => compareTermTested(b.toTerm, a.toTerm));
+
+  return {
+    grade: params.grade,
+    records,
+  };
+}
+
+// ============================================================
 // Goal Performance API
 // ============================================================
 
