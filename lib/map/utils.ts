@@ -251,7 +251,7 @@ export const CHART_EXPLANATIONS = {
     zh: "快速猜測比例過高可能影響測驗效度。>15% 需關注，>25% 可能需考慮重測。",
   },
   transition: {
-    en: "This matrix shows how students moved between benchmark levels (E1/E2/E3) across terms.",
-    zh: "此矩陣顯示學生在各學期間的基準等級（E1/E2/E3）流動情況。",
+    en: "Benchmark Transition Matrix: Shows student movement between levels (E1/E2/E3). Within-year (Fall→Spring) uses same grade thresholds. Cross-grade (Spring→Fall) reflects grade promotion with new thresholds.",
+    zh: "基準流動矩陣：顯示學生在等級（E1/E2/E3）間的流動。學年內（秋季→春季）使用相同年級門檻。跨年級（春季→秋季）反映升級後的新門檻。",
   },
 } as const;

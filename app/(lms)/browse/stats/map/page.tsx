@@ -94,7 +94,7 @@ const TRANSITION_PERIODS = [
     label: "Spring 24-25 → Fall 25-26",
     fromTerm: "Spring 2024-2025",
     toTerm: "Fall 2025-2026",
-    description: "Cross-year benchmark changes (after grade promotion)",
+    description: "Cross-grade benchmark changes (after grade promotion)",
   },
 ];
 
@@ -975,7 +975,7 @@ export default function MapAnalysisPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       {TRANSITION_PERIODS.map((period) => {
-                        // G3 cross-year not available (G2 has no Benchmark classification)
+                        // G3 cross-grade not available (G2 has no Benchmark classification)
                         const isDisabled = period.id === "spring-to-fall" && selectedGrade === 3;
                         return (
                           <Button
@@ -984,7 +984,7 @@ export default function MapAnalysisPage() {
                             variant={transitionPeriod === period.id ? "default" : "outline"}
                             onClick={() => handleTransitionPeriodChange(period.id)}
                             disabled={loadingStates.transitions || isDisabled}
-                            title={isDisabled ? "G3 cross-year not available (G2 has no Benchmark classification)" : period.description}
+                            title={isDisabled ? "G3 cross-grade not available (G2 has no Benchmark classification)" : period.description}
                           >
                             {period.label}
                           </Button>
@@ -999,7 +999,7 @@ export default function MapAnalysisPage() {
                       <strong>Within-year (Fall → Spring):</strong> Benchmark changes within the same academic year, using the same grade thresholds
                     </p>
                     <p>
-                      <strong>Cross-year (Spring → Fall):</strong> Benchmark changes across academic years, students advance one grade and use new grade thresholds
+                      <strong>Cross-grade (Spring → Fall):</strong> Benchmark changes across academic years, students advance one grade and use new grade thresholds
                     </p>
                     {transitionPeriod === "spring-to-fall" && (
                       <p className="text-amber-600 dark:text-amber-400">
