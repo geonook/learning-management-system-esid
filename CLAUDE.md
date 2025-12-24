@@ -1,25 +1,24 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 4.6
-> **Last Updated**: 2025-12-23
+> **Documentation Version**: 4.7
+> **Last Updated**: 2025-12-24
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School LMS with Next.js + TypeScript + Supabase Cloud
-> **Current Version**: v1.58.0 - MAP NWEA-Style Charts & Multi-Year Growth Records
+> **Current Version**: v1.64.0 - MAP Stats Chart Redesign & Hybrid View Mode
 
 This file provides essential guidance to Claude Code when working with code in this repository.
 
 ## Current Status
 
-- **v1.58.0** - MAP Student Profile with NWEA-style charts
+- **v1.64.0** - MAP Statistics page with professional chart design
 - **Production**: 84 classes, 504 courses (2 academic years), 1514 students
 - **Tech Stack**: Next.js 14 (App Router) + TypeScript + Tailwind + Supabase Cloud
 
 **Recent Additions**:
-- **NWEA-Style Progress Charts**: Stacked percentile color bands (1-20% to 81-100%)
-- **Multi-Year Growth Index**: Shows ALL historical Fall→Spring growth records
-- **Separate Course Charts**: Reading and Language Usage displayed independently
-- **NWEA MAP CDF Import**: Official Combined Data File (140+ fields) import script
-- **Teacher-Friendly Explanations**: All MAP components include explanatory text
+- **Chart-Dominant Layout**: Full-width line charts with end-point labels
+- **Hybrid View Mode**: Grid (3 charts) / Single (tabbed) toggle for MAP Overview
+- **Consecutive Growth Analysis**: Fall→Spring and Spring→Fall growth tracking
+- **Skills Consolidation**: Merged MAP, Grades, Timetable skills into organized folders
 - Teacher Schedule page (`/schedule`) with weekly timetable grid
 
 **Next Steps**:

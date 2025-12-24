@@ -72,12 +72,18 @@ National percentile reference values by grade and term for comparison.
 ### Stats Page (`/browse/stats/map`)
 
 Group-level analysis with tabs:
-- **Overview**: Growth trend charts by English Level
-- **Growth**: Growth Index distribution, consecutive growth
+- **Overview**: Growth trend charts by English Level (Grid/Single view toggle)
+- **Growth**: Growth Index distribution, consecutive growth (FA→SP, SP→FA)
 - **Goals**: Goal area performance (Radar + Table)
 - **Lexile**: Reading level distribution
 - **Quality**: Rapid guessing analysis
 - **Transitions**: Benchmark level transitions
+
+**Chart Features** (v1.64.0):
+- Full-width line charts with end-point labels
+- Hybrid view mode: Grid (3 charts) / Single (tabbed)
+- Norm reference line (dashed)
+- Enhanced tooltip with color indicators
 
 ### Student Page (`/student/[id]` → MAP Tab)
 
