@@ -564,7 +564,7 @@ export default function MapAnalysisPage() {
                         .filter((c) => c.course === selectedChartCourse)
                         .map((chart) => (
                           <TabsContent key={chart.course} value={chart.course} className="mt-0">
-                            <MapGrowthLineChart data={chart} showNorm height={420} />
+                            <MapGrowthLineChart data={chart} showNorm height={350} />
                           </TabsContent>
                         ))}
                     </Tabs>

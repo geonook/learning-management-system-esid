@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * MAP Growth Line Chart (v1.63.0)
+ * MAP Growth Line Chart (v1.64.0)
  *
- * Chart-Dominant Layout:
+ * Clean Chart Layout:
  * - Full-width line chart with end-point labels
- * - Trend summary below chart (replaces side table)
+ * - Minimal footer (norm indicator only)
  * - Enhanced tooltip and animations
  *
  * X-axis: Terms (FA 24-25, SP 24-25, FA 25-26)
@@ -33,60 +33,12 @@ import {
   type Course,
 } from "@/lib/map/norms";
 import { ENGLISH_LEVEL_COLORS, NWEA_COLORS } from "@/lib/map/colors";
-import {
-  formatTermStats,
-  calculateYAxisRange,
-  CHART_EXPLANATIONS,
-} from "@/lib/map/utils";
+import { formatTermStats, calculateYAxisRange } from "@/lib/map/utils";
 
 interface MapGrowthLineChartProps {
   data: MapAnalyticsChartData;
   showNorm?: boolean;
   height?: number;
-}
-
-// Trend Summary Component
-interface TrendSummaryProps {
-  level: string;
-  scores: (number | null)[];
-  color: string;
-}
-
-function TrendSummary({ level, scores, color }: TrendSummaryProps) {
-  const validScores = scores.filter((s): s is number => s !== null);
-  if (validScores.length === 0) return null;
-
-  const first = validScores[0];
-  const last = validScores[validScores.length - 1];
-  const growth = last !== undefined && first !== undefined ? last - first : null;
-
-  // Format scores with arrows between them
-  const scoreDisplay = validScores.map((s) => s.toFixed(1)).join(" → ");
-
-  return (
-    <div className="flex items-center gap-2 text-sm">
-      <span
-        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-        style={{ backgroundColor: color }}
-      />
-      <span className="font-medium w-8 flex-shrink-0">{level}</span>
-      <span className="font-mono text-muted-foreground text-xs">
-        {scoreDisplay}
-      </span>
-      {growth !== null && validScores.length > 1 && (
-        <span
-          className={`text-xs font-medium ${
-            growth >= 0
-              ? "text-green-600 dark:text-green-400"
-              : "text-red-600 dark:text-red-400"
-          }`}
-        >
-          ({growth >= 0 ? "+" : ""}
-          {growth.toFixed(1)})
-        </span>
-      )}
-    </div>
-  );
 }
 
 // Custom Label for Line End Points
@@ -327,31 +279,13 @@ export function MapGrowthLineChart({
         </LineChart>
       </ResponsiveContainer>
 
-      {/* Trend Summary (replaces side table) */}
-      <div className="mt-4 p-3 bg-muted/30 rounded-lg">
-        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-          {data.data.map((levelData) => (
-            <TrendSummary
-              key={levelData.level}
-              level={levelData.level}
-              scores={levelData.scores}
-              color={getLevelColor(levelData.level).color}
-            />
-          ))}
+      {/* Norm indicator */}
+      {showNorm && latestNorm !== null && (
+        <div className="mt-2 text-xs text-muted-foreground flex items-center gap-2">
+          <span className="inline-block w-4 border-t-2 border-dashed border-gray-400" />
+          <span>Norm: {latestNorm.toFixed(1)}</span>
         </div>
-        {showNorm && latestNorm !== null && (
-          <div className="mt-2 pt-2 border-t border-border/50 text-xs text-muted-foreground">
-            <span className="inline-block w-2 h-0.5 bg-gray-400 mr-2 align-middle" />
-            <span className="inline-block w-2 h-0.5 bg-gray-400 mr-2 align-middle" />
-            Norm: {latestNorm.toFixed(1)}
-          </div>
-        )}
-      </div>
-
-      {/* Explanation */}
-      <div className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
-        <p>{CHART_EXPLANATIONS.growthTrend.en}</p>
-      </div>
+      )}
     </div>
   );
 }
