@@ -155,13 +155,59 @@ export const GROWTH_DISTRIBUTION_COLORS = {
 } as const;
 
 /**
- * 根據成長指數取得顏色
+ * 根據成長指數取得顏色（舊版 3 分類，已棄用）
+ * @deprecated 請使用 getGrowthQuintileColor 取得官方 5 分類配色
  */
 export function getGrowthIndexColor(index: number | null): string {
   if (index === null) return GROWTH_INDEX_COLORS.null;
   if (index > 1.0) return GROWTH_INDEX_COLORS.above;
   if (index === 1.0) return GROWTH_INDEX_COLORS.atTarget;
   return GROWTH_INDEX_COLORS.below;
+}
+
+/**
+ * NWEA 官方 Growth Quintile 閾值
+ * 基於 Conditional Growth Index 分位數
+ *
+ * 官方標準：
+ * - High: Index >= 1.5 (top 20%)
+ * - HiAvg: Index >= 1.1 (60-80%)
+ * - Avg: Index >= 0.9 (40-60%)
+ * - LoAvg: Index >= 0.5 (20-40%)
+ * - Low: Index < 0.5 (bottom 20%)
+ */
+export const GROWTH_QUINTILE_THRESHOLDS = {
+  HIGH: 1.5,
+  HIAVG: 1.1,
+  AVG: 0.9,
+  LOAVG: 0.5,
+} as const;
+
+/**
+ * 根據成長指數取得 NWEA 官方 Quintile 配色
+ *
+ * @param index Growth Index (Observed / Projected)
+ * @returns Quintile 配色 (hex)
+ */
+export function getGrowthQuintileColor(index: number | null): string {
+  if (index === null) return GROWTH_INDEX_COLORS.null;
+  if (index >= GROWTH_QUINTILE_THRESHOLDS.HIGH) return QUINTILE_COLORS.High.hex;
+  if (index >= GROWTH_QUINTILE_THRESHOLDS.HIAVG) return QUINTILE_COLORS.HiAvg.hex;
+  if (index >= GROWTH_QUINTILE_THRESHOLDS.AVG) return QUINTILE_COLORS.Avg.hex;
+  if (index >= GROWTH_QUINTILE_THRESHOLDS.LOAVG) return QUINTILE_COLORS.LoAvg.hex;
+  return QUINTILE_COLORS.Low.hex;
+}
+
+/**
+ * 根據成長指數取得 NWEA 官方 Quintile 標籤
+ */
+export function getGrowthQuintileLabel(index: number | null): string {
+  if (index === null) return "N/A";
+  if (index >= GROWTH_QUINTILE_THRESHOLDS.HIGH) return "High";
+  if (index >= GROWTH_QUINTILE_THRESHOLDS.HIAVG) return "HiAvg";
+  if (index >= GROWTH_QUINTILE_THRESHOLDS.AVG) return "Avg";
+  if (index >= GROWTH_QUINTILE_THRESHOLDS.LOAVG) return "LoAvg";
+  return "Low";
 }
 
 /**

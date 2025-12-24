@@ -22,7 +22,7 @@ import {
   LabelList,
 } from "recharts";
 import type { GrowthAnalysisData } from "@/lib/api/map-analytics";
-import { GROWTH_INDEX_COLORS, NWEA_COLORS, getGrowthIndexColor } from "@/lib/map/colors";
+import { QUINTILE_COLORS, NWEA_COLORS, getGrowthQuintileColor, GROWTH_QUINTILE_THRESHOLDS } from "@/lib/map/colors";
 import { CHART_EXPLANATIONS } from "@/lib/map/utils";
 
 interface MapGrowthIndexChartProps {
@@ -62,7 +62,7 @@ export function MapGrowthIndexChart({
       level: levelLabel,
       course: "Language Usage",
       value: levelData.languageUsage.growthIndex,
-      color: getGrowthIndexColor(levelData.languageUsage.growthIndex),
+      color: getGrowthQuintileColor(levelData.languageUsage.growthIndex),
     });
 
     chartData.push({
@@ -70,7 +70,7 @@ export function MapGrowthIndexChart({
       level: levelLabel,
       course: "Reading",
       value: levelData.reading.growthIndex,
-      color: getGrowthIndexColor(levelData.reading.growthIndex),
+      color: getGrowthQuintileColor(levelData.reading.growthIndex),
     });
   });
 
@@ -81,13 +81,20 @@ export function MapGrowthIndexChart({
   const xMin = Math.floor(minVal * 10) / 10 - 0.1;
   const xMax = Math.ceil(maxVal * 10) / 10 + 0.1;
 
-  // 自訂 Tooltip
+  // 自訂 Tooltip - 使用 NWEA 官方 Quintile 分類
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const entry = payload[0].payload;
       const value = entry.value;
-      const status =
-        value >= 1.0 ? "Above Expected" : value >= 0.8 ? "Near Expected" : "Below Expected";
+      // 官方 Quintile 五分類
+      const getQuintileLabel = (v: number | null) => {
+        if (v === null) return "N/A";
+        if (v >= GROWTH_QUINTILE_THRESHOLDS.HIGH) return "High";
+        if (v >= GROWTH_QUINTILE_THRESHOLDS.HIAVG) return "HiAvg";
+        if (v >= GROWTH_QUINTILE_THRESHOLDS.AVG) return "Avg";
+        if (v >= GROWTH_QUINTILE_THRESHOLDS.LOAVG) return "LoAvg";
+        return "Low";
+      };
       return (
         <div
           className="bg-popover border border-border rounded-md p-2 text-sm"
@@ -97,7 +104,9 @@ export function MapGrowthIndexChart({
           <p style={{ color: entry.color }}>
             {entry.course}: {value !== null ? value.toFixed(2) : "N/A"}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">{status}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Quintile: <span style={{ color: entry.color }}>{getQuintileLabel(value)}</span>
+          </p>
         </div>
       );
     }
@@ -206,19 +215,27 @@ export function MapGrowthIndexChart({
         </BarChart>
       </ResponsiveContainer>
 
-      {/* Legend explanation */}
-      <div className="mt-3 flex items-center gap-4 justify-center text-xs text-muted-foreground flex-wrap">
+      {/* Legend explanation - NWEA Official Quintile */}
+      <div className="mt-3 flex items-center gap-3 justify-center text-xs text-muted-foreground flex-wrap">
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded" style={{ backgroundColor: GROWTH_INDEX_COLORS.above }}></div>
-          <span>Above Expected (≥ 1.0)</span>
+          <div className="w-3 h-3 rounded" style={{ backgroundColor: QUINTILE_COLORS.High.hex }}></div>
+          <span>High (≥{GROWTH_QUINTILE_THRESHOLDS.HIGH})</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded" style={{ backgroundColor: GROWTH_INDEX_COLORS.atTarget }}></div>
-          <span>Near Expected (0.8-0.99)</span>
+          <div className="w-3 h-3 rounded" style={{ backgroundColor: QUINTILE_COLORS.HiAvg.hex }}></div>
+          <span>HiAvg (≥{GROWTH_QUINTILE_THRESHOLDS.HIAVG})</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded" style={{ backgroundColor: GROWTH_INDEX_COLORS.below }}></div>
-          <span>Below Expected (&lt; 0.8)</span>
+          <div className="w-3 h-3 rounded" style={{ backgroundColor: QUINTILE_COLORS.Avg.hex }}></div>
+          <span>Avg (≥{GROWTH_QUINTILE_THRESHOLDS.AVG})</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded" style={{ backgroundColor: QUINTILE_COLORS.LoAvg.hex }}></div>
+          <span>LoAvg (≥{GROWTH_QUINTILE_THRESHOLDS.LOAVG})</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded" style={{ backgroundColor: QUINTILE_COLORS.Low.hex }}></div>
+          <span>Low (&lt;{GROWTH_QUINTILE_THRESHOLDS.LOAVG})</span>
         </div>
       </div>
 
