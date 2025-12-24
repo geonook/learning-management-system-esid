@@ -1,7 +1,8 @@
 # LMS TODO List
 
-> **Last Updated**: 2025-12-02
-> **Current Phase**: Phase 4.2 - Browse Pages Data Integration
+> **Last Updated**: 2025-12-24
+> **Current Phase**: Sprint 7 - Student Historical Reports
+> **Version**: v1.64.0
 
 ## Priority Legend
 - 🔴 Critical - Blocking other work
@@ -11,73 +12,57 @@
 
 ---
 
+## ✅ Completed (v1.41.0 - v1.64.0)
+
+- [x] Browse Classes Page - Real data integration
+- [x] Browse Students Page - With pagination and filters
+- [x] Browse Teachers Page - Teacher listing with assignments
+- [x] Gradebook System - LT/IT and KCFS formulas
+- [x] NWEA MAP Growth Assessment - CDF import, analytics, benchmark classification
+- [x] Teacher Schedule System - Weekly timetable, course navigation
+- [x] MAP Statistics Page - Chart redesign, hybrid view mode
+
+---
+
 ## Immediate Tasks (This Week)
 
-### 🔴 Browse Pages Data Integration (Phase 4.2)
-- [ ] **Browse Classes Page** - Replace static placeholder with real data
-  - File: `app/(lms)/browse/classes/page.tsx`
-  - Fetch from Supabase: `classes` table (84 records)
-  - Display: class name, grade, level, student count, assigned teachers
+### 🟠 Sprint 7: Student Historical Reports
+- [ ] **Historical Grade View** - Show student grades across terms
+  - File: `app/(lms)/student/[id]/grades/page.tsx`
+  - Display term-by-term grade progression
 
-- [ ] **Browse Students Page** - Replace static placeholder with real data
-  - File: `app/(lms)/browse/students/page.tsx`
-  - Fetch from Supabase: `students` table (1,511 records)
-  - Implement: pagination, search, grade/level filters
-
-- [ ] **Browse Teachers Page** - Implement teacher listing
-  - File: `app/(lms)/browse/teachers/page.tsx` (if exists)
-  - Fetch from Supabase: `users` table (role = 'teacher')
-  - Display: name, email, teacher_type, assigned courses
-
-### 🟠 Teacher Course Assignment (Phase 4.3)
-- [ ] **Process course_assignments.csv**
-  - Match teachers to courses by email and course_type
-  - Script needed: `scripts/assign-teachers.ts`
-
-- [ ] **Update courses table**
-  - Set `teacher_id` for each of the 252 courses
-  - Verify: each course has correct teacher assigned
-
-- [ ] **Test Teacher SSO Login**
-  - Verify teachers can login via Info Hub SSO
-  - Verify RLS: teachers only see their own courses/classes
+- [ ] **Term 2 Data Import**
+  - Prepare CSV import workflow for new term data
+  - Scripts: `scripts/import-gradebook.ts`
 
 ---
 
 ## Short-term Tasks (This Month)
 
-### 🟡 Dashboard Enhancements
-- [ ] Connect admin KPI cards to real data (currently showing 0s for some metrics)
-- [ ] Add course assignment progress indicator
-- [ ] Show recent activity feed
+### 🟡 Attendance Analytics
+- [ ] Attendance reports by class/student
+- [ ] Trend analysis and alerts
 
-### 🟡 Gradebook Functionality
-- [ ] Verify gradebook works with real student data
-- [ ] Test score entry for assigned courses
-- [ ] Validate grade calculation formulas
-
-### 🟡 Search & Filter
-- [ ] Implement actual search functionality in Browse pages
-- [ ] Add filter by grade, level, class
-- [ ] Add export to CSV feature
+### 🟡 Enhanced MAP Analysis
+- [ ] Individual student growth projections
+- [ ] Peer comparison reports
 
 ---
 
 ## Backlog (Future)
 
-### 🟢 Academic Year Management (Phase 5)
+### 🟢 Academic Year Management
 - [ ] One-click year rollover feature
 - [ ] Class structure copy
 - [ ] Bulk teacher assignment UI
-- [ ] Academic year selector
 
 ### 🟢 Communication Logs
 - [ ] Parent communication tracking
 - [ ] Phone call records
 
 ### 🟢 Advanced Analytics
-- [ ] Student performance trends
-- [ ] Class comparison reports
+- [ ] Predictive models
+- [ ] Intervention recommendations
 - [ ] Teacher workload analysis
 
 ### 🟢 Attendance System

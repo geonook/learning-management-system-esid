@@ -1,8 +1,8 @@
 # LMS-ESID 文檔索引
 
-> **Last Updated**: 2025-10-16
+> **Last Updated**: 2025-12-24
 > **Project**: learning-management-system-esid
-> **Version**: 1.4.0
+> **Version**: 1.64.0
 
 本目錄包含專案的所有技術文檔、指南與參考資料。
 

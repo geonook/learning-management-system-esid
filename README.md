@@ -1,43 +1,34 @@
 # Learning Management System - ESID
 
-> **Version**: 1.41.0
-> **Status**: Production Ready (Phase 4.2 Complete, TeacherOS UI Refinements)
+> **Version**: 1.64.0
+> **Status**: Production Ready (MAP Statistics & Chart Redesign)
 > **Tech Stack**: Next.js 14 + TypeScript + Supabase Cloud + Tailwind CSS
-> **Last Updated**: 2025-12-02
+> **Last Updated**: 2025-12-24
 
-A comprehensive **Primary School (G1-G6)** Learning Management System featuring English Language Arts (ELA) and KCFS courses with advanced **Analytics Engine**, **Database Analytics Views**, and **Google SSO Integration** (via Info Hub). Features **One Class, Three Teachers (一班三師)** architecture where each class has dedicated LT, IT, and KCFS instructors, plus real-time performance analytics, intelligent insights, and comprehensive testing framework. Now with **macOS-style TeacherOS Desktop UI** unified with Info Hub, featuring **Dark Mode Optimization** and **Calendar Redesign**.
+A comprehensive **Primary School (G1-G6)** Learning Management System featuring English Language Arts (ELA) and KCFS courses with advanced **Analytics Engine**, **Database Analytics Views**, and **Info Hub SSO Integration**. Features **One Class, Three Teachers (一班三師)** architecture where each class has dedicated LT, IT, and KCFS instructors, plus **NWEA MAP Growth Assessment** analysis, real-time performance analytics, and **Teacher Schedule System**.
 
-## 🎯 Current Status (Updated 2025-12-02)
+## 🎯 Current Status (Updated 2025-12-24)
 
 ### ✅ Completed Features
 
-- **Phase 4.2 TeacherOS UI Refinements** (v1.41.0): ✅ Dark mode optimization, Calendar redesign, Widget improvements
-- **Phase 4.1 One OS Interface**: ✅ macOS-style Desktop, Dock, MenuBar, Windows unified with Info Hub
-- **Dockerfile Optimization**: ✅ Multi-stage build, standalone mode, optimized for Zeabur deployment
-- **Dashboard Performance**: ✅ Incremental loading + Skeleton UI for faster perceived load times
-- **Database Migrations**: ✅ Migrations 007-021 fully deployed (including RLS recursion fixes)
-- **Real Data Deployment**: ✅ 84 classes + 252 courses (2025-2026 學年度)
-- **Supabase Cloud**: ✅ Official cloud migration complete
-- **Analytics Engine**: ✅ Complete with 40+ TypeScript interfaces
-- **Database Views**: ✅ 3 professional analytics views deployed
-- **Performance**: ✅ Average query time 146ms (target <500ms)
-- **RLS Optimization**: ✅ 49 policies optimized (auth_rls_initplan: 0 warnings)
-- **Testing Framework**: ✅ 90-minute comprehensive testing workflow
-- **SSO Integration**: ✅ **Complete** - Full OAuth 2.0 + PKCE flow with Info Hub, Role Mapping, and Webhook Sync
-- **ESLint Configuration**: ✅ Configured with next/core-web-vitals and next/typescript (0 errors)
-- **Build Optimization**: ✅ Standalone output, dynamic rendering, security headers
-- **Technical Debt Cleanup**: ✅ 11 deprecated pages removed (~2,866 lines), all ESLint errors fixed
+- **v1.64.0 MAP Statistics Redesign**: ✅ Chart-dominant layout, hybrid view mode (Grid/Single toggle)
+- **NWEA MAP Growth Assessment**: ✅ CDF data import, benchmark classification (E1/E2/E3), growth analysis
+- **Teacher Schedule System**: ✅ Weekly timetable grid, course navigation, attendance integration
+- **Gradebook System**: ✅ LT/IT and KCFS grading formulas, expectations tracking
+- **Browse Pages**: ✅ Classes, Students, Teachers, Courses, Statistics with real data
+- **SSO Integration**: ✅ Full OAuth 2.0 + PKCE flow with Info Hub
+- **Real Data Deployment**: ✅ 84 classes, 504 courses (2 academic years), 1514 students
+- **Database Migrations**: ✅ 38 migrations deployed (002-038)
+- **Analytics Engine**: ✅ 40+ TypeScript interfaces, professional chart components
 
 ### ⏳ In Progress
 
-- **Application-Layer Permissions**: ⏳ Head teacher cross-user visibility (Phase 2)
-- **Data Import**: ⏳ Teacher and student data import (CSV templates ready)
+- **Sprint 7**: Student historical grade reports
+- **Term 2 Data Import**: CSV-based import workflow
 
 ### 📋 Upcoming
 
-- **E2E Testing**: Integration testing with Info Hub SSO
-- **Production Deployment**: After E2E testing completion
-- **JWT Claims-based RLS**: Long-term solution for zero recursion risk
+- **Attendance Reports**: Analytics and tracking
 - **Advanced Analytics**: Predictive models, intervention recommendations
 
 ## Quick Start
