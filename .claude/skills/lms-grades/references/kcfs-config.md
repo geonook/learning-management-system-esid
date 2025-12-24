@@ -1,6 +1,18 @@
-# KCFS Gradebook Configuration
+# KCFS Configuration
 
-## JavaScript/TypeScript Configuration
+## Category Codes
+
+| Code | Full Name | Grades |
+|------|-----------|--------|
+| COMM | Communication | All |
+| COLLAB | Collaboration | All |
+| SD | Self-Direction | All |
+| CT | Critical Thinking | All |
+| BW | Book Work | G3-4 only |
+| PORT | Portfolio | G5-6 only |
+| PRES | Presentation | G5-6 only |
+
+## TypeScript Configuration
 
 ```typescript
 const KCFS_GRADE_CONFIG = {
@@ -42,23 +54,11 @@ const KCFS_GRADE_CONFIG = {
 const BASE_SCORE = 50;
 ```
 
-## Database Schema (PostgreSQL/Supabase)
+## Database Schema
 
-### scores table (existing - add is_absent)
-
-```sql
--- Migration 033: Add is_absent column to scores table
-ALTER TABLE scores ADD COLUMN is_absent BOOLEAN DEFAULT FALSE;
-
--- Constraint: score should be NULL when is_absent is TRUE
-ALTER TABLE scores ADD CONSTRAINT check_absent_score
-  CHECK (NOT (is_absent = TRUE AND score IS NOT NULL));
-```
-
-### kcfs_categories table (new)
+### kcfs_categories table
 
 ```sql
--- Grade level configuration for KCFS
 CREATE TABLE kcfs_categories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   grade_range_start INTEGER NOT NULL CHECK (grade_range_start BETWEEN 1 AND 6),
@@ -72,22 +72,23 @@ CREATE TABLE kcfs_categories (
   UNIQUE (grade_range_start, grade_range_end, category_code),
   CHECK (grade_range_start <= grade_range_end)
 );
+```
 
--- Seed data for KCFS categories
+### Seed Data
+
+```sql
 INSERT INTO kcfs_categories (grade_range_start, grade_range_end, category_code, category_name, weight, sequence_order) VALUES
   -- G1-2: 4 categories, weight = 2.5
   (1, 2, 'COMM', 'Communication', 2.5, 1),
   (1, 2, 'COLLAB', 'Collaboration', 2.5, 2),
   (1, 2, 'SD', 'Self-Direction', 2.5, 3),
   (1, 2, 'CT', 'Critical Thinking', 2.5, 4),
-
   -- G3-4: 5 categories, weight = 2.0
   (3, 4, 'COMM', 'Communication', 2.0, 1),
   (3, 4, 'COLLAB', 'Collaboration', 2.0, 2),
   (3, 4, 'SD', 'Self-Direction', 2.0, 3),
   (3, 4, 'CT', 'Critical Thinking', 2.0, 4),
   (3, 4, 'BW', 'Book Work', 2.0, 5),
-
   -- G5-6: 6 categories, weight = 5/3 = 1.6667
   (5, 6, 'COMM', 'Communication', 1.6667, 1),
   (5, 6, 'COLLAB', 'Collaboration', 1.6667, 2),
@@ -97,40 +98,24 @@ INSERT INTO kcfs_categories (grade_range_start, grade_range_end, category_code, 
   (5, 6, 'PRES', 'Presentation', 1.6667, 6);
 ```
 
-### assessment_codes table (extend)
+### scores table extension
 
 ```sql
--- Add KCFS assessment codes
-INSERT INTO assessment_codes (code, category, sequence_order, is_active) VALUES
-  ('COMM', 'kcfs', 20, TRUE),
-  ('COLLAB', 'kcfs', 21, TRUE),
-  ('SD', 'kcfs', 22, TRUE),
-  ('CT', 'kcfs', 23, TRUE),
-  ('BW', 'kcfs', 24, TRUE),
-  ('PORT', 'kcfs', 25, TRUE),
-  ('PRES', 'kcfs', 26, TRUE)
-ON CONFLICT (code) DO NOTHING;
+-- Add is_absent column for KCFS absent tracking
+ALTER TABLE scores ADD COLUMN is_absent BOOLEAN DEFAULT FALSE;
+
+-- Constraint: score should be NULL when is_absent is TRUE
+ALTER TABLE scores ADD CONSTRAINT check_absent_score
+  CHECK (NOT (is_absent = TRUE AND score IS NOT NULL));
 ```
 
 ## Summary Table
 
-| Grade | Categories | Weight | Book Work | Portfolio | Presentation |
-|-------|------------|--------|-----------|-----------|--------------|
+| Grade | Categories | Weight | BW | PORT | PRES |
+|-------|------------|--------|----|------|------|
 | G1 | 4 | 2.5 | No | No | No |
 | G2 | 4 | 2.5 | No | No | No |
 | G3 | 5 | 2.0 | Yes | No | No |
 | G4 | 5 | 2.0 | Yes | No | No |
 | G5 | 6 | 5/3 | No | Yes | Yes |
 | G6 | 6 | 5/3 | No | Yes | Yes |
-
-## Category Code Reference
-
-| Code | Full Name |
-|------|-----------|
-| COMM | Communication |
-| COLLAB | Collaboration |
-| SD | Self-Direction |
-| CT | Critical Thinking |
-| BW | Book Work |
-| PORT | Portfolio |
-| PRES | Presentation |

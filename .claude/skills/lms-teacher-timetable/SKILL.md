@@ -1,6 +1,6 @@
 ---
 name: lms-teacher-timetable
-description: KCIS Linkou Campus elementary teacher timetable system. Use this skill when implementing teacher schedule features, querying schedules by teacher, displaying weekly timetables, or handling multi-type courses (English/HomeRoom/EV). Covers 73 teachers, 42 classes (G1-G6), and 8 daily periods.
+description: KCIS Linkou Campus elementary teacher timetable system. Use this skill when implementing teacher schedule features, querying schedules by teacher, displaying weekly timetables, or handling multi-type courses (English/EV/KCFS). Covers 73 teachers, 42 classes (G1-G6), and 8 daily periods.
 ---
 
 # KCIS Teacher Timetable System
@@ -11,28 +11,26 @@ description: KCIS Linkou Campus elementary teacher timetable system. Use this sk
 |------|-------|
 | **Teachers** | 73 |
 | **Classes** | 42 (G1-G6, 7 per grade) |
-| **Daily Periods** | 8 |
+| **Daily Periods** | 8 (08:25-16:05) |
 | **School Days** | Monday - Friday |
 
 ## Teacher Identification
 
-**Primary Key**: `email` (unique, for login/auth)
-
-**Timetable Join Key**: `teacher_name` (links to timetable records)
+**Primary Key**: `email` (unique, for matching)
 
 ```
 Teacher lookup flow:
-1. Get teacher by email → retrieve teacher_name
-2. Query timetable_entries by teacher_name → get schedule
+1. Get user by auth → retrieve email
+2. Query timetable_entries by teacher_email → get schedule
 ```
 
 ## Course Types
 
-| Type | Description | Example |
-|------|-------------|---------|
-| `english` | English class courses | G1 Visionaries |
-| `homeroom` | Homeroom courses (國語/數學/生活/社會) | 101 |
-| `ev` | EV special courses | G1I, G2B |
+| Type | Color | Click Action | Description |
+|------|-------|--------------|-------------|
+| english | Blue (`bg-blue-500`) | → `/class/{id}/attendance` | English (LT/IT) |
+| kcfs | Emerald (`bg-emerald-500`) | → `/class/{id}` | Kang Chiao Future Skill |
+| ev | Purple (`bg-purple-500`) | → `/class/{id}` | Extended Vocabulary |
 
 ## Period Schedule
 
@@ -44,59 +42,78 @@ Teacher lookup flow:
 | 4 | 11:05-11:45 |
 | 5 | 12:55-13:35 |
 | 6 | 13:40-14:20 |
-| 7 | 14:25-15:05 |
-| 8 | 15:10-15:50 |
-
-## Database Schema
-
-### timetable_periods
-```sql
-CREATE TABLE timetable_periods (
-  id UUID PRIMARY KEY,
-  period_number INTEGER NOT NULL UNIQUE,  -- 1-8
-  start_time TIME NOT NULL,
-  end_time TIME NOT NULL
-);
-```
-
-### timetable_entries
-```sql
-CREATE TABLE timetable_entries (
-  id UUID PRIMARY KEY,
-  teacher_id UUID REFERENCES users(id),
-  teacher_name TEXT NOT NULL,            -- Join key: "張家芸 Kenny"
-  day TEXT NOT NULL,                     -- 'Monday' - 'Friday'
-  period INTEGER NOT NULL,               -- 1-8
-  class_name TEXT NOT NULL,              -- 'G1 Visionaries' or '101'
-  course_type TEXT NOT NULL,             -- 'english', 'homeroom', 'ev'
-  course_name TEXT,                      -- For homeroom: '國語', '數學'
-  classroom TEXT,                        -- 'E101' or '一年一班'
-  course_id UUID REFERENCES courses(id), -- Link to LMS course
-  academic_year TEXT NOT NULL,
-  UNIQUE(teacher_name, day, period, academic_year)
-);
-```
-
-### users.teacher_name
-Added column to users table for timetable join:
-```sql
-ALTER TABLE users ADD COLUMN teacher_name TEXT;
-```
+| 7 | 14:40-15:20 |
+| 8 | 15:25-16:05 |
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
 | `lib/api/timetable.ts` | API functions |
-| `components/schedule/WeeklyTimetable.tsx` | Week view component |
+| `components/schedule/WeeklyTimetable.tsx` | Week view |
+| `components/schedule/TimetableCell.tsx` | Cell styling |
+| `components/schedule/TodaySchedule.tsx` | Mobile view |
 | `app/(lms)/schedule/page.tsx` | Schedule page |
-| `db/migrations/036_create_timetable_system.sql` | Database schema |
-| `scripts/import-timetable.ts` | CSV import script |
+| `scripts/import-timetable.ts` | CSV import |
 
-## Query Examples
+## API Functions
 
-See `references/query-examples.md` for common query patterns.
+```typescript
+// lib/api/timetable.ts
 
-## CSV Import
+// Get schedule by email (primary method)
+getTeacherScheduleByEmail(email: string, academicYear?: string): Promise<WeeklyTimetable>
 
-See `references/csv-format.md` for CSV structure and import specifications.
+// Get current user's schedule
+getCurrentUserSchedule(userId: string, academicYear?: string): Promise<{
+  weekly: WeeklyTimetable;
+  stats: TeacherScheduleStats;
+  periods: TimetablePeriod[];
+}>
+
+// Utilities
+getCurrentDayOfWeek(): DayOfWeek | null  // null on weekends
+formatPeriodTime(period: TimetablePeriod): string
+```
+
+## Click Navigation
+
+```typescript
+const handleCellClick = (entry: TimetableEntryWithPeriod) => {
+  if (!entry.course_id) return;
+
+  if (entry.course_type === "ev" || entry.course_type === "kcfs") {
+    // EV/KCFS: Navigate to course page
+    window.location.href = `/class/${entry.course_id}`;
+  } else {
+    // English: Navigate to attendance page
+    window.location.href = `/class/${entry.course_id}/attendance`;
+  }
+};
+```
+
+## Data Statistics (2025-2026)
+
+| Course Type | Entries | With course_id |
+|-------------|---------|----------------|
+| English | 1,064 | 1,064 (100%) |
+| KCFS | 167 | 167 (100%) |
+| EV | 56 | 0 (N/A) |
+
+## Troubleshooting
+
+### Schedule not showing
+1. Check `users.email` matches `timetable_entries.teacher_email`
+2. Verify `academic_year` is correct (2025-2026)
+3. Check RLS policies allow access
+
+### Click not navigating
+1. Verify `course_id` is populated
+2. Check course exists in `courses` table
+3. Confirm `course_type` is correct
+
+## References
+
+- Database Schema: [references/schema.sql](references/schema.sql)
+- Query Examples: [references/query-examples.md](references/query-examples.md)
+- CSV Format: [references/csv-format.md](references/csv-format.md)
