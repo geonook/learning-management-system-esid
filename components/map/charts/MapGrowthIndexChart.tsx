@@ -4,9 +4,9 @@
  * MAP Growth Index Bar Chart
  *
  * 顯示各 English Level (E1/E2/E3/All) 的 Growth Index
- * 左右對稱顯示 Language Usage 和 Reading
- * Growth Index > 1.0 綠色，= 1.0 藍色，< 1.0 紅色
- * 有虛線參考線在 1.0 位置
+ * 使用水平條形圖，以 0 為基準向右延伸
+ * Growth Index >= 1.0 綠色，0.8-0.99 藍色，< 0.8 紅色
+ * 有垂直參考線在 1.0 位置
  */
 
 import {
@@ -16,14 +16,14 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   ReferenceLine,
   Cell,
+  LabelList,
 } from "recharts";
 import type { GrowthAnalysisData } from "@/lib/api/map-analytics";
 import { GROWTH_INDEX_COLORS, NWEA_COLORS, getGrowthIndexColor } from "@/lib/map/colors";
-import { formatTermStats, CHART_EXPLANATIONS } from "@/lib/map/utils";
+import { CHART_EXPLANATIONS } from "@/lib/map/utils";
 
 interface MapGrowthIndexChartProps {
   data: GrowthAnalysisData | null;
@@ -32,7 +32,7 @@ interface MapGrowthIndexChartProps {
 
 export function MapGrowthIndexChart({
   data,
-  height = 300,
+  height = 320,
 }: MapGrowthIndexChartProps) {
   if (!data) {
     return (
@@ -42,48 +42,62 @@ export function MapGrowthIndexChart({
     );
   }
 
-  // 轉換資料格式為 recharts 需要的格式
-  // { level: 'E1', languageUsage: 1.2, reading: 0.9 }
-  const chartData = data.byLevel.map((levelData) => ({
-    level: levelData.englishLevel === "All" ? `All G${data.grade}` : `G${data.grade}${levelData.englishLevel}`,
-    languageUsage: levelData.languageUsage.growthIndex,
-    reading: levelData.reading.growthIndex,
-    // 保留顏色資訊
-    luColor: getGrowthIndexColor(levelData.languageUsage.growthIndex),
-    rdColor: getGrowthIndexColor(levelData.reading.growthIndex),
-  }));
+  // 轉換資料格式為水平條形圖需要的格式
+  // 每個 level 有兩個條目：LU 和 RD
+  const chartData: Array<{
+    label: string;
+    level: string;
+    course: string;
+    value: number | null;
+    color: string;
+  }> = [];
 
-  // 計算 Y 軸範圍
-  const allIndices = data.byLevel.flatMap((d) => [
-    d.languageUsage.growthIndex,
-    d.reading.growthIndex,
-  ]).filter((i): i is number => i !== null);
+  data.byLevel.forEach((levelData) => {
+    const levelLabel = levelData.englishLevel === "All"
+      ? `All G${data.grade}`
+      : `G${data.grade}${levelData.englishLevel}`;
 
-  const maxIndex = Math.max(...allIndices, 1.5);
-  const minIndex = Math.min(...allIndices, 0);
-  const yMax = Math.ceil(maxIndex * 10) / 10;
-  const yMin = Math.floor(minIndex * 10) / 10;
+    chartData.push({
+      label: `${levelLabel} LU`,
+      level: levelLabel,
+      course: "Language Usage",
+      value: levelData.languageUsage.growthIndex,
+      color: getGrowthIndexColor(levelData.languageUsage.growthIndex),
+    });
+
+    chartData.push({
+      label: `${levelLabel} RD`,
+      level: levelLabel,
+      course: "Reading",
+      value: levelData.reading.growthIndex,
+      color: getGrowthIndexColor(levelData.reading.growthIndex),
+    });
+  });
+
+  // 計算 X 軸範圍（最小值到最大值，確保包含 1.0）
+  const allValues = chartData.map(d => d.value).filter((v): v is number => v !== null);
+  const minVal = Math.min(...allValues, 0);
+  const maxVal = Math.max(...allValues, 1.2);
+  const xMin = Math.floor(minVal * 10) / 10 - 0.1;
+  const xMax = Math.ceil(maxVal * 10) / 10 + 0.1;
 
   // 自訂 Tooltip
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
+      const entry = payload[0].payload;
+      const value = entry.value;
+      const status =
+        value >= 1.0 ? "Above Expected" : value >= 0.8 ? "Near Expected" : "Below Expected";
       return (
         <div
           className="bg-popover border border-border rounded-md p-2 text-sm"
           style={{ backgroundColor: "hsl(var(--popover))" }}
         >
-          <p className="font-medium text-popover-foreground mb-1">{label}</p>
-          {payload.map((entry: any) => {
-            const value = entry.value;
-            const name = entry.name === "languageUsage" ? "Language Usage" : "Reading";
-            const status =
-              value > 1.0 ? "Above Expected" : value === 1.0 ? "On Target" : "Below Expected";
-            return (
-              <p key={entry.dataKey} style={{ color: entry.fill }}>
-                {name}: {value !== null ? value.toFixed(2) : "N/A"} ({status})
-              </p>
-            );
-          })}
+          <p className="font-medium text-popover-foreground mb-1">{entry.level}</p>
+          <p style={{ color: entry.color }}>
+            {entry.course}: {value !== null ? value.toFixed(2) : "N/A"}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">{status}</p>
         </div>
       );
     }
@@ -95,20 +109,41 @@ export function MapGrowthIndexChart({
     if (data.growthType === "within-year") {
       return `G${data.grade} Growth Index (${data.academicYear})`;
     } else {
-      // Year-over-year: 顯示 G4→G5 格式
       return `G${data.fromGrade}→G${data.toGrade} Year-over-Year Growth Index`;
     }
   };
 
   const formatSubtitle = () => {
     if (data.growthType === "within-year") {
-      return `Fall → Spring (1.0 = on target)`;
+      return `Fall → Spring | Target: 1.0`;
     } else {
-      // 簡化學期顯示
       const fromShort = data.fromTerm.replace(/(\w+) (\d{4})-\d{4}/, "$1 $2");
       const toShort = data.toTerm.replace(/(\w+) (\d{4})-\d{4}/, "$1 $2");
-      return `${fromShort} → ${toShort} (1.0 = on target)`;
+      return `${fromShort} → ${toShort} | Target: 1.0`;
     }
+  };
+
+  // 自定義 Label 渲染
+  const renderCustomLabel = (props: any) => {
+    const { x, y, width, value, fill } = props;
+    if (value === null) return null;
+
+    // Label 位置：在條形末端
+    const labelX = width >= 0 ? x + width + 5 : x + width - 5;
+    const textAnchor = width >= 0 ? "start" : "end";
+
+    return (
+      <text
+        x={labelX}
+        y={y + 10}
+        fill={fill}
+        textAnchor={textAnchor}
+        fontSize={11}
+        fontWeight={500}
+      >
+        {value.toFixed(2)}
+      </text>
+    );
   };
 
   return (
@@ -116,74 +151,74 @@ export function MapGrowthIndexChart({
       <h4 className="text-sm font-medium mb-1 text-center">
         {formatTitle()}
       </h4>
-      <p className="text-xs text-muted-foreground text-center mb-2">
+      <p className="text-xs text-muted-foreground text-center mb-3">
         {formatSubtitle()}
       </p>
+
       <ResponsiveContainer width="100%" height={height}>
         <BarChart
           data={chartData}
-          margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+          layout="vertical"
+          margin={{ top: 5, right: 60, left: 70, bottom: 5 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke={NWEA_COLORS.gridLine} />
+          <CartesianGrid strokeDasharray="3 3" stroke={NWEA_COLORS.gridLine} horizontal={false} />
           <XAxis
-            dataKey="level"
-            tick={{ fontSize: 12 }}
-            className="text-muted-foreground"
+            type="number"
+            domain={[xMin, xMax]}
+            tick={{ fontSize: 11 }}
+            tickFormatter={(v) => v.toFixed(1)}
           />
           <YAxis
-            domain={[yMin, yMax]}
-            tick={{ fontSize: 12 }}
-            className="text-muted-foreground"
-            label={{
-              value: "Growth Index",
-              angle: -90,
-              position: "insideLeft",
-              style: { fontSize: 12, fill: "hsl(var(--muted-foreground))" },
-            }}
+            type="category"
+            dataKey="label"
+            tick={{ fontSize: 11 }}
+            width={65}
           />
           <Tooltip content={<CustomTooltip />} />
-          <Legend wrapperStyle={{ fontSize: "12px" }} />
 
-          {/* Reference Line at 1.0 */}
+          {/* Reference Line at 1.0 (Target) */}
           <ReferenceLine
-            y={1.0}
+            x={1.0}
             stroke={NWEA_COLORS.norm}
+            strokeWidth={2}
             strokeDasharray="5 5"
             label={{
-              value: "Expected (1.0)",
-              position: "right",
+              value: "Target (1.0)",
+              position: "top",
               fontSize: 10,
               fill: NWEA_COLORS.norm,
             }}
           />
 
+          {/* Reference Line at 0 */}
+          <ReferenceLine x={0} stroke="#94a3b8" strokeWidth={1} />
+
           {/* Bars with dynamic colors */}
-          <Bar dataKey="languageUsage" name="Language Usage" radius={[4, 4, 0, 0]}>
+          <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={16}>
             {chartData.map((entry, index) => (
-              <Cell key={`lu-${index}`} fill={entry.luColor} />
+              <Cell key={`cell-${index}`} fill={entry.color} />
             ))}
-          </Bar>
-          <Bar dataKey="reading" name="Reading" radius={[4, 4, 0, 0]}>
-            {chartData.map((entry, index) => (
-              <Cell key={`rd-${index}`} fill={entry.rdColor} />
-            ))}
+            <LabelList
+              dataKey="value"
+              content={renderCustomLabel}
+            />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
 
       {/* Legend explanation */}
-      <div className="mt-3 flex items-center gap-4 justify-center text-xs text-muted-foreground">
+      <div className="mt-3 flex items-center gap-4 justify-center text-xs text-muted-foreground flex-wrap">
         <div className="flex items-center gap-1">
           <div className="w-3 h-3 rounded" style={{ backgroundColor: GROWTH_INDEX_COLORS.above }}></div>
-          <span>Above Expected (&gt; 1.0)</span>
+          <span>Above Expected (≥ 1.0)</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="w-3 h-3 rounded" style={{ backgroundColor: GROWTH_INDEX_COLORS.atTarget }}></div>
-          <span>On Target (= 1.0)</span>
+          <span>Near Expected (0.8-0.99)</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="w-3 h-3 rounded" style={{ backgroundColor: GROWTH_INDEX_COLORS.below }}></div>
-          <span>Below Expected (&lt; 1.0)</span>
+          <span>Below Expected (&lt; 0.8)</span>
         </div>
       </div>
 
