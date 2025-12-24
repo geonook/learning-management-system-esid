@@ -1,25 +1,25 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 4.7
+> **Documentation Version**: 4.8
 > **Last Updated**: 2025-12-24
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School LMS with Next.js + TypeScript + Supabase Cloud
-> **Current Version**: v1.64.0 - MAP Stats Chart Redesign & Hybrid View Mode
+> **Current Version**: v1.65.0 - MAP Visualization Expert Review & Production Release
 
 This file provides essential guidance to Claude Code when working with code in this repository.
 
 ## Current Status
 
-- **v1.64.0** - MAP Statistics page with professional chart design
+- **v1.65.0** - MAP Visualization Expert Review complete, merged to main
 - **Production**: 84 classes, 504 courses (2 academic years), 1514 students
 - **Tech Stack**: Next.js 14 (App Router) + TypeScript + Tailwind + Supabase Cloud
 
 **Recent Additions**:
-- **Chart-Dominant Layout**: Full-width line charts with end-point labels
-- **Hybrid View Mode**: Grid (3 charts) / Single (tabbed) toggle for MAP Overview
-- **Consecutive Growth Analysis**: Fall→Spring and Spring→Fall growth tracking
-- **Skills Consolidation**: Merged MAP, Grades, Timetable skills into organized folders
-- Teacher Schedule page (`/schedule`) with weekly timetable grid
+- **Level Compare View**: Grouped bar chart comparing Fall vs Spring by Level (G3E1/E2/E3/All)
+- **E2 Color Unification**: Standardized E2 benchmark to orange-500 (#f97316)
+- **Data Visualization Expert Review**: All 6 MAP tabs verified (Overview, Growth, Goals, Lexile, Quality, Transitions)
+- **GROWTH_INDEX_THRESHOLDS**: Extracted magic numbers (1.0, 0.8) to constants
+- **Production Release**: develop merged to main (2025-12-24)
 
 **Next Steps**:
 1. Sprint 7: Student historical grade reports
