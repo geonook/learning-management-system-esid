@@ -73,6 +73,15 @@ export interface MapCDFAssessmentRow {
   growth_quintile: string | null;
   typical_growth: number | null;
 
+  // Growth data (Fall to Fall) - Year-over-Year
+  fall_to_fall_projected_growth: number | null;
+  fall_to_fall_observed_growth: number | null;
+  fall_to_fall_observed_growth_se: number | null;
+  fall_to_fall_met_projected_growth: string | null;  // "Yes" | "No" | "Yes*" | "No*"
+  fall_to_fall_conditional_growth_index: number | null;
+  fall_to_fall_conditional_growth_percentile: number | null;
+  fall_to_fall_growth_quintile: string | null;
+
   // Projected Proficiency
   projected_proficiency: ProjectedProficiency[];
 
@@ -154,6 +163,15 @@ const CDF_COLUMNS = {
   F2S_CONDITIONAL_GROWTH_PERCENTILE: 'FallToSpringConditionalGrowthPercentile',
   F2S_GROWTH_QUINTILE: 'FallToSpringGrowthQuintile',
   TYPICAL_F2S_GROWTH: 'TypicalFallToSpringGrowth',
+
+  // Growth (Fall to Fall) - Year-over-Year
+  F2F_PROJECTED_GROWTH: 'FallToFallProjectedGrowth',
+  F2F_OBSERVED_GROWTH: 'FallToFallObservedGrowth',
+  F2F_OBSERVED_GROWTH_SE: 'FallToFallObservedGrowthSE',
+  F2F_MET_PROJECTED: 'FallToFallMetProjectedGrowth',
+  F2F_CONDITIONAL_GROWTH_INDEX: 'FallToFallConditionalGrowthIndex',
+  F2F_CONDITIONAL_GROWTH_PERCENTILE: 'FallToFallConditionalGrowthPercentile',
+  F2F_GROWTH_QUINTILE: 'FallToFallGrowthQuintile',
 } as const;
 
 // Goal columns pattern: Goal1Name, Goal1RitScore, Goal1StdErr, Goal1Range, Goal1Adjective
@@ -490,6 +508,15 @@ export function parseMapCDF(csvContent: string): MapCDFParseResult {
     const growthQuintile = getValue(row, colIndex.F2S_GROWTH_QUINTILE ?? -1);
     const typicalGrowth = parseIntSafe(getValue(row, colIndex.TYPICAL_F2S_GROWTH ?? -1));
 
+    // Extract Growth data (Fall to Fall) - Year-over-Year
+    const f2fProjectedGrowth = parseIntSafe(getValue(row, colIndex.F2F_PROJECTED_GROWTH ?? -1));
+    const f2fObservedGrowth = parseIntSafe(getValue(row, colIndex.F2F_OBSERVED_GROWTH ?? -1));
+    const f2fObservedGrowthSe = parseFloatSafe(getValue(row, colIndex.F2F_OBSERVED_GROWTH_SE ?? -1));
+    const f2fMetProjectedGrowth = getValue(row, colIndex.F2F_MET_PROJECTED ?? -1);
+    const f2fConditionalGrowthIndex = parseFloatSafe(getValue(row, colIndex.F2F_CONDITIONAL_GROWTH_INDEX ?? -1));
+    const f2fConditionalGrowthPercentile = parseIntSafe(getValue(row, colIndex.F2F_CONDITIONAL_GROWTH_PERCENTILE ?? -1));
+    const f2fGrowthQuintile = getValue(row, colIndex.F2F_GROWTH_QUINTILE ?? -1);
+
     // Extract Goals
     const goals: MapCDFGoalRow[] = [];
     for (const goalIdx of goalIndexes) {
@@ -552,6 +579,15 @@ export function parseMapCDF(csvContent: string): MapCDFParseResult {
       conditional_growth_percentile: conditionalGrowthPercentile,
       growth_quintile: growthQuintile,
       typical_growth: typicalGrowth,
+
+      // Fall to Fall (Year-over-Year)
+      fall_to_fall_projected_growth: f2fProjectedGrowth,
+      fall_to_fall_observed_growth: f2fObservedGrowth,
+      fall_to_fall_observed_growth_se: f2fObservedGrowthSe,
+      fall_to_fall_met_projected_growth: f2fMetProjectedGrowth,
+      fall_to_fall_conditional_growth_index: f2fConditionalGrowthIndex,
+      fall_to_fall_conditional_growth_percentile: f2fConditionalGrowthPercentile,
+      fall_to_fall_growth_quintile: f2fGrowthQuintile,
 
       projected_proficiency: projectedProficiency,
       goals,

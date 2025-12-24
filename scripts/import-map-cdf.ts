@@ -180,7 +180,7 @@ async function upsertAssessment(
     lexile_score: row.lexile_score,
     lexile_range: row.lexile_range,
 
-    // Growth data (NEW)
+    // Growth data - Fall to Spring (NEW)
     projected_growth: row.projected_growth,
     observed_growth: row.observed_growth,
     observed_growth_se: row.observed_growth_se,
@@ -189,6 +189,15 @@ async function upsertAssessment(
     conditional_growth_percentile: row.conditional_growth_percentile,
     growth_quintile: row.growth_quintile,
     typical_growth: row.typical_growth,
+
+    // Growth data - Fall to Fall (Year-over-Year) (NEW)
+    fall_to_fall_projected_growth: row.fall_to_fall_projected_growth,
+    fall_to_fall_observed_growth: row.fall_to_fall_observed_growth,
+    fall_to_fall_observed_growth_se: row.fall_to_fall_observed_growth_se,
+    fall_to_fall_met_projected_growth: row.fall_to_fall_met_projected_growth,
+    fall_to_fall_conditional_growth_index: row.fall_to_fall_conditional_growth_index,
+    fall_to_fall_conditional_growth_percentile: row.fall_to_fall_conditional_growth_percentile,
+    fall_to_fall_growth_quintile: row.fall_to_fall_growth_quintile,
 
     // Projected Proficiency (NEW)
     projected_proficiency_study1: row.projected_proficiency[0]?.study || null,
@@ -209,7 +218,10 @@ async function upsertAssessment(
         console.log(`             Achievement: ${row.achievement_quintile}, Percentile: ${row.test_percentile}`);
       }
       if (row.conditional_growth_index) {
-        console.log(`             Growth Index: ${row.conditional_growth_index}, Quintile: ${row.growth_quintile}`);
+        console.log(`             F2S Growth Index: ${row.conditional_growth_index}, Quintile: ${row.growth_quintile}`);
+      }
+      if (row.fall_to_fall_conditional_growth_index) {
+        console.log(`             F2F Growth Index: ${row.fall_to_fall_conditional_growth_index}, Quintile: ${row.fall_to_fall_growth_quintile}`);
       }
     }
     return { created: true, updated: false, assessmentId: null, error: null };
@@ -497,7 +509,10 @@ async function main(): Promise<void> {
     console.log(`   Term: ${sample!.term_tested}, Course: ${sample!.course}`);
     console.log(`   RIT: ${sample!.rit_score}, Percentile: ${sample!.test_percentile}, Quintile: ${sample!.achievement_quintile}`);
     if (sample!.conditional_growth_index) {
-      console.log(`   Growth Index: ${sample!.conditional_growth_index}, Growth Quintile: ${sample!.growth_quintile}`);
+      console.log(`   F2S Growth Index: ${sample!.conditional_growth_index}, Quintile: ${sample!.growth_quintile}`);
+    }
+    if (sample!.fall_to_fall_conditional_growth_index) {
+      console.log(`   F2F Growth Index: ${sample!.fall_to_fall_conditional_growth_index}, Quintile: ${sample!.fall_to_fall_growth_quintile}`);
     }
     if (sample!.projected_proficiency.length > 0) {
       console.log(`   Projected Proficiency: ${sample!.projected_proficiency.map(p => `${p.study}: ${p.level}`).join(", ")}`);

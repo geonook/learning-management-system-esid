@@ -741,6 +741,8 @@ import { getExpectedGrowth, getExpectedYearOverYearGrowth } from "@/lib/map/norm
  * 支援兩種成長類型：
  * 1. within-year: 學年內成長 (Fall → Spring)，同一學年內的成長
  * 2. year-over-year: 跨學年成長 (Fall Year1 → Fall Year2)，追蹤學生年度進步
+ *
+ * 對於 year-over-year，優先使用 CDF 官方 FallToFall 資料
  */
 export async function getGrowthAnalysis(params: {
   grade: number;
@@ -784,6 +786,7 @@ export async function getGrowthAnalysis(params: {
   }
 
   // 取得兩個學期的資料
+  // 對於 year-over-year，同時取得官方 FallToFall 欄位
   const { data, error } = await supabase
     .from("map_assessments")
     .select(`
@@ -792,6 +795,10 @@ export async function getGrowthAnalysis(params: {
       term_tested,
       rit_score,
       grade,
+      fall_to_fall_projected_growth,
+      fall_to_fall_observed_growth,
+      fall_to_fall_conditional_growth_index,
+      fall_to_fall_growth_quintile,
       students:student_id (
         grade,
         level,
@@ -828,6 +835,15 @@ export async function getGrowthAnalysis(params: {
     level: string;
     from: { languageUsage: number | null; reading: number | null };
     to: { languageUsage: number | null; reading: number | null };
+    // 官方 FallToFall 資料 (用於 year-over-year)
+    officialF2F: {
+      luProjectedGrowth: number | null;
+      luObservedGrowth: number | null;
+      luGrowthIndex: number | null;
+      rdProjectedGrowth: number | null;
+      rdObservedGrowth: number | null;
+      rdGrowthIndex: number | null;
+    };
   };
   const studentMap = new Map<string, StudentData>();
 
@@ -842,6 +858,14 @@ export async function getGrowthAnalysis(params: {
         level,
         from: { languageUsage: null, reading: null },
         to: { languageUsage: null, reading: null },
+        officialF2F: {
+          luProjectedGrowth: null,
+          luObservedGrowth: null,
+          luGrowthIndex: null,
+          rdProjectedGrowth: null,
+          rdObservedGrowth: null,
+          rdGrowthIndex: null,
+        },
       };
       studentMap.set(row.student_number, studentData);
     }
@@ -849,8 +873,20 @@ export async function getGrowthAnalysis(params: {
     const termData = isFromTerm ? studentData.from : studentData.to;
     if (row.course === "Language Usage") {
       termData.languageUsage = row.rit_score;
+      // 收集 toTerm 的官方 FallToFall 資料
+      if (!isFromTerm && growthType === "year-over-year") {
+        studentData.officialF2F.luProjectedGrowth = row.fall_to_fall_projected_growth;
+        studentData.officialF2F.luObservedGrowth = row.fall_to_fall_observed_growth;
+        studentData.officialF2F.luGrowthIndex = row.fall_to_fall_conditional_growth_index;
+      }
     } else if (row.course === "Reading") {
       termData.reading = row.rit_score;
+      // 收集 toTerm 的官方 FallToFall 資料
+      if (!isFromTerm && growthType === "year-over-year") {
+        studentData.officialF2F.rdProjectedGrowth = row.fall_to_fall_projected_growth;
+        studentData.officialF2F.rdObservedGrowth = row.fall_to_fall_observed_growth;
+        studentData.officialF2F.rdGrowthIndex = row.fall_to_fall_conditional_growth_index;
+      }
     }
   }
 
@@ -880,41 +916,108 @@ export async function getGrowthAnalysis(params: {
     const rdFromSum = rdStudents.reduce((sum, s) => sum + (s.from.reading ?? 0), 0);
     const rdToSum = rdStudents.reduce((sum, s) => sum + (s.to.reading ?? 0), 0);
 
-    // Expected Growth - 根據成長類型使用不同計算方式
+    // Expected Growth and Growth Index calculation
+    // 對於 year-over-year，優先使用 CDF 官方 FallToFall 資料
     let expectedLU: number | null = null;
     let expectedRD: number | null = null;
-
-    if (growthType === "within-year" && fromAcademicYear) {
-      expectedLU = getExpectedGrowth(fromAcademicYear, params.grade, "Language Usage");
-      expectedRD = getExpectedGrowth(fromAcademicYear, params.grade, "Reading");
-    } else if (growthType === "year-over-year" && fromAcademicYear && toAcademicYear && fromGrade && toGrade) {
-      expectedLU = getExpectedYearOverYearGrowth(fromAcademicYear, toAcademicYear, fromGrade, toGrade, "Language Usage");
-      expectedRD = getExpectedYearOverYearGrowth(fromAcademicYear, toAcademicYear, fromGrade, toGrade, "Reading");
-    }
+    let luGrowthIndex: number | null = null;
+    let rdGrowthIndex: number | null = null;
 
     const luAvgFrom = luStudents.length > 0 ? luFromSum / luStudents.length : null;
     const luAvgTo = luStudents.length > 0 ? luToSum / luStudents.length : null;
     const luActualGrowth = luAvgFrom !== null && luAvgTo !== null ? luAvgTo - luAvgFrom : null;
-    const luGrowthIndex = luActualGrowth !== null && expectedLU !== null && expectedLU !== 0
-      ? luActualGrowth / expectedLU
-      : null;
 
     const rdAvgFrom = rdStudents.length > 0 ? rdFromSum / rdStudents.length : null;
     const rdAvgTo = rdStudents.length > 0 ? rdToSum / rdStudents.length : null;
     const rdActualGrowth = rdAvgFrom !== null && rdAvgTo !== null ? rdAvgTo - rdAvgFrom : null;
-    const rdGrowthIndex = rdActualGrowth !== null && expectedRD !== null && expectedRD !== 0
-      ? rdActualGrowth / expectedRD
-      : null;
+
+    if (growthType === "within-year" && fromAcademicYear) {
+      // 學年內成長：使用 norms.ts 計算
+      expectedLU = getExpectedGrowth(fromAcademicYear, params.grade, "Language Usage");
+      expectedRD = getExpectedGrowth(fromAcademicYear, params.grade, "Reading");
+      luGrowthIndex = luActualGrowth !== null && expectedLU !== null && expectedLU !== 0
+        ? luActualGrowth / expectedLU
+        : null;
+      rdGrowthIndex = rdActualGrowth !== null && expectedRD !== null && expectedRD !== 0
+        ? rdActualGrowth / expectedRD
+        : null;
+    } else if (growthType === "year-over-year") {
+      // 跨學年成長：優先使用 CDF 官方 FallToFall 資料
+      // 計算有官方資料的學生
+      const luStudentsWithOfficial = luStudents.filter(
+        (s) => s.officialF2F.luProjectedGrowth !== null && s.officialF2F.luGrowthIndex !== null
+      );
+      const rdStudentsWithOfficial = rdStudents.filter(
+        (s) => s.officialF2F.rdProjectedGrowth !== null && s.officialF2F.rdGrowthIndex !== null
+      );
+
+      if (luStudentsWithOfficial.length > 0) {
+        // 使用官方資料計算平均
+        const luOfficialExpectedSum = luStudentsWithOfficial.reduce(
+          (sum, s) => sum + (s.officialF2F.luProjectedGrowth ?? 0), 0
+        );
+        const luOfficialIndexSum = luStudentsWithOfficial.reduce(
+          (sum, s) => sum + (s.officialF2F.luGrowthIndex ?? 0), 0
+        );
+        expectedLU = Math.round((luOfficialExpectedSum / luStudentsWithOfficial.length) * 10) / 10;
+        luGrowthIndex = luOfficialIndexSum / luStudentsWithOfficial.length;
+      } else if (fromAcademicYear && toAcademicYear && fromGrade && toGrade) {
+        // Fallback: 使用 norms.ts 計算
+        expectedLU = getExpectedYearOverYearGrowth(fromAcademicYear, toAcademicYear, fromGrade, toGrade, "Language Usage");
+        luGrowthIndex = luActualGrowth !== null && expectedLU !== null && expectedLU !== 0
+          ? luActualGrowth / expectedLU
+          : null;
+      }
+
+      if (rdStudentsWithOfficial.length > 0) {
+        // 使用官方資料計算平均
+        const rdOfficialExpectedSum = rdStudentsWithOfficial.reduce(
+          (sum, s) => sum + (s.officialF2F.rdProjectedGrowth ?? 0), 0
+        );
+        const rdOfficialIndexSum = rdStudentsWithOfficial.reduce(
+          (sum, s) => sum + (s.officialF2F.rdGrowthIndex ?? 0), 0
+        );
+        expectedRD = Math.round((rdOfficialExpectedSum / rdStudentsWithOfficial.length) * 10) / 10;
+        rdGrowthIndex = rdOfficialIndexSum / rdStudentsWithOfficial.length;
+      } else if (fromAcademicYear && toAcademicYear && fromGrade && toGrade) {
+        // Fallback: 使用 norms.ts 計算
+        expectedRD = getExpectedYearOverYearGrowth(fromAcademicYear, toAcademicYear, fromGrade, toGrade, "Reading");
+        rdGrowthIndex = rdActualGrowth !== null && expectedRD !== null && expectedRD !== 0
+          ? rdActualGrowth / expectedRD
+          : null;
+      }
+    }
 
     // 收集個人成長值 (用於分佈圖)
+    // 對於 year-over-year，使用官方 growth index 來分類
     if (level === "All") {
-      for (const s of luStudents) {
-        const growth = (s.to.languageUsage ?? 0) - (s.from.languageUsage ?? 0);
-        allGrowths.push(growth);
-      }
-      for (const s of rdStudents) {
-        const growth = (s.to.reading ?? 0) - (s.from.reading ?? 0);
-        allGrowths.push(growth);
+      if (growthType === "year-over-year") {
+        // 使用官方 growth index 分佈
+        for (const s of luStudents) {
+          if (s.officialF2F.luObservedGrowth !== null) {
+            allGrowths.push(s.officialF2F.luObservedGrowth);
+          } else {
+            const growth = (s.to.languageUsage ?? 0) - (s.from.languageUsage ?? 0);
+            allGrowths.push(growth);
+          }
+        }
+        for (const s of rdStudents) {
+          if (s.officialF2F.rdObservedGrowth !== null) {
+            allGrowths.push(s.officialF2F.rdObservedGrowth);
+          } else {
+            const growth = (s.to.reading ?? 0) - (s.from.reading ?? 0);
+            allGrowths.push(growth);
+          }
+        }
+      } else {
+        for (const s of luStudents) {
+          const growth = (s.to.languageUsage ?? 0) - (s.from.languageUsage ?? 0);
+          allGrowths.push(growth);
+        }
+        for (const s of rdStudents) {
+          const growth = (s.to.reading ?? 0) - (s.from.reading ?? 0);
+          allGrowths.push(growth);
+        }
       }
     }
 
