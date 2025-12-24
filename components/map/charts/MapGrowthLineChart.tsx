@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * MAP Growth Line Chart (v1.61.0)
+ * MAP Growth Line Chart (v1.62.1)
  *
  * 顯示多學期的成長趨勢折線圖，採用雙面板佈局
- * - 左側：折線圖（X 軸: English Level，Y 軸: RIT Score）
+ * - 左側：折線圖（X 軸: 學期，Y 軸: RIT Score，線條: English Level）
  * - 右側：數據表格
  *
  * 使用統一的配色系統和格式函數
@@ -24,7 +24,7 @@ import {
 } from "recharts";
 import type { MapAnalyticsChartData } from "@/lib/api/map-analytics";
 import { getNorm, getNormAverage, parseTermTested, type Course } from "@/lib/map/norms";
-import { TERM_SEQUENCE_COLORS, NWEA_COLORS } from "@/lib/map/colors";
+import { ENGLISH_LEVEL_COLORS, NWEA_COLORS } from "@/lib/map/colors";
 import { formatTermStats, calculateYAxisRange, CHART_EXPLANATIONS } from "@/lib/map/utils";
 
 interface MapGrowthLineChartProps {
@@ -48,15 +48,18 @@ export function MapGrowthLineChart({
     );
   }
 
-  // 轉換資料格式為 recharts 需要的格式
+  // 取得所有 English Level
+  const levels = useMemo(() => data.data.map((d) => d.level), [data]);
+
+  // 轉換資料格式：X 軸 = 學期，線條 = English Level
   const chartData = useMemo(() => {
-    return data.data.map((levelData) => {
+    return data.terms.map((term, termIdx) => {
       const row: Record<string, string | number | null> = {
-        level: levelData.level === "All" ? `All G${data.grade}` : `G${data.grade}${levelData.level}`,
-        levelShort: levelData.level,
+        term,
+        termShort: formatTermStats(term),
       };
-      data.terms.forEach((term, idx) => {
-        row[term] = levelData.scores[idx] ?? null;
+      data.data.forEach((levelData) => {
+        row[levelData.level] = levelData.scores[termIdx] ?? null;
       });
       return row;
     });
@@ -106,6 +109,11 @@ export function MapGrowthLineChart({
     return latestTerm ? getNormValue(latestTerm) : null;
   }, [data.terms]);
 
+  // 取得 Level 的顏色
+  const getLevelColor = (level: string) => {
+    return ENGLISH_LEVEL_COLORS[level] ?? { color: "#94a3b8", stroke: "#94a3b8" };
+  };
+
   return (
     <div className="w-full">
       <h4 className="text-sm font-medium mb-3 text-center">
@@ -126,7 +134,7 @@ export function MapGrowthLineChart({
                 stroke={NWEA_COLORS.gridLine}
               />
               <XAxis
-                dataKey="level"
+                dataKey="termShort"
                 tick={{ fontSize: 12 }}
                 className="text-muted-foreground"
               />
@@ -142,33 +150,35 @@ export function MapGrowthLineChart({
                   borderRadius: "6px",
                 }}
                 labelStyle={{ color: "hsl(var(--popover-foreground))" }}
-                formatter={(value) =>
-                  value !== null && typeof value === "number" ? [value.toFixed(1), "RIT"] : ["N/A", "RIT"]
+                formatter={(value, name) =>
+                  value !== null && typeof value === "number"
+                    ? [value.toFixed(1), name]
+                    : ["N/A", name]
                 }
               />
-              <Legend
-                formatter={(value) => formatTermStats(value)}
-                wrapperStyle={{ fontSize: "12px" }}
-              />
+              <Legend wrapperStyle={{ fontSize: "12px" }} />
 
-              {/* 繪製每個學期的線 */}
-              {data.terms.map((term, idx) => (
-                <Line
-                  key={term}
-                  type="monotone"
-                  dataKey={term}
-                  name={term}
-                  stroke={TERM_SEQUENCE_COLORS[idx % TERM_SEQUENCE_COLORS.length]?.stroke}
-                  strokeWidth={2}
-                  dot={{
-                    fill: TERM_SEQUENCE_COLORS[idx % TERM_SEQUENCE_COLORS.length]?.color,
-                    strokeWidth: 2,
-                    r: 4,
-                  }}
-                  activeDot={{ r: 6 }}
-                  connectNulls
-                />
-              ))}
+              {/* 繪製每個 English Level 的線 */}
+              {levels.map((level) => {
+                const colors = getLevelColor(level);
+                return (
+                  <Line
+                    key={level}
+                    type="monotone"
+                    dataKey={level}
+                    name={level}
+                    stroke={colors.stroke}
+                    strokeWidth={2}
+                    dot={{
+                      fill: colors.color,
+                      strokeWidth: 2,
+                      r: 4,
+                    }}
+                    activeDot={{ r: 6 }}
+                    connectNulls
+                  />
+                );
+              })}
 
               {/* 常模參考線（僅顯示最新學期的常模） */}
               {showNorm && latestNorm !== null && (
@@ -177,7 +187,7 @@ export function MapGrowthLineChart({
                   stroke={NWEA_COLORS.norm}
                   strokeDasharray="5 5"
                   label={{
-                    value: `Norm ${latestNorm}`,
+                    value: `Norm`,
                     position: "right",
                     fontSize: 10,
                     fill: NWEA_COLORS.norm,
@@ -201,6 +211,12 @@ export function MapGrowthLineChart({
                         key={levelData.level}
                         className="px-2 py-1.5 text-right font-medium"
                       >
+                        <span
+                          className="inline-block w-2 h-2 rounded-full mr-1"
+                          style={{
+                            backgroundColor: getLevelColor(levelData.level).color,
+                          }}
+                        />
                         {levelData.level}
                       </th>
                     ))}
@@ -213,13 +229,6 @@ export function MapGrowthLineChart({
                       className={rowIdx % 2 === 0 ? "bg-background" : "bg-muted/30"}
                     >
                       <td className="px-2 py-1.5 font-medium">
-                        <span
-                          className="inline-block w-2 h-2 rounded-full mr-1.5"
-                          style={{
-                            backgroundColor:
-                              TERM_SEQUENCE_COLORS[rowIdx % TERM_SEQUENCE_COLORS.length]?.color,
-                          }}
-                        />
                         {row.termShort}
                       </td>
                       {row.scores.map((scoreData) => (

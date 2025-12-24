@@ -59,6 +59,17 @@ export const TERM_SEQUENCE_COLORS = [
 ] as const;
 
 /**
+ * English Level 配色
+ * 用於成長趨勢圖，每個 Level 一個顏色
+ */
+export const ENGLISH_LEVEL_COLORS: Record<string, { color: string; stroke: string }> = {
+  E1: { color: "#22c55e", stroke: "#22c55e" }, // 綠色
+  E2: { color: "#3b82f6", stroke: "#3b82f6" }, // 藍色
+  E3: { color: "#f97316", stroke: "#f97316" }, // 橙色
+  All: { color: "#a855f7", stroke: "#a855f7" }, // 紫色
+} as const;
+
+/**
  * Achievement Quintile 配色
  * Low, LoAvg, Avg, HiAvg, High
  */
