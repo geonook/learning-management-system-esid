@@ -219,16 +219,20 @@ export const CHART_EXPLANATIONS = {
     zh: "成長指數 = 實際成長 ÷ 預期成長。NWEA 五分位：High (≥1.5)、HiAvg (≥1.1)、Avg (≥0.9)、LoAvg (≥0.5)、Low (<0.5)。目標 = 1.0。",
   },
   withinYear: {
-    en: "Within-Year Growth: Measures student progress from Fall to Spring within the same academic year. Uses NWEA projected growth norms for the grade level.",
-    zh: "學年內成長：衡量學生在同一學年從秋季到春季的進步。使用該年級的 NWEA 預期成長常模。",
+    en: "Within-Year Growth (Fall→Spring): Measures progress within the same academic year. Growth Index = Actual ÷ Expected. Uses NWEA FallToSpring projected growth norms.",
+    zh: "學年內成長（秋季→春季）：衡量同一學年內的進步。成長指數 = 實際成長 ÷ 預期成長。使用 NWEA FallToSpring 預期成長常模。",
   },
   yearOverYear: {
-    en: "Year-over-Year Growth: Measures student progress from Fall (previous year) to Fall (current year). Uses CDF official FallToFall projected growth for accurate comparison.",
-    zh: "跨學年成長：衡量學生從上學年秋季到本學年秋季的進步。使用 CDF 官方 FallToFall 預期成長進行精準比較。",
+    en: "Year-over-Year Growth (Fall→Fall): Measures annual progress across academic years. Uses CDF official FallToFall projected growth (personalized per student's starting RIT).",
+    zh: "跨學年成長（秋季→秋季）：衡量跨學年的年度進步。使用 CDF 官方 FallToFall 預期成長（依學生起始 RIT 個人化計算）。",
   },
   consecutive: {
-    en: "Consecutive Growth: Shows growth between adjacent test terms. Spring→Fall has no NWEA projected growth norm (summer break), so only actual growth is displayed.",
-    zh: "連續成長：顯示相鄰測驗學期間的成長。春季→秋季無 NWEA 預期成長常模（暑假期間），僅顯示實際成長。",
+    en: "Consecutive Growth: Shows growth between adjacent test terms. Fall→Spring has full metrics (Growth, Expected, Index). Spring→Fall shows only actual growth (no NWEA summer benchmarks).",
+    zh: "連續成長：顯示相鄰測驗學期間的成長。秋季→春季有完整指標（成長、預期、指數）。春季→秋季僅顯示實際成長（NWEA 無暑期基準）。",
+  },
+  growthDistribution: {
+    en: "Growth Distribution: Shows how many students achieved different RIT growth ranges (<0, 0-5, 5-10, 10-15, 15+). Combines Language Usage and Reading scores.",
+    zh: "成長分佈：顯示各 RIT 成長區間（<0、0-5、5-10、10-15、15+）的學生人數。合併語言使用與閱讀兩科分數。",
   },
   benchmark: {
     en: "Students are classified into E1 (Advanced), E2 (Intermediate), or E3 (Developing) based on their Spring semester Average RIT score. Average = (Language Usage + Reading) / 2. Used for next year's English Level placement.",
