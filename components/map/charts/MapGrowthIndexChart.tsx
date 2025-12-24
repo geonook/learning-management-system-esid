@@ -142,12 +142,7 @@ export function MapGrowthIndexChart({
             }}
           />
           <Tooltip content={<CustomTooltip />} />
-          <Legend
-            formatter={(value) =>
-              value === "languageUsage" ? "Language Usage" : "Reading"
-            }
-            wrapperStyle={{ fontSize: "12px" }}
-          />
+          <Legend wrapperStyle={{ fontSize: "12px" }} />
 
           {/* Reference Line at 1.0 */}
           <ReferenceLine
