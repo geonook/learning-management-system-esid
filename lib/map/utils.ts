@@ -215,8 +215,8 @@ export const CHART_EXPLANATIONS = {
     zh: "此圖表顯示各英文等級學生的 RIT 成長趨勢。每條線代表一個學期，虛線為 NWEA 全國常模。",
   },
   growthIndex: {
-    en: "Growth Index = Actual Growth ÷ Expected Growth. Values ≥1.0 indicate meeting or exceeding growth expectations.",
-    zh: "成長指數 = 實際成長 ÷ 預期成長。≥1.0 表示達到或超越成長預期。",
+    en: "Growth Index = Actual Growth ÷ Expected Growth. NWEA Quintile: High (≥1.5), HiAvg (≥1.1), Avg (≥0.9), LoAvg (≥0.5), Low (<0.5). Target = 1.0.",
+    zh: "成長指數 = 實際成長 ÷ 預期成長。NWEA 五分位：High (≥1.5)、HiAvg (≥1.1)、Avg (≥0.9)、LoAvg (≥0.5)、Low (<0.5)。目標 = 1.0。",
   },
   benchmark: {
     en: "Students are classified into E1 (Advanced), E2 (Intermediate), or E3 (Developing) based on their Spring semester Average RIT score. Average = (Language Usage + Reading) / 2. Used for next year's English Level placement.",
