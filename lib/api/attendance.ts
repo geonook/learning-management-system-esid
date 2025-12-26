@@ -5,6 +5,11 @@
  */
 
 import { createClient } from "@/lib/supabase/client";
+import {
+  assertPeriodEditableClient,
+  getTermFromDate,
+  getAcademicYearFromDate,
+} from "@/hooks/usePeriodLock";
 
 // ============================================================================
 // Types
@@ -203,6 +208,11 @@ export async function saveAttendance(
   input: AttendanceInput,
   recordedBy: string
 ): Promise<AttendanceRecord | null> {
+  // Period lock check
+  const academicYear = getAcademicYearFromDate(input.date);
+  const term = getTermFromDate(input.date);
+  await assertPeriodEditableClient({ academicYear, term });
+
   const supabase = createClient();
 
   const record = {
@@ -238,6 +248,14 @@ export async function saveAttendanceBatch(
   inputs: AttendanceInput[],
   recordedBy: string
 ): Promise<{ success: number; failed: number }> {
+  // Period lock check - use first input's date for all
+  const firstInput = inputs[0];
+  if (firstInput) {
+    const academicYear = getAcademicYearFromDate(firstInput.date);
+    const term = getTermFromDate(firstInput.date);
+    await assertPeriodEditableClient({ academicYear, term });
+  }
+
   const supabase = createClient();
 
   const records = inputs.map((input) => ({
@@ -270,6 +288,23 @@ export async function saveAttendanceBatch(
  */
 export async function deleteAttendance(id: string): Promise<boolean> {
   const supabase = createClient();
+
+  // First get the record to check period lock
+  const { data: record, error: fetchError } = await supabase
+    .from("attendance")
+    .select("date")
+    .eq("id", id)
+    .single();
+
+  if (fetchError || !record) {
+    console.error("Error fetching attendance for delete:", fetchError);
+    return false;
+  }
+
+  // Period lock check
+  const academicYear = getAcademicYearFromDate(record.date);
+  const term = getTermFromDate(record.date);
+  await assertPeriodEditableClient({ academicYear, term });
 
   const { error } = await supabase.from("attendance").delete().eq("id", id);
 
@@ -418,6 +453,11 @@ export async function addBehavior(
   period?: number,
   note?: string
 ): Promise<StudentBehavior | null> {
+  // Period lock check
+  const academicYear = getAcademicYearFromDate(date);
+  const term = getTermFromDate(date);
+  await assertPeriodEditableClient({ academicYear, term });
+
   const supabase = createClient();
 
   const { data, error } = await supabase
@@ -452,6 +492,23 @@ export async function addBehavior(
  */
 export async function deleteBehavior(id: string): Promise<boolean> {
   const supabase = createClient();
+
+  // First get the record to check period lock
+  const { data: record, error: fetchError } = await supabase
+    .from("student_behaviors")
+    .select("date")
+    .eq("id", id)
+    .single();
+
+  if (fetchError || !record) {
+    console.error("Error fetching behavior for delete:", fetchError);
+    return false;
+  }
+
+  // Period lock check
+  const academicYear = getAcademicYearFromDate(record.date);
+  const term = getTermFromDate(record.date);
+  await assertPeriodEditableClient({ academicYear, term });
 
   const { error } = await supabase.from("student_behaviors").delete().eq("id", id);
 

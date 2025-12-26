@@ -23,6 +23,7 @@ export default async function ClassGradebookPage({ params, searchParams }: PageP
   let currentCourseType: CourseType | null = null;
   let teacherInfo: TeacherInfo | null = null;
   let classGrade: number = 1;
+  let academicYear: string | undefined = undefined;
   let error = null;
 
   if (classId) {
@@ -39,6 +40,7 @@ export default async function ClassGradebookPage({ params, searchParams }: PageP
       currentCourseType = result.currentCourseType;
       teacherInfo = result.teacherInfo;
       classGrade = result.classGrade ?? 1;
+      academicYear = result.academicYear;
     } catch (e) {
       console.error("Failed to load gradebook data:", e);
       error = "Failed to load data. Please try again.";
@@ -66,6 +68,7 @@ export default async function ClassGradebookPage({ params, searchParams }: PageP
               initialCourseType={currentCourseType}
               initialTeacherName={teacherInfo?.teacherName}
               classGrade={classGrade}
+              academicYear={academicYear}
             />
           </div>
         )}

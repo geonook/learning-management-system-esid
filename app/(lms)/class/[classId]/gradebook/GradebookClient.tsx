@@ -5,7 +5,9 @@ import { Spreadsheet, ExtendedGradeRow } from "@/components/gradebook/Spreadshee
 import { CourseTypeSelector } from "@/components/gradebook/CourseTypeSelector";
 import { getGradebookData, CourseType } from "@/lib/actions/gradebook";
 import { cn } from "@/lib/utils";
-import { Loader2, User, Check, AlertCircle, Users } from "lucide-react";
+import { Loader2, User, Check, AlertCircle, Users, Lock, AlertTriangle } from "lucide-react";
+import { usePeriodLock } from "@/hooks/usePeriodLock";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export type SaveStatus = "saved" | "saving" | "error";
 
@@ -16,6 +18,7 @@ interface GradebookClientProps {
   initialCourseType: CourseType | null;
   initialTeacherName?: string | null;
   classGrade?: number; // For KCFS category determination
+  academicYear?: string; // For period lock check
 }
 
 export function GradebookClient({
@@ -25,6 +28,7 @@ export function GradebookClient({
   initialCourseType,
   initialTeacherName,
   classGrade,
+  academicYear,
 }: GradebookClientProps) {
   const [data, setData] = useState<ExtendedGradeRow[]>(initialData);
   const [currentCourseType, setCurrentCourseType] = useState<CourseType | null>(
@@ -36,6 +40,13 @@ export function GradebookClient({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
+
+  // Period lock status - check all terms (1-4) and use the most restrictive
+  // For now, we use usePeriodLock without specific term to get overall status
+  const { lockInfo, isLoading: isLockLoading } = usePeriodLock({
+    academicYear: academicYear || "",
+  });
+  const { isEditable, status, daysUntilLock, message } = lockInfo;
 
   const handleCourseTypeChange = (courseType: CourseType) => {
     if (courseType === currentCourseType) return;
@@ -119,6 +130,26 @@ export function GradebookClient({
         </div>
       </div>
 
+      {/* Period Lock Warning Banner */}
+      {!isLockLoading && academicYear && !isEditable && (
+        <Alert variant="destructive" className="mx-4 mt-2 rounded-lg">
+          <Lock className="h-4 w-4" />
+          <AlertTitle>Period Locked</AlertTitle>
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Period Closing Warning Banner */}
+      {!isLockLoading && academicYear && isEditable && status === "closing" && daysUntilLock !== null && (
+        <Alert className="mx-4 mt-2 rounded-lg border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertTitle className="text-amber-800 dark:text-amber-200">Deadline Approaching</AlertTitle>
+          <AlertDescription className="text-amber-700 dark:text-amber-300">
+            {daysUntilLock} days until this period is locked. Please complete your grade entries.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Loading Overlay */}
       {isPending && (
         <div className="absolute inset-0 bg-white/50 dark:bg-slate-900/50 z-50 flex items-center justify-center">
@@ -144,6 +175,7 @@ export function GradebookClient({
             courseType={currentCourseType}
             classGrade={classGrade}
             onSaveStatusChange={setSaveStatus}
+            disabled={!isEditable}
           />
         </div>
       )}

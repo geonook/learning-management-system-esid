@@ -10,6 +10,7 @@
  */
 
 import { createClient } from "@/lib/supabase/client";
+import { assertPeriodEditableClient } from "@/hooks/usePeriodLock";
 import type {
   GradebookExpectation,
   ExpectationFilter,
@@ -141,6 +142,12 @@ export async function getExpectedTotal(
 export async function upsertExpectation(
   input: ExpectationInput
 ): Promise<GradebookExpectation> {
+  // Period lock check
+  await assertPeriodEditableClient({
+    academicYear: input.academic_year,
+    term: input.term,
+  });
+
   const supabase = createClient();
 
   // Validate course_type constraints
@@ -188,6 +195,12 @@ export async function upsertExpectation(
 export async function batchUpsertExpectations(
   input: ExpectationBatchInput
 ): Promise<GradebookExpectation[]> {
+  // Period lock check
+  await assertPeriodEditableClient({
+    academicYear: input.academic_year,
+    term: input.term,
+  });
+
   const supabase = createClient();
 
   // Validate course_type - KCFS should not use batch update
@@ -231,6 +244,12 @@ export async function resetToDefault(
   grades?: number[],
   levels?: Level[]
 ): Promise<GradebookExpectation[]> {
+  // Period lock check
+  await assertPeriodEditableClient({
+    academicYear: filter.academic_year,
+    term: filter.term,
+  });
+
   const supabase = createClient();
 
   if (filter.course_type === "KCFS") {
@@ -301,6 +320,12 @@ export async function resetToDefault(
 export async function deleteExpectations(
   filter: ExpectationFilter
 ): Promise<void> {
+  // Period lock check
+  await assertPeriodEditableClient({
+    academicYear: filter.academic_year,
+    term: filter.term,
+  });
+
   const supabase = createClient();
 
   let query = supabase

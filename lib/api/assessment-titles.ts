@@ -6,6 +6,28 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/types/database'
+import {
+  assertPeriodEditableClient,
+  getTermFromDate,
+} from '@/hooks/usePeriodLock'
+
+/**
+ * Check period lock for class-based operations
+ */
+async function assertClassEditable(classId: string): Promise<void> {
+  const supabase = createClient()
+  const { data } = await supabase
+    .from('classes')
+    .select('academic_year')
+    .eq('id', classId)
+    .single()
+
+  if (!data?.academic_year) return // If no academic year, skip check
+
+  // Use current date to determine term
+  const term = getTermFromDate(new Date())
+  await assertPeriodEditableClient({ academicYear: data.academic_year, term })
+}
 
 export type AssessmentTitle = Database['public']['Tables']['assessment_titles']['Row']
 export type AssessmentTitleInsert = Database['public']['Tables']['assessment_titles']['Insert']
@@ -178,6 +200,11 @@ export async function createAssessmentTitle(
   const supabase = createClient()
 
   try {
+    // Period lock check (if class-specific title)
+    if (titleData.class_id) {
+      await assertClassEditable(titleData.class_id)
+    }
+
     // Ensure required fields are present
     const completeData = {
       ...titleData,
@@ -213,6 +240,18 @@ export async function updateAssessmentTitle(
   const supabase = createClient()
 
   try {
+    // First get the existing title to check period lock
+    const { data: existing } = await supabase
+      .from('assessment_titles')
+      .select('class_id')
+      .eq('id', id)
+      .single()
+
+    // Period lock check (if class-specific title)
+    if (existing?.class_id) {
+      await assertClassEditable(existing.class_id)
+    }
+
     const { data, error } = await supabase
       .from('assessment_titles')
       .update({
@@ -242,6 +281,18 @@ export async function deleteAssessmentTitle(id: string): Promise<boolean> {
   const supabase = createClient()
 
   try {
+    // First get the existing title to check period lock
+    const { data: existing } = await supabase
+      .from('assessment_titles')
+      .select('class_id')
+      .eq('id', id)
+      .single()
+
+    // Period lock check (if class-specific title)
+    if (existing?.class_id) {
+      await assertClassEditable(existing.class_id)
+    }
+
     const { error } = await supabase
       .from('assessment_titles')
       .update({
@@ -276,6 +327,11 @@ export async function upsertAssessmentTitle(
   const supabase = createClient()
 
   try {
+    // Period lock check (if class-specific title)
+    if (classId) {
+      await assertClassEditable(classId)
+    }
+
     // Check if override already exists
     let existingQuery = supabase
       .from('assessment_titles')

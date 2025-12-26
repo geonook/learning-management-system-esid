@@ -62,6 +62,7 @@ interface SpreadsheetProps {
   courseType?: CourseType | null;
   classGrade?: number; // For KCFS category determination
   onSaveStatusChange?: (status: SaveStatus) => void;
+  disabled?: boolean; // Disable inputs when period is locked
 }
 
 // Column configuration type
@@ -77,6 +78,7 @@ export function Spreadsheet({
   courseType = "LT",
   classGrade = 1,
   onSaveStatusChange,
+  disabled = false,
 }: SpreadsheetProps) {
   const [data, setData] = useState<ExtendedGradeRow[]>(initialData);
   const [focusModeCode, setFocusModeCode] = useState<string | null>(null);
@@ -271,26 +273,30 @@ export function Spreadsheet({
                 <div
                   key={col.code}
                   className={cn(
-                    "w-24 p-2 text-sm font-medium cursor-pointer transition-colors duration-100 group relative",
+                    "w-24 p-2 text-sm font-medium transition-colors duration-100 group relative",
                     "border-r",
                     NOTION_STYLES.border,
                     NOTION_STYLES.bgHeader,
                     NOTION_STYLES.textMuted,
-                    "hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    disabled
+                      ? "cursor-not-allowed opacity-75"
+                      : "cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20"
                   )}
-                  onClick={() => setFocusModeCode(col.code)}
-                  title="Click to enter Focus Mode"
+                  onClick={() => !disabled && setFocusModeCode(col.code)}
+                  title={disabled ? "Period is locked" : "Click to enter Focus Mode"}
                 >
                   <div className="h-full flex flex-col justify-center items-center">
                     <span className="text-xs truncate max-w-full">{col.label}</span>
                     <span className={cn("text-[10px] font-normal mt-0.5", NOTION_STYLES.textLight)}>
                       {col.weight}
                     </span>
-                    <div className="absolute inset-0 bg-blue-500/5 dark:bg-blue-400/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold bg-white/90 dark:bg-slate-800/90 px-1.5 py-0.5 rounded">
-                        FOCUS
-                      </span>
-                    </div>
+                    {!disabled && (
+                      <div className="absolute inset-0 bg-blue-500/5 dark:bg-blue-400/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold bg-white/90 dark:bg-slate-800/90 px-1.5 py-0.5 rounded">
+                          FOCUS
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -431,6 +437,7 @@ export function Spreadsheet({
                             handleScoreInputChange(row.id, col.code, newValue)
                           }
                           courseType={effectiveCourseType}
+                          disabled={disabled}
                         />
                       </div>
                     );

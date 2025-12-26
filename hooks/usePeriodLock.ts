@@ -49,7 +49,7 @@ export function usePeriodLock(
     daysUntilLock: null,
     lockedAt: null,
     lockedBy: null,
-    message: "載入中...",
+    message: "Loading...",
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,7 +63,7 @@ export function usePeriodLock(
         daysUntilLock: null,
         lockedAt: null,
         lockedBy: null,
-        message: "可以編輯",
+        message: "Editable",
       });
       setIsLoading(false);
       return;
@@ -97,7 +97,7 @@ export function usePeriodLock(
           daysUntilLock: null,
           lockedAt: null,
           lockedBy: null,
-          message: "可以編輯",
+          message: "Editable",
         });
         setIsLoading(false);
         return;
@@ -115,7 +115,7 @@ export function usePeriodLock(
       // Year level
       const yearPeriod = periodMap.get("year--");
       if (yearPeriod && !isEditableStatus(yearPeriod.status)) {
-        setLockInfo(buildLockInfo(yearPeriod, "學年"));
+        setLockInfo(buildLockInfo(yearPeriod, "Year"));
         setIsLoading(false);
         return;
       }
@@ -124,7 +124,7 @@ export function usePeriodLock(
       if (targetSemester) {
         const semesterPeriod = periodMap.get(`semester-${targetSemester}-`);
         if (semesterPeriod && !isEditableStatus(semesterPeriod.status)) {
-          setLockInfo(buildLockInfo(semesterPeriod, "學期"));
+          setLockInfo(buildLockInfo(semesterPeriod, "Semester"));
           setIsLoading(false);
           return;
         }
@@ -148,10 +148,10 @@ export function usePeriodLock(
         daysUntilLock: null,
         lockedAt: null,
         lockedBy: null,
-        message: "可以編輯",
+        message: "Editable",
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "無法取得鎖定狀態";
+      const message = err instanceof Error ? err.message : "Failed to load lock status";
       setError(message);
       // On error, default to editable to not block users
       setLockInfo({
@@ -161,7 +161,7 @@ export function usePeriodLock(
         daysUntilLock: null,
         lockedAt: null,
         lockedBy: null,
-        message: "可以編輯",
+        message: "Editable",
       });
     } finally {
       setIsLoading(false);
@@ -276,4 +276,136 @@ export function useClosingPeriods() {
   }, []);
 
   return { closingPeriods, isLoading };
+}
+
+// ============================================================
+// Client-side Period Lock Check (for client-side API functions)
+// ============================================================
+
+/**
+ * Get period lock info (client-side, non-hook version)
+ * Use this in client-side API functions
+ */
+export async function getPeriodLockInfoClient(params: {
+  academicYear: string;
+  term?: number;
+  semester?: number;
+}): Promise<PeriodLockInfo> {
+  const { academicYear, term, semester } = params;
+  const supabase = createClient();
+
+  const defaultInfo: PeriodLockInfo = {
+    isEditable: true,
+    status: "active",
+    lockDeadline: null,
+    daysUntilLock: null,
+    lockedAt: null,
+    lockedBy: null,
+    message: "Editable",
+  };
+
+  if (!academicYear) {
+    return defaultInfo;
+  }
+
+  try {
+    const targetSemester = semester || (term ? (term <= 2 ? 1 : 2) : null);
+
+    const { data: periods, error } = await supabase
+      .from("academic_periods")
+      .select("*")
+      .eq("academic_year", academicYear);
+
+    if (error || !periods || periods.length === 0) {
+      return defaultInfo;
+    }
+
+    const periodMap = new Map<string, ReturnType<typeof toAcademicPeriod>>();
+    for (const row of periods) {
+      const p = toAcademicPeriod(row as AcademicPeriodRow);
+      const key = `${p.periodType}-${p.semester || ""}-${p.term || ""}`;
+      periodMap.set(key, p);
+    }
+
+    // Check hierarchy: Year -> Semester -> Term
+    const yearPeriod = periodMap.get("year--");
+    if (yearPeriod && !isEditableStatus(yearPeriod.status)) {
+      return buildLockInfo(yearPeriod, "Year");
+    }
+
+    if (targetSemester) {
+      const semesterPeriod = periodMap.get(`semester-${targetSemester}-`);
+      if (semesterPeriod && !isEditableStatus(semesterPeriod.status)) {
+        return buildLockInfo(semesterPeriod, "Semester");
+      }
+    }
+
+    if (term) {
+      const termPeriod = periodMap.get(`term-${targetSemester}-${term}`);
+      if (termPeriod) {
+        return buildLockInfo(termPeriod);
+      }
+    }
+
+    return defaultInfo;
+  } catch {
+    return defaultInfo;
+  }
+}
+
+/**
+ * Assert that a period is editable (client-side version)
+ * Throws an error if not editable - use in client-side mutation functions
+ */
+export async function assertPeriodEditableClient(params: {
+  academicYear: string;
+  term: number;
+}): Promise<void> {
+  const lockInfo = await getPeriodLockInfoClient(params);
+
+  if (!lockInfo.isEditable) {
+    const termName = `Term ${params.term}`;
+    throw new Error(
+      `Cannot edit: ${params.academicYear} ${termName} is ${lockInfo.message}`
+    );
+  }
+}
+
+/**
+ * Get term number from date
+ * Used for attendance and communications
+ */
+export function getTermFromDate(date: Date | string): number {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const month = d.getMonth() + 1; // 1-12
+
+  // Fall Semester (Sep-Jan)
+  if (month >= 9 || month <= 1) {
+    // Term 1 = Sep-Nov (Fall Midterm)
+    // Term 2 = Dec-Jan (Fall Final)
+    return month >= 9 && month <= 11 ? 1 : 2;
+  }
+
+  // Spring Semester (Feb-Jun)
+  // Term 3 = Feb-Apr (Spring Midterm)
+  // Term 4 = May-Jun (Spring Final)
+  return month <= 4 ? 3 : 4;
+}
+
+/**
+ * Get academic year from date
+ * Academic year runs from Sep to Aug
+ * e.g., Sep 2025 - Aug 2026 = "2025-2026"
+ */
+export function getAcademicYearFromDate(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1; // 1-12
+
+  // Sep-Dec = current year is start year
+  // Jan-Aug = previous year is start year
+  const startYear = month >= 9 ? year : year - 1;
+  const endYear = startYear + 1;
+
+  return `${startYear}-${endYear}`;
 }

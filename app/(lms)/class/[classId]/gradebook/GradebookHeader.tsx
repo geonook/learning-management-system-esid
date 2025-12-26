@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { usePeriodLock } from "@/hooks/usePeriodLock";
 
 interface ClassInfo {
   id: string;
@@ -38,6 +39,12 @@ export function GradebookHeader({ classId, courseType }: GradebookHeaderProps) {
     fetchData();
   }, [classId]);
 
+  // Period lock status
+  const { lockInfo, isLoading: isLockLoading } = usePeriodLock({
+    academicYear: classInfo?.academic_year || "",
+  });
+  const { status } = lockInfo;
+
   // Build title with course type
   const courseLabel = courseType ? COURSE_TYPE_LABELS[courseType] || courseType : null;
   const title = classInfo
@@ -65,8 +72,17 @@ export function GradebookHeader({ classId, courseType }: GradebookHeaderProps) {
   const backLabel = "Back to Class";
 
   // Build simplified subtitle (course type and teacher shown in toolbar instead)
+  // Include lock status when applicable
+  const lockStatusText = !isLockLoading && classInfo?.academic_year
+    ? status === "locked" || status === "archived"
+      ? " • 🔒 Locked"
+      : status === "closing"
+      ? " • ⚠️ Closing Soon"
+      : ""
+    : "";
+
   const subtitle = classInfo
-    ? `Grade ${classInfo.grade}${classInfo.academic_year ? ` • ${classInfo.academic_year}` : ""}`
+    ? `Grade ${classInfo.grade}${classInfo.academic_year ? ` • ${classInfo.academic_year}` : ""}${lockStatusText}`
     : undefined;
 
   return (

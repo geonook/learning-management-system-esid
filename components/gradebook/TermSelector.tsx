@@ -1,9 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { Term } from "@/types/academic-year";
 import { TERM_NAMES, TERM_NAMES_SHORT, ALL_TERMS } from "@/types/academic-year";
+import { Lock } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 interface TermSelectorProps {
   availableTerms?: Term[];
@@ -11,6 +13,7 @@ interface TermSelectorProps {
   onChange: (term: Term | "all") => void;
   showAllOption?: boolean;
   compact?: boolean;
+  academicYear?: string; // For lock status check
 }
 
 const TERM_COLORS: Record<
@@ -55,7 +58,38 @@ export function TermSelector({
   onChange,
   showAllOption = true,
   compact = false,
+  academicYear,
 }: TermSelectorProps) {
+  // Track locked terms
+  const [lockedTerms, setLockedTerms] = useState<Set<Term>>(new Set());
+
+  // Fetch lock status for terms
+  useEffect(() => {
+    if (!academicYear) return;
+
+    async function fetchLockStatus() {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("academic_periods")
+        .select("term, status")
+        .eq("academic_year", academicYear)
+        .eq("period_type", "term")
+        .in("status", ["locked", "archived"]);
+
+      if (data) {
+        const locked = new Set<Term>();
+        data.forEach((row) => {
+          if (row.term && (row.status === "locked" || row.status === "archived")) {
+            locked.add(row.term as Term);
+          }
+        });
+        setLockedTerms(locked);
+      }
+    }
+
+    fetchLockStatus();
+  }, [academicYear]);
+
   // Build options list
   const options: (Term | "all")[] = showAllOption
     ? ["all", ...availableTerms]
@@ -77,6 +111,7 @@ export function TermSelector({
         {options.map((term) => {
           const isActive = term === currentTerm;
           const colors = TERM_COLORS[term];
+          const isLocked = term !== "all" && lockedTerms.has(term);
 
           return (
             <button
@@ -85,6 +120,7 @@ export function TermSelector({
               className={cn(
                 "px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-150",
                 "focus:outline-none focus:ring-2 focus:ring-offset-1",
+                "flex items-center gap-1",
                 compact && "px-2 py-1",
                 isActive
                   ? cn(
@@ -99,8 +135,12 @@ export function TermSelector({
                       "hover:bg-surface-hover"
                     )
               )}
+              title={isLocked ? `${getLabel(term)} (Locked)` : getLabel(term)}
             >
               {getLabel(term)}
+              {isLocked && (
+                <Lock className="h-3 w-3 text-red-500 dark:text-red-400" />
+              )}
             </button>
           );
         })}

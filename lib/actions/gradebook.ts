@@ -35,6 +35,7 @@ export type GradebookData = {
   currentTerm: Term | null;
   teacherInfo: TeacherInfo | null;
   classGrade?: number; // For KCFS category determination
+  academicYear?: string; // For period lock check
 };
 
 /**
@@ -95,14 +96,15 @@ export async function getGradebookData(
   if (studentsError)
     throw new Error(`Failed to fetch students: ${studentsError.message}`);
 
-  // 2.5. Get class grade for KCFS
+  // 2.5. Get class grade and academic year
   const { data: classData } = await supabase
     .from("classes")
-    .select("grade")
+    .select("grade, academic_year")
     .eq("id", classId)
     .single();
 
   const classGrade = classData?.grade ?? 1;
+  const academicYear = classData?.academic_year ?? undefined;
 
   // 3. Get scores filtered by course type and term via exam -> course relationship
   const studentIds = students.map((s) => s.id);
@@ -213,6 +215,7 @@ export async function getGradebookData(
     currentTerm: selectedTerm,
     teacherInfo,
     classGrade,
+    academicYear,
   };
 }
 

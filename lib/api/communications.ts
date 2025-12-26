@@ -4,6 +4,10 @@
  */
 
 import { supabase } from "@/lib/supabase/client";
+import {
+  assertPeriodEditableClient,
+  getTermFromDate,
+} from "@/hooks/usePeriodLock";
 import type {
   Communication,
   CommunicationWithDetails,
@@ -94,6 +98,11 @@ export async function getCourseCommunications(
 export async function createCommunication(
   input: CreateCommunicationInput
 ): Promise<Communication> {
+  // Period lock check
+  const commDate = input.communication_date || new Date().toISOString();
+  const term = getTermFromDate(commDate);
+  await assertPeriodEditableClient({ academicYear: input.academic_year, term });
+
   // Get current user for teacher_id
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -133,6 +142,22 @@ export async function updateCommunication(
   id: string,
   input: UpdateCommunicationInput
 ): Promise<Communication> {
+  // First get the record to check period lock
+  const { data: existing, error: fetchError } = await supabase
+    .from("communications")
+    .select("academic_year, communication_date")
+    .eq("id", id)
+    .single();
+
+  if (fetchError || !existing) {
+    console.error("Failed to fetch communication for update:", fetchError);
+    throw new Error(fetchError?.message || "Communication not found");
+  }
+
+  // Period lock check
+  const term = getTermFromDate(existing.communication_date);
+  await assertPeriodEditableClient({ academicYear: existing.academic_year, term });
+
   const { data, error } = await supabase
     .from("communications")
     .update({
@@ -155,6 +180,22 @@ export async function updateCommunication(
  * Delete a communication record
  */
 export async function deleteCommunication(id: string): Promise<void> {
+  // First get the record to check period lock
+  const { data: existing, error: fetchError } = await supabase
+    .from("communications")
+    .select("academic_year, communication_date")
+    .eq("id", id)
+    .single();
+
+  if (fetchError || !existing) {
+    console.error("Failed to fetch communication for delete:", fetchError);
+    throw new Error(fetchError?.message || "Communication not found");
+  }
+
+  // Period lock check
+  const term = getTermFromDate(existing.communication_date);
+  await assertPeriodEditableClient({ academicYear: existing.academic_year, term });
+
   const { error } = await supabase
     .from("communications")
     .delete()

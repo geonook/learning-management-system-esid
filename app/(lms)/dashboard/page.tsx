@@ -12,6 +12,7 @@ import {
   BookOpen,
   Percent,
   Clock,
+  Lock,
 } from "lucide-react";
 import {
   getTeacherDashboardKpis,
@@ -41,11 +42,14 @@ import { Widget } from "@/components/os/Widget";
 import { Skeleton, SkeletonKPI } from "@/components/ui/skeleton";
 import { ScoreHeatmap, ClassCompletionBars, CompletionDonut } from "@/components/statistics/charts";
 import { useGlobalFilters } from "@/components/filters";
+import { useClosingPeriods } from "@/hooks/usePeriodLock";
+import { TERM_DETAILS } from "@/types/academic-period";
 
 export default function Dashboard() {
   const { user, userPermissions } = useAuth();
   const userRole = userPermissions?.role;
   const { academicYear, termForApi } = useGlobalFilters();
+  const { closingPeriods, isLoading: isLoadingClosingPeriods } = useClosingPeriods();
 
   // Independent loading states
   const [loadingKpis, setLoadingKpis] = useState(true);
@@ -207,6 +211,56 @@ export default function Dashboard() {
             </div>
           </div>
         </Widget>
+
+        {/* Deadline Warning Widget - Only show if there are closing periods */}
+        {!isLoadingClosingPeriods && closingPeriods.length > 0 && (
+          <Widget
+            title="Deadline Alerts"
+            size="medium"
+            icon={<Lock size={16} />}
+            className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-200 dark:border-amber-800"
+            delay={0.5}
+          >
+            <div className="h-full flex flex-col justify-center p-2 space-y-2">
+              {closingPeriods.slice(0, 3).map((period) => {
+                const termDetail = period.term ? TERM_DETAILS[period.term] : null;
+                const termLabel = termDetail
+                  ? `Term ${period.term} (${termDetail.semester} ${termDetail.type})`
+                  : period.semester
+                  ? `Semester ${period.semester}`
+                  : "Year";
+
+                return (
+                  <div
+                    key={period.id}
+                    className="flex items-center justify-between p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800"
+                  >
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                      <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                        {termLabel}
+                      </span>
+                    </div>
+                    <span className={`text-sm font-bold ${
+                      period.daysUntilLock <= 3
+                        ? "text-red-600 dark:text-red-400"
+                        : period.daysUntilLock <= 7
+                        ? "text-amber-600 dark:text-amber-400"
+                        : "text-text-secondary"
+                    }`}>
+                      {period.daysUntilLock} days
+                    </span>
+                  </div>
+                );
+              })}
+              {closingPeriods.length > 3 && (
+                <div className="text-xs text-text-tertiary text-center">
+                  +{closingPeriods.length - 3} more deadlines
+                </div>
+              )}
+            </div>
+          </Widget>
+        )}
 
         {/* ==================== TEACHER KPIs ==================== */}
         {userRole === "teacher" && (

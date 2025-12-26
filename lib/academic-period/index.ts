@@ -56,7 +56,7 @@ export async function getPeriodLockInfo(params: {
     daysUntilLock: null,
     lockedAt: null,
     lockedBy: null,
-    message: '可以編輯',
+    message: 'Editable',
   };
 
   // If no term specified, check semester or year level
@@ -101,14 +101,14 @@ export async function getPeriodLockInfo(params: {
   // Check Year level
   const yearPeriod = periodMap.get('year--');
   if (yearPeriod && !isEditableStatus(yearPeriod.status)) {
-    return buildLockInfo(yearPeriod, '學年');
+    return buildLockInfo(yearPeriod, 'Year');
   }
 
   // Check Semester level
   if (targetSemester) {
     const semesterPeriod = periodMap.get(`semester-${targetSemester}-`);
     if (semesterPeriod && !isEditableStatus(semesterPeriod.status)) {
-      return buildLockInfo(semesterPeriod, '學期');
+      return buildLockInfo(semesterPeriod, 'Semester');
     }
   }
 
@@ -138,7 +138,7 @@ function buildLockInfo(
     message = `${levelName}${message}`;
   }
   if (period.status === 'closing' && daysUntil !== null) {
-    message = `${daysUntil} 天後截止`;
+    message = `${daysUntil} days until lock`;
   }
 
   return {
@@ -169,7 +169,7 @@ export async function assertPeriodEditable(params: {
   if (!lockInfo.isEditable) {
     const termName = `Term ${params.term}`;
     throw new Error(
-      `無法編輯: ${params.academicYear} ${termName} ${lockInfo.message}`
+      `Cannot edit: ${params.academicYear} ${termName} is ${lockInfo.message}`
     );
   }
 }

@@ -13,6 +13,41 @@ import type {
   UpdateCourseTaskInput,
   TaskStatus,
 } from '@/types/course-tasks';
+import {
+  assertPeriodEditableClient,
+  getTermFromDate,
+} from '@/hooks/usePeriodLock';
+
+/**
+ * Helper to get academic year from course
+ */
+async function getCourseAcademicYear(courseId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('courses')
+    .select('classes(academic_year)')
+    .eq('id', courseId)
+    .single();
+
+  // Handle nested join - can be object or array
+  const classData = data?.classes;
+  if (!classData) return null;
+  if (Array.isArray(classData)) {
+    return classData[0]?.academic_year || null;
+  }
+  return (classData as { academic_year: string })?.academic_year || null;
+}
+
+/**
+ * Check period lock for course-based operations
+ */
+async function assertCourseEditable(courseId: string): Promise<void> {
+  const academicYear = await getCourseAcademicYear(courseId);
+  if (!academicYear) return; // If no academic year, skip check
+
+  // Use current date to determine term
+  const term = getTermFromDate(new Date());
+  await assertPeriodEditableClient({ academicYear, term });
+}
 
 /**
  * Get all tasks for a specific course
@@ -39,6 +74,9 @@ export async function createCourseTask(
   input: CreateCourseTaskInput,
   teacherId: string
 ): Promise<CourseTask> {
+  // Period lock check
+  await assertCourseEditable(input.course_id);
+
   // Get the max position for the status column
   const { data: existingTasks } = await supabase
     .from('course_tasks')
@@ -81,6 +119,17 @@ export async function updateCourseTask(
   taskId: string,
   updates: UpdateCourseTaskInput
 ): Promise<CourseTask> {
+  // Get task's course_id for period lock check
+  const { data: task } = await supabase
+    .from('course_tasks')
+    .select('course_id')
+    .eq('id', taskId)
+    .single();
+
+  if (task?.course_id) {
+    await assertCourseEditable(task.course_id);
+  }
+
   const { data, error } = await supabase
     .from('course_tasks')
     .update(updates)
@@ -100,6 +149,17 @@ export async function updateCourseTask(
  * Delete a task
  */
 export async function deleteCourseTask(taskId: string): Promise<void> {
+  // Get task's course_id for period lock check
+  const { data: task } = await supabase
+    .from('course_tasks')
+    .select('course_id')
+    .eq('id', taskId)
+    .single();
+
+  if (task?.course_id) {
+    await assertCourseEditable(task.course_id);
+  }
+
   const { error } = await supabase
     .from('course_tasks')
     .delete()
@@ -119,6 +179,17 @@ export async function moveTask(
   newStatus: TaskStatus,
   newPosition: number
 ): Promise<CourseTask> {
+  // Get task's course_id for period lock check
+  const { data: task } = await supabase
+    .from('course_tasks')
+    .select('course_id')
+    .eq('id', taskId)
+    .single();
+
+  if (task?.course_id) {
+    await assertCourseEditable(task.course_id);
+  }
+
   const { data, error } = await supabase
     .from('course_tasks')
     .update({
@@ -146,6 +217,9 @@ export async function reorderTasks(
   status: TaskStatus,
   taskIds: string[]
 ): Promise<void> {
+  // Period lock check
+  await assertCourseEditable(courseId);
+
   // Update positions based on array order
   const updates = taskIds.map((id, index) => ({
     id,
