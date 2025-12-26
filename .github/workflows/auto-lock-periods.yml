@@ -1,0 +1,36 @@
+# Auto-Lock Periods Cron Job
+# Runs daily at 00:00 UTC (08:00 Taiwan Time)
+# Triggers automatic period locking for past deadlines
+
+name: Auto-Lock Periods
+
+on:
+  schedule:
+    # Run daily at 00:00 UTC = 08:00 Taiwan Time (UTC+8)
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    # Allow manual trigger from GitHub Actions UI
+
+jobs:
+  auto-lock:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Auto-Lock API
+        run: |
+          response=$(curl -s -w "\n%{http_code}" \
+            -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.APP_URL }}/api/cron/auto-lock-periods")
+
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+
+          echo "Response: $body"
+          echo "HTTP Status: $http_code"
+
+          if [ "$http_code" -ne 200 ]; then
+            echo "Auto-lock API call failed with status $http_code"
+            exit 1
+          fi
+
+          echo "Auto-lock completed successfully"
