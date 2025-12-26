@@ -39,25 +39,66 @@ export type GradebookData = {
 };
 
 /**
- * Get available course types for a class
+ * Get available course types for a class, filtered by user role
+ * - Admin/Office Member: see all course types
+ * - Head Teacher: only see courses matching their track
+ * - Teacher: only see their own course type(s)
  */
 export async function getAvailableCourseTypes(
   classId: string
 ): Promise<CourseType[]> {
   const supabase = createClient();
 
-  const { data: courses, error } = await supabase
+  // Get current user and their role/permissions
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let userRole: string | null = null;
+  let userTrack: string | null = null;
+  let userId: string | null = null;
+
+  if (user) {
+    userId = user.id;
+    const { data: userData } = await supabase
+      .from("users")
+      .select("role, track")
+      .eq("id", user.id)
+      .single();
+
+    if (userData) {
+      userRole = userData.role;
+      userTrack = userData.track;
+    }
+  }
+
+  // Build query based on role
+  let coursesQuery = supabase
     .from("courses")
-    .select("course_type")
+    .select("course_type, teacher_id")
     .eq("class_id", classId)
     .eq("is_active", true);
+
+  const { data: courses, error } = await coursesQuery;
 
   if (error) {
     console.error("Failed to fetch course types:", error.message);
     return [];
   }
 
-  const courseTypes = [...new Set(courses.map((c) => c.course_type as CourseType))];
+  // Filter courses based on role
+  let filteredCourses = courses;
+
+  if (userRole === "teacher") {
+    // Teacher: only see their own course(s)
+    filteredCourses = courses.filter((c) => c.teacher_id === userId);
+  } else if (userRole === "head" && userTrack) {
+    // Head Teacher: only see courses matching their track
+    filteredCourses = courses.filter((c) => c.course_type === userTrack);
+  }
+  // Admin and Office Member see all courses
+
+  const courseTypes = [...new Set(filteredCourses.map((c) => c.course_type as CourseType))];
   // Sort in consistent order: LT, IT, KCFS
   const order: CourseType[] = ["LT", "IT", "KCFS"];
   return courseTypes.sort((a, b) => order.indexOf(a) - order.indexOf(b));
