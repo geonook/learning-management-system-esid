@@ -1,6 +1,7 @@
 # Auto-Lock Periods Cron Job
 # Runs daily at 00:00 UTC (08:00 Taiwan Time)
 # Triggers automatic period locking for past deadlines
+# Calls both Staging and Production environments
 
 name: Auto-Lock Periods
 
@@ -12,15 +13,16 @@ on:
     # Allow manual trigger from GitHub Actions UI
 
 jobs:
-  auto-lock:
+  auto-lock-staging:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Auto-Lock API
+      - name: Trigger Staging Auto-Lock API
         run: |
+          echo "Calling Staging: ${{ secrets.STAGING_URL }}"
           response=$(curl -s -w "\n%{http_code}" \
             -X GET \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "${{ secrets.APP_URL }}/api/cron/auto-lock-periods")
+            "${{ secrets.STAGING_URL }}/api/cron/auto-lock-periods")
 
           http_code=$(echo "$response" | tail -n1)
           body=$(echo "$response" | sed '$d')
@@ -29,8 +31,32 @@ jobs:
           echo "HTTP Status: $http_code"
 
           if [ "$http_code" -ne 200 ]; then
-            echo "Auto-lock API call failed with status $http_code"
+            echo "Staging auto-lock failed with status $http_code"
             exit 1
           fi
 
-          echo "Auto-lock completed successfully"
+          echo "Staging auto-lock completed successfully"
+
+  auto-lock-production:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Production Auto-Lock API
+        run: |
+          echo "Calling Production: ${{ secrets.PRODUCTION_URL }}"
+          response=$(curl -s -w "\n%{http_code}" \
+            -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.PRODUCTION_URL }}/api/cron/auto-lock-periods")
+
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+
+          echo "Response: $body"
+          echo "HTTP Status: $http_code"
+
+          if [ "$http_code" -ne 200 ]; then
+            echo "Production auto-lock failed with status $http_code"
+            exit 1
+          fi
+
+          echo "Production auto-lock completed successfully"
