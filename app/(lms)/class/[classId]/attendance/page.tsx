@@ -37,7 +37,7 @@ interface ClassInfo {
 export default function ClassAttendancePage() {
   const params = useParams();
   const classId = params?.classId as string | undefined;
-  const { userId, isReady, role } = useAuthReady();
+  const { userId, isReady, role, track } = useAuthReady();
 
   const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -49,15 +49,6 @@ export default function ClassAttendancePage() {
 
     async function loadData() {
       const supabase = createClient();
-
-      // Get current user's email (unique identifier)
-      const { data: currentUser } = await supabase
-        .from("users")
-        .select("email")
-        .eq("id", userId)
-        .single();
-
-      const userEmail = currentUser?.email?.toLowerCase();
 
       // Get class info
       const { data: classData } = await supabase
@@ -86,16 +77,22 @@ export default function ClassAttendancePage() {
         .order("course_type");
 
       if (coursesData) {
-        // Filter courses based on role using email matching
+        // Filter courses based on role
         let filteredCourses = coursesData as unknown as Course[];
 
-        // Teachers and Head Teachers only see their own courses (matched by email)
-        if ((role === "teacher" || role === "head") && userEmail) {
+        // Teachers only see their own courses (matched by teacher_id)
+        if (role === "teacher") {
           filteredCourses = filteredCourses.filter(
-            (c) => c.teacher?.email?.toLowerCase() === userEmail
+            (c) => c.teacher_id === userId
           );
         }
-        // Admin sees all courses
+        // Head Teachers only see courses of their track type
+        else if (role === "head" && track) {
+          filteredCourses = filteredCourses.filter(
+            (c) => c.course_type === track
+          );
+        }
+        // Admin and Office Member see all courses
 
         setCourses(filteredCourses);
 
@@ -109,7 +106,7 @@ export default function ClassAttendancePage() {
     }
 
     loadData();
-  }, [classId, isReady, userId, role]);
+  }, [classId, isReady, userId, role, track]);
 
   const selectedCourse = courses.find((c) => c.id === selectedCourseId);
 

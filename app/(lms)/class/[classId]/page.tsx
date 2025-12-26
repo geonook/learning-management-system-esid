@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { supabase } from "@/lib/supabase/client";
-import { useAuth } from "@/lib/supabase/auth-context";
+import { useAuthReady } from "@/hooks/useAuthReady";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { CourseKanban } from "@/components/class/CourseKanban";
 import { getClassCourses } from "@/lib/api/course-tasks";
@@ -24,7 +24,7 @@ interface CourseInfo {
 
 export default function ClassOverviewPage() {
   const params = useParams();
-  const { user, userPermissions } = useAuth();
+  const { userId, role, track, isReady } = useAuthReady();
   const classId = params?.classId as string;
   const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
   const [isMyClass, setIsMyClass] = useState<boolean | null>(null);
@@ -32,11 +32,12 @@ export default function ClassOverviewPage() {
   const [allCourses, setAllCourses] = useState<CourseInfo[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
 
-  const isAdminOrOffice = userPermissions?.role === "admin" || userPermissions?.role === "office_member";
+  const isAdminOrOffice = role === "admin" || role === "office_member";
+  const isHeadTeacher = role === "head";
 
   useEffect(() => {
     async function fetchData() {
-      if (!classId) return;
+      if (!classId || !isReady) return;
 
       // Fetch class info
       const { data: classData } = await supabase
@@ -47,12 +48,12 @@ export default function ClassOverviewPage() {
       if (classData) setClassInfo(classData);
 
       // Check if this is user's class and get course ID
-      if (user?.id) {
+      if (userId) {
         const { data: courseData } = await supabase
           .from("courses")
           .select("id, course_type")
           .eq("class_id", classId)
-          .eq("teacher_id", user.id)
+          .eq("teacher_id", userId)
           .single();
 
         if (courseData) {
@@ -66,10 +67,16 @@ export default function ClassOverviewPage() {
         setIsMyClass(false);
       }
 
-      // For admin/office, fetch all courses for this class
-      if (isAdminOrOffice) {
+      // For admin/office/head, fetch courses for this class
+      if (isAdminOrOffice || isHeadTeacher) {
         try {
-          const courses = await getClassCourses(classId);
+          let courses = await getClassCourses(classId);
+
+          // Head Teacher: only show courses matching their track
+          if (isHeadTeacher && track) {
+            courses = courses.filter(c => c.course_type === track);
+          }
+
           setAllCourses(courses);
           // Default to first course if no course selected
           if (courses.length > 0 && !selectedCourseId && courses[0]) {
@@ -81,7 +88,7 @@ export default function ClassOverviewPage() {
       }
     }
     fetchData();
-  }, [classId, user?.id, isAdminOrOffice, selectedCourseId]);
+  }, [classId, userId, isReady, isAdminOrOffice, isHeadTeacher, track, selectedCourseId]);
 
   // Determine breadcrumb path based on whether this is user's class
   const breadcrumbs = classInfo
@@ -140,11 +147,11 @@ export default function ClassOverviewPage() {
         )}
 
         {/* Course Kanban */}
-        {selectedCourseId && classInfo && user?.id ? (
+        {selectedCourseId && classInfo && userId ? (
           <CourseKanban
             courseId={selectedCourseId}
             className={classInfo.name}
-            teacherId={user.id}
+            teacherId={userId}
             readOnly={isAdminOrOffice && myCourseId !== selectedCourseId}
           />
         ) : !isMyClass && !isAdminOrOffice ? (

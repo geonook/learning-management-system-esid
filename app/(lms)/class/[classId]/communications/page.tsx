@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { useAuth } from "@/lib/supabase/auth-context";
+import { useAuthReady } from "@/hooks/useAuthReady";
 import { supabase } from "@/lib/supabase/client";
 import {
   MessageSquare,
@@ -70,8 +70,7 @@ interface CourseInfo {
 export default function ClassCommunicationsPage() {
   const params = useParams();
   const classId = params?.classId as string;
-  const { userPermissions, user } = useAuth();
-  const userId = user?.id;
+  const { userId, role, track, isReady } = useAuthReady();
 
   const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
   const [courses, setCourses] = useState<CourseInfo[]>([]);
@@ -100,9 +99,9 @@ export default function ClassCommunicationsPage() {
   const [students, setStudents] = useState<{ id: string; full_name: string; student_id: string }[]>([]);
 
   const isLTCourse = selectedCourse?.course_type === "LT";
-  const isAdmin = userPermissions?.role === "admin";
-  const isOffice = userPermissions?.role === "office_member";
-  const isHeadTeacher = userPermissions?.role === "head";
+  const isAdmin = role === "admin";
+  const isOffice = role === "office_member";
+  const isHeadTeacher = role === "head";
   const isAdminOrOffice = isAdmin || isOffice;
 
   // Check if current user is the teacher of the selected course
@@ -112,8 +111,8 @@ export default function ClassCommunicationsPage() {
 
   // Fetch class and courses info
   useEffect(() => {
-    // Wait for user to be available
-    if (!userId) {
+    // Wait for auth to be ready
+    if (!isReady || !userId) {
       return;
     }
 
@@ -147,10 +146,8 @@ export default function ClassCommunicationsPage() {
           visibleCourses = visibleCourses.filter(c => c.teacher_id === userId);
         }
         // Head teachers can see courses of their track type
-        else if (isHeadTeacher && userPermissions?.track) {
-          visibleCourses = visibleCourses.filter(
-            c => c.course_type === userPermissions.track
-          );
+        else if (isHeadTeacher && track) {
+          visibleCourses = visibleCourses.filter(c => c.course_type === track);
         }
         // Admin/Office can see all courses
 
@@ -180,7 +177,7 @@ export default function ClassCommunicationsPage() {
     }
 
     fetchClassInfo();
-  }, [userId, classId, userPermissions?.teacher_type, userPermissions?.role, userPermissions?.track, isAdminOrOffice, isHeadTeacher]);
+  }, [userId, classId, isReady, role, track, isAdminOrOffice, isHeadTeacher]);
 
   // Fetch communications when course or semester changes
   const fetchCommunications = useCallback(async () => {
