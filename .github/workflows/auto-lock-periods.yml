@@ -1,14 +1,16 @@
 # Auto-Lock Periods Cron Job
-# Runs daily at 00:00 UTC (08:00 Taiwan Time)
-# Triggers automatic period locking for past deadlines
+# Runs 4 times daily to check and lock periods past their deadline
 # Calls both Staging and Production environments
+# Schedule: 08:00, 14:00, 20:00, 02:00 Taiwan Time
+# Max delay: 6 hours after deadline
 
 name: Auto-Lock Periods
 
 on:
   schedule:
-    # Run daily at 00:00 UTC = 08:00 Taiwan Time (UTC+8)
-    - cron: '0 0 * * *'
+    # Run every 6 hours (00:00, 06:00, 12:00, 18:00 UTC)
+    # = Taiwan Time: 08:00, 14:00, 20:00, 02:00
+    - cron: '0 0,6,12,18 * * *'
   workflow_dispatch:
     # Allow manual trigger from GitHub Actions UI
 
