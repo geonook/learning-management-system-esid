@@ -6,6 +6,7 @@ import type { Term } from "@/types/academic-year";
 import { TERM_ASSESSMENT_CODES } from "@/types/academic-year";
 import { getKCFSCategoryCodes } from "@/lib/grade/kcfs-calculations";
 import { isValidKCFSScore } from "@/lib/grade/kcfs-calculations";
+import { assertPeriodEditable, getPeriodLockInfo } from "@/lib/academic-period";
 
 export type CourseType = "LT" | "IT" | "KCFS";
 
@@ -280,6 +281,51 @@ export async function updateScore(
     throw new Error(
       "Permission denied: Only Course Teacher or Grade Head can edit grades."
     );
+  }
+  // ------------------------
+
+  // --- Period Lock Check ---
+  // Get class academic year from courses
+  const { data: classInfo } = await supabase
+    .from("classes")
+    .select("academic_year")
+    .eq("id", classId)
+    .single();
+
+  if (classInfo?.academic_year) {
+    // Determine term from assessment code or course type
+    // For LT/IT: FA1-4, SA1-2, MID = Term 1 or 3; FA5-8, SA3-4, FINAL = Term 2 or 4
+    // For KCFS: We need to check the current term context
+    let termToCheck: number | undefined;
+
+    // Check if assessment code indicates a specific term
+    const term1Codes = ["FA1", "FA2", "FA3", "FA4", "SA1", "SA2", "MID"];
+    const term2Codes = ["FA5", "FA6", "FA7", "FA8", "SA3", "SA4", "FINAL"];
+
+    if (term1Codes.includes(assessmentCode)) {
+      // Could be Term 1 or Term 3 - need to determine from context
+      // For now, assume current semester's first term
+      const currentMonth = new Date().getMonth();
+      termToCheck = currentMonth >= 7 || currentMonth <= 0 ? 1 : 3;
+    } else if (term2Codes.includes(assessmentCode)) {
+      const currentMonth = new Date().getMonth();
+      termToCheck = currentMonth >= 7 || currentMonth <= 0 ? 2 : 4;
+    }
+
+    // If we have a term to check, verify period is editable
+    if (termToCheck) {
+      try {
+        await assertPeriodEditable({
+          academicYear: classInfo.academic_year,
+          term: termToCheck,
+        });
+      } catch (error) {
+        // Re-throw with a user-friendly message
+        throw new Error(
+          error instanceof Error ? error.message : "此時間段已鎖定，無法編輯成績"
+        );
+      }
+    }
   }
   // ------------------------
 

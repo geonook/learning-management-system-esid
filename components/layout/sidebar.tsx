@@ -6,16 +6,17 @@ import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { useAppStore } from "@/lib/store"
 import { useAuth } from "@/lib/supabase/auth-context"
-import { 
-  Home, 
-  Users, 
-  GraduationCap, 
+import {
+  Home,
+  Users,
+  GraduationCap,
   FileBarChart,
   CalendarDays,
   Settings,
   ChevronLeft,
   Menu,
-  LogOut
+  LogOut,
+  Clock
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -42,6 +43,12 @@ const sidebarItems = [
     href: "/admin/assessment-titles",
     icon: FileBarChart,
     roles: ["admin", "head"]
+  },
+  {
+    label: "Period Lock",
+    href: "/admin/periods",
+    icon: Clock,
+    roles: ["admin"]
   },
   {
     label: "Scores",
