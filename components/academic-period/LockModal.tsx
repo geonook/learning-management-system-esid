@@ -62,10 +62,10 @@ export function LockModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Lock className="h-5 w-5 text-red-500" />
-            確認鎖定
+            Confirm Lock
           </DialogTitle>
           <DialogDescription>
-            您即將鎖定 <strong>{getPeriodDisplayName(period)}</strong>
+            You are about to lock <strong>{getPeriodDisplayName(period)}</strong>
           </DialogDescription>
         </DialogHeader>
 
@@ -74,15 +74,15 @@ export function LockModal({
           <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
             <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
             <div className="text-sm">
-              <p className="font-medium text-amber-800">注意事項</p>
+              <p className="font-medium text-amber-800">Important Notes</p>
               <ul className="mt-1 text-amber-700 space-y-1">
-                <li>鎖定後，老師將無法編輯該時間段的成績、出缺席等資料</li>
-                <li>僅管理員可以解鎖</li>
+                <li>Once locked, teachers cannot edit grades, attendance, etc. for this period</li>
+                <li>Only administrators can unlock</li>
                 {period.periodType === "semester" && (
-                  <li>鎖定學期會同時鎖定該學期的所有段考 (Term)</li>
+                  <li>Locking a semester will also lock all its terms</li>
                 )}
                 {period.periodType === "year" && (
-                  <li>鎖定學年會同時鎖定所有學期和段考</li>
+                  <li>Locking a year will also lock all semesters and terms</li>
                 )}
               </ul>
             </div>
@@ -90,10 +90,10 @@ export function LockModal({
 
           {/* Optional reason */}
           <div className="space-y-2">
-            <Label htmlFor="reason">備註 (選填)</Label>
+            <Label htmlFor="reason">Reason (Optional)</Label>
             <Textarea
               id="reason"
-              placeholder="輸入鎖定原因..."
+              placeholder="Enter lock reason..."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={2}
@@ -103,14 +103,14 @@ export function LockModal({
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={handleClose} disabled={isLoading}>
-            取消
+            Cancel
           </Button>
           <Button
             variant="destructive"
             onClick={handleConfirm}
             disabled={isLoading}
           >
-            {isLoading ? "處理中..." : "確認鎖定"}
+            {isLoading ? "Processing..." : "Confirm Lock"}
           </Button>
         </DialogFooter>
       </DialogContent>

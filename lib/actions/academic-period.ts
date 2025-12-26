@@ -49,7 +49,7 @@ async function assertAdmin(): Promise<string> {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    throw new Error("未登入");
+    throw new Error("Not logged in");
   }
 
   const { data: userData, error } = await supabase
@@ -59,11 +59,11 @@ async function assertAdmin(): Promise<string> {
     .single();
 
   if (error || !userData) {
-    throw new Error("無法驗證使用者");
+    throw new Error("Unable to verify user");
   }
 
   if (userData.role !== "admin") {
-    throw new Error("權限不足：僅限管理員操作");
+    throw new Error("Permission denied: Admin only");
   }
 
   return user.id;
@@ -94,7 +94,7 @@ export async function changePeriodStatus(
     const period = await getPeriodById(input.periodId);
     return { success: true, period: period || undefined };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "操作失敗";
+    const message = error instanceof Error ? error.message : "Operation failed";
     return { success: false, error: message };
   }
 }
@@ -170,7 +170,7 @@ export async function lockTerm(
     const updatedPeriod = await getPeriodById(period.id);
     return { success: true, period: updatedPeriod || undefined };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "操作失敗";
+    const message = error instanceof Error ? error.message : "Operation failed";
     return { success: false, error: message };
   }
 }
@@ -243,7 +243,7 @@ export async function lockSemester(
     const updatedPeriod = await getPeriodById(period.id);
     return { success: true, period: updatedPeriod || undefined };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "操作失敗";
+    const message = error instanceof Error ? error.message : "Operation failed";
     return { success: false, error: message };
   }
 }
@@ -315,7 +315,7 @@ export async function lockYear(
     const updatedPeriod = await getPeriodById(period.id);
     return { success: true, period: updatedPeriod || undefined };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "操作失敗";
+    const message = error instanceof Error ? error.message : "Operation failed";
     return { success: false, error: message };
   }
 }
@@ -330,7 +330,7 @@ export async function unlockPeriod(
     const userId = await assertAdmin();
 
     if (!input.reason || input.reason.trim().length === 0) {
-      return { success: false, error: "必須提供解鎖原因" };
+      return { success: false, error: "Unlock reason is required" };
     }
 
     const result = await updatePeriodStatus(input.periodId, "active", userId);
@@ -345,7 +345,7 @@ export async function unlockPeriod(
     const period = await getPeriodById(input.periodId);
     return { success: true, period: period || undefined };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "操作失敗";
+    const message = error instanceof Error ? error.message : "Operation failed";
     return { success: false, error: message };
   }
 }
@@ -374,7 +374,7 @@ export async function setLockDeadline(
     const period = await getPeriodById(input.periodId);
     return { success: true, period: period || undefined };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "操作失敗";
+    const message = error instanceof Error ? error.message : "Operation failed";
     return { success: false, error: message };
   }
 }
@@ -399,7 +399,7 @@ export async function clearLockDeadline(
     const period = await getPeriodById(periodId);
     return { success: true, period: period || undefined };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "操作失敗";
+    const message = error instanceof Error ? error.message : "Operation failed";
     return { success: false, error: message };
   }
 }
@@ -425,7 +425,7 @@ export async function toggleAutoLock(
     const period = await getPeriodById(periodId);
     return { success: true, period: period || undefined };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "操作失敗";
+    const message = error instanceof Error ? error.message : "Operation failed";
     return { success: false, error: message };
   }
 }
@@ -593,7 +593,7 @@ export async function createAcademicYearPeriods(
     revalidatePath("/admin/periods");
     return { success: true };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "操作失敗";
+    const message = error instanceof Error ? error.message : "Operation failed";
     return { success: false, error: message };
   }
 }

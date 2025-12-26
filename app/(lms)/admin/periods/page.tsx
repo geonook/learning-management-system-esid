@@ -97,7 +97,7 @@ export default function PeriodsPage() {
 
     if (error) {
       toast({
-        title: "載入失敗",
+        title: "Load Failed",
         description: error.message,
         variant: "destructive",
       });
@@ -136,13 +136,13 @@ export default function PeriodsPage() {
 
     if (result.success) {
       toast({
-        title: "鎖定成功",
-        description: "時間段已鎖定",
+        title: "Locked Successfully",
+        description: "Period has been locked",
       });
       fetchPeriods();
     } else {
       toast({
-        title: "鎖定失敗",
+        title: "Lock Failed",
         description: result.error,
         variant: "destructive",
       });
@@ -160,13 +160,13 @@ export default function PeriodsPage() {
 
     if (result.success) {
       toast({
-        title: "解鎖成功",
-        description: "時間段已解鎖",
+        title: "Unlocked Successfully",
+        description: "Period has been unlocked",
       });
       fetchPeriods();
     } else {
       toast({
-        title: "解鎖失敗",
+        title: "Unlock Failed",
         description: result.error,
         variant: "destructive",
       });
@@ -189,7 +189,7 @@ export default function PeriodsPage() {
 
       if (!result.success) {
         toast({
-          title: "儲存失敗",
+          title: "Save Failed",
           description: result.error,
           variant: "destructive",
         });
@@ -206,7 +206,7 @@ export default function PeriodsPage() {
 
       if (!result.success) {
         toast({
-          title: "儲存失敗",
+          title: "Save Failed",
           description: result.error,
           variant: "destructive",
         });
@@ -215,8 +215,8 @@ export default function PeriodsPage() {
     }
 
     toast({
-      title: "儲存成功",
-      description: "截止日期已更新",
+      title: "Saved Successfully",
+      description: "Deadline has been updated",
     });
     fetchPeriods();
   };
@@ -228,14 +228,14 @@ export default function PeriodsPage() {
 
     if (result.success) {
       toast({
-        title: "建立成功",
-        description: `已建立 ${currentYear} 學年的時間段`,
+        title: "Created Successfully",
+        description: `Created periods for ${currentYear} academic year`,
       });
       fetchAcademicYears();
       setSelectedYear(currentYear);
     } else {
       toast({
-        title: "建立失敗",
+        title: "Create Failed",
         description: result.error,
         variant: "destructive",
       });
@@ -247,9 +247,9 @@ export default function PeriodsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">學年週期管理</h1>
+          <h1 className="text-2xl font-bold">Academic Period Management</h1>
           <p className="text-muted-foreground">
-            管理學年、學期、段考的鎖定狀態和截止日期
+            Manage lock status and deadlines for academic years, semesters, and terms
           </p>
         </div>
 
@@ -263,12 +263,12 @@ export default function PeriodsPage() {
             <RefreshCw
               className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
             />
-            重新整理
+            Refresh
           </Button>
 
           <Button variant="outline" size="sm" onClick={handleCreateYear}>
             <Plus className="h-4 w-4 mr-2" />
-            建立新學年
+            Create New Year
           </Button>
         </div>
       </div>
@@ -279,12 +279,12 @@ export default function PeriodsPage() {
           <div className="flex items-center justify-between">
             <CardTitle className="text-base font-medium flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              選擇學年
+              Select Academic Year
             </CardTitle>
 
             <Select value={selectedYear} onValueChange={setSelectedYear}>
               <SelectTrigger className="w-40">
-                <SelectValue placeholder="選擇學年" />
+                <SelectValue placeholder="Select Year" />
               </SelectTrigger>
               <SelectContent>
                 {academicYears.map((year) => (
@@ -301,7 +301,7 @@ export default function PeriodsPage() {
       {/* Period tree */}
       <Card>
         <CardHeader>
-          <CardTitle>時間段管理</CardTitle>
+          <CardTitle>Period Management</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -312,14 +312,14 @@ export default function PeriodsPage() {
             </div>
           ) : periods.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <p>尚無時間段資料</p>
+              <p>No period data available</p>
               <Button
                 variant="outline"
                 className="mt-4"
                 onClick={handleCreateYear}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                建立 {selectedYear || getCurrentAcademicYear()} 學年
+                Create {selectedYear || getCurrentAcademicYear()} Year
               </Button>
             </div>
           ) : (

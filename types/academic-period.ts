@@ -210,14 +210,14 @@ export interface PeriodActionResult {
 // ============================================================
 
 /**
- * Status display names (Chinese)
+ * Status display names
  */
 export const PERIOD_STATUS_NAMES: Record<PeriodStatus, string> = {
-  preparing: '準備中',
-  active: '進行中',
-  closing: '即將截止',
-  locked: '已鎖定',
-  archived: '已歸檔',
+  preparing: 'Preparing',
+  active: 'Active',
+  closing: 'Closing',
+  locked: 'Locked',
+  archived: 'Archived',
 };
 
 /**
@@ -235,9 +235,9 @@ export const PERIOD_STATUS_COLORS: Record<PeriodStatus, string> = {
  * Period type display names
  */
 export const PERIOD_TYPE_NAMES: Record<PeriodType, string> = {
-  year: '學年',
-  semester: '學期',
-  term: '段考',
+  year: 'Academic Year',
+  semester: 'Semester',
+  term: 'Term',
 };
 
 /**
@@ -298,10 +298,10 @@ export function isLockedStatus(status: PeriodStatus): boolean {
  */
 export function getPeriodDisplayName(period: AcademicPeriod): string {
   if (period.periodType === 'year') {
-    return `${period.academicYear} 學年`;
+    return `${period.academicYear} Academic Year`;
   }
   if (period.periodType === 'semester') {
-    return `${period.academicYear} ${period.semester === 1 ? '上' : '下'}學期`;
+    return `${period.academicYear} Semester ${period.semester}`;
   }
   // term
   return `${period.academicYear} Term ${period.term}`;

@@ -98,17 +98,17 @@ export function DeadlineEditor({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            設定截止日期
+            Set Deadline
           </DialogTitle>
           <DialogDescription>
-            設定 <strong>{getPeriodDisplayName(period)}</strong> 的鎖定截止日期
+            Set lock deadline for <strong>{getPeriodDisplayName(period)}</strong>
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           {/* Date input */}
           <div className="space-y-2">
-            <Label htmlFor="deadline-date">截止日期</Label>
+            <Label htmlFor="deadline-date">Deadline Date</Label>
             <Input
               id="deadline-date"
               type="date"
@@ -119,7 +119,7 @@ export function DeadlineEditor({
 
           {/* Time input */}
           <div className="space-y-2">
-            <Label htmlFor="deadline-time">截止時間</Label>
+            <Label htmlFor="deadline-time">Deadline Time</Label>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-muted-foreground" />
               <Input
@@ -136,10 +136,10 @@ export function DeadlineEditor({
           <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
             <div>
               <Label htmlFor="auto-lock" className="font-medium">
-                自動鎖定
+                Auto-lock
               </Label>
               <p className="text-xs text-muted-foreground mt-0.5">
-                截止日期後自動鎖定此時間段
+                Automatically lock this period after the deadline
               </p>
             </div>
             <Checkbox
@@ -153,8 +153,8 @@ export function DeadlineEditor({
           {deadline && (
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
               <p className="text-blue-700">
-                截止時間:{" "}
-                {new Date(`${deadline}T${time}:00`).toLocaleString("zh-TW", {
+                Deadline:{" "}
+                {new Date(`${deadline}T${time}:00`).toLocaleString("en-US", {
                   year: "numeric",
                   month: "2-digit",
                   day: "2-digit",
@@ -164,7 +164,7 @@ export function DeadlineEditor({
               </p>
               {autoLockEnabled && (
                 <p className="text-blue-600 mt-1">
-                  將在截止時間後自動鎖定
+                  Will auto-lock after the deadline
                 </p>
               )}
             </div>
@@ -178,13 +178,13 @@ export function DeadlineEditor({
             disabled={isLoading}
             className="mr-auto"
           >
-            清除截止日
+            Clear Deadline
           </Button>
           <Button variant="outline" onClick={onClose} disabled={isLoading}>
-            取消
+            Cancel
           </Button>
           <Button onClick={handleSave} disabled={isLoading}>
-            {isLoading ? "儲存中..." : "儲存"}
+            {isLoading ? "Saving..." : "Save"}
           </Button>
         </DialogFooter>
       </DialogContent>

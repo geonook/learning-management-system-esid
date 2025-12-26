@@ -43,7 +43,7 @@ export function UnlockModal({
 
   const handleConfirm = async () => {
     if (!reason.trim()) {
-      setError("請輸入解鎖原因");
+      setError("Please enter a reason for unlocking");
       return;
     }
 
@@ -55,7 +55,7 @@ export function UnlockModal({
       setReason("");
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "解鎖失敗");
+      setError(err instanceof Error ? err.message : "Unlock failed");
     } finally {
       setIsLoading(false);
     }
@@ -73,10 +73,10 @@ export function UnlockModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Unlock className="h-5 w-5 text-green-500" />
-            解鎖時間段
+            Unlock Period
           </DialogTitle>
           <DialogDescription>
-            您即將解鎖 <strong>{getPeriodDisplayName(period)}</strong>
+            You are about to unlock <strong>{getPeriodDisplayName(period)}</strong>
           </DialogDescription>
         </DialogHeader>
 
@@ -85,19 +85,19 @@ export function UnlockModal({
           <div className="flex items-start gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-blue-700">
-              <p>解鎖後，老師可以繼續編輯該時間段的資料。</p>
-              <p className="mt-1">解鎖記錄將被保存以供日後查閱。</p>
+              <p>After unlocking, teachers can continue editing data for this period.</p>
+              <p className="mt-1">Unlock history will be saved for future reference.</p>
             </div>
           </div>
 
           {/* Required reason */}
           <div className="space-y-2">
             <Label htmlFor="unlock-reason">
-              解鎖原因 <span className="text-red-500">*</span>
+              Reason <span className="text-red-500">*</span>
             </Label>
             <Textarea
               id="unlock-reason"
-              placeholder="請說明解鎖原因..."
+              placeholder="Enter reason for unlocking..."
               value={reason}
               onChange={(e) => {
                 setReason(e.target.value);
@@ -112,10 +112,10 @@ export function UnlockModal({
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={handleClose} disabled={isLoading}>
-            取消
+            Cancel
           </Button>
           <Button onClick={handleConfirm} disabled={isLoading}>
-            {isLoading ? "處理中..." : "確認解鎖"}
+            {isLoading ? "Processing..." : "Confirm Unlock"}
           </Button>
         </DialogFooter>
       </DialogContent>

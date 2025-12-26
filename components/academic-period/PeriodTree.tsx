@@ -50,7 +50,7 @@ export function PeriodTree({
   if (tree.length === 0) {
     return (
       <div className="text-center text-muted-foreground py-8">
-        尚無學年資料
+        No academic year data available
       </div>
     );
   }

@@ -6,7 +6,6 @@
  * Displays a single academic period with its status, deadline, and actions.
  */
 
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "./StatusBadge";
@@ -111,7 +110,7 @@ export function PeriodCard({
               {period.status === "closing" && daysUntilLock !== null && (
                 <div className="flex items-center gap-1 text-amber-600 text-sm">
                   <Clock className="h-4 w-4" />
-                  <span>{daysUntilLock} 天後截止</span>
+                  <span>{daysUntilLock} days until lock</span>
                 </div>
               )}
 
@@ -128,12 +127,12 @@ export function PeriodCard({
               {deadlineDisplay && (
                 <div className="flex items-center gap-1">
                   <Calendar className="h-3.5 w-3.5" />
-                  <span>截止: {deadlineDisplay}</span>
+                  <span>Deadline: {deadlineDisplay}</span>
                 </div>
               )}
               {period.autoLockEnabled && (
                 <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                  自動鎖定
+                  Auto-lock
                 </span>
               )}
             </div>
@@ -148,7 +147,7 @@ export function PeriodCard({
                   className="h-7 text-xs"
                 >
                   <Calendar className="h-3 w-3 mr-1" />
-                  設定截止日
+                  Set Deadline
                 </Button>
               )}
 
@@ -160,7 +159,7 @@ export function PeriodCard({
                   className="h-7 text-xs"
                 >
                   <Lock className="h-3 w-3 mr-1" />
-                  鎖定
+                  Lock
                 </Button>
               )}
 
@@ -172,7 +171,7 @@ export function PeriodCard({
                   className="h-7 text-xs"
                 >
                   <Unlock className="h-3 w-3 mr-1" />
-                  解鎖
+                  Unlock
                 </Button>
               )}
             </div>
