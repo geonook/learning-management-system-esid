@@ -294,6 +294,26 @@ export function isLockedStatus(status: PeriodStatus): boolean {
 }
 
 /**
+ * Semester name mapping (1=Fall, 2=Spring)
+ */
+export const SEMESTER_NAMES: Record<number, string> = {
+  1: 'Fall',
+  2: 'Spring',
+};
+
+/**
+ * Term detail mapping
+ * Term 1 = Fall Midterm, Term 2 = Fall Final
+ * Term 3 = Spring Midterm, Term 4 = Spring Final
+ */
+export const TERM_DETAILS: Record<number, { semester: string; type: string }> = {
+  1: { semester: 'Fall', type: 'Midterm' },
+  2: { semester: 'Fall', type: 'Final' },
+  3: { semester: 'Spring', type: 'Midterm' },
+  4: { semester: 'Spring', type: 'Final' },
+};
+
+/**
  * Get display name for period
  */
 export function getPeriodDisplayName(period: AcademicPeriod): string {
@@ -301,10 +321,18 @@ export function getPeriodDisplayName(period: AcademicPeriod): string {
     return `${period.academicYear} Academic Year`;
   }
   if (period.periodType === 'semester') {
-    return `${period.academicYear} Semester ${period.semester}`;
+    const semesterName = period.semester ? SEMESTER_NAMES[period.semester] : '';
+    return `${period.academicYear} ${semesterName} Semester`;
   }
-  // term
-  return `${period.academicYear} Term ${period.term}`;
+  // term - show "Term X (Fall/Spring Midterm/Final)"
+  if (period.term) {
+    const detail = TERM_DETAILS[period.term];
+    if (detail) {
+      return `${period.academicYear} Term ${period.term} (${detail.semester} ${detail.type})`;
+    }
+    return `${period.academicYear} Term ${period.term}`;
+  }
+  return `${period.academicYear} Term`;
 }
 
 /**
