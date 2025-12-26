@@ -67,6 +67,7 @@ export default async function ClassGradebookPage({ params, searchParams }: PageP
               availableCourseTypes={availableCourseTypes}
               initialCourseType={currentCourseType}
               initialTeacherName={teacherInfo?.teacherName}
+              initialTeacherId={teacherInfo?.teacherId}
               classGrade={classGrade}
               academicYear={academicYear}
             />

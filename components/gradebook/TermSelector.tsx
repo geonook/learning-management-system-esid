@@ -14,6 +14,7 @@ interface TermSelectorProps {
   showAllOption?: boolean;
   compact?: boolean;
   academicYear?: string; // For lock status check
+  disabled?: boolean; // Disable all term buttons (e.g., for read-only users)
 }
 
 const TERM_COLORS: Record<
@@ -59,6 +60,7 @@ export function TermSelector({
   showAllOption = true,
   compact = false,
   academicYear,
+  disabled = false,
 }: TermSelectorProps) {
   // Track locked terms
   const [lockedTerms, setLockedTerms] = useState<Set<Term>>(new Set());
@@ -117,11 +119,13 @@ export function TermSelector({
             <button
               key={term}
               onClick={() => onChange(term)}
+              disabled={disabled}
               className={cn(
                 "px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-150",
                 "focus:outline-none focus:ring-2 focus:ring-offset-1",
                 "flex items-center gap-1",
                 compact && "px-2 py-1",
+                disabled && "opacity-50 cursor-not-allowed",
                 isActive
                   ? cn(
                       colors.activeBg,
@@ -132,7 +136,7 @@ export function TermSelector({
                     )
                   : cn(
                       "text-text-secondary hover:text-text-primary",
-                      "hover:bg-surface-hover"
+                      !disabled && "hover:bg-surface-hover"
                     )
               )}
               title={isLocked ? `${getLabel(term)} (Locked)` : getLabel(term)}
