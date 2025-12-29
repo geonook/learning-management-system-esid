@@ -4,6 +4,15 @@ import { NextRequest, NextResponse } from 'next/server'
 // Admin-only API endpoint to fix RLS recursion issues
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function POST(_request: NextRequest) {
+  // Security: Require CRON_SECRET for dangerous operations
+  const authHeader = _request.headers.get('authorization')
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json(
+      { error: 'Unauthorized: Valid CRON_SECRET required' },
+      { status: 401 }
+    )
+  }
+
   try {
     // Check if we have the service role key
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL

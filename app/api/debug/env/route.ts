@@ -9,9 +9,18 @@
  * @date 2025-11-17
  */
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Security: Require CRON_SECRET for debug endpoints
+  const authHeader = request.headers.get('authorization')
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json(
+      { error: 'Unauthorized: Valid CRON_SECRET required' },
+      { status: 401 }
+    )
+  }
+
   // Collect all relevant environment variables for SSO
   const envDiagnostic = {
     // Critical SSO Configuration
@@ -57,8 +66,6 @@ export async function GET() {
     status: 200,
     headers: {
       'Content-Type': 'application/json',
-      // Allow CORS for development testing
-      'Access-Control-Allow-Origin': '*',
     }
   })
 }

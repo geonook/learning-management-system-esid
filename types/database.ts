@@ -9,6 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_audit_logs: {
+        Row: {
+          id: string
+          admin_id: string | null
+          action: string
+          target_user_id: string | null
+          metadata: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          admin_id?: string | null
+          action: string
+          target_user_id?: string | null
+          metadata?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          admin_id?: string | null
+          action?: string
+          target_user_id?: string | null
+          metadata?: Json | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_audit_logs_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_audit_logs_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       users: {
         Row: {
           id: string
@@ -56,6 +98,7 @@ export type Database = {
           id: string
           name: string
           grade: number
+          level: string | null
           track: 'local' | 'international'
           teacher_id: string | null
           academic_year: string
@@ -67,6 +110,7 @@ export type Database = {
           id?: string
           name: string
           grade: number
+          level?: string | null
           track: 'local' | 'international'
           teacher_id?: string | null
           academic_year?: string
@@ -78,6 +122,7 @@ export type Database = {
           id?: string
           name?: string
           grade?: number
+          level?: string | null
           track?: 'local' | 'international'
           teacher_id?: string | null
           academic_year?: string
@@ -101,6 +146,7 @@ export type Database = {
           student_id: string
           full_name: string
           grade: number
+          level: string | null
           track: 'local' | 'international'
           class_id: string | null
           is_active: boolean
@@ -112,6 +158,7 @@ export type Database = {
           student_id: string
           full_name: string
           grade: number
+          level?: string | null
           track: 'local' | 'international'
           class_id?: string | null
           is_active?: boolean
@@ -123,6 +170,7 @@ export type Database = {
           student_id?: string
           full_name?: string
           grade?: number
+          level?: string | null
           track?: 'local' | 'international'
           class_id?: string | null
           is_active?: boolean

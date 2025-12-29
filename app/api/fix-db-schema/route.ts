@@ -5,6 +5,15 @@ export const dynamic = "force-dynamic";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function GET(_request: NextRequest) {
+  // Security: Require CRON_SECRET for dangerous operations
+  const authHeader = _request.headers.get('authorization')
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json(
+      { error: 'Unauthorized: Valid CRON_SECRET required' },
+      { status: 401 }
+    )
+  }
+
   try {
     // 1. Check for required environment variables
     if (

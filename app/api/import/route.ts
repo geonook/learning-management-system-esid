@@ -22,40 +22,35 @@ export async function POST(request: NextRequest) {
     // Verify user authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
-    // Development bypass for mock users
-    if (process.env.NODE_ENV === 'development' && userId === 'dev-admin-user-id') {
-      console.log('Development mode: Bypassing authentication and permissions for mock admin user')
-      // Skip all authentication and permission checks for development
-    } else {
-      if (authError || !user || user.id !== userId) {
-        console.error('Authentication failed:', { authError: authError?.message, hasUser: !!user, userIdMatch: user?.id === userId })
-        return NextResponse.json(
-          { error: 'Unauthorized', details: 'User authentication failed' },
-          { status: 401 }
-        )
-      }
+    // Verify user authentication - no development bypass for security
+    if (authError || !user || user.id !== userId) {
+      console.error('Authentication failed:', { authError: authError?.message, hasUser: !!user, userIdMatch: user?.id === userId })
+      return NextResponse.json(
+        { error: 'Unauthorized', details: 'User authentication failed' },
+        { status: 401 }
+      )
+    }
 
-      // Verify user has admin permissions
-      const { data: userProfile, error: profileError } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', userId)
-        .single()
+    // Verify user has admin permissions
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', userId)
+      .single()
 
-      if (profileError || !userProfile || userProfile.role !== 'admin') {
-        console.error('Permission check failed:', { 
-          profileError: profileError?.message, 
-          hasProfile: !!userProfile, 
-          role: userProfile?.role 
-        })
-        return NextResponse.json(
-          { 
-            error: 'Insufficient permissions', 
-            details: profileError?.message || `User role: ${userProfile?.role || 'unknown'}` 
-          },
-          { status: 403 }
-        )
-      }
+    if (profileError || !userProfile || userProfile.role !== 'admin') {
+      console.error('Permission check failed:', {
+        profileError: profileError?.message,
+        hasProfile: !!userProfile,
+        role: userProfile?.role
+      })
+      return NextResponse.json(
+        {
+          error: 'Insufficient permissions',
+          details: profileError?.message || `User role: ${userProfile?.role || 'unknown'}`
+        },
+        { status: 403 }
+      )
     }
 
     // Execute the clean import
