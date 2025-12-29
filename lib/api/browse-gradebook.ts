@@ -157,60 +157,59 @@ export async function getClassesProgress(
     studentCountMap.set(s.class_id, count + 1);
   });
 
-  // 4. Fetch score counts per course
-  // IMPORTANT: Always use exam → course relationship to get correct course_id
-  // Do NOT use scores.course_id directly as it may be NULL or incorrect
+  // 4. Fetch score counts per course using two-stage query
+  // This avoids hitting Supabase max_rows limit (10,000) when there are many scores
+  // Stage 1: Get exam IDs for the specified courses and term
+  // Stage 2: Count scores per exam and aggregate by course
   const courseIds = courses?.map(c => c.id) || [];
 
-  let scoreCounts: { course_id: string }[] = [];
+  const scoreCountMap = new Map<string, number>();
+
   if (courseIds.length > 0) {
-    // Always use exam → course join to get accurate course_id
-    // This matches the pattern in lib/actions/gradebook.ts
-    type ExamData = { course_id: string; term: number };
+    // Stage 1: Get exams for these courses (filtered by term at DB level)
+    let examsQuery = supabase
+      .from('exams')
+      .select('id, course_id')
+      .in('course_id', courseIds);
 
-    let scoresQuery = supabase
-      .from('scores')
-      .select('exam:exams!inner(course_id, term)')
-      .not('score', 'is', null);
-
-    // Apply term filter if provided
+    // Apply term filter at exams level (much smaller dataset)
     if (filters?.term) {
-      scoresQuery = scoresQuery.eq('exam.term', filters.term);
+      examsQuery = examsQuery.eq('term', filters.term);
     }
 
-    const { data: scoresWithExams, error: scoresError } = await scoresQuery;
+    const { data: exams, error: examsError } = await examsQuery;
 
-    if (scoresError) {
-      console.error('Error fetching scores:', scoresError);
-      // Don't throw, just use empty scores
-    } else {
-      // DEBUG: Log the first few items to verify structure
-      console.log('[Browse Gradebook] Total scores fetched:', scoresWithExams?.length);
-      if (scoresWithExams && scoresWithExams.length > 0) {
-        console.log('[Browse Gradebook] First score structure:', JSON.stringify(scoresWithExams[0]));
-      }
+    if (examsError) {
+      console.error('[Browse Gradebook] Error fetching exams:', examsError);
+    } else if (exams && exams.length > 0) {
+      // Build exam_id → course_id mapping
+      const examToCourse = new Map<string, string>();
+      exams.forEach(e => examToCourse.set(e.id, e.course_id));
 
-      // Extract course_id from nested exam object and filter by courseIds
-      scoreCounts = (scoresWithExams || [])
-        .filter(s => {
-          const examData = s.exam as unknown as ExamData | null;
-          return examData && courseIds.includes(examData.course_id);
-        })
-        .map(s => {
-          const examData = s.exam as unknown as ExamData;
-          return { course_id: examData.course_id };
+      const examIds = exams.map(e => e.id);
+
+      // Stage 2: Count scores per exam (only non-null scores)
+      // This query is much more efficient as it only fetches exam_id
+      const { data: scores, error: scoresError } = await supabase
+        .from('scores')
+        .select('exam_id')
+        .in('exam_id', examIds)
+        .not('score', 'is', null);
+
+      if (scoresError) {
+        console.error('[Browse Gradebook] Error fetching scores:', scoresError);
+      } else if (scores) {
+        // Aggregate scores by course_id
+        scores.forEach(s => {
+          const courseId = examToCourse.get(s.exam_id);
+          if (courseId) {
+            const count = scoreCountMap.get(courseId) || 0;
+            scoreCountMap.set(courseId, count + 1);
+          }
         });
-
-      console.log('[Browse Gradebook] Filtered scores count:', scoreCounts.length);
+      }
     }
   }
-
-  // Count scores per course
-  const scoreCountMap = new Map<string, number>();
-  scoreCounts.forEach(s => {
-    const count = scoreCountMap.get(s.course_id) || 0;
-    scoreCountMap.set(s.course_id, count + 1);
-  });
 
   // 5. Build course lookup map
   const courseLookup = new Map<string, {
