@@ -73,14 +73,22 @@ export default function MagicLinkPage() {
           refresh_token: refreshToken || ""
         })
 
+        console.log("[MagicLink] setSession result:", {
+          hasSession: !!data?.session,
+          hasUser: !!data?.user,
+          error: sessionError?.message
+        })
+
         if (sessionError) {
           console.error("[MagicLink] setSession error:", sessionError)
           setError(sessionError.message)
           return
         }
 
-        if (data.session) {
-          console.log("[MagicLink] Session established successfully:", data.session.user.email)
+        // Session established - redirect to dashboard
+        // The session might be in data.session or we can verify via getSession
+        if (data?.session || data?.user) {
+          console.log("[MagicLink] Session established successfully")
           setStatus("Login successful! Redirecting...")
 
           // Clear the hash from URL for cleaner appearance
@@ -91,8 +99,21 @@ export default function MagicLinkPage() {
             router.replace("/dashboard")
           }, 500)
         } else {
-          console.error("[MagicLink] No session after setSession")
-          setError("Failed to establish session. The link may have expired.")
+          // Double check with getSession in case setSession returns differently
+          const { data: checkData } = await supabase.auth.getSession()
+          console.log("[MagicLink] Fallback getSession check:", !!checkData?.session)
+
+          if (checkData?.session) {
+            console.log("[MagicLink] Session verified via getSession")
+            setStatus("Login successful! Redirecting...")
+            window.history.replaceState(null, "", window.location.pathname)
+            setTimeout(() => {
+              router.replace("/dashboard")
+            }, 500)
+          } else {
+            console.error("[MagicLink] No session after setSession")
+            setError("Failed to establish session. The link may have expired.")
+          }
         }
       } catch (err) {
         console.error("[MagicLink] Exception:", err)
