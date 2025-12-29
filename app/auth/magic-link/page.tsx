@@ -48,6 +48,7 @@ export default function MagicLinkPage() {
       }
 
       // Case 2: 有 hash token，進行處理
+      console.log("[MagicLink] Has hash token, processing...")
       setStatus("Verifying authentication...")
 
       try {
@@ -56,16 +57,20 @@ export default function MagicLinkPage() {
         const accessToken = hashParams.get("access_token")
         const refreshToken = hashParams.get("refresh_token")
 
-        console.log("[MagicLink] Tokens:", {
+        console.log("[MagicLink] Parsed tokens:", {
           hasAccess: !!accessToken,
-          hasRefresh: !!refreshToken
+          hasRefresh: !!refreshToken,
+          accessTokenLength: accessToken?.length,
+          refreshTokenLength: refreshToken?.length
         })
 
         if (!accessToken) {
+          console.error("[MagicLink] No access token found in hash")
           setError("Invalid magic link: missing access token")
           return
         }
 
+        console.log("[MagicLink] Access token valid, calling setSession...")
         // 設定 session
         console.log("[MagicLink] Calling setSession...")
         const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
