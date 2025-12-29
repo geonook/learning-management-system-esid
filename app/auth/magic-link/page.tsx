@@ -73,10 +73,21 @@ export default function MagicLinkPage() {
         console.log("[MagicLink] Access token valid, calling setSession...")
         // 設定 session
         console.log("[MagicLink] Calling setSession...")
-        const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken || ""
-        })
+
+        let sessionData, sessionError
+        try {
+          const result = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken || ""
+          })
+          sessionData = result.data
+          sessionError = result.error
+          console.log("[MagicLink] setSession completed")
+        } catch (setSessionErr) {
+          console.error("[MagicLink] setSession threw exception:", setSessionErr)
+          setError("Failed to set session: " + (setSessionErr instanceof Error ? setSessionErr.message : "Unknown error"))
+          return
+        }
 
         console.log("[MagicLink] setSession result:", {
           hasSession: !!sessionData?.session,
