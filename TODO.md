@@ -1,8 +1,8 @@
 # LMS TODO List
 
-> **Last Updated**: 2025-12-24
+> **Last Updated**: 2025-12-29
 > **Current Phase**: Sprint 7 - Student Historical Reports
-> **Version**: v1.64.0
+> **Version**: v1.66.0
 
 ## Priority Legend
 - 🔴 Critical - Blocking other work
@@ -12,15 +12,16 @@
 
 ---
 
-## ✅ Completed (v1.41.0 - v1.64.0)
+## ✅ Completed (v1.64.0 - v1.66.0)
 
-- [x] Browse Classes Page - Real data integration
-- [x] Browse Students Page - With pagination and filters
-- [x] Browse Teachers Page - Teacher listing with assignments
-- [x] Gradebook System - LT/IT and KCFS formulas
-- [x] NWEA MAP Growth Assessment - CDF import, analytics, benchmark classification
-- [x] Teacher Schedule System - Weekly timetable, course navigation
-- [x] MAP Statistics Page - Chart redesign, hybrid view mode
+- [x] Security Architecture Refactor - Four-layer security model
+- [x] RLS Simplification - Migration 036/037
+- [x] Application Permission Layer - `lib/api/permissions.ts`
+- [x] Browse Gradebook Fix - Two-stage batch queries for 26,000+ scores
+- [x] Admin Sidebar Fix - Added 3 missing admin pages
+- [x] MAP Visualization Expert Review
+- [x] Level Compare View - Fall vs Spring by Level
+- [x] E2 Color Unification - orange-500 (#f97316)
 
 ---
 
@@ -42,64 +43,43 @@
 ### 🟡 Attendance Analytics
 - [ ] Attendance reports by class/student
 - [ ] Trend analysis and alerts
+- Backend tables exist: `attendance`, `behavior_tags`, `student_behaviors`
 
-### 🟡 Enhanced MAP Analysis
-- [ ] Individual student growth projections
-- [ ] Peer comparison reports
+### 🟡 Communications Input
+- [ ] Teacher communication input from class pages
+- Browse page UI complete (`/browse/comms`)
+- API ready (`lib/api/communications.ts`)
 
 ---
 
 ## Backlog (Future)
 
 ### 🟢 Academic Year Management
-- [ ] One-click year rollover feature
-- [ ] Class structure copy
-- [ ] Bulk teacher assignment UI
-
-### 🟢 Communication Logs
-- [ ] Parent communication tracking
-- [ ] Phone call records
+- [ ] Year rollover workflow
+- [ ] Academic year selector improvements
 
 ### 🟢 Advanced Analytics
 - [ ] Predictive models
 - [ ] Intervention recommendations
 - [ ] Teacher workload analysis
 
-### 🟢 Attendance System
-- [ ] Daily attendance tracking
-- [ ] Attendance reports
+### 🟢 Parent Portal
+- [ ] Parent access to student grades
+- [ ] Progress reports
 
 ---
 
 ## Recently Completed
 
-| Task | Completed Date |
-|------|----------------|
-| E2E SSO Integration Testing on Staging | 2025-12-02 |
-| SSO User ID Mismatch Fix (Auth ID vs public.users ID) | 2025-12-02 |
-| Production & Staging Data Seeding | 2025-12-02 |
-| Migration 022: Assessment Codes (Production) | 2025-12-08 |
-| Info Hub Teacher Import (72 teachers) | 2025-12-02 |
-| v1.41.0 TeacherOS UI Refinements | 2025-12-01 |
-| Dockerfile Optimization | 2025-11-28 |
-| Phase 4.1: One OS Interface | 2025-11-28 |
-| SSO Implementation Complete | 2025-11-19 |
-
----
-
-## Known Issues
-
-### ⚠️ Browse Pages Show Placeholder Data
-- **Issue**: Classes/Students/Teachers pages display hardcoded placeholder data
-- **Root Cause**: Pages were built as UI mockups without data fetching
-- **Impact**: Users see fake data instead of real database records
-- **Status**: Phase 4.2 will address this
-
-### ⚠️ All Courses Have No Teacher Assigned
-- **Issue**: `teacher_id = NULL` for all 252 courses
-- **Root Cause**: Teachers not yet imported/assigned to LMS
-- **Impact**: Teachers cannot see their courses after SSO login
-- **Status**: Phase 4.3 will address this
+| Task | Completed Date | Version |
+|------|----------------|---------|
+| Security Architecture Refactor | 2025-12-29 | v1.66.0 |
+| RLS Simplification (Migration 036-037) | 2025-12-29 | v1.66.0 |
+| Application Permission Layer | 2025-12-29 | v1.66.0 |
+| Browse Gradebook Progress Fix | 2025-12-29 | v1.66.0 |
+| Admin Sidebar Fix | 2025-12-29 | v1.66.0 |
+| MAP Visualization Expert Review | 2025-12-24 | v1.65.0 |
+| MAP Statistics Redesign | 2025-12-24 | v1.64.0 |
 
 ---
 
@@ -107,16 +87,27 @@
 
 | Environment | URL | Status |
 |-------------|-----|--------|
-| Production | https://lms-esid.zeabur.app | 🟢 Running |
-| Staging | https://lms-staging.zeabur.app | 🟢 Running |
+| Production | lms-staging.zeabur.app | 🟢 Running |
 | Local Dev | http://localhost:3000 | 🟢 Available |
 
-### Database Status (2025-12-02)
+### Database Status (2025-12-29)
 
-| Table | Production | Staging |
-|-------|------------|---------|
-| classes | 84 | 84 |
-| courses | 252 | 252 |
-| students | 1,511 | 1,511 |
-| users | 4 | 4 |
-| assessment_codes | 13 | 13 |
+| Table | Count |
+|-------|-------|
+| classes | 84 (2 years) |
+| courses | 504 (2 years) |
+| students | 1,514 |
+| users | 73 |
+| scores | 26,170+ (Term 1) |
+| exams | 5,000+ |
+
+---
+
+## Known Issues
+
+_No critical issues at this time._
+
+### ✅ Resolved Issues
+- ~~Browse Gradebook showing 0% for some courses~~ - Fixed with batch queries
+- ~~RLS recursion errors~~ - Fixed with Migration 036-037
+- ~~Admin sidebar missing pages~~ - Fixed in v1.66.0

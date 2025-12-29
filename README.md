@@ -1,24 +1,28 @@
 # Learning Management System - ESID
 
-> **Version**: 1.64.0
-> **Status**: Production Ready (MAP Statistics & Chart Redesign)
+> **Version**: 1.66.0
+> **Status**: Production Ready (Security Architecture Refactor)
 > **Tech Stack**: Next.js 14 + TypeScript + Supabase Cloud + Tailwind CSS
-> **Last Updated**: 2025-12-24
+> **Last Updated**: 2025-12-29
 
-A comprehensive **Primary School (G1-G6)** Learning Management System featuring English Language Arts (ELA) and KCFS courses with advanced **Analytics Engine**, **Database Analytics Views**, and **Info Hub SSO Integration**. Features **One Class, Three Teachers (一班三師)** architecture where each class has dedicated LT, IT, and KCFS instructors, plus **NWEA MAP Growth Assessment** analysis, real-time performance analytics, and **Teacher Schedule System**.
+A comprehensive **Primary School (G1-G6)** Learning Management System featuring English Language Arts (ELA) and KCFS courses with advanced **Analytics Engine**, **Four-Layer Security Architecture**, and **Info Hub SSO Integration**. Features **One Class, Three Teachers (一班三師)** architecture where each class has dedicated LT, IT, and KCFS instructors, plus **NWEA MAP Growth Assessment** analysis, real-time performance analytics, and **Teacher Schedule System**.
 
-## 🎯 Current Status (Updated 2025-12-24)
+## 🎯 Current Status (Updated 2025-12-29)
 
 ### ✅ Completed Features
 
-- **v1.64.0 MAP Statistics Redesign**: ✅ Chart-dominant layout, hybrid view mode (Grid/Single toggle)
+- **v1.66.0 Security Architecture**: ✅ Four-layer security (Auth → RLS → Application → Frontend)
+- **RLS Simplification**: ✅ Migration 036/037 - simplified from 100+ to ~30 policies
+- **Application Permission Layer**: ✅ Unified `lib/api/permissions.ts` with role-based access
+- **Browse Gradebook Fix**: ✅ Two-stage batch queries to handle 26,000+ scores
+- **v1.65.0 MAP Visualization**: ✅ Expert review, Level Compare View, E2 color unification
 - **NWEA MAP Growth Assessment**: ✅ CDF data import, benchmark classification (E1/E2/E3), growth analysis
 - **Teacher Schedule System**: ✅ Weekly timetable grid, course navigation, attendance integration
 - **Gradebook System**: ✅ LT/IT and KCFS grading formulas, expectations tracking
-- **Browse Pages**: ✅ Classes, Students, Teachers, Courses, Statistics with real data
+- **Browse Pages**: ✅ Classes, Students, Teachers, Gradebook, Statistics with real data
 - **SSO Integration**: ✅ Full OAuth 2.0 + PKCE flow with Info Hub
 - **Real Data Deployment**: ✅ 84 classes, 504 courses (2 academic years), 1514 students
-- **Database Migrations**: ✅ 38 migrations deployed (002-038)
+- **Database Migrations**: ✅ 37 migrations deployed (007-037)
 - **Analytics Engine**: ✅ 40+ TypeScript interfaces, professional chart components
 
 ### ⏳ In Progress
@@ -29,7 +33,7 @@ A comprehensive **Primary School (G1-G6)** Learning Management System featuring 
 ### 📋 Upcoming
 
 - **Attendance Reports**: Analytics and tracking
-- **Advanced Analytics**: Predictive models, intervention recommendations
+- **Communications Browse**: Parent communication oversight (UI complete, awaiting data)
 
 ## Quick Start
 
@@ -343,41 +347,40 @@ npm run deploy          # Deploy to Zeabur
 
 ## 🗄️ Database Migrations
 
-**Latest Migration**: **021 - Fix Courses RLS Recursion** (2025-11-21) ✅
+**Latest Migration**: **037 - Complete RLS Policies for 12 Tables** (2025-12-29) ✅
 
 ### Recent Migration History
 
-- **021**: SECURITY DEFINER function for courses table RLS ✅
-  - Created `get_user_role_safe()` function
-  - Eliminated RLS recursion in courses queries
-  - Dashboard 400 errors resolved
+- **037**: Complete RLS policies for 12 tables ✅
+  - Added policies for: academic_periods, attendance, behavior_tags, communications, etc.
+  - Simplified RLS architecture (~30 policies total)
 
-- **020**: Disabled auto user sync trigger ✅
-  - Prevented OAuth callback conflicts
-  - User sync handled by application layer
+- **036**: RLS simplification - removed complex recursive policies ✅
+  - Moved permission logic to application layer
+  - Eliminated RLS recursion issues
 
-- **019e**: Removed `heads_view_jurisdiction` policy (RLS recursion fix) ✅
-  - **Problem**: Infinite recursion in `is_head_teacher()` function
-  - **Solution**: Removed application-layer permission policy temporarily
-  - **Impact**: Head teachers can only view their own data (Phase 1)
-  - **Next Step**: Implement JWT claims-based permissions (Phase 2)
+- **033-035**: Attendance system and behavior tags ✅
+- **030-032**: MAP assessment integration ✅
+- **027-029**: Gradebook expectations system ✅
+- **022-026**: Assessment codes and titles ✅
+- **007-021**: Core architecture and initial RLS policies ✅
 
-- **019d**: Syntax corrections (still had recursion issues) ❌
-- **018**: Rollback office_member policies ✅
-- **017**: Add office_member role support ✅
-- **015**: RLS performance optimization (44→0 `auth_rls_initplan` warnings) ✅
-- **014**: Track column type fix + analytics views rebuild ✅
-- **012-013**: Student courses + RLS security ✅
-- **007-011**: Core architecture (courses table, level format, track semantics) ✅
+### Four-Layer Security Architecture (2025-12-29)
+
+```
+Layer 1: Authentication (Supabase Auth)
+Layer 2: Row-Level Security (Simple policies)
+Layer 3: Application Permission Layer (lib/api/permissions.ts)
+Layer 4: Frontend Guards (AuthGuard, role checks)
+```
 
 ### Database Design
 
-- **9 Core Tables**: users, classes, courses, students, student_courses, exams, scores, assessment_titles, assessment_codes
-- **3 Analytics Views**: student_grade_aggregates, class_statistics, teacher_performance
-- **49 RLS Policies**: Optimized with InitPlan caching (0 performance warnings)
-- **5 Helper Functions**: SECURITY DEFINER for permission checks
+- **15+ Core Tables**: users, classes, courses, students, exams, scores, attendance, communications, etc.
+- **~30 RLS Policies**: Simplified, non-recursive policies
+- **Application Permissions**: `requireAuth()`, `requireRole()`, `filterByRole()`
 
-See [CLAUDE.md](/Users/chenzehong/Desktop/LMS/CLAUDE.md) for complete migration documentation.
+See [CLAUDE.md](CLAUDE.md) for complete migration documentation.
 
 ## 📝 Environment Setup
 
@@ -518,9 +521,9 @@ Proprietary - All Rights Reserved
 
 ---
 
-**🎯 Primary School ELA LMS | 康橋小學英語學習管理系統 | v1.11.0**
+**🎯 Primary School ELA LMS | 康橋小學英語學習管理系統 | v1.66.0**
 
 **Maintained By**: ESID Development Team
-**Last Updated**: 2025-11-25
+**Last Updated**: 2025-12-29
 
-🏫 **Core Features**: G1-G6 支援 | 一班三師架構 | Grade×CourseType 權限 | CSV 批量匯入 | 📊 Analytics 引擎 | 🧠 智能分析 | 🔐 Google SSO 整合 | ⚡ Build Optimization
+🏫 **Core Features**: G1-G6 支援 | 一班三師架構 | Grade×CourseType 權限 | CSV 批量匯入 | 📊 Analytics 引擎 | 🧠 MAP 成長分析 | 🔐 Info Hub SSO 整合 | 🛡️ 四層安全架構

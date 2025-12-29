@@ -1,6 +1,7 @@
 # Database Migration History
 
-> 完整的 Migration 007-032 記錄
+> 完整的 Migration 007-037 記錄
+> Last Updated: 2025-12-29
 
 ## Migration 索引
 
@@ -24,7 +25,9 @@
 | 030 | Four-Term System | 2025-12-12 | ✅ |
 | 031 | 2026-2027 Academic Year | 2025-12-12 | ✅ |
 | 032 | Gradebook Expectations | 2025-12-14 | ✅ |
-| 038 | MAP term → map_term | 2025-12-22 | ✅ |
+| 033-035 | Attendance & Behavior Tags | 2025-12-18 | ✅ |
+| **036** | **RLS Simplification** | 2025-12-29 | ✅ |
+| **037** | **Complete RLS for 12 Tables** | 2025-12-29 | ✅ |
 
 ---
 
@@ -242,30 +245,69 @@ CREATE TABLE gradebook_expectations (
 
 ---
 
-## Migration 038: MAP term → map_term
+## Migration 033-035: Attendance & Behavior Tags
 
-**目的**：避免 MAP `term` 與 ELA `term` 混淆
-
-**背景**：
-- MAP `term`: 'fall', 'winter', 'spring'（NWEA 測驗週期）
-- ELA `term`: 1, 2, 3, 4（學校成績週期）
+**目的**：建立點名與行為標籤系統
 
 **變更**：
-```sql
--- 重命名欄位
-ALTER TABLE map_assessments
-  RENAME COLUMN term TO map_term;
+- `attendance` 表：點名記錄
+- `behavior_tags` 表：行為標籤定義
+- `student_behaviors` 表：學生行為記錄
 
--- 更新索引
-DROP INDEX IF EXISTS idx_map_assessments_term;
-CREATE INDEX idx_map_assessments_map_term ON map_assessments(map_term);
+---
+
+## Migration 036: RLS Simplification (重要)
+
+**目的**：簡化 RLS policies，解決遞迴和效能問題
+
+**背景**：
+- 原本 100+ policies，複雜的跨表查詢
+- 多處 RLS 遞迴問題
+- 效能警告
+
+**解決方案：四層安全架構**：
+```
+Layer 1: Authentication (Supabase Auth)
+Layer 2: Row-Level Security (簡化後 ~30 policies)
+Layer 3: Application Permission Layer (lib/api/permissions.ts)
+Layer 4: Frontend Guards (AuthGuard)
 ```
 
-**型別定義**：
+**變更**：
+- 建立 `is_admin()` helper function
+- 每張表最多 4 個 policies
+- 移除複雜的跨表權限檢查
+- 細粒度權限移至 Application Layer
+
+**Application Layer 函數**：
 ```typescript
-// MapTerm: NWEA testing period (distinct from ELA Term 1-4)
-type MapTerm = 'fall' | 'winter' | 'spring';
+requireAuth()           // 需要登入
+requireRole(['admin'])  // 需要特定角色
+filterByRole(query)     // 依角色過濾資料
+gradeInBand(grade)      // 檢查年級是否在管轄範圍
 ```
+
+---
+
+## Migration 037: Complete RLS for 12 Tables
+
+**目的**：補齊遺漏表的 RLS policies
+
+**變更**：為以下 12 張表新增 policies
+- `academic_periods`
+- `attendance`
+- `behavior_tags`
+- `communications`
+- `course_tasks`
+- `gradebook_expectations`
+- `map_assessments`
+- `map_goal_scores`
+- `student_behaviors`
+- `student_courses`
+- `timetable_entries`
+- `timetable_periods`
+
+**效果**：修復 MAP 資料不顯示問題
 
 ---
 
@@ -275,9 +317,11 @@ type MapTerm = 'fall' | 'winter' | 'spring';
 -- 檢查 Migration 狀態
 SELECT COUNT(*) FROM courses;  -- 預期：504
 SELECT COUNT(*) FROM classes WHERE academic_year = '2025-2026';  -- 預期：84
-SELECT COUNT(*) FROM gradebook_expectations;  -- 看有多少設定
+SELECT COUNT(*) FROM pg_policies;  -- 檢查 policy 數量
 
--- 驗證 map_term 重命名
-SELECT column_name FROM information_schema.columns
-WHERE table_name = 'map_assessments' AND column_name = 'map_term';
+-- 驗證四層安全架構
+SELECT schemaname, tablename, policyname
+FROM pg_policies
+WHERE schemaname = 'public'
+ORDER BY tablename, policyname;
 ```

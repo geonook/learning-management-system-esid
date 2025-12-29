@@ -1,7 +1,7 @@
 # LMS Features Skill
 
 > Browse Gradebook、Course Kanban、Communications、Statistics Module、MAP Analytics、Teacher Schedule
-> Last Updated: 2025-12-22
+> Last Updated: 2025-12-29
 
 ## Browse Gradebook 架構
 
@@ -34,15 +34,45 @@ interface ClassProgress {
 ### 進度計算
 
 ```typescript
-// 每個課程的進度 = 已輸入成績數 / (學生數 × 13)
-// 13 = FA1-FA8 (8) + SA1-SA4 (4) + MID (1)
-const progress = (scores_entered / (student_count * 13)) * 100;
+// 每個課程的進度 = 已輸入成績數 / (學生數 × expected_total)
+// LT/IT: 從 gradebook_expectations 表取得，預設 13
+// KCFS: 依年級 (G1-2: 4, G3-4: 5, G5-6: 6)
+const progress = (scores_entered / (student_count * expected_total)) * 100;
 
 // 狀態判定
 if (lt >= 80 && it >= 80 && kcfs >= 80) return 'on_track';
 if (lt > 0 || it > 0 || kcfs > 0) return 'behind';
 return 'not_started';
 ```
+
+### 批次查詢（重要）
+
+因應 Supabase `max_rows` 限制（10,000），使用兩階段並行查詢：
+
+```typescript
+// Stage 1: 取得 exam IDs（依 term 過濾）
+const { data: exams } = await supabase
+  .from('exams')
+  .select('id, course_id')
+  .in('course_id', courseIds)
+  .eq('term', filters.term);
+
+// Stage 2: 分批並行查詢 scores
+const EXAM_BATCH_SIZE = 500;
+const batches = chunk(examIds, EXAM_BATCH_SIZE);
+const batchResults = await Promise.all(
+  batches.map(batch =>
+    supabase.from('scores')
+      .select('exam_id')
+      .in('exam_id', batch)
+      .not('score', 'is', null)
+  )
+);
+
+// Aggregate by course_id
+```
+
+**效能**: ~100-150ms，可處理 26,000+ scores
 
 ### 相關檔案
 
