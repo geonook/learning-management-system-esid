@@ -67,9 +67,16 @@ export default function MagicLinkPage() {
         }
 
         // 設定 session
-        const { error: sessionError } = await supabase.auth.setSession({
+        console.log("[MagicLink] Calling setSession...")
+        const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken || ""
+        })
+
+        console.log("[MagicLink] setSession result:", {
+          hasSession: !!sessionData?.session,
+          hasUser: !!sessionData?.user,
+          error: sessionError?.message
         })
 
         if (sessionError) {
@@ -79,7 +86,14 @@ export default function MagicLinkPage() {
         }
 
         // 驗證 session 成功
+        console.log("[MagicLink] Calling getUser...")
         const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+        console.log("[MagicLink] getUser result:", {
+          hasUser: !!user,
+          email: user?.email,
+          error: userError?.message
+        })
 
         if (userError || !user) {
           console.error("[MagicLink] getUser error:", userError)
@@ -92,7 +106,9 @@ export default function MagicLinkPage() {
 
         // 關鍵：使用完整頁面導航而非 client-side navigation
         // 這確保 AuthContext 從新的 session 狀態初始化
+        console.log("[MagicLink] Redirecting to dashboard in 300ms...")
         setTimeout(() => {
+          console.log("[MagicLink] Executing redirect now")
           window.location.href = "/dashboard"
         }, 300)
 
