@@ -88,7 +88,8 @@ export async function POST(request: NextRequest) {
       type: 'magiclink',
       email: targetUser.email,
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard`
+        // Redirect to magic-link page which handles hash fragment tokens client-side
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/magic-link`
       }
     })
 
