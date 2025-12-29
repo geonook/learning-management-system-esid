@@ -2,10 +2,23 @@
  * Student Management API for Primary School LMS
  * Enhanced with course management functionality
  * Supports class assignments and LT/IT/KCFS course allocations
+ *
+ * Permission Model (2025-12-29):
+ * - Admin: Full access to all students
+ * - Office Member: Read-only access to all students
+ * - Head: Read all students in grade band, write only within scope
+ * - Teacher: Read/write only students in their courses
  */
 
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/types/database'
+import {
+  getCurrentUser,
+  requireAuth,
+  requireRole,
+  gradeInBand,
+  type CurrentUser
+} from './permissions'
 
 export type Student = Database['public']['Tables']['students']['Row']
 export type StudentInsert = Database['public']['Tables']['students']['Insert']
@@ -46,14 +59,29 @@ export type StudentWithCourses = Student & {
   }
 }
 
-// Get all students (simplified version)
+/**
+ * Get all students
+ *
+ * Permission: Admin/Office/Head only (Teachers use course-based queries)
+ * - Head: Only students in their grade band
+ */
 export async function getStudents() {
+  const user = await requireRole(['admin', 'office_member', 'head'])
+
   const supabase = createClient()
-  
-  const { data, error } = await supabase
+
+  let query = supabase
     .from('students')
     .select('*')
     .eq('is_active', true)
+
+  // Head teacher: filter by grade band
+  if (user.role === 'head' && user.gradeBand) {
+    const grades = parseGradeBandToArray(user.gradeBand)
+    query = query.in('grade', grades)
+  }
+
+  const { data, error } = await query
     .order('grade')
     .order('full_name')
 
@@ -65,10 +93,35 @@ export async function getStudents() {
   return data as Student[]
 }
 
-// Get students by class (simplified)
+// Helper to parse grade band
+function parseGradeBandToArray(gradeBand: string): number[] {
+  if (gradeBand.includes('-')) {
+    const [start, end] = gradeBand.split('-').map(Number)
+    if (start === undefined || end === undefined || isNaN(start) || isNaN(end)) {
+      return []
+    }
+    const grades: number[] = []
+    for (let i = start; i <= end; i++) {
+      grades.push(i)
+    }
+    return grades
+  }
+  const grade = Number(gradeBand)
+  return isNaN(grade) ? [] : [grade]
+}
+
+/**
+ * Get students by class
+ *
+ * Permission: All authenticated users can read (for gradebook/roster views)
+ * RLS handles basic auth, this is a convenience query
+ */
 export async function getStudentsByClass(classId: string) {
+  // Require authentication
+  await requireAuth()
+
   const supabase = createClient()
-  
+
   const { data, error } = await supabase
     .from('students')
     .select('*')
@@ -146,8 +199,15 @@ export async function getStudentByStudentId(studentId: string) {
   return data as Student
 }
 
-// Create new student (simplified)
+/**
+ * Create new student
+ *
+ * Permission: Admin only
+ */
 export async function createStudent(studentData: StudentInsert) {
+  // Only admin can create students
+  await requireRole(['admin'])
+
   // Check if student_id already exists
   const existing = await getStudentByStudentId(studentData.student_id)
   if (existing) {
@@ -155,7 +215,7 @@ export async function createStudent(studentData: StudentInsert) {
   }
 
   const supabase = createClient()
-  
+
   const { data, error } = await supabase
     .from('students')
     .insert(studentData)
@@ -170,10 +230,17 @@ export async function createStudent(studentData: StudentInsert) {
   return data as Student
 }
 
-// Bulk create students (simplified)
+/**
+ * Bulk create students
+ *
+ * Permission: Admin only
+ */
 export async function createStudentsBulk(studentsData: StudentInsert[]) {
+  // Only admin can bulk create
+  await requireRole(['admin'])
+
   const supabase = createClient()
-  
+
   const { data, error } = await supabase
     .from('students')
     .insert(studentsData)
@@ -187,10 +254,17 @@ export async function createStudentsBulk(studentsData: StudentInsert[]) {
   return data as Student[]
 }
 
-// Update student (simplified)
+/**
+ * Update student
+ *
+ * Permission: Admin only (student data updates are admin operations)
+ */
 export async function updateStudent(id: string, updates: StudentUpdate) {
+  // Only admin can update students
+  await requireRole(['admin'])
+
   const supabase = createClient()
-  
+
   const { data, error } = await supabase
     .from('students')
     .update({
@@ -209,10 +283,17 @@ export async function updateStudent(id: string, updates: StudentUpdate) {
   return data as Student
 }
 
-// Assign student to class (simplified)
+/**
+ * Assign student to class
+ *
+ * Permission: Admin only
+ */
 export async function assignStudentToClass(studentId: string, classId: string) {
+  // Only admin can assign students
+  await requireRole(['admin'])
+
   const supabase = createClient()
-  
+
   const { data, error } = await supabase
     .from('students')
     .update({
@@ -231,10 +312,17 @@ export async function assignStudentToClass(studentId: string, classId: string) {
   return data as Student
 }
 
-// Remove student from class (simplified)
+/**
+ * Remove student from class
+ *
+ * Permission: Admin only
+ */
 export async function removeStudentFromClass(studentId: string) {
+  // Only admin can remove students
+  await requireRole(['admin'])
+
   const supabase = createClient()
-  
+
   const { data, error } = await supabase
     .from('students')
     .update({
@@ -253,10 +341,17 @@ export async function removeStudentFromClass(studentId: string) {
   return data as Student
 }
 
-// Soft delete student (mark as inactive)
+/**
+ * Soft delete student (mark as inactive)
+ *
+ * Permission: Admin only
+ */
 export async function deleteStudent(id: string) {
+  // Only admin can delete students
+  await requireRole(['admin'])
+
   const supabase = createClient()
-  
+
   const { error } = await supabase
     .from('students')
     .update({
@@ -432,6 +527,8 @@ export async function getStudentStatistics() {
 /**
  * Promote students to next grade (for new academic year)
  *
+ * Permission: Admin only (dangerous bulk operation)
+ *
  * This function:
  * 1. Gets all students in the fromGrade
  * 2. Cleans up their student_courses records (removes course enrollments)
@@ -440,6 +537,9 @@ export async function getStudentStatistics() {
  * Note: For primary school (G1-G6), students graduating from G6 should not be promoted.
  */
 export async function promoteStudents(fromGrade: number, toGrade: number) {
+  // Only admin can promote students
+  await requireRole(['admin'])
+
   // Don't promote Grade 6 students (primary school graduation)
   if (fromGrade === 6) {
     throw new Error('Grade 6 students cannot be promoted (primary school graduation)')

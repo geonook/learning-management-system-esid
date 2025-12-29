@@ -1,4 +1,12 @@
 /**
+ * User Management API for Primary School LMS
+ *
+ * Permission Model (2025-12-29):
+ * - Admin: Full access to all users
+ * - Office Member: Read-only access to teachers/heads
+ * - Head: Read teachers in their track
+ * - Teacher: Read own profile only
+ *
  * ⚠️ LEGACY WARNING: This file uses track-based filtering
  * For course-based teacher queries in grade entry, use course APIs from /lib/api/scores.ts
  * This API is maintained for general user management features only
@@ -6,6 +14,12 @@
 
 import { supabase } from '@/lib/supabase/client'
 import { Database } from '@/types/database'
+import {
+  getCurrentUser,
+  requireAuth,
+  requireRole,
+  type CurrentUser
+} from './permissions'
 
 export type User = Database['public']['Tables']['users']['Row']
 export type UserInsert = Database['public']['Tables']['users']['Insert']
@@ -15,8 +29,15 @@ export type UserRole = 'admin' | 'head' | 'teacher' | 'student'
 export type TeacherType = 'LT' | 'IT' | 'KCFS'
 export type TrackType = 'local' | 'international'
 
-// Get all users
+/**
+ * Get all users
+ *
+ * Permission: Admin only (user list contains sensitive info)
+ */
 export async function getUsers() {
+  // Only admin can see all users
+  await requireRole(['admin'])
+
   const { data, error } = await supabase
     .from('users')
     .select('*')
@@ -32,8 +53,15 @@ export async function getUsers() {
   return data
 }
 
-// Get users by role
+/**
+ * Get users by role
+ *
+ * Permission: Admin/Office only
+ */
 export async function getUsersByRole(role: UserRole) {
+  // Only admin/office can query by role
+  await requireRole(['admin', 'office_member'])
+
   const { data, error } = await supabase
     .from('users')
     .select('*')
@@ -49,8 +77,20 @@ export async function getUsersByRole(role: UserRole) {
   return data
 }
 
-// Get teachers by type
+/**
+ * Get teachers by type
+ *
+ * Permission: Admin/Office/Head only
+ * - Head: Only teachers matching their track
+ */
 export async function getTeachersByType(teacherType: TeacherType) {
+  const user = await requireRole(['admin', 'office_member', 'head'])
+
+  // Head can only query their own track
+  if (user.role === 'head' && user.track !== teacherType) {
+    return []
+  }
+
   const { data, error } = await supabase
     .from('users')
     .select('*')
@@ -124,8 +164,16 @@ export async function getUserByEmail(email: string) {
   return data
 }
 
-// Create new user (this would normally be handled by Supabase Auth)
+/**
+ * Create new user
+ *
+ * Permission: Admin only (user creation is admin operation)
+ * Note: This would normally be handled by Supabase Auth
+ */
 export async function createUser(userData: UserInsert) {
+  // Only admin can create users
+  await requireRole(['admin'])
+
   // Check if email already exists
   const existing = await getUserByEmail(userData.email)
   if (existing) {
@@ -146,8 +194,15 @@ export async function createUser(userData: UserInsert) {
   return data
 }
 
-// Update user
+/**
+ * Update user
+ *
+ * Permission: Admin only
+ */
 export async function updateUser(id: string, updates: UserUpdate) {
+  // Only admin can update users
+  await requireRole(['admin'])
+
   const { data, error } = await supabase
     .from('users')
     .update({
@@ -166,8 +221,15 @@ export async function updateUser(id: string, updates: UserUpdate) {
   return data
 }
 
-// Soft delete user (mark as inactive)
+/**
+ * Soft delete user (mark as inactive)
+ *
+ * Permission: Admin only
+ */
 export async function deleteUser(id: string) {
+  // Only admin can delete users
+  await requireRole(['admin'])
+
   const { error } = await supabase
     .from('users')
     .update({

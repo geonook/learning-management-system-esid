@@ -2,10 +2,26 @@
  * Courses API Layer
  * Purpose: Manage course assignments for classes
  * Architecture: One class can have three course types (LT/IT/KCFS) taught by different teachers
+ *
+ * Permission Model (2025-12-29):
+ * - Admin: Full access to all courses
+ * - Office Member: Read-only access to all courses
+ * - Head: Read all courses, write only within grade band + track
+ * - Teacher: Read/write only their own courses
  */
 
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/types/database'
+import {
+  getCurrentUser,
+  requireAuth,
+  requireRole,
+  canAccessClass,
+  canWrite,
+  filterByRole,
+  gradeInBand,
+  type CurrentUser
+} from './permissions'
 
 type Course = Database['public']['Tables']['courses']['Row']
 type CourseInsert = Database['public']['Tables']['courses']['Insert']
@@ -30,9 +46,17 @@ export interface CourseWithDetails extends Course {
 
 /**
  * Get all courses for a class
+ *
+ * Permission: All authenticated users can read (RLS handles auth)
+ * - Admin/Office: All courses visible
+ * - Head: Only courses matching their track
+ * - Teacher: All courses visible (they need to see class structure)
  */
 export async function getCoursesByClass(classId: string): Promise<CourseWithDetails[]> {
   const supabase = createClient()
+
+  // Get current user for filtering
+  const user = await getCurrentUser()
 
   const { data, error } = await supabase
     .from('courses')
@@ -57,6 +81,11 @@ export async function getCoursesByClass(classId: string): Promise<CourseWithDeta
   if (error) {
     console.error('Error fetching courses by class:', error)
     throw new Error(error.message)
+  }
+
+  // Filter by role if user is head (only show their track)
+  if (user?.role === 'head' && user.track) {
+    return (data as CourseWithDetails[]).filter(c => c.course_type === user.track)
   }
 
   return data as CourseWithDetails[]
@@ -99,11 +128,16 @@ export async function getCoursesByTeacher(teacherId: string): Promise<CourseWith
 
 /**
  * Assign a teacher to a course
+ *
+ * Permission: Admin only (course assignments are admin operations)
  */
 export async function assignTeacherToCourse(
   courseId: string,
   teacherId: string
 ): Promise<Course> {
+  // Only admin can assign teachers
+  await requireRole(['admin'])
+
   const supabase = createClient()
 
   // First verify teacher type matches course type
@@ -151,8 +185,13 @@ export async function assignTeacherToCourse(
 
 /**
  * Unassign a teacher from a course
+ *
+ * Permission: Admin only
  */
 export async function unassignTeacherFromCourse(courseId: string): Promise<Course> {
+  // Only admin can unassign teachers
+  await requireRole(['admin'])
+
   const supabase = createClient()
 
   const { data, error } = await supabase
@@ -172,11 +211,16 @@ export async function unassignTeacherFromCourse(courseId: string): Promise<Cours
 
 /**
  * Create courses for a new class (automatically creates LT, IT, KCFS courses)
+ *
+ * Permission: Admin only (class creation is admin operation)
  */
 export async function createCoursesForClass(
   classId: string,
   academicYear: string
 ): Promise<Course[]> {
+  // Only admin can create courses
+  await requireRole(['admin'])
+
   const supabase = createClient()
 
   const courseTypes: TeacherType[] = ['LT', 'IT', 'KCFS']
@@ -203,10 +247,16 @@ export async function createCoursesForClass(
 
 /**
  * Get unassigned courses (courses without a teacher)
+ *
+ * Permission: Admin/Office/Head only (for assignment management)
+ * - Head: Only sees courses in their grade band + track
  */
 export async function getUnassignedCourses(
   academicYear?: string
 ): Promise<CourseWithDetails[]> {
+  // Require elevated role
+  const user = await requireRole(['admin', 'office_member', 'head'])
+
   const supabase = createClient()
 
   let query = supabase
@@ -234,18 +284,50 @@ export async function getUnassignedCourses(
     throw new Error(error.message)
   }
 
-  return data as CourseWithDetails[]
+  // Filter by role - handle nested grade field specially
+  let result = data as CourseWithDetails[]
+
+  if (user.role === 'head') {
+    result = result.filter(course => {
+      // Filter by grade band
+      if (user.gradeBand) {
+        const classData = course.classes as { grade: number } | undefined
+        if (classData && !gradeInBand(classData.grade, user.gradeBand)) {
+          return false
+        }
+      }
+      // Filter by track
+      if (user.track && course.course_type !== user.track) {
+        return false
+      }
+      return true
+    })
+  }
+
+  return result
 }
 
 /**
  * Get course statistics
+ *
+ * Permission: Admin/Office/Head only
+ * - Head: Only sees stats for their grade band + track
  */
 export async function getCourseStatistics(academicYear?: string) {
+  // Require elevated role
+  const user = await requireRole(['admin', 'office_member', 'head'])
+
   const supabase = createClient()
 
   let query = supabase
     .from('courses')
-    .select('course_type, teacher_id')
+    .select(`
+      course_type,
+      teacher_id,
+      classes:class_id (
+        grade
+      )
+    `)
 
   if (academicYear) {
     query = query.eq('academic_year', academicYear)
@@ -258,23 +340,43 @@ export async function getCourseStatistics(academicYear?: string) {
     throw new Error(error.message)
   }
 
+  // Filter by role for head teachers
+  let filteredData = data
+  if (user.role === 'head') {
+    filteredData = data.filter(course => {
+      // Filter by grade band
+      if (user.gradeBand) {
+        // Handle Supabase FK join type (could be array or object)
+        const classData = (Array.isArray(course.classes) ? course.classes[0] : course.classes) as { grade: number } | null | undefined
+        if (classData && !gradeInBand(classData.grade, user.gradeBand)) {
+          return false
+        }
+      }
+      // Filter by track
+      if (user.track && course.course_type !== user.track) {
+        return false
+      }
+      return true
+    })
+  }
+
   // Calculate statistics
   const stats = {
-    total: data.length,
-    assigned: data.filter(c => c.teacher_id !== null).length,
-    unassigned: data.filter(c => c.teacher_id === null).length,
+    total: filteredData.length,
+    assigned: filteredData.filter(c => c.teacher_id !== null).length,
+    unassigned: filteredData.filter(c => c.teacher_id === null).length,
     byType: {
       LT: {
-        total: data.filter(c => c.course_type === 'LT').length,
-        assigned: data.filter(c => c.course_type === 'LT' && c.teacher_id !== null).length
+        total: filteredData.filter(c => c.course_type === 'LT').length,
+        assigned: filteredData.filter(c => c.course_type === 'LT' && c.teacher_id !== null).length
       },
       IT: {
-        total: data.filter(c => c.course_type === 'IT').length,
-        assigned: data.filter(c => c.course_type === 'IT' && c.teacher_id !== null).length
+        total: filteredData.filter(c => c.course_type === 'IT').length,
+        assigned: filteredData.filter(c => c.course_type === 'IT' && c.teacher_id !== null).length
       },
       KCFS: {
-        total: data.filter(c => c.course_type === 'KCFS').length,
-        assigned: data.filter(c => c.course_type === 'KCFS' && c.teacher_id !== null).length
+        total: filteredData.filter(c => c.course_type === 'KCFS').length,
+        assigned: filteredData.filter(c => c.course_type === 'KCFS' && c.teacher_id !== null).length
       }
     }
   }
@@ -284,10 +386,15 @@ export async function getCourseStatistics(academicYear?: string) {
 
 /**
  * Bulk assign teachers to courses
+ *
+ * Permission: Admin only
  */
 export async function bulkAssignTeachers(
   assignments: Array<{ courseId: string; teacherId: string }>
 ): Promise<Course[]> {
+  // Only admin can bulk assign
+  await requireRole(['admin'])
+
   const supabase = createClient()
 
   // Validate all assignments first
