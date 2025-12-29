@@ -54,7 +54,7 @@ export default function ClassOverviewPage() {
           .select("id, course_type")
           .eq("class_id", classId)
           .eq("teacher_id", userId)
-          .single();
+          .maybeSingle();
 
         if (courseData) {
           setIsMyClass(true);
