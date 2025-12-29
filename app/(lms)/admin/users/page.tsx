@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { useAuth } from "@/lib/supabase/auth-context";
+import { useAuthReady } from "@/hooks/useAuthReady";
 import {
   Users,
   Search,
@@ -43,8 +43,7 @@ const TEACHER_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 export default function UserManagementPage() {
-  const { user } = useAuth();
-  const userId = user?.id;
+  const { isReady } = useAuthReady();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,12 +83,12 @@ export default function UserManagementPage() {
   }, []);
 
   useEffect(() => {
-    // Wait for user to be available
-    if (!userId) {
+    // Wait for auth to be ready
+    if (!isReady) {
       return;
     }
     fetchData();
-  }, [userId, fetchData]);
+  }, [isReady, fetchData]);
 
   useEffect(() => {
     let result = users;
@@ -130,6 +129,18 @@ export default function UserManagementPage() {
 
   const handleSaveEdit = async (userId: string) => {
     if (!editForm) return;
+
+    // Validate: teacher role requires teacher_type
+    if (editForm.role === 'teacher' && !editForm.teacher_type) {
+      alert("Teachers must have a Teacher Type (LT, IT, or KCFS). Please select one.");
+      return;
+    }
+
+    // Validate: head role requires grade_band and track
+    if (editForm.role === 'head' && (!editForm.grade_band || !editForm.track)) {
+      alert("Head Teachers must have a Grade Band assignment. Please select one.");
+      return;
+    }
 
     setSaving(true);
     try {
@@ -369,25 +380,29 @@ export default function UserManagementPage() {
                     </td>
                     <td className="p-4">
                       {editingUser === user.id ? (
-                        <select
-                          className="bg-surface-tertiary border border-border-default rounded px-2 py-1 text-text-primary text-sm"
-                          value={editForm?.teacher_type || ""}
-                          onChange={(e) =>
-                            setEditForm((prev) =>
-                              prev
-                                ? {
-                                    ...prev,
-                                    teacher_type: e.target.value as TeacherType || null
-                                  }
-                                : null
-                            )
-                          }
-                        >
-                          <option value="">None</option>
-                          <option value="LT">LT</option>
-                          <option value="IT">IT</option>
-                          <option value="KCFS">KCFS</option>
-                        </select>
+                        editForm?.role === 'teacher' ? (
+                          <select
+                            className="bg-surface-tertiary border border-border-default rounded px-2 py-1 text-text-primary text-sm"
+                            value={editForm?.teacher_type || ""}
+                            onChange={(e) =>
+                              setEditForm((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      teacher_type: e.target.value as TeacherType || null
+                                    }
+                                  : null
+                              )
+                            }
+                          >
+                            <option value="">Select Type</option>
+                            <option value="LT">LT</option>
+                            <option value="IT">IT</option>
+                            <option value="KCFS">KCFS</option>
+                          </select>
+                        ) : (
+                          <span className="text-text-tertiary text-sm">N/A</span>
+                        )
                       ) : user.teacher_type ? (
                         <span
                           className={`px-2 py-1 text-xs rounded-full ${
