@@ -193,24 +193,32 @@ export async function getClassesProgress(
 
       const examIds = exams.map(e => e.id);
 
-      // Stage 2: Count scores per exam in batches (only non-null scores)
-      // Split examIds into batches to avoid row limit issues
+      // Stage 2: Count scores per exam in parallel batches (only non-null scores)
+      // Split examIds into batches and query in parallel for better performance
+      const batches: string[][] = [];
       for (let i = 0; i < examIds.length; i += EXAM_BATCH_SIZE) {
-        const batchExamIds = examIds.slice(i, i + EXAM_BATCH_SIZE);
+        batches.push(examIds.slice(i, i + EXAM_BATCH_SIZE));
+      }
 
-        const { data: scores, error: scoresError } = await supabase
-          .from('scores')
-          .select('exam_id')
-          .in('exam_id', batchExamIds)
-          .not('score', 'is', null);
+      // Execute all batch queries in parallel
+      const batchResults = await Promise.all(
+        batches.map(batchExamIds =>
+          supabase
+            .from('scores')
+            .select('exam_id')
+            .in('exam_id', batchExamIds)
+            .not('score', 'is', null)
+        )
+      );
 
+      // Aggregate results from all batches
+      batchResults.forEach(({ data: scores, error: scoresError }, index) => {
         if (scoresError) {
-          console.error('[Browse Gradebook] Error fetching scores batch:', scoresError);
-          continue; // Skip this batch but try others
+          console.error(`[Browse Gradebook] Error fetching scores batch ${index}:`, scoresError);
+          return; // Skip this batch but process others
         }
 
         if (scores) {
-          // Aggregate scores by course_id
           scores.forEach(s => {
             const courseId = examToCourse.get(s.exam_id);
             if (courseId) {
@@ -219,7 +227,7 @@ export async function getClassesProgress(
             }
           });
         }
-      }
+      });
     }
   }
 
