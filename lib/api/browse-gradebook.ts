@@ -157,13 +157,18 @@ export async function getClassesProgress(
     studentCountMap.set(s.class_id, count + 1);
   });
 
-  // 4. Fetch score counts per course using two-stage query
+  // 4. Fetch score counts per course using two-stage query with batching
   // This avoids hitting Supabase max_rows limit (10,000) when there are many scores
   // Stage 1: Get exam IDs for the specified courses and term
-  // Stage 2: Count scores per exam and aggregate by course
+  // Stage 2: Count scores per exam in batches and aggregate by course
   const courseIds = courses?.map(c => c.id) || [];
 
   const scoreCountMap = new Map<string, number>();
+
+  // Batch size for scores query to stay well under 10,000 row limit
+  // Each exam can have ~20 students × ~13 assessments = ~260 scores max
+  // 500 exams × 260 = 130,000 scores max, but filtered by term it's much less
+  const EXAM_BATCH_SIZE = 500;
 
   if (courseIds.length > 0) {
     // Stage 1: Get exams for these courses (filtered by term at DB level)
@@ -188,25 +193,32 @@ export async function getClassesProgress(
 
       const examIds = exams.map(e => e.id);
 
-      // Stage 2: Count scores per exam (only non-null scores)
-      // This query is much more efficient as it only fetches exam_id
-      const { data: scores, error: scoresError } = await supabase
-        .from('scores')
-        .select('exam_id')
-        .in('exam_id', examIds)
-        .not('score', 'is', null);
+      // Stage 2: Count scores per exam in batches (only non-null scores)
+      // Split examIds into batches to avoid row limit issues
+      for (let i = 0; i < examIds.length; i += EXAM_BATCH_SIZE) {
+        const batchExamIds = examIds.slice(i, i + EXAM_BATCH_SIZE);
 
-      if (scoresError) {
-        console.error('[Browse Gradebook] Error fetching scores:', scoresError);
-      } else if (scores) {
-        // Aggregate scores by course_id
-        scores.forEach(s => {
-          const courseId = examToCourse.get(s.exam_id);
-          if (courseId) {
-            const count = scoreCountMap.get(courseId) || 0;
-            scoreCountMap.set(courseId, count + 1);
-          }
-        });
+        const { data: scores, error: scoresError } = await supabase
+          .from('scores')
+          .select('exam_id')
+          .in('exam_id', batchExamIds)
+          .not('score', 'is', null);
+
+        if (scoresError) {
+          console.error('[Browse Gradebook] Error fetching scores batch:', scoresError);
+          continue; // Skip this batch but try others
+        }
+
+        if (scores) {
+          // Aggregate scores by course_id
+          scores.forEach(s => {
+            const courseId = examToCourse.get(s.exam_id);
+            if (courseId) {
+              const count = scoreCountMap.get(courseId) || 0;
+              scoreCountMap.set(courseId, count + 1);
+            }
+          });
+        }
       }
     }
   }
