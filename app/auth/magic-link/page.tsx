@@ -24,9 +24,10 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner"
  */
 export default function MagicLinkPage() {
   const router = useRouter()
-  const { isReady, userId } = useAuthReady()
+  const { isReady, userId, isLoading } = useAuthReady()
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState("Processing magic link...")
+  const [tokenProcessed, setTokenProcessed] = useState(false)
   const hasProcessed = useRef(false)
   const hasRedirected = useRef(false)
 
@@ -34,6 +35,7 @@ export default function MagicLinkPage() {
   useEffect(() => {
     if (hasRedirected.current) return
 
+    // Only redirect if we've processed the token (or there was no token) and auth is ready
     if (isReady && userId) {
       hasRedirected.current = true
       console.log("[MagicLink] Auth ready with userId, redirecting to dashboard")
@@ -46,7 +48,19 @@ export default function MagicLinkPage() {
     }
   }, [isReady, userId, router])
 
-  // Effect 2: Process magic link hash tokens
+  // Effect 2: Handle no-hash case - redirect to login if no token and not authenticated
+  useEffect(() => {
+    // Only check after token processing and auth loading is complete
+    if (!tokenProcessed || isLoading) return
+
+    // If we processed and there was no token, and user is not authenticated, go to login
+    if (!userId) {
+      console.log("[MagicLink] No token and no session, redirecting to login")
+      router.replace("/auth/login")
+    }
+  }, [tokenProcessed, isLoading, userId, router])
+
+  // Effect 3: Process magic link hash tokens (runs once on mount)
   useEffect(() => {
     const handleMagicLink = async () => {
       if (hasProcessed.current) return
@@ -56,15 +70,10 @@ export default function MagicLinkPage() {
 
       console.log("[MagicLink] Processing hash:", hash ? "present" : "empty")
 
-      // No hash token - check for existing session or redirect to login
+      // No hash token - mark as processed and let Effect 2 handle redirect
       if (!hash || !hash.includes("access_token")) {
-        // If already authenticated, Effect 1 will handle redirect
-        // If not authenticated and no hash, redirect to login
-        if (isReady && !userId) {
-          console.log("[MagicLink] No token and no session, redirecting to login")
-          router.replace("/auth/login")
-        }
-        // If not ready yet, wait for isReady to be true
+        console.log("[MagicLink] No access_token in hash, will check session state")
+        setTokenProcessed(true)
         return
       }
 
@@ -83,8 +92,12 @@ export default function MagicLinkPage() {
 
         if (!accessToken) {
           setError("Invalid magic link: missing access token")
+          setTokenProcessed(true)
           return
         }
+
+        // Clear hash immediately for cleaner URL
+        window.history.replaceState(null, "", window.location.pathname)
 
         // Manually set the session using the tokens from hash
         // Using global singleton ensures AuthContext receives the state change
@@ -103,6 +116,7 @@ export default function MagicLinkPage() {
         if (sessionError) {
           console.error("[MagicLink] setSession error:", sessionError)
           setError(sessionError.message)
+          setTokenProcessed(true)
           return
         }
 
@@ -110,21 +124,22 @@ export default function MagicLinkPage() {
         if (data?.session || data?.user) {
           console.log("[MagicLink] Session established, waiting for AuthContext to sync...")
           setStatus("Login successful! Redirecting...")
-          // Clear hash immediately for cleaner URL
-          window.history.replaceState(null, "", window.location.pathname)
           // Redirect will happen via Effect 1 when isReady && userId
         } else {
           console.error("[MagicLink] No session after setSession")
           setError("Failed to establish session. The link may have expired.")
         }
+
+        setTokenProcessed(true)
       } catch (err) {
         console.error("[MagicLink] Exception:", err)
         setError(err instanceof Error ? err.message : "An unexpected error occurred")
+        setTokenProcessed(true)
       }
     }
 
     handleMagicLink()
-  }, [isReady, userId, router])
+  }, [])
 
   if (error) {
     return (
