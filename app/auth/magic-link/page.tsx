@@ -15,54 +15,33 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner"
  * Flow:
  * 1. Admin generates magic link via /api/admin/impersonate
  * 2. User clicks link → redirects to this page with hash fragment
- * 3. Supabase SDK extracts token from hash and establishes session
+ * 3. This page manually extracts token from hash and sets session
  * 4. Page redirects to dashboard
  */
 export default function MagicLinkPage() {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState("Processing magic link...")
-  const hasRedirected = useRef(false)
+  const hasProcessed = useRef(false)
 
   useEffect(() => {
-    const supabase = createClient()
+    const handleMagicLink = async () => {
+      if (hasProcessed.current) return
+      hasProcessed.current = true
 
-    // Listen for auth state changes - this is the most reliable way
-    // to detect when the session is established from the hash fragment
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("[MagicLink] Auth state changed:", event, session?.user?.email)
-
-        if (hasRedirected.current) return
-
-        if (event === "SIGNED_IN" && session) {
-          hasRedirected.current = true
-          setStatus("Login successful! Redirecting...")
-          console.log("[MagicLink] SIGNED_IN event, redirecting to dashboard")
-
-          // Small delay to show success message
-          setTimeout(() => {
-            router.replace("/dashboard")
-          }, 500)
-        }
-      }
-    )
-
-    // Also check for existing session (in case auth state already changed)
-    const checkExistingSession = async () => {
-      // Check if we have a hash with access_token
+      const supabase = createClient()
       const hash = window.location.hash
+
       console.log("[MagicLink] Processing hash:", hash ? "present" : "empty")
 
+      // No hash token - check for existing session or redirect to login
       if (!hash || !hash.includes("access_token")) {
-        // No magic link token, check for existing session
         const { data: { session } } = await supabase.auth.getSession()
 
-        if (session && !hasRedirected.current) {
-          hasRedirected.current = true
+        if (session) {
           console.log("[MagicLink] Existing session found, redirecting to dashboard")
           router.replace("/dashboard")
-        } else if (!session) {
+        } else {
           console.log("[MagicLink] No token or session, redirecting to login")
           router.replace("/auth/login")
         }
@@ -71,30 +50,57 @@ export default function MagicLinkPage() {
 
       setStatus("Verifying authentication...")
 
-      // Give Supabase SDK time to process the hash and trigger onAuthStateChange
-      // The SDK automatically detects hash fragments and establishes session
-      setTimeout(async () => {
-        if (hasRedirected.current) return
+      try {
+        // Parse hash parameters manually
+        const hashParams = new URLSearchParams(hash.substring(1))
+        const accessToken = hashParams.get("access_token")
+        const refreshToken = hashParams.get("refresh_token")
 
-        const { data: { session } } = await supabase.auth.getSession()
+        console.log("[MagicLink] Tokens found:", {
+          hasAccessToken: !!accessToken,
+          hasRefreshToken: !!refreshToken
+        })
 
-        if (session && !hasRedirected.current) {
-          hasRedirected.current = true
-          console.log("[MagicLink] Session found after delay, redirecting")
-          setStatus("Login successful! Redirecting...")
-          router.replace("/dashboard")
-        } else if (!hasRedirected.current) {
-          console.log("[MagicLink] No session after timeout, showing error")
-          setError("Failed to establish session. Please try again.")
+        if (!accessToken) {
+          setError("Invalid magic link: missing access token")
+          return
         }
-      }, 3000) // Wait up to 3 seconds for SDK to process
+
+        // Manually set the session using the tokens from hash
+        console.log("[MagicLink] Setting session with tokens...")
+        const { data, error: sessionError } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken || ""
+        })
+
+        if (sessionError) {
+          console.error("[MagicLink] setSession error:", sessionError)
+          setError(sessionError.message)
+          return
+        }
+
+        if (data.session) {
+          console.log("[MagicLink] Session established successfully:", data.session.user.email)
+          setStatus("Login successful! Redirecting...")
+
+          // Clear the hash from URL for cleaner appearance
+          window.history.replaceState(null, "", window.location.pathname)
+
+          // Redirect to dashboard
+          setTimeout(() => {
+            router.replace("/dashboard")
+          }, 500)
+        } else {
+          console.error("[MagicLink] No session after setSession")
+          setError("Failed to establish session. The link may have expired.")
+        }
+      } catch (err) {
+        console.error("[MagicLink] Exception:", err)
+        setError(err instanceof Error ? err.message : "An unexpected error occurred")
+      }
     }
 
-    checkExistingSession()
-
-    return () => {
-      subscription.unsubscribe()
-    }
+    handleMagicLink()
   }, [router])
 
   if (error) {
