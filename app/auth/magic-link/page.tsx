@@ -1,145 +1,109 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase/client"
-import { useAuthReady } from "@/hooks/useAuthReady"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 
 /**
- * Magic Link Callback Page
+ * Magic Link Callback Page - Simplified Architecture
  *
- * Handles magic link authentication from Supabase Admin API
- * Magic links contain tokens in the URL hash fragment (#access_token=...)
- * which can only be processed client-side
+ * 設計原則：
+ * 這個頁面不依賴 AuthContext/useAuthReady，因為我們需要在
+ * AuthContext 初始化之前處理 token。
  *
- * Flow:
- * 1. Admin generates magic link via /api/admin/impersonate
- * 2. User clicks link → redirects to this page with hash fragment
- * 3. This page manually extracts token from hash and sets session (using global singleton)
- * 4. useAuthReady detects auth change and redirects to dashboard
+ * 流程：
+ * 1. 解析 URL hash 中的 token
+ * 2. 呼叫 supabase.auth.setSession() 設定 session
+ * 3. 使用 supabase.auth.getUser() 驗證 session 成功
+ * 4. 直接用 window.location.href 導向 dashboard（強制完整頁面載入）
  *
- * Key fix: Uses global supabase singleton (same as AuthContext) to ensure
- * session state is synchronized across the app.
+ * 為什麼用 window.location.href 而非 router.replace：
+ * - router.replace 是 client-side navigation，不會重新載入 AuthContext
+ * - window.location.href 強制完整頁面載入，AuthContext 會從新 session 初始化
  */
 export default function MagicLinkPage() {
   const router = useRouter()
-  const { isReady, userId, isLoading } = useAuthReady()
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState("Processing magic link...")
-  const [tokenProcessed, setTokenProcessed] = useState(false)
-  const hasProcessed = useRef(false)
-  const hasRedirected = useRef(false)
 
-  // Effect 1: Redirect when auth is ready and user is authenticated
   useEffect(() => {
-    if (hasRedirected.current) return
-
-    // Only redirect if we've processed the token (or there was no token) and auth is ready
-    if (isReady && userId) {
-      hasRedirected.current = true
-      console.log("[MagicLink] Auth ready with userId, redirecting to dashboard")
-      setStatus("Login successful! Redirecting...")
-
-      // Clear the hash from URL for cleaner appearance
-      window.history.replaceState(null, "", window.location.pathname)
-
-      router.replace("/dashboard")
-    }
-  }, [isReady, userId, router])
-
-  // Effect 2: Handle no-hash case - redirect to login if no token and not authenticated
-  useEffect(() => {
-    // Only check after token processing and auth loading is complete
-    if (!tokenProcessed || isLoading) return
-
-    // If we processed and there was no token, and user is not authenticated, go to login
-    if (!userId) {
-      console.log("[MagicLink] No token and no session, redirecting to login")
-      router.replace("/auth/login")
-    }
-  }, [tokenProcessed, isLoading, userId, router])
-
-  // Effect 3: Process magic link hash tokens (runs once on mount)
-  useEffect(() => {
-    const handleMagicLink = async () => {
-      if (hasProcessed.current) return
-      hasProcessed.current = true
-
+    const processToken = async () => {
       const hash = window.location.hash
+      console.log("[MagicLink] Hash:", hash ? "present" : "empty")
 
-      console.log("[MagicLink] Processing hash:", hash ? "present" : "empty")
-
-      // No hash token - mark as processed and let Effect 2 handle redirect
+      // Case 1: 沒有 hash token
       if (!hash || !hash.includes("access_token")) {
-        console.log("[MagicLink] No access_token in hash, will check session state")
-        setTokenProcessed(true)
+        // 檢查是否已有 session（可能是直接訪問這個頁面）
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (user) {
+          console.log("[MagicLink] User already logged in, redirecting")
+          window.location.href = "/dashboard"
+        } else {
+          console.log("[MagicLink] No token and no session")
+          router.replace("/auth/login")
+        }
         return
       }
 
+      // Case 2: 有 hash token，進行處理
       setStatus("Verifying authentication...")
 
       try {
-        // Parse hash parameters manually
+        // 解析 token
         const hashParams = new URLSearchParams(hash.substring(1))
         const accessToken = hashParams.get("access_token")
         const refreshToken = hashParams.get("refresh_token")
 
-        console.log("[MagicLink] Tokens found:", {
-          hasAccessToken: !!accessToken,
-          hasRefreshToken: !!refreshToken
+        console.log("[MagicLink] Tokens:", {
+          hasAccess: !!accessToken,
+          hasRefresh: !!refreshToken
         })
 
         if (!accessToken) {
           setError("Invalid magic link: missing access token")
-          setTokenProcessed(true)
           return
         }
 
-        // Clear hash immediately for cleaner URL
-        window.history.replaceState(null, "", window.location.pathname)
-
-        // Manually set the session using the tokens from hash
-        // Using global singleton ensures AuthContext receives the state change
-        console.log("[MagicLink] Setting session with tokens (using global singleton)...")
-        const { data, error: sessionError } = await supabase.auth.setSession({
+        // 設定 session
+        const { error: sessionError } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken || ""
-        })
-
-        console.log("[MagicLink] setSession result:", {
-          hasSession: !!data?.session,
-          hasUser: !!data?.user,
-          error: sessionError?.message
         })
 
         if (sessionError) {
           console.error("[MagicLink] setSession error:", sessionError)
           setError(sessionError.message)
-          setTokenProcessed(true)
           return
         }
 
-        // Session established - Effect 1 will handle redirect when useAuthReady updates
-        if (data?.session || data?.user) {
-          console.log("[MagicLink] Session established, waiting for AuthContext to sync...")
-          setStatus("Login successful! Redirecting...")
-          // Redirect will happen via Effect 1 when isReady && userId
-        } else {
-          console.error("[MagicLink] No session after setSession")
-          setError("Failed to establish session. The link may have expired.")
+        // 驗證 session 成功
+        const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+        if (userError || !user) {
+          console.error("[MagicLink] getUser error:", userError)
+          setError("Failed to verify session. The link may have expired.")
+          return
         }
 
-        setTokenProcessed(true)
+        console.log("[MagicLink] Session verified for:", user.email)
+        setStatus("Login successful! Redirecting...")
+
+        // 關鍵：使用完整頁面導航而非 client-side navigation
+        // 這確保 AuthContext 從新的 session 狀態初始化
+        setTimeout(() => {
+          window.location.href = "/dashboard"
+        }, 300)
+
       } catch (err) {
         console.error("[MagicLink] Exception:", err)
         setError(err instanceof Error ? err.message : "An unexpected error occurred")
-        setTokenProcessed(true)
       }
     }
 
-    handleMagicLink()
-  }, [])
+    processToken()
+  }, [router])
 
   if (error) {
     return (
