@@ -110,6 +110,9 @@ export default function ClassAttendancePage() {
 
   const selectedCourse = courses.find((c) => c.id === selectedCourseId);
 
+  // Permission: Admin can edit all; others can only edit courses they teach
+  const canEdit = role === "admin" || selectedCourse?.teacher_id === userId;
+
   const getCourseTypeLabel = (type: string) => {
     // Simply return the course type code (LT, IT, KCFS)
     return type;
@@ -187,6 +190,7 @@ export default function ClassAttendancePage() {
           courseId={selectedCourseId}
           courseName={`${getCourseTypeLabel(selectedCourse.course_type)} - ${selectedCourse.class?.name || classInfo?.name || ""}`}
           className={classInfo?.name || ""}
+          readOnly={!canEdit}
         />
       ) : (
         <Card>

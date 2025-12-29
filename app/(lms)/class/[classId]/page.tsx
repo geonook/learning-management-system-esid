@@ -152,7 +152,7 @@ export default function ClassOverviewPage() {
             courseId={selectedCourseId}
             className={classInfo.name}
             teacherId={userId}
-            readOnly={isAdminOrOffice && myCourseId !== selectedCourseId}
+            readOnly={role !== 'admin' && allCourses.find(c => c.id === selectedCourseId)?.teacher_id !== userId}
           />
         ) : !isMyClass && !isAdminOrOffice ? (
           <div className="bg-surface-elevated rounded-xl p-6 border border-border-default">

@@ -62,29 +62,16 @@ export function GradebookClient({
 
   // Permission check: determine if current user can edit this course
   // - Admin: can edit all
-  // - Head: can only edit their track (need to fetch user.track from auth context)
-  // - Teacher: can only edit if they are the course teacher
-  // - Office Member: read-only only
+  // - All other roles: can only edit if they are the course teacher
   const canEdit = useMemo(() => {
     if (!isAuthReady) return false;
     if (!isPeriodEditable) return false;
 
-    // Office Member is always read-only
-    if (role === "office_member") return false;
-
     // Admin can edit all
     if (role === "admin") return true;
 
-    // Teacher: can only edit if they are the course teacher
-    if (role === "teacher") {
-      return userId === teacherId;
-    }
-
-    // Head: can edit (RLS will enforce track restriction)
-    // Note: RLS policy already restricts head to their grade + track
-    if (role === "head") return true;
-
-    return false;
+    // All other roles: can only edit if they are the course teacher
+    return userId === teacherId;
   }, [isAuthReady, isPeriodEditable, role, userId, teacherId]);
 
   const handleCourseTypeChange = (courseType: CourseType) => {
@@ -225,13 +212,13 @@ export function GradebookClient({
         </Alert>
       )}
 
-      {/* Read-only Warning for Office Members */}
-      {isAuthReady && role === "office_member" && isPeriodEditable && (
+      {/* Read-only Warning for non-course teachers (except admin) */}
+      {isAuthReady && role !== "admin" && isPeriodEditable && userId !== teacherId && teacherId && role !== "teacher" && (
         <Alert className="mx-4 mt-2 rounded-lg border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
           <Lock className="h-4 w-4 text-blue-600" />
           <AlertTitle className="text-blue-800 dark:text-blue-200">Read-Only Mode</AlertTitle>
           <AlertDescription className="text-blue-700 dark:text-blue-300">
-            You are viewing grades in read-only mode. Contact an administrator to make changes.
+            This course is assigned to {teacherName || "another teacher"}. You can view but not edit grades.
           </AlertDescription>
         </Alert>
       )}

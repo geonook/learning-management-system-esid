@@ -30,6 +30,7 @@ interface AttendanceSheetProps {
   courseId: string;
   courseName: string;
   className: string;
+  readOnly?: boolean;
 }
 
 interface StudentRow {
@@ -42,6 +43,7 @@ export function AttendanceSheet({
   courseId,
   courseName,
   className,
+  readOnly = false,
 }: AttendanceSheetProps) {
   const { userId, isReady } = useAuthReady();
   const [date, setDate] = useState(() => {
@@ -247,22 +249,26 @@ export function AttendanceSheet({
                   className="px-2 py-1 border rounded-md text-sm bg-background"
                 />
               </div>
-              <Button onClick={markAllPresent} variant="outline" size="sm">
-                <Users className="w-4 h-4 mr-1" />
-                All Present
-              </Button>
-              <Button
-                onClick={handleSave}
-                disabled={!hasChanges || saving}
-                size="sm"
-              >
-                {saving ? (
-                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                ) : (
-                  <Save className="w-4 h-4 mr-1" />
-                )}
-                Save
-              </Button>
+              {!readOnly && (
+                <>
+                  <Button onClick={markAllPresent} variant="outline" size="sm">
+                    <Users className="w-4 h-4 mr-1" />
+                    All Present
+                  </Button>
+                  <Button
+                    onClick={handleSave}
+                    disabled={!hasChanges || saving}
+                    size="sm"
+                  >
+                    {saving ? (
+                      <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4 mr-1" />
+                    )}
+                    Save
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -336,7 +342,7 @@ export function AttendanceSheet({
                           <BehaviorTagBadge
                             key={behavior.id}
                             tag={behavior.tag}
-                            onRemove={() =>
+                            onRemove={readOnly ? undefined : () =>
                               handleRemoveBehavior(row.student.id, behavior.id)
                             }
                           />
@@ -346,13 +352,16 @@ export function AttendanceSheet({
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <BehaviorTagPicker
-                    onSelect={(tag) => handleAddBehavior(row.student.id, tag)}
-                  />
+                  {!readOnly && (
+                    <BehaviorTagPicker
+                      onSelect={(tag) => handleAddBehavior(row.student.id, tag)}
+                    />
+                  )}
                   <AttendanceStatusGroup
                     value={row.status}
                     onChange={(status) => updateStatus(row.student.id, status)}
                     size="sm"
+                    disabled={readOnly}
                   />
                 </div>
               </div>

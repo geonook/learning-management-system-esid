@@ -104,10 +104,8 @@ export default function ClassCommunicationsPage() {
   const isHeadTeacher = role === "head";
   const isAdminOrOffice = isAdmin || isOffice;
 
-  // Check if current user is the teacher of the selected course
-  const isMyClass = selectedCourse?.teacher_id === userId;
-  // Office members can view all but only edit their own course
-  const canEdit = isAdmin || isMyClass;
+  // Permission: Admin can edit all; others can only edit courses they teach
+  const canEdit = isAdmin || selectedCourse?.teacher_id === userId;
 
   // Fetch class and courses info
   useEffect(() => {
