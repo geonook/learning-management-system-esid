@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { useAppStore } from "@/lib/store"
-import { useAuth } from "@/lib/supabase/auth-context"
+import { useAuthReady } from "@/hooks/useAuthReady"
 import {
   Home,
   Users,
@@ -91,7 +91,7 @@ export default function Sidebar({ className }: SidebarProps) {
   const [expandedItem, setExpandedItem] = useState<string | null>(null)
   const pathname = usePathname()
   const role = useAppStore((s) => s.role)
-  const { signOut } = useAuth()
+  const { signOut } = useAuthReady()
 
   const filteredItems = sidebarItems.filter(item => 
     !role || item.roles.includes(role)

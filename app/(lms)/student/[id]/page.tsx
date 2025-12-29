@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { useAuth } from "@/lib/supabase/auth-context";
+import { useAuthReady } from "@/hooks/useAuthReady";
 import { supabase } from "@/lib/supabase/client";
 import {
   GraduationCap,
@@ -41,8 +41,7 @@ interface StudentDetails {
 }
 
 export default function StudentDetailPage() {
-  const { user } = useAuth();
-  const userId = user?.id;
+  const { userId } = useAuthReady();
   const params = useParams();
   const studentId = params?.id as string;
 

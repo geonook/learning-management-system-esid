@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/lib/supabase/auth-context";
+import { useAuthReady } from "@/hooks/useAuthReady";
 import { getClassesByTeacher, getClassesByGradeBand, getTeachingClasses, Class, ClassWithCourseType } from "@/lib/api/classes";
 import {
   LayoutDashboard,
@@ -43,7 +43,7 @@ const STORAGE_KEY = 'lms-sidebar-sections';
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { user, userPermissions } = useAuth();
+  const { userId, permissions: userPermissions } = useAuthReady();
   const [classes, setClasses] = useState<Class[]>([]);
   // Head Teacher specific states
   const [teachingClasses, setTeachingClasses] = useState<ClassWithCourseType[]>([]);
@@ -90,12 +90,12 @@ export function Sidebar() {
 
   useEffect(() => {
     async function fetchClasses() {
-      if (!user) return;
+      if (!userId) return;
       try {
         // Head Teacher: Get both teaching classes AND managed classes (grade band)
         if (isHead && userPermissions?.grade) {
           const [teaching, managed] = await Promise.all([
-            getTeachingClasses(user.id),
+            getTeachingClasses(userId),
             getClassesByGradeBand(userPermissions.grade)
           ]);
           setTeachingClasses(teaching);
@@ -105,14 +105,14 @@ export function Sidebar() {
         }
         // Regular Teacher: Get classes they teach (via courses table)
         else if (isTeacher) {
-          const data = await getClassesByTeacher(user.id);
+          const data = await getClassesByTeacher(userId);
           setClasses(data);
         }
         // Office Member: Check if they have any teaching assignments
         else if (isOfficeMember) {
           // Office members might also be teachers (dual role)
           // Check if they have any courses assigned to them
-          const data = await getClassesByTeacher(user.id);
+          const data = await getClassesByTeacher(userId);
           if (data.length > 0) {
             setHasTeachingAssignments(true);
           }
@@ -128,7 +128,7 @@ export function Sidebar() {
     }
 
     fetchClasses();
-  }, [user, isHead, isTeacher, isOfficeMember, userPermissions?.grade]);
+  }, [userId, isHead, isTeacher, isOfficeMember, userPermissions?.grade]);
 
   // Don't render content until hydrated to prevent flash
   const isExpanded = (sectionId: SectionId) => isHydrated ? expandedSections[sectionId] : DEFAULT_EXPANDED[sectionId];

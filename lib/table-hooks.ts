@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { getTeacherCourses, getCourseStudentsWithScores, upsertScoreWithCourse, type TeacherCourse } from "./api/scores"
-import { useAuth } from "./supabase/auth-context"
+import { useAuthReady } from "@/hooks/useAuthReady"
 
 // Course-based score row for UI
 export type CourseScoreRow = {
@@ -19,10 +19,10 @@ export function useTeacherCourses() {
   const [courses, setCourses] = useState<TeacherCourse[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { user } = useAuth()
+  const { userId } = useAuthReady()
 
   const fetchCourses = useCallback(async () => {
-    if (!user) {
+    if (!userId) {
       setLoading(false)
       return
     }
@@ -40,7 +40,7 @@ export function useTeacherCourses() {
     } finally {
       setLoading(false)
     }
-  }, [user])
+  }, [userId])
 
   useEffect(() => {
     fetchCourses()
@@ -55,7 +55,7 @@ export function useTeacherScores(courseId?: string) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-  const { user } = useAuth()
+  const { userId } = useAuthReady()
 
   // Convert API data to UI format
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -100,7 +100,7 @@ export function useTeacherScores(courseId?: string) {
 
   // Fetch scores for the selected course
   const fetchScores = useCallback(async () => {
-    if (!user || !courseId) {
+    if (!userId || !courseId) {
       setRows([])
       setLoading(false)
       return
@@ -120,7 +120,7 @@ export function useTeacherScores(courseId?: string) {
     } finally {
       setLoading(false)
     }
-  }, [user, courseId])
+  }, [userId, courseId])
 
   useEffect(() => {
     fetchScores()
@@ -128,7 +128,7 @@ export function useTeacherScores(courseId?: string) {
 
   // Update score function
   async function onEdit(id: string, type: "FA" | "SA" | "Final", idx: number, value: number) {
-    if (!courseId || !user) return
+    if (!courseId || !userId) return
 
     const clampedValue = clamp(value)
     
@@ -168,7 +168,7 @@ export function useTeacherScores(courseId?: string) {
         course_id: courseId,
         assessment_code,
         score: clampedValue,
-        entered_by: user.id,
+        entered_by: userId,
         entered_at: new Date().toISOString()
       })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

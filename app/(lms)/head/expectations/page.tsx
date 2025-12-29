@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { useAuth } from "@/lib/supabase/auth-context";
+import { useAuthReady } from "@/hooks/useAuthReady";
 import { Target, Save, RotateCcw, Loader2, Check, Info } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ interface ExpectationSetting {
 }
 
 export default function ExpectationsPage() {
-  const { userPermissions } = useAuth();
+  const { permissions: userPermissions } = useAuthReady();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);

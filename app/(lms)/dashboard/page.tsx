@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useAuth } from "@/lib/supabase/auth-context";
+import { useAuthReady } from "@/hooks/useAuthReady";
 import AuthGuard from "@/components/auth/auth-guard";
 import {
   AlertTriangle,
@@ -46,8 +46,7 @@ import { useClosingPeriods } from "@/hooks/usePeriodLock";
 import { TERM_DETAILS } from "@/types/academic-period";
 
 export default function Dashboard() {
-  const { user, userPermissions } = useAuth();
-  const userRole = userPermissions?.role;
+  const { userId, role: userRole, permissions: userPermissions, fullName } = useAuthReady();
   const { academicYear, termForApi } = useGlobalFilters();
   const { closingPeriods, isLoading: isLoadingClosingPeriods } = useClosingPeriods();
 
@@ -88,7 +87,6 @@ export default function Dashboard() {
   });
 
   // Extract primitive values
-  const userId = user?.id;
   const userGrade = userPermissions?.grade;
 
   // Track if data has been loaded at least once
@@ -198,7 +196,7 @@ export default function Dashboard() {
           <div className="flex h-full flex-col justify-center p-4">
             <h1 className="text-3xl font-bold text-text-primary mb-2">
               {getGreeting()},{" "}
-              {user?.user_metadata?.full_name?.split(" ")[0] || "Teacher"}
+              {fullName?.split(" ")[0] || "Teacher"}
             </h1>
             <p className="text-text-secondary text-lg">
               Here&apos;s what&apos;s happening in your classes today.

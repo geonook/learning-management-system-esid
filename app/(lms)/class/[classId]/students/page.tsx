@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { useAuth } from "@/lib/supabase/auth-context";
+import { useAuthReady } from "@/hooks/useAuthReady";
 import { createClient } from "@/lib/supabase/client";
 import {
   Users,
@@ -46,8 +46,7 @@ export default function ClassStudentsPage() {
   const params = useParams();
   const classId = params?.classId as string;
 
-  const { user } = useAuth();
-  const userId = user?.id;
+  const { userId } = useAuthReady();
   const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
   const [students, setStudents] = useState<StudentRow[]>([]);
   const [loading, setLoading] = useState(true);

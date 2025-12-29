@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useAuth } from "@/lib/supabase/auth-context"
+import { useAuthReady } from "@/hooks/useAuthReady"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -58,7 +58,7 @@ interface NotificationCenterProps {
 }
 
 export default function NotificationCenter({ className }: NotificationCenterProps) {
-  const { user, userPermissions } = useAuth()
+  const { userId, permissions: userPermissions } = useAuthReady()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [summary, setSummary] = useState({
     total: 0,
@@ -72,21 +72,21 @@ export default function NotificationCenter({ className }: NotificationCenterProp
   // Load notifications
   useEffect(() => {
     async function loadNotifications() {
-      if (!user?.id || !userPermissions?.role) return
+      if (!userId || !userPermissions?.role) return
 
       try {
         setLoading(true)
         
         const [notificationData, summaryData] = await Promise.all([
           getUserNotifications(
-            user.id, 
+            userId,
             userPermissions.role,
             userPermissions.grade || undefined,
             userPermissions.track || undefined,
             10
           ),
           getNotificationSummary(
-            user.id,
+            userId,
             userPermissions.role,
             userPermissions.grade || undefined,
             userPermissions.track || undefined
@@ -107,7 +107,7 @@ export default function NotificationCenter({ className }: NotificationCenterProp
     // Refresh notifications every 2 minutes
     const interval = setInterval(loadNotifications, 2 * 60 * 1000)
     return () => clearInterval(interval)
-  }, [user?.id, userPermissions?.role, userPermissions?.grade, userPermissions?.track])
+  }, [userId, userPermissions?.role, userPermissions?.grade, userPermissions?.track])
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {

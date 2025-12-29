@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { useAuth } from "@/lib/supabase/auth-context";
+import { useAuthReady } from "@/hooks/useAuthReady";
 import { Users, CheckCircle, Clock, AlertCircle, BookOpen, GraduationCap, Search } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -10,9 +10,8 @@ import { GlobalFilterBar, useGlobalFilters } from "@/components/filters";
 import { getTeachersProgress, type TeacherProgress, type TeacherProgressStats } from "@/lib/api/teacher-progress";
 
 export default function TeacherProgressPage() {
-  const { userPermissions, user } = useAuth();
+  const { userId, permissions: userPermissions } = useAuthReady();
   const { academicYear, termForApi } = useGlobalFilters();
-  const userId = user?.id;
   const [loading, setLoading] = useState(true);
   const [teachers, setTeachers] = useState<TeacherProgress[]>([]);
   const [stats, setStats] = useState<TeacherProgressStats>({

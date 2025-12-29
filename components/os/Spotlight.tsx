@@ -10,14 +10,14 @@ import {
   BookOpen,
   GraduationCap,
 } from "lucide-react";
-import { useAuth } from "@/lib/supabase/auth-context";
+import { useAuthReady } from "@/hooks/useAuthReady";
 import { getClassesByTeacher, Class } from "@/lib/api/classes";
 
 export function Spotlight() {
   const [open, setOpen] = React.useState(false);
   const [classes, setClasses] = React.useState<Class[]>([]);
   const router = useRouter();
-  const { user } = useAuth();
+  const { userId } = useAuthReady();
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -32,10 +32,10 @@ export function Spotlight() {
   }, []);
 
   React.useEffect(() => {
-    if (open && user) {
-      getClassesByTeacher(user.id).then(setClasses).catch(console.error);
+    if (open && userId) {
+      getClassesByTeacher(userId).then(setClasses).catch(console.error);
     }
-  }, [open, user]);
+  }, [open, userId]);
 
   const runCommand = React.useCallback((command: () => void) => {
     setOpen(false);

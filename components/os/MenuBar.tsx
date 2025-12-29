@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useAuth } from "@/lib/supabase/auth-context";
+import { useAuthReady } from "@/hooks/useAuthReady";
 import { useRouter } from "next/navigation";
 
 interface MenuBarProps {
@@ -23,7 +23,7 @@ interface MenuBarProps {
 const TEACHEROS_URL = process.env.NEXT_PUBLIC_INFOHUB_URL || "https://next14-landing.zeabur.app";
 
 export function MenuBar({ onOpenEvents }: MenuBarProps) {
-  const { user, signOut } = useAuth();
+  const { fullName, permissions, signOut } = useAuthReady();
   const router = useRouter();
 
   const handleBackToTeacherOS = () => {
@@ -90,18 +90,18 @@ export function MenuBar({ onOpenEvents }: MenuBarProps) {
               variant="ghost"
               size="sm"
               className="h-6 px-2 hover:bg-[rgb(var(--surface-hover))] rounded text-[13px] font-medium text-text-primary gap-1 transition-colors duration-normal ease-apple"
-              title={user?.user_metadata?.full_name || user?.email || "User"}
+              title={fullName || "User"}
             >
               <User className="w-3.5 h-3.5" />
               <span className="hidden sm:inline max-w-[100px] truncate">
-                {user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User"}
+                {fullName || "User"}
               </span>
               <ChevronDown className="w-3 h-3" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <div className="px-2 py-1.5 text-sm text-text-secondary">
-              {user?.email || "No email"}
+              {fullName || "User"}
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { useAuth } from "@/lib/supabase/auth-context";
+import { useAuthReady } from "@/hooks/useAuthReady";
 import { LayoutDashboard, TrendingUp, Users, GraduationCap, AlertTriangle } from "lucide-react";
 import {
   getHeadTeacherKpis,
@@ -34,9 +34,8 @@ interface ClassSummary {
 }
 
 export default function GradeOverviewPage() {
-  const { userPermissions, user } = useAuth();
+  const { userId, permissions: userPermissions } = useAuthReady();
   const { academicYear, termForApi } = useGlobalFilters();
-  const userId = user?.id;
   const [loading, setLoading] = useState(true);
   const [kpis, setKpis] = useState<HeadTeacherKpis>({
     totalClasses: 0,

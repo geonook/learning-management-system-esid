@@ -12,7 +12,7 @@ import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { supabase } from "@/lib/supabase/client";
-import { useAuth } from "@/lib/supabase/auth-context";
+import { useAuthReady } from "@/hooks/useAuthReady";
 import {
   Target,
   Loader2,
@@ -63,7 +63,7 @@ interface ClassMapStats {
 
 export default function ClassMapPage() {
   const params = useParams();
-  const { user, userPermissions } = useAuth();
+  const { userId, permissions: userPermissions } = useAuthReady();
   const classId = params?.classId as string;
 
   const [loading, setLoading] = useState(true);
@@ -77,7 +77,7 @@ export default function ClassMapPage() {
 
   useEffect(() => {
     async function fetchData() {
-      if (!classId || !user?.id) return;
+      if (!classId || !userId) return;
       setLoading(true);
 
       try {
@@ -107,7 +107,7 @@ export default function ClassMapPage() {
           .from("courses")
           .select("id")
           .eq("class_id", classId)
-          .eq("teacher_id", user.id)
+          .eq("teacher_id", userId)
           .maybeSingle();
 
         setIsMyClass(!!courseData || isAdminOrOffice);
@@ -197,7 +197,7 @@ export default function ClassMapPage() {
     }
 
     fetchData();
-  }, [classId, user?.id, isAdminOrOffice]);
+  }, [classId, userId, isAdminOrOffice]);
 
   // Calculate class statistics
   const stats: ClassMapStats | null = useMemo(() => {

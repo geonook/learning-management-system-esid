@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/supabase/auth-context'
+import { useAuthReady } from '@/hooks/useAuthReady'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 
 interface AuthGuardProps {
@@ -16,7 +16,7 @@ export function AuthGuard({
   requiredRoles = [],
   redirectTo = '/auth/login'
 }: AuthGuardProps) {
-  const { user, userPermissions, loading } = useAuth()
+  const { userId, permissions: userPermissions, isLoading: loading } = useAuthReady()
   const router = useRouter()
   const [authState, setAuthState] = useState<'loading' | 'authorized' | 'unauthorized' | 'unauthenticated' | 'error'>('loading')
   const [error, setError] = useState<string | null>(null)
@@ -27,7 +27,7 @@ export function AuthGuard({
   useEffect(() => {
     // 1. If loading but we already have valid user data, keep showing content
     // This prevents loading flash when onAuthStateChange triggers during page navigation
-    if (loading && user && userPermissions) {
+    if (loading && userId && userPermissions) {
       return
     }
 
@@ -45,7 +45,7 @@ export function AuthGuard({
     }
 
     // 4. No user session - redirect to login
-    if (!user) {
+    if (!userId) {
       wasAuthorizedRef.current = false
       if (authState !== 'unauthenticated') {
         setAuthState('unauthenticated')
@@ -61,7 +61,7 @@ export function AuthGuard({
     // (could be RLS issue or user not in database)
     if (!userPermissions) {
       console.error('[AuthGuard] User session exists but permissions not loaded - possible RLS issue')
-      console.error('[AuthGuard] User ID:', user.id, 'Email:', user.email)
+      console.error('[AuthGuard] User ID:', userId)
       wasAuthorizedRef.current = false
       if (authState !== 'error') {
         setAuthState('error')
@@ -88,7 +88,7 @@ export function AuthGuard({
     if (authState !== 'authorized') {
       setAuthState('authorized')
     }
-  }, [user, userPermissions, loading, router, requiredRoles, redirectTo, authState])
+  }, [userId, userPermissions, loading, router, requiredRoles, redirectTo, authState])
 
   // Error state - show friendly message instead of infinite loading
   if (authState === 'error') {
@@ -123,7 +123,7 @@ export function AuthGuard({
 
   // If we have valid user data with correct role, show content regardless of loading/authState
   // This is the key fix for Phase E2: prevents loading flash when data already exists
-  const hasValidAuth = user && userPermissions &&
+  const hasValidAuth = userId && userPermissions &&
     (requiredRoles.length === 0 || requiredRoles.includes(userPermissions.role))
 
   if (hasValidAuth) {

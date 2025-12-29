@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { useAuth } from "@/lib/supabase/auth-context";
+import { useAuthReady } from "@/hooks/useAuthReady";
 import {
   BookOpen,
   Search,
@@ -22,8 +22,7 @@ import type { ClassProgress, BrowseGradebookStats, ProgressStatus } from "@/type
 import { GlobalFilterBar, useGlobalFilters } from "@/components/filters";
 
 export default function BrowseGradebookPage() {
-  const { user } = useAuth();
-  const userId = user?.id;
+  const { userId } = useAuthReady();
   const { academicYear, termForApi } = useGlobalFilters();
   const [loading, setLoading] = useState(true);
   const [classes, setClasses] = useState<ClassProgress[]>([]);
