@@ -19,7 +19,8 @@ import {
   BarChart3,
   Zap,
   ChevronDown,
-  Target
+  Target,
+  UserCog
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -165,7 +166,7 @@ export function Sidebar() {
             sectionId="admin"
             isExpanded={isExpanded('admin')}
             onToggle={() => toggleSection('admin')}
-            itemCount={4}
+            itemCount={7}
           >
             <SidebarItem
               href="/admin/users"
@@ -180,16 +181,34 @@ export function Sidebar() {
               active={pathname === "/admin/classes"}
             />
             <SidebarItem
+              href="/admin/courses"
+              icon={<BookOpen className="w-4 h-4" />}
+              label="Course Assignments"
+              active={pathname === "/admin/courses"}
+            />
+            <SidebarItem
               href="/admin/roles"
               icon={<Shield className="w-4 h-4" />}
               label="Role Permissions"
               active={pathname === "/admin/roles"}
             />
             <SidebarItem
+              href="/admin/periods"
+              icon={<Calendar className="w-4 h-4" />}
+              label="Period Management"
+              active={pathname === "/admin/periods"}
+            />
+            <SidebarItem
               href="/admin/settings"
               icon={<Settings className="w-4 h-4" />}
               label="System Settings"
               active={pathname === "/admin/settings"}
+            />
+            <SidebarItem
+              href="/admin/impersonate"
+              icon={<UserCog className="w-4 h-4" />}
+              label="Impersonate"
+              active={pathname === "/admin/impersonate"}
             />
           </SidebarSection>
         )}
