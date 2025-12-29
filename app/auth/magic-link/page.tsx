@@ -1,140 +1,117 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase/client"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 
 /**
- * Magic Link Callback Page - Simplified Architecture
+ * Magic Link Callback Page
  *
- * 設計原則：
- * 這個頁面不依賴 AuthContext/useAuthReady，因為我們需要在
- * AuthContext 初始化之前處理 token。
- *
- * 流程：
- * 1. 解析 URL hash 中的 token
- * 2. 呼叫 supabase.auth.setSession() 設定 session
- * 3. 使用 supabase.auth.getUser() 驗證 session 成功
- * 4. 直接用 window.location.href 導向 dashboard（強制完整頁面載入）
- *
- * 為什麼用 window.location.href 而非 router.replace：
- * - router.replace 是 client-side navigation，不會重新載入 AuthContext
- * - window.location.href 強制完整頁面載入，AuthContext 會從新 session 初始化
+ * 使用 onAuthStateChange 監聽方式，而非 await setSession()
+ * 因為 setSession() 的 promise 可能不會 resolve
  */
 export default function MagicLinkPage() {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState("Processing magic link...")
+  const hasProcessed = useRef(false)
+  const hasRedirected = useRef(false)
 
   useEffect(() => {
+    // 監聽 auth 狀態變化
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("[MagicLink] Auth event:", event, session?.user?.email)
+
+      if (hasRedirected.current) return
+
+      if (event === "SIGNED_IN" && session?.user) {
+        hasRedirected.current = true
+        console.log("[MagicLink] SIGNED_IN detected, redirecting...")
+        setStatus("Login successful! Redirecting...")
+
+        // 清除 URL hash
+        window.history.replaceState(null, "", window.location.pathname)
+
+        // 使用完整頁面導航
+        setTimeout(() => {
+          window.location.href = "/dashboard"
+        }, 300)
+      }
+    })
+
+    // 處理 hash token
     const processToken = async () => {
+      if (hasProcessed.current) return
+      hasProcessed.current = true
+
       const hash = window.location.hash
       console.log("[MagicLink] Hash:", hash ? "present" : "empty")
 
-      // Case 1: 沒有 hash token
+      // 沒有 hash token
       if (!hash || !hash.includes("access_token")) {
-        // 檢查是否已有 session（可能是直接訪問這個頁面）
         const { data: { user } } = await supabase.auth.getUser()
-
         if (user) {
-          console.log("[MagicLink] User already logged in, redirecting")
+          console.log("[MagicLink] Already logged in")
           window.location.href = "/dashboard"
         } else {
-          console.log("[MagicLink] No token and no session")
+          console.log("[MagicLink] No token, redirecting to login")
           router.replace("/auth/login")
         }
         return
       }
 
-      // Case 2: 有 hash token，進行處理
-      console.log("[MagicLink] Has hash token, processing...")
       setStatus("Verifying authentication...")
 
-      try {
-        // 解析 token
-        const hashParams = new URLSearchParams(hash.substring(1))
-        const accessToken = hashParams.get("access_token")
-        const refreshToken = hashParams.get("refresh_token")
+      // 解析 token
+      const hashParams = new URLSearchParams(hash.substring(1))
+      const accessToken = hashParams.get("access_token")
+      const refreshToken = hashParams.get("refresh_token")
 
-        console.log("[MagicLink] Parsed tokens:", {
-          hasAccess: !!accessToken,
-          hasRefresh: !!refreshToken,
-          accessTokenLength: accessToken?.length,
-          refreshTokenLength: refreshToken?.length
-        })
+      console.log("[MagicLink] Tokens parsed:", !!accessToken, !!refreshToken)
 
-        if (!accessToken) {
-          console.error("[MagicLink] No access token found in hash")
-          setError("Invalid magic link: missing access token")
-          return
-        }
-
-        console.log("[MagicLink] Access token valid, calling setSession...")
-        // 設定 session
-        console.log("[MagicLink] Calling setSession...")
-
-        let sessionData, sessionError
-        try {
-          const result = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken || ""
-          })
-          sessionData = result.data
-          sessionError = result.error
-          console.log("[MagicLink] setSession completed")
-        } catch (setSessionErr) {
-          console.error("[MagicLink] setSession threw exception:", setSessionErr)
-          setError("Failed to set session: " + (setSessionErr instanceof Error ? setSessionErr.message : "Unknown error"))
-          return
-        }
-
-        console.log("[MagicLink] setSession result:", {
-          hasSession: !!sessionData?.session,
-          hasUser: !!sessionData?.user,
-          error: sessionError?.message
-        })
-
-        if (sessionError) {
-          console.error("[MagicLink] setSession error:", sessionError)
-          setError(sessionError.message)
-          return
-        }
-
-        // 驗證 session 成功
-        console.log("[MagicLink] Calling getUser...")
-        const { data: { user }, error: userError } = await supabase.auth.getUser()
-
-        console.log("[MagicLink] getUser result:", {
-          hasUser: !!user,
-          email: user?.email,
-          error: userError?.message
-        })
-
-        if (userError || !user) {
-          console.error("[MagicLink] getUser error:", userError)
-          setError("Failed to verify session. The link may have expired.")
-          return
-        }
-
-        console.log("[MagicLink] Session verified for:", user.email)
-        setStatus("Login successful! Redirecting...")
-
-        // 關鍵：使用完整頁面導航而非 client-side navigation
-        // 這確保 AuthContext 從新的 session 狀態初始化
-        console.log("[MagicLink] Redirecting to dashboard in 300ms...")
-        setTimeout(() => {
-          console.log("[MagicLink] Executing redirect now")
-          window.location.href = "/dashboard"
-        }, 300)
-
-      } catch (err) {
-        console.error("[MagicLink] Exception:", err)
-        setError(err instanceof Error ? err.message : "An unexpected error occurred")
+      if (!accessToken) {
+        setError("Invalid magic link: missing access token")
+        return
       }
+
+      // 呼叫 setSession（不等待回傳，靠 onAuthStateChange 觸發 redirect）
+      console.log("[MagicLink] Calling setSession (fire and forget)...")
+      supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken || ""
+      }).then(({ error }) => {
+        if (error) {
+          console.error("[MagicLink] setSession error:", error)
+          setError(error.message)
+        }
+      }).catch((err) => {
+        console.error("[MagicLink] setSession exception:", err)
+        setError(err.message)
+      })
+
+      // 設定 timeout 以防 onAuthStateChange 不觸發
+      setTimeout(() => {
+        if (!hasRedirected.current) {
+          console.log("[MagicLink] Timeout - checking session manually")
+          supabase.auth.getUser().then(({ data: { user } }) => {
+            if (user && !hasRedirected.current) {
+              hasRedirected.current = true
+              console.log("[MagicLink] Manual check found user, redirecting")
+              window.location.href = "/dashboard"
+            } else if (!user) {
+              setError("Session verification timed out. Please try again.")
+            }
+          })
+        }
+      }, 5000)
     }
 
     processToken()
+
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [router])
 
   if (error) {
