@@ -8,9 +8,15 @@
  *
  * OPTIMIZED (2025-12): Replaced sequential while loops with parallel Promise.all
  * for 3-5x faster query performance on pages with large datasets.
+ *
+ * Permission Model (2025-12-29):
+ * - Admin: Full access to all statistics
+ * - Office Member: Read-only access to all statistics
+ * - Head/Teacher: No access (use gradeband-statistics.ts or teacher-specific APIs)
  */
 
 import { createClient } from '@/lib/supabase/server';
+import { requireRole } from './permissions';
 import {
   calculateAverage,
   calculateMax,
@@ -60,10 +66,13 @@ interface RawClassData {
 
 /**
  * Get statistics for all classes, optionally filtered
+ *
+ * Permission: Admin/Office only
  */
 export async function getClassStatistics(
   filters?: StatisticsFilters
 ): Promise<ClassStatistics[]> {
+  await requireRole(['admin', 'office_member'])
   const supabase = createClient();
 
   // 1. Fetch all classes
@@ -368,11 +377,14 @@ export async function getClassStatistics(
 /**
  * Get statistics aggregated by grade level
  * Fetches data grade-by-grade to avoid querying too many students at once
+ *
+ * Permission: Admin/Office only
  */
 export async function getGradeLevelStatistics(
   courseType: CourseType,
   filters?: { academic_year?: string; term?: 1 | 2 | 3 | 4 }
 ): Promise<GradeLevelStatistics[]> {
+  await requireRole(['admin', 'office_member'])
   // Fetch all grades in PARALLEL using Promise.all for 3-5x speedup
   // Instead of sequential 6 queries, we run them concurrently
   const grades = [1, 2, 3, 4, 5, 6];
@@ -440,11 +452,14 @@ export async function getGradeLevelStatistics(
 
 /**
  * Get grade level summary (simplified view)
+ *
+ * Permission: Admin/Office only
  */
 export async function getGradeLevelSummary(
   courseType: CourseType,
   filters?: { academic_year?: string; term?: 1 | 2 | 3 | 4 }
 ): Promise<GradeLevelSummary[]> {
+  await requireRole(['admin', 'office_member'])
   const stats = await getGradeLevelStatistics(courseType, filters);
 
   return stats.map(s => ({
@@ -463,10 +478,13 @@ export async function getGradeLevelSummary(
 
 /**
  * Get class rankings within a grade level and course type
+ *
+ * Permission: Admin/Office only
  */
 export async function getClassRanking(
   filters: RankingFilters
 ): Promise<{ rankings: ClassRanking[]; gradeAverage: GradeLevelAverage }> {
+  await requireRole(['admin', 'office_member'])
   const { grade_level, course_type, metric = 'term_avg', academic_year, term } = filters;
 
   // Get class statistics for this grade level and course type
@@ -539,10 +557,13 @@ export async function getClassRanking(
 
 /**
  * Get all student grades (raw data)
+ *
+ * Permission: Admin/Office only
  */
 export async function getStudentGrades(
   filters?: StatisticsFilters
 ): Promise<StudentGradeRow[]> {
+  await requireRole(['admin', 'office_member'])
   const supabase = createClient();
 
   // 1. Fetch students with their classes
@@ -836,9 +857,12 @@ export interface QuickStats {
 /**
  * Get quick overview statistics for the stats home page
  * Returns counts that are always available (no grades dependency)
+ *
+ * Permission: Admin/Office only
  * @param filters - Optional filters including academic_year
  */
 export async function getQuickStats(filters?: { academic_year?: string }): Promise<QuickStats> {
+  await requireRole(['admin', 'office_member'])
   const supabase = createClient();
 
   // Build class query with academic_year filter
@@ -880,8 +904,11 @@ export async function getQuickStats(filters?: { academic_year?: string }): Promi
 
 /**
  * Get all available grade levels in the system
+ *
+ * Permission: Admin/Office only
  */
 export async function getAvailableGradeLevels(): Promise<string[]> {
+  await requireRole(['admin', 'office_member'])
   const supabase = createClient();
 
   const { data, error } = await supabase

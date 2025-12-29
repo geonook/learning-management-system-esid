@@ -107,8 +107,14 @@ export async function getTeachersByType(teacherType: TeacherType) {
   return data
 }
 
-// Get head teacher by grade band and course type (new grade band system)
+/**
+ * Get head teacher by grade band and course type (new grade band system)
+ *
+ * Permission: All authenticated users
+ */
 export async function getHeadByGradeBand(gradeBand: string, courseType: TeacherType) {
+  await requireAuth()
+
   const { data, error } = await supabase
     .from('users')
     .select('*')
@@ -129,8 +135,14 @@ export async function getHeadByGradeBand(gradeBand: string, courseType: TeacherT
   return data
 }
 
-// Get single user by ID
+/**
+ * Get single user by ID
+ *
+ * Permission: All authenticated users (profile viewing)
+ */
 export async function getUser(id: string) {
+  await requireAuth()
+
   const { data, error } = await supabase
     .from('users')
     .select('*')
@@ -145,8 +157,14 @@ export async function getUser(id: string) {
   return data
 }
 
-// Get user by email
+/**
+ * Get user by email
+ *
+ * Permission: Admin only (email lookup is sensitive)
+ */
 export async function getUserByEmail(email: string) {
+  await requireRole(['admin'])
+
   const { data, error } = await supabase
     .from('users')
     .select('*')
@@ -246,8 +264,14 @@ export async function deleteUser(id: string) {
   return true
 }
 
-// Get user statistics
+/**
+ * Get user statistics
+ *
+ * Permission: Admin/Office only (aggregate statistics)
+ */
 export async function getUserStatistics() {
+  await requireRole(['admin', 'office_member'])
+
   const { data, error } = await supabase
     .from('users')
     .select('role, teacher_type')
@@ -343,12 +367,18 @@ export type TeacherWithCourses = User & {
   assigned_classes: string[]  // Class names
 }
 
-// Get teachers with their course assignments for Browse page
+/**
+ * Get teachers with their course assignments for Browse page
+ *
+ * Permission: Admin/Office/Head only
+ */
 export async function getTeachersWithCourses(options?: {
   teacherType?: TeacherType
   search?: string
   academicYear?: string
 }): Promise<TeacherWithCourses[]> {
+  await requireRole(['admin', 'office_member', 'head'])
+
   // Build query for teachers (role = 'teacher' or 'head')
   let query = supabase
     .from('users')
@@ -440,7 +470,11 @@ export async function getTeachersWithCourses(options?: {
   return result
 }
 
-// Get teacher type statistics
+/**
+ * Get teacher type statistics
+ *
+ * Permission: Admin/Office only
+ */
 export async function getTeacherTypeStatistics(): Promise<{
   total: number
   lt: number
@@ -448,6 +482,8 @@ export async function getTeacherTypeStatistics(): Promise<{
   kcfs: number
   head: number
 }> {
+  await requireRole(['admin', 'office_member'])
+
   const { data, error } = await supabase
     .from('users')
     .select('role, teacher_type')
@@ -482,8 +518,14 @@ export async function getTeacherTypeStatistics(): Promise<{
   return stats
 }
 
-// Get available teachers for class assignment
+/**
+ * Get available teachers for class assignment
+ *
+ * Permission: Admin only (for assigning teachers to courses)
+ */
 export async function getAvailableTeachers(grade?: number, track?: TrackType) {
+  await requireRole(['admin'])
+
   let query = supabase
     .from('users')
     .select('*')

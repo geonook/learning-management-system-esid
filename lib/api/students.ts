@@ -137,11 +137,16 @@ export async function getStudentsByClass(classId: string) {
   return data as Student[]
 }
 
-// Get students by grade and track (simplified)
+/**
+ * Get students by grade and track (simplified)
+ *
+ * Permission: Authenticated users only
+ */
 export async function getStudentsByGradeTrack(
   grade: number,
   track: 'local' | 'international'
 ) {
+  await requireAuth()
   const supabase = createClient()
   
   const { data, error } = await supabase
@@ -160,8 +165,13 @@ export async function getStudentsByGradeTrack(
   return data as Student[]
 }
 
-// Get single student by ID (simplified)
+/**
+ * Get single student by ID (simplified)
+ *
+ * Permission: Authenticated users only
+ */
 export async function getStudent(id: string) {
+  await requireAuth()
   const supabase = createClient()
   
   const { data, error } = await supabase
@@ -178,8 +188,13 @@ export async function getStudent(id: string) {
   return data as Student
 }
 
-// Get student by student ID (external ID) - simplified
+/**
+ * Get student by student ID (external ID) - simplified
+ *
+ * Permission: Authenticated users only
+ */
 export async function getStudentByStudentId(studentId: string) {
+  await requireAuth()
   const supabase = createClient()
   
   const { data, error } = await supabase
@@ -384,7 +399,11 @@ export interface PaginatedStudents {
   totalPages: number
 }
 
-// Get students with pagination and filters for Browse page
+/**
+ * Get students with pagination and filters for Browse page
+ *
+ * Permission: Authenticated users only
+ */
 export async function getStudentsWithPagination(options?: {
   page?: number
   pageSize?: number
@@ -392,6 +411,7 @@ export async function getStudentsWithPagination(options?: {
   level?: string  // e.g., "E1", "E2", "E3" (extracted from level field like "G1E1")
   search?: string
 }): Promise<PaginatedStudents> {
+  await requireAuth()
   const supabase = createClient()
   const page = options?.page || 1
   const pageSize = options?.pageSize || 50
@@ -452,13 +472,18 @@ export async function getStudentsWithPagination(options?: {
   }
 }
 
-// Get level statistics for stats display
+/**
+ * Get level statistics for stats display
+ *
+ * Permission: Authenticated users only
+ */
 export async function getLevelStatistics(): Promise<{
   total: number
   e1: number
   e2: number
   e3: number
 }> {
+  await requireAuth()
   const supabase = createClient()
 
   const { data, error } = await supabase
@@ -487,8 +512,13 @@ export async function getLevelStatistics(): Promise<{
   return stats
 }
 
-// Get student statistics
+/**
+ * Get student statistics
+ *
+ * Permission: Authenticated users only
+ */
 export async function getStudentStatistics() {
+  await requireAuth()
   const supabase = createClient()
   
   const { data, error } = await supabase
@@ -612,12 +642,15 @@ export async function promoteStudents(fromGrade: number, toGrade: number) {
 
 /**
  * Get students with their course enrollment details
+ *
+ * Permission: Authenticated users only
  */
 export async function getStudentsWithCourses(
   grade?: number,
   track?: 'local' | 'international',
   classId?: string
 ): Promise<StudentWithCourses[]> {
+  await requireAuth()
   const supabase = createClient()
 
   try {
@@ -685,6 +718,8 @@ export async function getStudentsWithCourses(
 
 /**
  * Get course assignment summary for Head Teacher dashboard
+ *
+ * Permission: Authenticated users only
  */
 export async function getCourseAssignmentSummary(
   grade: number,
@@ -703,6 +738,7 @@ export async function getCourseAssignmentSummary(
     }>
   }>
 }> {
+  await requireAuth()
   const supabase = createClient()
 
   try {
@@ -775,13 +811,14 @@ export async function getCourseAssignmentSummary(
 
 /**
  * Bulk assign students to a class (course enrollment is automatic)
+ *
+ * Permission: Admin only
  */
 export async function bulkAssignStudentsToClass(
   studentIds: string[],
   classId: string
 ): Promise<Student[]> {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const supabase = createClient()
+  await requireRole(['admin'])
 
   try {
     const supabase = createClient()
@@ -809,12 +846,13 @@ export async function bulkAssignStudentsToClass(
 
 /**
  * Remove students from class (removes from all courses in class)
+ *
+ * Permission: Admin only
  */
 export async function bulkRemoveStudentsFromClass(
   studentIds: string[]
 ): Promise<Student[]> {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const supabase = createClient()
+  await requireRole(['admin'])
 
   try {
     const supabase = createClient()
@@ -842,13 +880,19 @@ export async function bulkRemoveStudentsFromClass(
 
 /**
  * Get unassigned students by grade and track
+ *
+ * Permission: Admin and Head only
  */
 export async function getUnassignedStudents(
   grade: number,
   track: 'local' | 'international'
 ): Promise<Student[]> {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const supabase = createClient()
+  const user = await requireAuth()
+
+  // Heads can only access their grade band
+  if (user.role === 'head' && user.gradeBand && !gradeInBand(grade, user.gradeBand)) {
+    return []
+  }
 
   try {
     const supabase = createClient()
@@ -876,6 +920,8 @@ export async function getUnassignedStudents(
 
 /**
  * Get course enrollment statistics for admin dashboard
+ *
+ * Permission: Admin only
  */
 export async function getCourseEnrollmentStats(): Promise<{
   totalStudents: number
@@ -886,6 +932,7 @@ export async function getCourseEnrollmentStats(): Promise<{
   }>
   byCourseType: Record<'LT' | 'IT' | 'KCFS', number>
 }> {
+  await requireRole(['admin'])
   const supabase = createClient()
 
   try {

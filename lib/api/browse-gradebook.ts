@@ -8,9 +8,20 @@
  * - LT/IT: Per Grade × Level expectations from gradebook_expectations table
  * - KCFS: Grade-specific category counts (G1-2: 4, G3-4: 5, G5-6: 6)
  * - Falls back to default 13 for LT/IT if no expectation is set
+ *
+ * Permission Model (2025-12-29):
+ * - Admin: Full access to all classes
+ * - Office Member: Read-only access to all classes
+ * - Head: Read classes in their grade band only
+ * - Teacher: No access (use class-specific APIs)
  */
 
 import { supabase } from '@/lib/supabase/client';
+import {
+  requireRole,
+  gradeInBand,
+  type CurrentUser
+} from './permissions';
 import type {
   ClassProgress,
   BrowseGradebookStats,
@@ -65,10 +76,16 @@ function determineStatus(ltProgress: number, itProgress: number, kcfsProgress: n
 
 /**
  * Fetch all class progress data
+ *
+ * Permission: Admin/Office/Head only
+ * - Head: Only sees classes in their grade band
  */
 export async function getClassesProgress(
   filters?: BrowseGradebookFilters
 ): Promise<{ data: ClassProgress[]; stats: BrowseGradebookStats }> {
+  // Require admin, office_member, or head role
+  const user = await requireRole(['admin', 'office_member', 'head'])
+
   // 1. Fetch all classes with level info
   let classesQuery = supabase
     .from('classes')
@@ -316,18 +333,24 @@ export async function getClassesProgress(
     };
   });
 
-  // 8. Apply status filter if provided
-  let filteredData = classProgressList;
-  if (filters?.status) {
-    filteredData = classProgressList.filter(c => c.overall_status === filters.status);
+  // 8. Apply role-based filtering for heads
+  let roleFilteredData = classProgressList;
+  if (user.role === 'head' && user.gradeBand) {
+    roleFilteredData = classProgressList.filter(c => gradeInBand(c.grade, user.gradeBand!));
   }
 
-  // 9. Calculate stats (from unfiltered data)
+  // 9. Apply status filter if provided
+  let filteredData = roleFilteredData;
+  if (filters?.status) {
+    filteredData = roleFilteredData.filter(c => c.overall_status === filters.status);
+  }
+
+  // 10. Calculate stats (from role-filtered data, not status-filtered)
   const stats: BrowseGradebookStats = {
-    total_classes: classProgressList.length,
-    on_track: classProgressList.filter(c => c.overall_status === 'on_track').length,
-    behind: classProgressList.filter(c => c.overall_status === 'behind').length,
-    not_started: classProgressList.filter(c => c.overall_status === 'not_started').length,
+    total_classes: roleFilteredData.length,
+    on_track: roleFilteredData.filter(c => c.overall_status === 'on_track').length,
+    behind: roleFilteredData.filter(c => c.overall_status === 'behind').length,
+    not_started: roleFilteredData.filter(c => c.overall_status === 'not_started').length,
   };
 
   return { data: filteredData, stats };

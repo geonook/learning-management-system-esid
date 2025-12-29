@@ -1,6 +1,17 @@
+/**
+ * Score and Exam API
+ *
+ * Permission Model (2025-12-29):
+ * - Admin: Full access to all scores/exams
+ * - Office Member: Read-only access to all scores
+ * - Head: Read scores in their grade band + track
+ * - Teacher: Full access to own course scores only
+ */
+
 import { supabase } from '@/lib/supabase/client'
 import { Database } from '@/types/database'
 import { calculateGrades } from '@/lib/grade/calculations'
+import { requireAuth, requireRole } from './permissions'
 
 export type Score = Database['public']['Tables']['scores']['Row']
 export type ScoreInsert = Database['public']['Tables']['scores']['Insert']
@@ -169,8 +180,16 @@ export async function getTeacherCourses() {
   return coursesWithCounts
 }
 
-// Get scores for a specific course
+/**
+ * Get scores for a specific course
+ *
+ * Permission: Authenticated users only
+ * - Teacher: Must own the course (RLS enforced)
+ * - Admin/Head/Office: Can read all
+ */
 export async function getScoresByCourse(courseId: string) {
+  await requireAuth()
+
   const { data, error } = await supabase
     .from('scores')
     .select(`
@@ -198,8 +217,14 @@ export async function getScoresByCourse(courseId: string) {
   return data as ScoreWithDetails[]
 }
 
-// Get all students enrolled in a course with their scores
+/**
+ * Get all students enrolled in a course with their scores
+ *
+ * Permission: Authenticated users only
+ */
 export async function getCourseStudentsWithScores(courseId: string) {
+  await requireAuth()
+
   const { data, error } = await supabase
     .from('student_courses')
     .select(`
@@ -258,15 +283,20 @@ export async function getCourseStudentsWithScores(courseId: string) {
   }))
 }
 
-// Update score with course_id (simplified for direct course access)
-export async function upsertScoreWithCourse(scoreData: { 
+/**
+ * Update score with course_id (simplified for direct course access)
+ *
+ * Permission: Admin or Teacher who owns the course
+ */
+export async function upsertScoreWithCourse(scoreData: {
   student_id: string
-  course_id: string 
+  course_id: string
   assessment_code: string
   score: number
   entered_by: string
   entered_at: string
 }) {
+  await requireRole(['admin', 'teacher'])
   // First, find or create a default exam for this course
   let examId = null
   const defaultExamName = `${scoreData.assessment_code} Assessment`
@@ -330,8 +360,13 @@ export async function upsertScoreWithCourse(scoreData: {
   return data as Score
 }
 
-// Bulk upsert scores with course_id
+/**
+ * Bulk upsert scores with course_id
+ *
+ * Permission: Admin or Teacher who owns the course
+ */
 export async function upsertScoresBulkWithCourse(scoresData: (ScoreInsert & { course_id: string })[]) {
+  await requireRole(['admin', 'teacher'])
   const scoresWithTimestamp = scoresData.map(score => ({
     ...score,
     updated_at: new Date().toISOString(),
@@ -358,8 +393,14 @@ export async function upsertScoresBulkWithCourse(scoresData: (ScoreInsert & { co
 
 // Legacy Score-related functions (maintained for compatibility)
 
-// Get scores for a specific exam (simplified)
+/**
+ * Get scores for a specific exam (simplified)
+ *
+ * Permission: Authenticated users only
+ */
 export async function getScoresByExam(examId: string) {
+  await requireAuth()
+
   const { data, error } = await supabase
     .from('scores')
     .select('*')
@@ -374,8 +415,14 @@ export async function getScoresByExam(examId: string) {
   return data as Score[]
 }
 
-// Get scores for a specific student (simplified)
+/**
+ * Get scores for a specific student (simplified)
+ *
+ * Permission: Authenticated users only
+ */
 export async function getScoresByStudent(studentId: string) {
+  await requireAuth()
+
   const { data, error } = await supabase
     .from('scores')
     .select('*')
@@ -390,8 +437,13 @@ export async function getScoresByStudent(studentId: string) {
   return data as Score[]
 }
 
-// Get all scores for a class (simplified - via course → exam lookup)
+/**
+ * Get all scores for a class (simplified - via course → exam lookup)
+ *
+ * Permission: Authenticated users only
+ */
 export async function getScoresByClass(classId: string) {
+  await requireAuth()
   // First get course IDs for this class
   const { data: courses } = await supabase
     .from('courses')
@@ -430,8 +482,13 @@ export async function getScoresByClass(classId: string) {
   return data as Score[]
 }
 
-// Create or update a single score (simplified)
+/**
+ * Create or update a single score (simplified)
+ *
+ * Permission: Admin or Teacher who owns the course
+ */
 export async function upsertScore(scoreData: ScoreInsert) {
+  await requireRole(['admin', 'teacher'])
   const { data, error } = await supabase
     .from('scores')
     .upsert(
@@ -455,8 +512,13 @@ export async function upsertScore(scoreData: ScoreInsert) {
   return data as Score
 }
 
-// Bulk upsert scores (simplified)
+/**
+ * Bulk upsert scores (simplified)
+ *
+ * Permission: Admin or Teacher who owns the course
+ */
 export async function upsertScoresBulk(scoresData: ScoreInsert[]) {
+  await requireRole(['admin', 'teacher'])
   const scoresWithTimestamp = scoresData.map(score => ({
     ...score,
     updated_at: new Date().toISOString(),
@@ -481,8 +543,13 @@ export async function upsertScoresBulk(scoresData: ScoreInsert[]) {
   return data as Score[]
 }
 
-// Delete a score
+/**
+ * Delete a score
+ *
+ * Permission: Admin or Teacher who owns the course
+ */
 export async function deleteScore(id: string) {
+  await requireRole(['admin', 'teacher'])
   const { error } = await supabase
     .from('scores')
     .delete()
@@ -496,8 +563,13 @@ export async function deleteScore(id: string) {
   return true
 }
 
-// Get calculated grades for a student
+/**
+ * Get calculated grades for a student
+ *
+ * Permission: Authenticated users only
+ */
 export async function getStudentGrades(studentId: string, examId?: string) {
+  await requireAuth()
   let query = supabase
     .from('scores')
     .select('assessment_code, score')
@@ -535,8 +607,13 @@ export async function getStudentGrades(studentId: string, examId?: string) {
 
 // Exam-related functions
 
-// Get all exams (simplified version)
+/**
+ * Get all exams (simplified version)
+ *
+ * Permission: Authenticated users only
+ */
 export async function getExams() {
+  await requireAuth()
   const { data, error } = await supabase
     .from('exams')
     .select('*')
@@ -550,8 +627,13 @@ export async function getExams() {
   return data as Exam[]
 }
 
-// Get exams by class (simplified)
+/**
+ * Get exams by class (simplified)
+ *
+ * Permission: Authenticated users only
+ */
 export async function getExamsByClass(classId: string) {
+  await requireAuth()
   const { data, error } = await supabase
     .from('exams')
     .select('*')
@@ -566,8 +648,13 @@ export async function getExamsByClass(classId: string) {
   return data as Exam[]
 }
 
-// Get single exam (simplified)
+/**
+ * Get single exam (simplified)
+ *
+ * Permission: Authenticated users only
+ */
 export async function getExam(id: string) {
+  await requireAuth()
   const { data, error } = await supabase
     .from('exams')
     .select('*')
@@ -582,8 +669,13 @@ export async function getExam(id: string) {
   return data as Exam
 }
 
-// Create exam (simplified)
+/**
+ * Create exam (simplified)
+ *
+ * Permission: Admin or Teacher
+ */
 export async function createExam(examData: ExamInsert) {
+  await requireRole(['admin', 'teacher'])
   const { data, error } = await supabase
     .from('exams')
     .insert(examData)
@@ -598,8 +690,13 @@ export async function createExam(examData: ExamInsert) {
   return data as Exam
 }
 
-// Update exam (simplified)
+/**
+ * Update exam (simplified)
+ *
+ * Permission: Admin or Teacher who owns the exam
+ */
 export async function updateExam(id: string, updates: ExamUpdate) {
+  await requireRole(['admin', 'teacher'])
   const { data, error } = await supabase
     .from('exams')
     .update({
@@ -618,8 +715,13 @@ export async function updateExam(id: string, updates: ExamUpdate) {
   return data as Exam
 }
 
-// Delete exam (and all associated scores)
+/**
+ * Delete exam (and all associated scores)
+ *
+ * Permission: Admin or Teacher who owns the exam
+ */
 export async function deleteExam(id: string) {
+  await requireRole(['admin', 'teacher'])
   const { error } = await supabase
     .from('exams')
     .delete()
@@ -633,13 +735,23 @@ export async function deleteExam(id: string) {
   return true
 }
 
-// Publish/unpublish exam
+/**
+ * Publish/unpublish exam
+ *
+ * Permission: Admin or Teacher who owns the exam
+ */
 export async function toggleExamPublished(id: string, isPublished: boolean) {
+  // No additional auth check needed - updateExam already checks
   return updateExam(id, { is_published: isPublished })
 }
 
-// Get assessment codes
+/**
+ * Get assessment codes
+ *
+ * Permission: Authenticated users only
+ */
 export async function getAssessmentCodes() {
+  await requireAuth()
   const { data, error } = await supabase
     .from('assessment_codes')
     .select('*')

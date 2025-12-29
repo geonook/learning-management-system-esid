@@ -2,11 +2,23 @@
  * ⚠️ LEGACY WARNING: This file uses track-based filtering
  * For course-based class queries in grade entry, use course APIs from /lib/api/scores.ts
  * This API is maintained for general class management features only
+ *
+ * Permission Model (2025-12-29):
+ * - Admin: Full access to all classes
+ * - Office Member: Read-only access to all classes
+ * - Head: Read classes in their grade band only
+ * - Teacher: Read classes they teach only
  */
 
 import { supabase } from '@/lib/supabase/client'
 import { Database } from '@/types/database'
 import { getCurrentAcademicYear } from '@/types/academic-year'
+import {
+  requireAuth,
+  requireRole,
+  gradeInBand,
+  type CurrentUser
+} from './permissions'
 
 export type Class = Database['public']['Tables']['classes']['Row']
 export type ClassInsert = Database['public']['Tables']['classes']['Insert']
@@ -21,10 +33,18 @@ export type ClassWithTeacher = Class & {
   }
 }
 
-// Get all classes for current academic year (simplified version)
+/**
+ * Get all classes for current academic year
+ *
+ * Permission: All authenticated users can read (RLS handles auth)
+ * - Admin/Office: All classes
+ * - Head: Only classes in their grade band
+ * - Teacher: Only classes they teach
+ */
 export async function getClasses(academicYear?: string) {
+  const user = await requireAuth()
   const currentYear = academicYear || new Date().getFullYear().toString()
-  
+
   const { data, error } = await supabase
     .from('classes')
     .select('*')
@@ -38,17 +58,39 @@ export async function getClasses(academicYear?: string) {
     throw new Error(`Failed to fetch classes: ${error.message}`)
   }
 
-  return data as Class[]
+  // Filter by role
+  let filteredData = data as Class[]
+  if (user.role === 'head' && user.gradeBand) {
+    filteredData = filteredData.filter(cls => gradeInBand(cls.grade, user.gradeBand!))
+  } else if (user.role === 'teacher') {
+    // Teachers need to fetch via getClassesByTeacher
+    return getClassesByTeacher(user.id, academicYear)
+  }
+
+  return filteredData
 }
 
-// Get classes by grade and track (simplified)
+/**
+ * Get classes by grade and track
+ *
+ * Permission: All authenticated users can read (RLS handles auth)
+ * - Admin/Office: All matching classes
+ * - Head: Only if grade is in their grade band
+ * - Teacher: Not used (teachers access via course)
+ */
 export async function getClassesByGradeTrack(
   grade: number,
   track: 'local' | 'international',
   academicYear?: string
 ) {
+  const user = await requireAuth()
   const currentYear = academicYear || new Date().getFullYear().toString()
-  
+
+  // Check if head has access to this grade
+  if (user.role === 'head' && user.gradeBand && !gradeInBand(grade, user.gradeBand)) {
+    return [] // Head cannot access grades outside their band
+  }
+
   const { data, error } = await supabase
     .from('classes')
     .select('*')
@@ -66,11 +108,18 @@ export async function getClassesByGradeTrack(
   return data as Class[]
 }
 
-// Get classes by teacher ID (via courses table - "one class, three teachers" architecture)
+/**
+ * Get classes by teacher ID (via courses table - "one class, three teachers" architecture)
+ *
+ * Permission: Must be authenticated
+ * - Admin/Office: Can query any teacher
+ * - Teacher: Can only query own classes (enforced by caller)
+ */
 export async function getClassesByTeacher(
   teacherId: string,
   academicYear?: string
 ) {
+  await requireAuth()
   const currentYear = academicYear || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`
 
   // Query classes through courses table (teacher_id is in courses, not classes)
@@ -119,12 +168,19 @@ export type ClassWithCourseType = Class & {
   course_id: string
 }
 
-// Get teaching classes for a user (Teacher or Head Teacher)
-// Returns classes with course type information for each course the user teaches
+/**
+ * Get teaching classes for a user (Teacher or Head Teacher)
+ * Returns classes with course type information for each course the user teaches
+ *
+ * Permission: Must be authenticated
+ * - Admin/Office: Can query any user
+ * - Teacher/Head: Can only query own classes (verified by caller or RLS)
+ */
 export async function getTeachingClasses(
   userId: string,
   academicYear?: string
 ): Promise<ClassWithCourseType[]> {
+  await requireAuth()
   const currentYear = academicYear || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`
 
   // Query courses with class information
@@ -169,12 +225,26 @@ export async function getTeachingClasses(
   })
 }
 
-// Get classes by grade band (for Head Teachers)
-// grade_band can be: "1", "2", "3-4", "5-6", "1-2", "1-6"
+/**
+ * Get classes by grade band (for Head Teachers)
+ * grade_band can be: "1", "2", "3-4", "5-6", "1-2", "1-6"
+ *
+ * Permission: Must be authenticated
+ * - Admin/Office: Can query any grade band
+ * - Head: Can only query own grade band
+ * - Teacher: Not typically used
+ */
 export async function getClassesByGradeBand(
   gradeBand: string,
   academicYear?: string
 ) {
+  const user = await requireAuth()
+
+  // Heads can only query their own grade band
+  if (user.role === 'head' && user.gradeBand && user.gradeBand !== gradeBand) {
+    return [] // Head cannot access grades outside their band
+  }
+
   const currentYear = academicYear || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`
 
   // Parse grade band to get grade numbers
@@ -208,8 +278,15 @@ export async function getClassesByGradeBand(
   return data as Class[]
 }
 
-// Get single class by ID (simplified)
+/**
+ * Get single class by ID
+ *
+ * Permission: All authenticated users can read (RLS handles auth)
+ * Access check is performed by RLS at database level
+ */
 export async function getClass(id: string) {
+  await requireAuth()
+
   const { data, error } = await supabase
     .from('classes')
     .select('*')
@@ -224,8 +301,14 @@ export async function getClass(id: string) {
   return data as Class
 }
 
-// Create new class (simplified)
+/**
+ * Create new class
+ *
+ * Permission: Admin only
+ */
 export async function createClass(classData: ClassInsert) {
+  await requireRole(['admin'])
+
   const { data, error } = await supabase
     .from('classes')
     .insert(classData)
@@ -240,8 +323,14 @@ export async function createClass(classData: ClassInsert) {
   return data as Class
 }
 
-// Update class (simplified)
+/**
+ * Update class
+ *
+ * Permission: Admin only
+ */
 export async function updateClass(id: string, updates: ClassUpdate) {
+  await requireRole(['admin'])
+
   const { data, error } = await supabase
     .from('classes')
     .update({
@@ -260,8 +349,14 @@ export async function updateClass(id: string, updates: ClassUpdate) {
   return data as Class
 }
 
-// Soft delete class (mark as inactive)
+/**
+ * Soft delete class (mark as inactive)
+ *
+ * Permission: Admin only
+ */
 export async function deleteClass(id: string) {
+  await requireRole(['admin'])
+
   const { error } = await supabase
     .from('classes')
     .update({
@@ -278,8 +373,14 @@ export async function deleteClass(id: string) {
   return true
 }
 
-// Get all academic years
+/**
+ * Get all academic years
+ *
+ * Permission: All authenticated users can read
+ */
 export async function getAcademicYears() {
+  await requireAuth()
+
   const { data, error } = await supabase
     .from('classes')
     .select('academic_year')
@@ -309,12 +410,20 @@ export type ClassWithDetails = Class & {
   }>
 }
 
-// Get all classes with student counts and course teachers for Browse page
+/**
+ * Get all classes with student counts and course teachers for Browse page
+ *
+ * Permission: Authenticated users only
+ * - Admin/Office: All classes
+ * - Head: Only classes in their grade band
+ * - Teacher: Only classes they teach
+ */
 export async function getClassesWithDetails(options?: {
   academicYear?: string
   grade?: number
   search?: string
 }): Promise<ClassWithDetails[]> {
+  const user = await requireAuth()
   const academicYear = options?.academicYear || getCurrentAcademicYear()
 
   // Build query for classes
@@ -411,19 +520,37 @@ export async function getClassesWithDetails(options?: {
   }
 
   // Combine all data
-  const result: ClassWithDetails[] = classes.map(cls => ({
+  let result: ClassWithDetails[] = classes.map(cls => ({
     ...cls,
     student_count: countMap[cls.id] || 0,
     courses: courseMap[cls.id] || []
   }))
 
+  // Apply role-based filtering
+  if (user.role === 'head' && user.gradeBand) {
+    result = result.filter(cls => gradeInBand(cls.grade, user.gradeBand!))
+  } else if (user.role === 'teacher') {
+    // Teachers only see classes where they teach a course
+    result = result.filter(cls =>
+      cls.courses.some(course => course.teacher?.id === user.id)
+    )
+  }
+
   return result
 }
 
-// Get class statistics
+/**
+ * Get class statistics
+ *
+ * Permission: Authenticated users only
+ * - Admin/Office: Full statistics
+ * - Head: Statistics for their grade band only
+ * - Teacher: Not typically used (limited view)
+ */
 export async function getClassStatistics(academicYear?: string) {
+  const user = await requireAuth()
   const currentYear = academicYear || new Date().getFullYear().toString()
-  
+
   const { data, error } = await supabase
     .from('classes')
     .select('grade, track')
@@ -435,8 +562,14 @@ export async function getClassStatistics(academicYear?: string) {
     throw new Error(`Failed to fetch class statistics: ${error.message}`)
   }
 
+  // Apply role-based filtering
+  let filteredData = data
+  if (user.role === 'head' && user.gradeBand) {
+    filteredData = data.filter(cls => gradeInBand(cls.grade, user.gradeBand!))
+  }
+
   const stats = {
-    total: data.length,
+    total: filteredData.length,
     byGrade: {} as Record<number, number>,
     byTrack: {
       local: 0,
@@ -444,7 +577,7 @@ export async function getClassStatistics(academicYear?: string) {
     }
   }
 
-  data.forEach(cls => {
+  filteredData.forEach(cls => {
     stats.byGrade[cls.grade] = (stats.byGrade[cls.grade] || 0) + 1
     if (cls.track === 'local' || cls.track === 'international') {
       stats.byTrack[cls.track as 'local' | 'international'] += 1

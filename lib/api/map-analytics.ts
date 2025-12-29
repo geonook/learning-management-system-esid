@@ -3,9 +3,14 @@
  *
  * 提供 MAP 統計分析功能，用於 /browse/stats/map 頁面
  * 依據 lms-map-analytics skill 的 queries.md
+ *
+ * Permission Model (2025-12-29):
+ * - All authenticated users can read MAP analytics
+ * - Data is filtered by grade if Head role with grade band
  */
 
 import { createClient } from "@/lib/supabase/client";
+import { requireAuth } from './permissions';
 import {
   classifyBenchmark,
   calculateMapAverage,
@@ -96,8 +101,11 @@ export interface MapAnalyticsChartData {
 
 /**
  * 取得所有可用的 term_tested 值（排序後）
+ *
+ * Permission: All authenticated users
  */
 export async function getAvailableTerms(): Promise<string[]> {
+  await requireAuth()
   const supabase = createClient();
 
   const { data, error } = await supabase
@@ -121,10 +129,13 @@ export async function getAvailableTerms(): Promise<string[]> {
 
 /**
  * 取得群組平均 (按 Grade × English Level × Course × Term)
+ *
+ * Permission: All authenticated users
  */
 export async function getMapGroupAverages(params: {
   grade?: number;
 }): Promise<MapGroupAverage[]> {
+  await requireAuth()
   const supabase = createClient();
 
   // 查詢 MAP 資料，JOIN students 取得 level (英文等級)
@@ -263,11 +274,14 @@ export async function getMapGroupAverages(params: {
 
 /**
  * 取得 Benchmark 分佈 (基於 Spring Average)
+ *
+ * Permission: All authenticated users
  */
 export async function getBenchmarkDistribution(params: {
   grade: number;
   termTested?: string; // 預設使用最近的 Spring
 }): Promise<BenchmarkDistribution | null> {
+  await requireAuth()
   const supabase = createClient();
 
   // 決定要使用的 term
@@ -359,10 +373,13 @@ export async function getBenchmarkDistribution(params: {
 
 /**
  * 取得圖表資料 (Growth Trend Line Chart)
+ *
+ * Permission: All authenticated users
  */
 export async function getMapChartData(params: {
   grade: number;
 }): Promise<MapAnalyticsChartData[]> {
+  await requireAuth()
   const groupAverages = await getMapGroupAverages({ grade: params.grade });
 
   if (groupAverages.length === 0) return [];
@@ -443,10 +460,13 @@ export async function getMapChartData(params: {
 
 /**
  * 取得 Overview Table 資料
+ *
+ * Permission: All authenticated users
  */
 export async function getOverviewTableData(params: {
   grade: number;
 }): Promise<OverviewTableRow[]> {
+  await requireAuth()
   const groupAverages = await getMapGroupAverages({ grade: params.grade });
 
   if (groupAverages.length === 0) return [];
@@ -508,10 +528,13 @@ export async function getOverviewTableData(params: {
 
 /**
  * 取得 Norm 比較資料
+ *
+ * Permission: All authenticated users
  */
 export async function getNormComparison(params: {
   grade: number;
 }): Promise<NormComparison[]> {
+  await requireAuth()
   const groupAverages = await getMapGroupAverages({ grade: params.grade });
 
   // 只看 "All" 等級的平均
@@ -563,10 +586,13 @@ export interface MapAnalyticsData {
 
 /**
  * 取得完整的 MAP 分析資料（一次性載入頁面所需的所有資料）
+ *
+ * Permission: All authenticated users
  */
 export async function getMapAnalyticsData(params: {
   grade: number;
 }): Promise<MapAnalyticsData> {
+  await requireAuth()
   const [chartData, benchmarkDistribution, overviewTable, normComparison] =
     await Promise.all([
       getMapChartData(params),
@@ -743,6 +769,8 @@ import { getExpectedGrowth, getExpectedYearOverYearGrowth } from "@/lib/map/norm
  * 2. year-over-year: 跨學年成長 (Fall Year1 → Fall Year2)，追蹤學生年度進步
  *
  * 對於 year-over-year，優先使用 CDF 官方 FallToFall 資料
+ *
+ * Permission: All authenticated users
  */
 export async function getGrowthAnalysis(params: {
   grade: number;
@@ -751,6 +779,7 @@ export async function getGrowthAnalysis(params: {
   fromTerm?: string;      // year-over-year 時使用
   toTerm?: string;        // year-over-year 時使用
 }): Promise<GrowthAnalysisData | null> {
+  await requireAuth()
   const supabase = createClient();
 
   const growthType = params.growthType ?? "within-year";
@@ -1124,10 +1153,13 @@ export interface ConsecutiveGrowthAnalysisData {
  *
  * 找出所有連續的測驗對（Fall→Spring 和 Spring→Fall）
  * 並按 English Level 分組計算平均成長
+ *
+ * Permission: All authenticated users
  */
 export async function getConsecutiveGrowthAnalysis(params: {
   grade: number;
 }): Promise<ConsecutiveGrowthAnalysisData | null> {
+  await requireAuth()
   const supabase = createClient();
 
   // 1. 取得該年級所有學生的 MAP 資料
@@ -1420,12 +1452,15 @@ import { parseRitRange, READING_GOALS, LANGUAGE_USAGE_GOALS } from "@/lib/map/go
 
 /**
  * 取得 Goal 效能分析資料
+ *
+ * Permission: All authenticated users
  */
 export async function getGoalPerformance(params: {
   grade: number;
   course: Course;
   termTested: string;
 }): Promise<GoalPerformanceData | null> {
+  await requireAuth()
   const supabase = createClient();
 
   // 取得 MAP 評量和 Goal Scores
@@ -1570,11 +1605,14 @@ import {
 
 /**
  * 取得 Lexile 分析資料
+ *
+ * Permission: All authenticated users
  */
 export async function getLexileAnalysis(params: {
   grade: number;
   termTested: string;
 }): Promise<LexileAnalysisData | null> {
+  await requireAuth()
   const supabase = createClient();
 
   const { data, error } = await supabase
@@ -1645,12 +1683,15 @@ export async function getLexileAnalysis(params: {
 
 /**
  * 取得測驗品質報告
+ *
+ * Permission: All authenticated users
  */
 export async function getTestQualityReport(params: {
   termTested: string;
   grade?: number;  // Optional grade filter
   flagThreshold?: number;
 }): Promise<TestQualityData | null> {
+  await requireAuth()
   const supabase = createClient();
   const threshold = params.flagThreshold ?? 30;
 
@@ -1752,6 +1793,8 @@ export async function getTestQualityReport(params: {
 
 /**
  * 取得 Benchmark 等級流動分析
+ *
+ * Permission: All authenticated users
  */
 export async function getBenchmarkTransition(params: {
   grade: number;
@@ -1760,6 +1803,7 @@ export async function getBenchmarkTransition(params: {
   fromGrade?: number;  // 跨學年時，from 的年級 (預設與 grade 相同)
   toGrade?: number;    // 跨學年時，to 的年級 (預設與 grade 相同)
 }): Promise<BenchmarkTransitionData | null> {
+  await requireAuth()
   const supabase = createClient();
 
   // 跨學年時使用不同年級的 Benchmark 閾值
@@ -1915,10 +1959,13 @@ export async function getBenchmarkTransition(params: {
 
 /**
  * 取得同屆學生追蹤資料
+ *
+ * Permission: All authenticated users
  */
 export async function getCohortTracking(params: {
   cohortPrefix: string;
 }): Promise<CohortTrackingData | null> {
+  await requireAuth()
   const supabase = createClient();
 
   // 根據 cohort prefix 查詢學生
