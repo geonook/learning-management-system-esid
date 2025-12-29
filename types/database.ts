@@ -286,6 +286,7 @@ export type Database = {
           grade: number | null
           track: 'local' | 'international' | null
           created_by: string
+          is_active: boolean
           created_at: string
           updated_at: string
         }
@@ -298,6 +299,7 @@ export type Database = {
           grade?: number | null
           track?: 'local' | 'international' | null
           created_by: string
+          is_active?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -310,6 +312,7 @@ export type Database = {
           grade?: number | null
           track?: 'local' | 'international' | null
           created_by?: string
+          is_active?: boolean
           created_at?: string
           updated_at?: string
         }
