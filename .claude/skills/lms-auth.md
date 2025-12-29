@@ -1,6 +1,54 @@
 # LMS Auth Skill
 
-> 認證系統、SSO 整合、useAuthReady hook 標準模式
+> 認證系統、SSO 整合、useAuthReady hook 標準模式、四層安全架構
+> Last Updated: 2025-12-29
+
+## 四層安全架構（v1.66.0）
+
+```
+1. Authentication (Supabase Auth) - 必須登入
+2. RLS (Database Layer) - 粗粒度：authenticated_read, admin_full_access
+3. Application Layer (lib/api/permissions.ts) - 細粒度：角色過濾
+4. Frontend (AuthGuard) - 頁面存取控制
+```
+
+### Application Layer 使用模式
+
+```typescript
+import { requireAuth, requireRole, filterByRole } from '@/lib/api/permissions';
+
+// 要求登入
+export async function getData() {
+  const user = await requireAuth();  // 未登入會 throw Error
+  // ...
+}
+
+// 要求特定角色
+export async function adminOnly() {
+  const user = await requireRole(['admin']);
+  // ...
+}
+
+// 過濾資料
+export async function getStudents() {
+  const user = await requireAuth();
+  const allStudents = await fetchAllStudents();
+  return filterByRole(allStudents, user, { gradeField: 'grade' });
+}
+```
+
+### 關鍵函數
+
+| 函數 | 說明 |
+|------|------|
+| `getCurrentUser()` | 取得當前用戶，未登入返回 null |
+| `requireAuth()` | 要求登入，未登入 throw Error |
+| `requireRole(roles)` | 要求特定角色 |
+| `filterByRole(data, user, opts)` | 依角色過濾資料 |
+| `canAccessGrade(user, grade)` | 檢查是否可存取年級 |
+| `canAccessCourseType(user, type)` | 檢查是否可存取課程類型 |
+
+---
 
 ## useAuthReady Hook（標準模式）
 

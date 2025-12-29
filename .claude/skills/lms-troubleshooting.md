@@ -1,7 +1,7 @@
 # LMS Troubleshooting Skill
 
 > 已解決問題、常見錯誤、除錯技巧
-> Last Updated: 2025-12-22
+> Last Updated: 2025-12-29
 
 ## Statistics 頁面成績不顯示
 
@@ -133,6 +133,38 @@ USING (
 CREATE POLICY "authenticated_read_users" ON users
 FOR SELECT USING (auth.role() = 'authenticated');
 ```
+
+---
+
+## RLS 簡化（Migration 036/037）
+
+### 問題描述
+
+- RLS policies 過於複雜（100+ policies），難以維護
+- 複雜的跨表查詢造成效能問題和遞迴風險
+- MAP 資料不顯示（map_assessments 表缺少 policies）
+
+### 解決方案
+
+**Migration 036**：RLS 簡化
+- 從 100+ policies 減少至 ~30 policies
+- 建立 `is_admin()` helper function
+- 每張表最多 4 個 policies
+
+**Migration 037**：補齊遺漏表
+- 為 12 個遺漏表新增 RLS policies
+- 修復 MAP 資料不顯示問題
+
+### 新架構：四層安全
+
+```
+1. Authentication (Supabase Auth)
+2. RLS (粗粒度：authenticated_read, admin_full_access)
+3. Application Layer (lib/api/permissions.ts)
+4. Frontend (AuthGuard)
+```
+
+細粒度權限（Head 年級過濾、Teacher 課程過濾）移至 Application Layer，使用 `requireAuth()`, `requireRole()`, `filterByRole()` 函數。
 
 ---
 

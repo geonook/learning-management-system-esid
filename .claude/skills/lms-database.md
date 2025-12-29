@@ -1,7 +1,7 @@
 # LMS Database Skill
 
 > Supabase 資料庫查詢模式、RLS 政策、Migration 記錄
-> Last Updated: 2025-12-22
+> Last Updated: 2025-12-29
 >
 > **相關 Skill**: [kcis-school-config.md](kcis-school-config.md) - 學校專屬設定
 
@@ -90,28 +90,36 @@ exam:exams!inner(
 
 ## RLS (Row Level Security) 核心規則
 
+### 四層安全架構（v1.66.0）
+
+```
+1. Authentication (Supabase Auth) - 必須登入
+2. RLS (Database Layer) - 粗粒度：authenticated_read, admin_full_access
+3. Application Layer (lib/api/permissions.ts) - 細粒度：角色過濾
+4. Frontend (AuthGuard) - 頁面存取控制
+```
+
+**設計原則**：
+- RLS 只負責「是否登入」和「是否 Admin」
+- 細粒度權限（Head 年級過濾、Teacher 課程過濾）在 Application Layer 處理
+- 避免 RLS 跨表查詢造成遞迴
+
+### 簡化後的 RLS Policies
+
+每張表最多 4 個 policies：
+1. `service_role_bypass` - Service Role 繞過
+2. `admin_full_access` - Admin 完整存取
+3. `authenticated_read` - 已登入者可讀
+4. `teacher_manage_own` - 教師管理自己課程（僅 courses, exams, scores）
+
 ### 角色權限矩陣
 
-| 角色 | users | classes | courses | exams | scores |
-|------|-------|---------|---------|-------|--------|
-| admin | ✅ 全部 | ✅ 全部 | ✅ 全部 | ✅ 全部 | ✅ 全部 |
-| head | 自己 | 年級內 | 年級+類型 | 年級+類型 | 年級+類型 |
-| teacher | 自己 | 任課班 | 任課 | 任課 | 任課 |
-| office_member | 自己 | 唯讀 | 唯讀 | 唯讀 | 任課才能寫 |
-
-### RLS 效能優化
-
-所有 RLS policies 使用 `(SELECT auth.uid())` 而非直接 `auth.uid()`：
-
-```sql
--- ❌ 效能差：每行都呼叫 auth.uid()
-CREATE POLICY "..." ON users
-USING (id = auth.uid());
-
--- ✅ 效能好：只呼叫一次，快取結果
-CREATE POLICY "..." ON users
-USING (id = (SELECT auth.uid()));
-```
+| 角色 | RLS 層 | Application 層 |
+|------|--------|----------------|
+| admin | 全部存取 | 不過濾 |
+| office_member | 可讀全部 | 不過濾（唯讀）|
+| head | 可讀全部 | 過濾 grade_band + track |
+| teacher | 可讀全部 + 寫自己課程 | 過濾 teacher_id |
 
 ### Service Role Bypass
 
@@ -167,6 +175,16 @@ USING (id = (SELECT auth.uid()));
 - 設定 `exams.course_id` 為 NOT NULL
 - 重命名 `is_published` 為 `is_active`
 - 同步 Staging 與 Production 資料庫結構
+
+### Migration 036: RLS Simplification
+- 簡化 RLS policies 從 100+ 降至 ~30
+- 建立 `is_admin()` helper function
+- 設計原則：不跨表查詢，防止無限遞迴
+- 細粒度權限移至 Application Layer
+
+### Migration 037: Complete RLS Policies
+- 補齊 12 個遺漏表的 RLS policies
+- 受影響表：map_assessments, map_goal_scores, attendance, behavior_tags, student_behaviors, communications, gradebook_expectations, academic_periods, kcfs_categories, timetable_entries, timetable_periods, course_tasks, admin_audit_logs
 
 ---
 
