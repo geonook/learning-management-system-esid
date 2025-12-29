@@ -8,7 +8,6 @@ import { createClient } from "@/lib/supabase/client";
 import {
   Search,
   UserCog,
-  ExternalLink,
   Shield,
   Clock,
   AlertTriangle,
@@ -50,8 +49,7 @@ export default function ImpersonatePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [impersonating, setImpersonating] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [generatedLink, setGeneratedLink] = useState<{ userId: string; url: string; userName: string } | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copiedUserId, setCopiedUserId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -139,12 +137,16 @@ export default function ImpersonatePage() {
         throw new Error(data.error || "Failed to generate impersonation link");
       }
 
-      // Store the generated link instead of opening immediately
-      setGeneratedLink({
-        userId: targetUser.id,
-        url: data.url,
-        userName: targetUser.full_name || targetUser.email
-      });
+      // Copy link to clipboard immediately
+      try {
+        await navigator.clipboard.writeText(data.url);
+        setCopiedUserId(targetUser.id);
+        setTimeout(() => setCopiedUserId(null), 3000);
+      } catch (err) {
+        console.error("Failed to copy:", err);
+        // Fallback: open in new tab if copy fails
+        window.open(data.url, "_blank");
+      }
 
       // Refresh audit logs
       fetchData();
@@ -154,22 +156,6 @@ export default function ImpersonatePage() {
     } finally {
       setImpersonating(null);
     }
-  };
-
-  const handleCopyLink = async () => {
-    if (!generatedLink) return;
-    try {
-      await navigator.clipboard.writeText(generatedLink.url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy:", err);
-    }
-  };
-
-  const handleCloseLink = () => {
-    setGeneratedLink(null);
-    setCopied(false);
   };
 
   const getRoleBadgeColor = (role: string) => {
@@ -222,53 +208,6 @@ export default function ImpersonatePage() {
         {error && (
           <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400">
             {error}
-          </div>
-        )}
-
-        {/* Generated Link Panel */}
-        {generatedLink && (
-          <div className="p-4 rounded-lg bg-green-100 dark:bg-green-500/10 border border-green-300 dark:border-green-500/20">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-green-700 dark:text-green-400 mb-2">
-                  Magic link generated for {generatedLink.userName}
-                </p>
-                <p className="text-xs text-gray-600 dark:text-text-secondary mb-3">
-                  <strong>Important:</strong> Open this link in an <span className="text-amber-600 dark:text-amber-400 font-medium">Incognito/Private window</span> to avoid logging out your current session.
-                </p>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleCopyLink}
-                    className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="w-3 h-3" />
-                        <span>Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3 h-3" />
-                        <span>Copy Link</span>
-                      </>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => window.open(generatedLink.url, "_blank")}
-                    className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg bg-gray-100 dark:bg-surface-tertiary text-gray-700 dark:text-text-primary hover:bg-gray-200 dark:hover:bg-surface-primary transition-colors border border-gray-300 dark:border-border-default"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                    <span>Open in New Tab</span>
-                  </button>
-                  <button
-                    onClick={handleCloseLink}
-                    className="px-3 py-1.5 text-xs rounded-lg text-gray-500 dark:text-text-tertiary hover:text-gray-700 dark:hover:text-text-primary transition-colors"
-                  >
-                    Dismiss
-                  </button>
-                </div>
-              </div>
-            </div>
           </div>
         )}
 
@@ -325,10 +264,12 @@ export default function ImpersonatePage() {
                         disabled={impersonating === user.id || user.id === userId}
                         className={`flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg transition-colors ${
                           user.id === userId
-                            ? "bg-gray-500/20 text-gray-500 cursor-not-allowed"
+                            ? "bg-gray-300 dark:bg-gray-500/20 text-gray-500 cursor-not-allowed"
+                            : copiedUserId === user.id
+                            ? "bg-green-600 text-white"
                             : impersonating === user.id
-                            ? "bg-accent-primary/50 text-white"
-                            : "bg-accent-primary text-white hover:bg-accent-primary/80"
+                            ? "bg-blue-400 dark:bg-accent-primary/50 text-white"
+                            : "bg-blue-600 dark:bg-accent-primary text-white hover:bg-blue-700 dark:hover:bg-accent-primary/80"
                         }`}
                       >
                         {impersonating === user.id ? (
@@ -336,9 +277,14 @@ export default function ImpersonatePage() {
                             <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
                             <span>Generating...</span>
                           </>
+                        ) : copiedUserId === user.id ? (
+                          <>
+                            <Check className="w-3 h-3" />
+                            <span>Copied! Open in Incognito</span>
+                          </>
                         ) : (
                           <>
-                            <ExternalLink className="w-3 h-3" />
+                            <Copy className="w-3 h-3" />
                             <span>Impersonate</span>
                           </>
                         )}
