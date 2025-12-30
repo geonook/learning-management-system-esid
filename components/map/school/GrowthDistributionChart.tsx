@@ -20,7 +20,13 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Info } from "lucide-react";
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { SchoolGrowthDistributionData } from "@/lib/api/map-school-analytics";
 import {
   generateGaussianCurve,
@@ -128,52 +134,111 @@ export function GrowthDistributionChart({
 
   const r2Interpretation = interpretRSquared(rSquared);
 
-  return (
-    <div className="w-full">
-      {/* 負成長警示 */}
-      {data.negativeGrowthPercentage > 0 && (
-        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
-          <span className="text-sm text-red-700 dark:text-red-300">
-            <strong>{data.negativeGrowthCount}</strong> students (
-            {data.negativeGrowthPercentage}%) showed negative growth
-          </span>
-        </div>
-      )}
+  // Period 類型標籤
+  const periodLabel = useMemo(() => {
+    const periodType = data.periodType;
+    switch (periodType) {
+      case "fall-to-fall":
+        return "Fall-to-Fall (1 Year)";
+      case "fall-to-spring":
+        return "Fall-to-Spring (Within Year)";
+      case "winter-to-spring":
+        return "Winter-to-Spring";
+      default:
+        return "Custom Period";
+    }
+  }, [data.periodType]);
 
-      {/* 統計摘要 */}
-      <div className="mb-4 flex flex-wrap gap-3 text-sm">
-        <div className="px-3 py-1.5 bg-muted rounded-md">
-          <span className="text-muted-foreground">Students: </span>
-          <span className="font-medium">{data.totalStudents}</span>
+  // 計算正成長百分比
+  const positiveGrowthPercentage = useMemo(() => {
+    return Math.round((1 - data.negativeGrowthCount / data.totalStudents) * 100);
+  }, [data.negativeGrowthCount, data.totalStudents]);
+
+  return (
+    <TooltipProvider>
+      <div className="w-full">
+        {/* 負成長警示 */}
+        {data.negativeGrowthPercentage > 0 && (
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
+            <span className="text-sm text-red-700 dark:text-red-300">
+              <strong>{data.negativeGrowthCount}</strong> students (
+              {data.negativeGrowthPercentage}%) showed negative growth
+            </span>
+          </div>
+        )}
+
+        {/* 統計摘要 */}
+        <div className="mb-4 flex flex-wrap gap-3 text-sm">
+          {/* Period 標籤（優先顯示） */}
+          <div className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-md">
+            <span className="text-blue-700 font-medium text-xs">
+              📅 {periodLabel}
+            </span>
+          </div>
+
+          {/* 學生數（含說明） */}
+          <div className="px-3 py-1.5 bg-muted rounded-md flex items-center gap-1">
+            <span className="text-muted-foreground">Students: </span>
+            <span className="font-medium">{data.totalStudents}</span>
+            <UITooltip>
+              <TooltipTrigger asChild>
+                <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[280px]">
+                <p className="text-xs">
+                  Only students with assessment data in <strong>both</strong>{" "}
+                  {data.fromTerm} and {data.toTerm} are included in growth analysis.
+                </p>
+              </TooltipContent>
+            </UITooltip>
+          </div>
+
+          {/* 平均成長 */}
+          <div className="px-3 py-1.5 bg-muted rounded-md">
+            <span className="text-muted-foreground">Mean Growth: </span>
+            <span
+              className={`font-medium ${
+                data.meanGrowth >= 0 ? "text-green-600" : "text-red-600"
+              }`}
+            >
+              {data.meanGrowth >= 0 ? "+" : ""}
+              {data.meanGrowth} RIT
+            </span>
+            <span className="text-muted-foreground ml-1">
+              (SD: {data.stdDev})
+            </span>
+          </div>
+
+          {/* 正成長百分比 */}
+          <div className="px-3 py-1.5 bg-green-50 border border-green-200 rounded-md">
+            <span className="text-green-700 font-medium text-xs">
+              ✅ {positiveGrowthPercentage}% showed positive growth
+            </span>
+          </div>
+
+          {/* R² 擬合品質 */}
+          <div className="px-3 py-1.5 bg-muted rounded-md flex items-center gap-1">
+            <span className="text-muted-foreground">Gaussian Fit: </span>
+            <span className="font-medium" style={{ color: r2Interpretation.color }}>
+              R² = {rSquared.toFixed(2)}
+            </span>
+            <UITooltip>
+              <TooltipTrigger asChild>
+                <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[280px]">
+                <p className="text-xs">
+                  <strong>{r2Interpretation.quality}</strong> - {r2Interpretation.color === "#22c55e"
+                    ? "Distribution closely follows normal curve"
+                    : r2Interpretation.color === "#eab308"
+                    ? "Distribution roughly follows normal curve"
+                    : "Distribution deviates from normal curve (may indicate subgroups)"}
+                </p>
+              </TooltipContent>
+            </UITooltip>
+          </div>
         </div>
-        <div className="px-3 py-1.5 bg-muted rounded-md">
-          <span className="text-muted-foreground">Mean: </span>
-          <span
-            className={`font-medium ${
-              data.meanGrowth >= 0 ? "text-green-600" : "text-red-600"
-            }`}
-          >
-            {data.meanGrowth >= 0 ? "+" : ""}
-            {data.meanGrowth}
-          </span>
-          <span className="text-muted-foreground ml-1">
-            (SD: {data.stdDev})
-          </span>
-        </div>
-        <div className="px-3 py-1.5 bg-muted rounded-md">
-          <span className="text-muted-foreground">Gaussian Fit R²: </span>
-          <span className="font-medium" style={{ color: r2Interpretation.color }}>
-            {rSquared.toFixed(2)} ({r2Interpretation.quality})
-          </span>
-        </div>
-        <div className="px-3 py-1.5 bg-muted rounded-md">
-          <span className="text-muted-foreground">Period: </span>
-          <span className="font-medium text-xs">
-            {data.fromTerm} → {data.toTerm}
-          </span>
-        </div>
-      </div>
 
       {/* 直方圖 + 高斯曲線 */}
       <ResponsiveContainer width="100%" height={height}>
@@ -286,6 +351,17 @@ export function GrowthDistributionChart({
           <span>Gaussian Fit</span>
         </div>
       </div>
-    </div>
+
+      {/* 解讀說明 */}
+      <div className="mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
+        <p>
+          <strong>How to read:</strong> This histogram shows the distribution of RIT
+          growth from {data.fromTerm} to {data.toTerm}. Red bars indicate students
+          with negative growth who may need intervention. The curve shows the expected
+          normal distribution.
+        </p>
+      </div>
+      </div>
+    </TooltipProvider>
   );
 }

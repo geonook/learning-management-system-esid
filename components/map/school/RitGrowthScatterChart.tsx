@@ -18,7 +18,16 @@ import {
   ResponsiveContainer,
   ReferenceLine,
   ZAxis,
+  Line,
+  ComposedChart,
 } from "recharts";
+import { Info } from "lucide-react";
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { RitGrowthScatterData } from "@/lib/api/map-school-analytics";
 
 interface RitGrowthScatterChartProps {
@@ -72,41 +81,150 @@ export function RitGrowthScatterChart({
     ];
   }, [data.stats.minGrowth, data.stats.maxGrowth]);
 
-  // 相關性解讀
+  // 相關性解讀（增強版，包含教學意涵）
   const correlationInterpretation = useMemo(() => {
     const r = data.stats.correlation;
-    if (r >= 0.5) return { text: "Strong positive", color: "text-green-600" };
-    if (r >= 0.3) return { text: "Moderate positive", color: "text-green-500" };
-    if (r >= 0.1) return { text: "Weak positive", color: "text-yellow-600" };
-    if (r >= -0.1) return { text: "No correlation", color: "text-gray-500" };
-    if (r >= -0.3) return { text: "Weak negative", color: "text-orange-500" };
-    if (r >= -0.5)
-      return { text: "Moderate negative", color: "text-orange-600" };
-    return { text: "Strong negative", color: "text-red-600" };
+    const r2 = r * r;
+    const explainedVariance = Math.round(r2 * 100);
+
+    if (r >= 0.5) {
+      return {
+        strength: "Strong positive",
+        text: "Higher starting RIT shows more growth",
+        color: "text-green-600",
+        explainedVariance,
+      };
+    }
+    if (r >= 0.3) {
+      return {
+        strength: "Moderate positive",
+        text: "Some tendency for higher RIT to show more growth",
+        color: "text-green-500",
+        explainedVariance,
+      };
+    }
+    if (r >= 0.1) {
+      return {
+        strength: "Weak positive",
+        text: "Slight tendency for higher RIT to show more growth",
+        color: "text-yellow-600",
+        explainedVariance,
+      };
+    }
+    if (r >= -0.1) {
+      return {
+        strength: "No correlation",
+        text: "Growth is independent of starting RIT",
+        color: "text-gray-500",
+        explainedVariance,
+      };
+    }
+    if (r >= -0.3) {
+      return {
+        strength: "Weak negative",
+        text: "Slight ceiling effect - high performers show less growth",
+        color: "text-orange-500",
+        explainedVariance,
+      };
+    }
+    if (r >= -0.5) {
+      return {
+        strength: "Moderate negative",
+        text: "Ceiling effect present - high performers have less room to grow",
+        color: "text-orange-600",
+        explainedVariance,
+      };
+    }
+    return {
+      strength: "Strong negative",
+      text: "Strong ceiling effect - high performers showing less growth",
+      color: "text-red-600",
+      explainedVariance,
+    };
   }, [data.stats.correlation]);
 
+  // 趨勢線資料（使用 API 回傳的 slope 和 intercept）
+  const trendLineData = useMemo(() => {
+    const { slope, intercept } = data.stats;
+    const xMin = xDomain[0] ?? 150;
+    const xMax = xDomain[1] ?? 250;
+    // 生成趨勢線的兩個端點
+    return [
+      { x: xMin, y: slope * xMin + intercept },
+      { x: xMax, y: slope * xMax + intercept },
+    ];
+  }, [data.stats, xDomain]);
+
+  // Period 類型標籤
+  const periodLabel = useMemo(() => {
+    const periodType = data.periodType;
+    switch (periodType) {
+      case "fall-to-fall":
+        return "Fall-to-Fall (1 Year)";
+      case "fall-to-spring":
+        return "Fall-to-Spring (Within Year)";
+      case "winter-to-spring":
+        return "Winter-to-Spring";
+      default:
+        return "Custom Period";
+    }
+  }, [data.periodType]);
+
   return (
-    <div className="w-full">
-      {/* 統計摘要 */}
-      <div className="mb-4 flex gap-4 text-sm flex-wrap">
-        <div className="px-3 py-1.5 bg-muted rounded-md">
-          <span className="text-muted-foreground">Students: </span>
-          <span className="font-medium">{data.points.length}</span>
+    <TooltipProvider>
+      <div className="w-full">
+        {/* 統計摘要 */}
+        <div className="mb-4 flex gap-4 text-sm flex-wrap">
+          {/* 學生數（含說明） */}
+          <div className="px-3 py-1.5 bg-muted rounded-md flex items-center gap-1">
+            <span className="text-muted-foreground">Students: </span>
+            <span className="font-medium">{data.points.length}</span>
+            <UITooltip>
+              <TooltipTrigger asChild>
+                <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[280px]">
+                <p className="text-xs">
+                  Only students with assessment data in <strong>both</strong>{" "}
+                  {data.fromTerm} and {data.toTerm} are included. Students missing
+                  either term are excluded from growth analysis.
+                </p>
+              </TooltipContent>
+            </UITooltip>
+          </div>
+
+          {/* Period 標籤 */}
+          <div className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-md">
+            <span className="text-blue-700 font-medium text-xs">
+              📅 {periodLabel}
+            </span>
+          </div>
+
+          {/* 相關係數（增強顯示） */}
+          <div className="px-3 py-1.5 bg-muted rounded-md flex items-center gap-1">
+            <span className="text-muted-foreground">Correlation: </span>
+            <span className={`font-medium ${correlationInterpretation.color}`}>
+              r = {data.stats.correlation.toFixed(2)}
+            </span>
+            <span className="text-muted-foreground text-xs">
+              ({correlationInterpretation.strength})
+            </span>
+            <UITooltip>
+              <TooltipTrigger asChild>
+                <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[280px]">
+                <p className="text-xs mb-1">
+                  <strong>R² = {correlationInterpretation.explainedVariance}%</strong> of
+                  growth variance is explained by starting RIT.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {correlationInterpretation.text}
+                </p>
+              </TooltipContent>
+            </UITooltip>
+          </div>
         </div>
-        <div className="px-3 py-1.5 bg-muted rounded-md">
-          <span className="text-muted-foreground">Correlation (r): </span>
-          <span className={`font-medium ${correlationInterpretation.color}`}>
-            {data.stats.correlation.toFixed(2)} (
-            {correlationInterpretation.text})
-          </span>
-        </div>
-        <div className="px-3 py-1.5 bg-muted rounded-md">
-          <span className="text-muted-foreground">Period: </span>
-          <span className="font-medium text-xs">
-            {data.fromTerm} → {data.toTerm}
-          </span>
-        </div>
-      </div>
 
       {/* 散佈圖 */}
       <ResponsiveContainer width="100%" height={height}>
@@ -173,6 +291,18 @@ export function RitGrowthScatterChart({
           {/* 零成長參考線 */}
           <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="3 3" />
 
+          {/* 趨勢線 */}
+          <ReferenceLine
+            segment={[
+              { x: trendLineData[0]?.x ?? 150, y: trendLineData[0]?.y ?? 0 },
+              { x: trendLineData[1]?.x ?? 250, y: trendLineData[1]?.y ?? 0 },
+            ]}
+            stroke="#6366f1"
+            strokeWidth={2}
+            strokeDasharray="5 3"
+            ifOverflow="extendDomain"
+          />
+
           {/* 各年級散點 */}
           {([3, 4, 5, 6] as const).map((grade) => (
             <Scatter
@@ -199,17 +329,28 @@ export function RitGrowthScatterChart({
             </span>
           </div>
         ))}
+        {/* 趨勢線圖例 */}
+        <div className="flex items-center gap-1">
+          <span
+            className="w-4 h-0.5"
+            style={{
+              backgroundColor: "#6366f1",
+              borderStyle: "dashed",
+            }}
+          />
+          <span>Trend Line</span>
+        </div>
       </div>
 
       {/* 解讀說明 */}
       <div className="mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
         <p>
           <strong>How to read:</strong> Each dot represents a student. Points
-          below the dashed line show negative growth. A negative correlation
-          suggests higher-performing students may have limited room for growth
-          (ceiling effect).
+          below the dashed line show negative growth. The purple trend line
+          shows the linear regression fit. {correlationInterpretation.text}.
         </p>
       </div>
-    </div>
+      </div>
+    </TooltipProvider>
   );
 }

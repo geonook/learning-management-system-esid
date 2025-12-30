@@ -8,6 +8,13 @@
  */
 
 import { useMemo } from "react";
+import { Info } from "lucide-react";
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { RitGradeHeatmapData, HeatmapCell } from "@/lib/api/map-school-analytics";
 
 interface RitGradeHeatmapProps {
@@ -70,6 +77,35 @@ export function RitGradeHeatmap({ data }: RitGradeHeatmapProps) {
     return map;
   }, [data.cells]);
 
+  // 計算每年級的峰值區間（最多學生的 RIT 區間）
+  const peakBuckets = useMemo(() => {
+    const peaks: { grade: number; bucket: string; count: number }[] = [];
+    for (const grade of grades) {
+      let maxCount = 0;
+      let peakBucket = "";
+      for (const bucket of data.ritBuckets) {
+        const cell = cellMap.get(`${grade}-${bucket}`);
+        if (cell && cell.count > maxCount) {
+          maxCount = cell.count;
+          peakBucket = bucket;
+        }
+      }
+      if (maxCount > 0) {
+        peaks.push({ grade, bucket: peakBucket, count: maxCount });
+      }
+    }
+    return peaks;
+  }, [cellMap, data.ritBuckets]);
+
+  // 計算每年級的學生總數
+  const gradeStudentCounts = useMemo(() => {
+    const counts: Record<number, number> = { 3: 0, 4: 0, 5: 0, 6: 0 };
+    for (const cell of data.cells) {
+      counts[cell.grade] = (counts[cell.grade] || 0) + cell.count;
+    }
+    return counts;
+  }, [data.cells]);
+
   if (relevantBuckets.length === 0) {
     return (
       <div className="flex items-center justify-center h-48 text-muted-foreground">
@@ -79,18 +115,52 @@ export function RitGradeHeatmap({ data }: RitGradeHeatmapProps) {
   }
 
   return (
-    <div className="w-full">
-      {/* 統計摘要 */}
-      <div className="mb-4 flex gap-4 text-sm">
-        <div className="px-3 py-1.5 bg-muted rounded-md">
-          <span className="text-muted-foreground">Students: </span>
-          <span className="font-medium">{data.totalStudents}</span>
+    <TooltipProvider>
+      <div className="w-full">
+        {/* 統計摘要 */}
+        <div className="mb-4 flex flex-wrap gap-3 text-sm">
+          <div className="px-3 py-1.5 bg-muted rounded-md flex items-center gap-1">
+            <span className="text-muted-foreground">Students: </span>
+            <span className="font-medium">{data.totalStudents}</span>
+            <UITooltip>
+              <TooltipTrigger asChild>
+                <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[280px]">
+                <p className="text-xs mb-1">
+                  <strong>Per-grade breakdown:</strong>
+                </p>
+                <div className="text-xs space-y-0.5">
+                  {grades.map((g) => (
+                    <div key={g}>G{g}: {gradeStudentCounts[g]} students</div>
+                  ))}
+                </div>
+              </TooltipContent>
+            </UITooltip>
+          </div>
+          <div className="px-3 py-1.5 bg-muted rounded-md">
+            <span className="text-muted-foreground">Term: </span>
+            <span className="font-medium text-xs">{data.termTested}</span>
+          </div>
         </div>
-        <div className="px-3 py-1.5 bg-muted rounded-md">
-          <span className="text-muted-foreground">Term: </span>
-          <span className="font-medium text-xs">{data.termTested}</span>
-        </div>
-      </div>
+
+        {/* 峰值區間說明 */}
+        {peakBuckets.length > 0 && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-xs font-medium text-blue-700 mb-2">📊 Peak Concentration by Grade:</p>
+            <div className="flex flex-wrap gap-3 text-xs">
+              {peakBuckets.map(({ grade, bucket, count }) => {
+                const total = gradeStudentCounts[grade] || 1;
+                const percentage = Math.round((count / total) * 100);
+                return (
+                  <div key={grade} className="text-blue-600">
+                    <span className="font-medium">G{grade}:</span> {bucket} RIT ({percentage}%)
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
       {/* 熱力圖表格 */}
       <div className="overflow-x-auto">
@@ -169,8 +239,9 @@ export function RitGradeHeatmap({ data }: RitGradeHeatmapProps) {
       {/* 說明 */}
       <div className="mt-2 text-xs text-muted-foreground text-center">
         RIT score distribution across grade levels. Darker cells indicate more
-        students in that range.
+        students in that range. Higher grades typically show higher RIT scores.
       </div>
-    </div>
+      </div>
+    </TooltipProvider>
   );
 }

@@ -242,6 +242,140 @@ export async function getAvailableSchoolTerms(): Promise<string[]> {
 }
 
 // ============================================================
+// Growth Period Selection API
+// ============================================================
+
+export type GrowthPeriodType = "fall-to-fall" | "fall-to-spring" | "winter-to-spring" | "custom";
+
+export interface GrowthPeriodOption {
+  fromTerm: string;       // e.g., "Fall 2023"
+  toTerm: string;         // e.g., "Fall 2024"
+  label: string;          // e.g., "Fall 2023 → Fall 2024 (1 year)"
+  studentCount: number;   // 配對學生數
+  periodType: GrowthPeriodType;
+}
+
+/**
+ * 取得可用的成長期間選項
+ *
+ * 動態查詢資料庫中有足夠配對資料的 term 組合
+ * 用於 Growth Period 選擇器
+ *
+ * Permission: All authenticated users
+ */
+export async function getAvailableGrowthPeriods(): Promise<GrowthPeriodOption[]> {
+  await requireAuth();
+  const supabase = createClient();
+
+  // 查詢所有可用的 terms
+  const { data: termsData } = await supabase
+    .from("map_assessments")
+    .select("term_tested")
+    .in("grade", [3, 4, 5, 6])
+    .not("student_id", "is", null);
+
+  if (!termsData || termsData.length === 0) return [];
+
+  // 取得唯一 terms 並排序
+  const uniqueTerms = [...new Set(termsData.map((d) => d.term_tested))].sort(
+    compareTermTested
+  );
+
+  if (uniqueTerms.length < 2) return [];
+
+  const options: GrowthPeriodOption[] = [];
+
+  // 生成可能的 period 組合
+  // 1. Fall-to-Fall (跨學年)
+  const fallTerms = uniqueTerms.filter((t) => t.startsWith("Fall "));
+  for (let i = 0; i < fallTerms.length - 1; i++) {
+    const fromTerm = fallTerms[i];
+    const toTerm = fallTerms[i + 1];
+    if (fromTerm && toTerm) {
+      const count = await countPairedStudents(supabase, fromTerm, toTerm);
+      if (count > 0) {
+        options.push({
+          fromTerm,
+          toTerm,
+          label: `${fromTerm} → ${toTerm} (1 year)`,
+          studentCount: count,
+          periodType: "fall-to-fall",
+        });
+      }
+    }
+  }
+
+  // 2. Fall-to-Spring (學年內)
+  for (const fallTerm of fallTerms) {
+    const parsed = parseTermTested(fallTerm);
+    if (!parsed) continue;
+
+    const springTerm = `Spring ${parsed.academicYear}`;
+    if (uniqueTerms.includes(springTerm)) {
+      const count = await countPairedStudents(supabase, fallTerm, springTerm);
+      if (count > 0) {
+        options.push({
+          fromTerm: fallTerm,
+          toTerm: springTerm,
+          label: `${fallTerm} → ${springTerm} (within year)`,
+          studentCount: count,
+          periodType: "fall-to-spring",
+        });
+      }
+    }
+  }
+
+  // 依 toTerm 排序（最近的在前）
+  return options.sort((a, b) => compareTermTested(b.toTerm, a.toTerm));
+}
+
+/**
+ * 計算兩個 term 之間有完整配對資料的學生數
+ */
+async function countPairedStudents(
+  supabase: ReturnType<typeof createClient>,
+  fromTerm: string,
+  toTerm: string
+): Promise<number> {
+  const { data } = await supabase
+    .from("map_assessments")
+    .select("student_number, term_tested, course, student_id, students:student_id (is_active)")
+    .in("term_tested", [fromTerm, toTerm])
+    .in("grade", [3, 4, 5, 6])
+    .not("student_id", "is", null);
+
+  if (!data || data.length === 0) return 0;
+
+  // 過濾已停用的學生
+  const activeData = data.filter((d) => {
+    const student = d.students as unknown as { is_active: boolean } | null;
+    return student?.is_active === true;
+  });
+
+  // 按學生分組，計算有完整配對的學生數
+  const studentMap = new Map<string, { hasFrom: boolean; hasTo: boolean }>();
+
+  for (const row of activeData) {
+    let student = studentMap.get(row.student_number);
+    if (!student) {
+      student = { hasFrom: false, hasTo: false };
+      studentMap.set(row.student_number, student);
+    }
+
+    if (row.term_tested === fromTerm) student.hasFrom = true;
+    if (row.term_tested === toTerm) student.hasTo = true;
+  }
+
+  // 計算有完整配對的學生數
+  let count = 0;
+  for (const s of studentMap.values()) {
+    if (s.hasFrom && s.hasTo) count++;
+  }
+
+  return count;
+}
+
+// ============================================================
 // Growth Distribution API
 // ============================================================
 
@@ -257,6 +391,7 @@ export interface GrowthDistributionBucket {
 export interface SchoolGrowthDistributionData {
   fromTerm: string;
   toTerm: string;
+  periodType: GrowthPeriodType;
   totalStudents: number;
   negativeGrowthCount: number;
   negativeGrowthPercentage: number;
@@ -266,57 +401,76 @@ export interface SchoolGrowthDistributionData {
 }
 
 /**
- * 取得全校 Fall-to-Fall 成長分佈
+ * 取得全校成長分佈
  *
- * 根據 termTested 參數決定成長期間：
- * - 如果 termTested 是 Fall term，則使用該 term 作為 toTerm，前一個 Fall 作為 fromTerm
- * - 如果未指定或不是 Fall term，則使用最近的兩個 Fall terms
+ * 支援兩種模式：
+ * 1. 明確指定 fromTerm 和 toTerm（新模式，用於彈性選擇）
+ * 2. 舊模式：根據 termTested 自動決定 Fall-to-Fall 成長期間
  *
  * Permission: All authenticated users
  */
 export async function getSchoolGrowthDistribution(params?: {
-  termTested?: string;
+  fromTerm?: string;  // 新增：明確指定起始 term
+  toTerm?: string;    // 新增：明確指定結束 term
+  termTested?: string; // 舊參數：向後相容
 }): Promise<SchoolGrowthDistributionData | null> {
   await requireAuth();
   const supabase = createClient();
 
-  // 動態查找可用的 Fall terms (Fall-to-Fall 成長)
-  const { data: termsData } = await supabase
-    .from("map_assessments")
-    .select("term_tested")
-    .like("term_tested", "Fall %")
-    .in("grade", [3, 4, 5, 6]);
-
-  if (!termsData || termsData.length === 0) return null;
-
-  // 取得唯一的 Fall terms 並排序（由舊到新）
-  const fallTerms = [...new Set(termsData.map((d) => d.term_tested))].sort(
-    compareTermTested
-  );
-  if (fallTerms.length < 2) return null; // 需要至少兩個 Fall terms
-
-  // 決定 fromTerm 和 toTerm
   let fromTerm: string;
   let toTerm: string;
+  let periodType: GrowthPeriodType = "fall-to-fall";
 
-  // 檢查 termTested 是否為 Fall term
-  const selectedTerm = params?.termTested;
-  if (selectedTerm && selectedTerm.startsWith("Fall ")) {
-    // 找到 selectedTerm 在 fallTerms 中的位置
-    const selectedIndex = fallTerms.indexOf(selectedTerm);
-    if (selectedIndex > 0) {
-      // 使用選擇的 term 作為 toTerm，前一個作為 fromTerm
-      toTerm = selectedTerm;
-      fromTerm = fallTerms[selectedIndex - 1];
+  // 模式 1: 明確指定 fromTerm 和 toTerm
+  if (params?.fromTerm && params?.toTerm) {
+    fromTerm = params.fromTerm;
+    toTerm = params.toTerm;
+    // 判斷 period type
+    if (fromTerm.startsWith("Fall ") && toTerm.startsWith("Fall ")) {
+      periodType = "fall-to-fall";
+    } else if (fromTerm.startsWith("Fall ") && toTerm.startsWith("Spring ")) {
+      periodType = "fall-to-spring";
+    } else if (fromTerm.startsWith("Winter ") && toTerm.startsWith("Spring ")) {
+      periodType = "winter-to-spring";
     } else {
-      // selectedTerm 是最早的 Fall 或不存在，使用最近的兩個
+      periodType = "custom";
+    }
+  } else {
+    // 模式 2: 舊邏輯 - 自動決定 Fall-to-Fall
+    // 動態查找可用的 Fall terms (Fall-to-Fall 成長)
+    const { data: termsData } = await supabase
+      .from("map_assessments")
+      .select("term_tested")
+      .like("term_tested", "Fall %")
+      .in("grade", [3, 4, 5, 6]);
+
+    if (!termsData || termsData.length === 0) return null;
+
+    // 取得唯一的 Fall terms 並排序（由舊到新）
+    const fallTerms = [...new Set(termsData.map((d) => d.term_tested))].sort(
+      compareTermTested
+    );
+    if (fallTerms.length < 2) return null; // 需要至少兩個 Fall terms
+
+    // 檢查 termTested 是否為 Fall term
+    const selectedTerm = params?.termTested;
+    if (selectedTerm && selectedTerm.startsWith("Fall ")) {
+      // 找到 selectedTerm 在 fallTerms 中的位置
+      const selectedIndex = fallTerms.indexOf(selectedTerm);
+      if (selectedIndex > 0) {
+        // 使用選擇的 term 作為 toTerm，前一個作為 fromTerm
+        toTerm = selectedTerm;
+        fromTerm = fallTerms[selectedIndex - 1];
+      } else {
+        // selectedTerm 是最早的 Fall 或不存在，使用最近的兩個
+        fromTerm = fallTerms[fallTerms.length - 2];
+        toTerm = fallTerms[fallTerms.length - 1];
+      }
+    } else {
+      // 未指定或不是 Fall term，使用最近的兩個 Fall terms
       fromTerm = fallTerms[fallTerms.length - 2];
       toTerm = fallTerms[fallTerms.length - 1];
     }
-  } else {
-    // 未指定或不是 Fall term，使用最近的兩個 Fall terms
-    fromTerm = fallTerms[fallTerms.length - 2];
-    toTerm = fallTerms[fallTerms.length - 1];
   }
 
   if (!fromTerm || !toTerm) return null;
@@ -474,6 +628,7 @@ export async function getSchoolGrowthDistribution(params?: {
   return {
     fromTerm,
     toTerm,
+    periodType,
     totalStudents: total,
     negativeGrowthCount: negativeCount,
     negativeGrowthPercentage: Math.round((negativeCount / total) * 1000) / 10,
@@ -496,6 +651,7 @@ export interface RitGrowthDataPoint {
 export interface RitGrowthScatterData {
   fromTerm: string;
   toTerm: string;
+  periodType: GrowthPeriodType;
   points: RitGrowthDataPoint[];
   stats: {
     minRit: number;
@@ -503,6 +659,8 @@ export interface RitGrowthScatterData {
     minGrowth: number;
     maxGrowth: number;
     correlation: number; // R value
+    slope: number;       // 線性迴歸斜率
+    intercept: number;   // 線性迴歸截距
   };
 }
 
@@ -529,10 +687,53 @@ function calculateCorrelation(x: number[], y: number[]): number {
 }
 
 /**
- * 取得 RIT-Growth 散佈圖資料
- *
- * Permission: All authenticated users
+ * 計算線性迴歸 y = slope * x + intercept
  */
+function calculateLinearRegression(
+  x: number[],
+  y: number[]
+): { slope: number; intercept: number } {
+  const n = x.length;
+  if (n === 0) return { slope: 0, intercept: 0 };
+
+  const sumX = x.reduce((a, b) => a + b, 0);
+  const sumY = y.reduce((a, b) => a + b, 0);
+  const sumXY = x.reduce((sum, xi, i) => sum + xi * (y[i] ?? 0), 0);
+  const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0);
+
+  const meanX = sumX / n;
+  const meanY = sumY / n;
+
+  const denominator = n * sumX2 - sumX * sumX;
+  if (denominator === 0) return { slope: 0, intercept: meanY };
+
+  const slope = (n * sumXY - sumX * sumY) / denominator;
+  const intercept = meanY - slope * meanX;
+
+  return {
+    slope: Math.round(slope * 1000) / 1000,
+    intercept: Math.round(intercept * 100) / 100,
+  };
+}
+
+/**
+ * 根據 fromTerm 和 toTerm 決定 periodType
+ */
+function determinePeriodType(fromTerm: string, toTerm: string): GrowthPeriodType {
+  const fromSeason = fromTerm.split(" ")[0];
+  const toSeason = toTerm.split(" ")[0];
+
+  if (fromSeason === "Fall" && toSeason === "Fall") {
+    return "fall-to-fall";
+  } else if (fromSeason === "Fall" && toSeason === "Spring") {
+    return "fall-to-spring";
+  } else if (fromSeason === "Winter" && toSeason === "Spring") {
+    return "winter-to-spring";
+  } else {
+    return "custom";
+  }
+}
+
 // ============================================================
 // RIT-Grade Heatmap API
 // ============================================================
@@ -730,55 +931,63 @@ export async function getRitGradeHeatmapData(params: {
 /**
  * 取得 RIT-Growth 散佈圖資料
  *
- * 根據 termTested 參數決定成長期間：
- * - 如果 termTested 是 Fall term，則使用該 term 作為 toTerm，前一個 Fall 作為 fromTerm
- * - 如果未指定或不是 Fall term，則使用最近的兩個 Fall terms
+ * 支援兩種模式：
+ * 1. 明確指定 fromTerm/toTerm（新模式，用於 Growth Period 選擇器）
+ * 2. 根據 termTested 自動決定期間（向下相容）
  */
 export async function getRitGrowthScatterData(params?: {
   termTested?: string;
+  fromTerm?: string;
+  toTerm?: string;
 }): Promise<RitGrowthScatterData | null> {
   await requireAuth();
   const supabase = createClient();
-
-  // 動態查找可用的 Fall terms
-  const { data: termsData } = await supabase
-    .from("map_assessments")
-    .select("term_tested")
-    .like("term_tested", "Fall %")
-    .in("grade", [3, 4, 5, 6]);
-
-  if (!termsData || termsData.length === 0) return null;
-
-  const fallTerms = [...new Set(termsData.map((d) => d.term_tested))].sort(
-    compareTermTested
-  );
-  if (fallTerms.length < 2) return null;
 
   // 決定 fromTerm 和 toTerm
   let fromTerm: string;
   let toTerm: string;
 
-  // 檢查 termTested 是否為 Fall term
-  const selectedTerm = params?.termTested;
-  if (selectedTerm && selectedTerm.startsWith("Fall ")) {
-    // 找到 selectedTerm 在 fallTerms 中的位置
-    const selectedIndex = fallTerms.indexOf(selectedTerm);
-    if (selectedIndex > 0) {
-      // 使用選擇的 term 作為 toTerm，前一個作為 fromTerm
-      toTerm = selectedTerm;
-      fromTerm = fallTerms[selectedIndex - 1];
+  // 優先使用明確指定的 fromTerm/toTerm
+  if (params?.fromTerm && params?.toTerm) {
+    fromTerm = params.fromTerm;
+    toTerm = params.toTerm;
+  } else {
+    // 向下相容：動態查找可用的 Fall terms
+    const { data: termsData } = await supabase
+      .from("map_assessments")
+      .select("term_tested")
+      .like("term_tested", "Fall %")
+      .in("grade", [3, 4, 5, 6]);
+
+    if (!termsData || termsData.length === 0) return null;
+
+    const fallTerms = [...new Set(termsData.map((d) => d.term_tested))].sort(
+      compareTermTested
+    );
+    if (fallTerms.length < 2) return null;
+
+    // 檢查 termTested 是否為 Fall term
+    const selectedTerm = params?.termTested;
+    if (selectedTerm && selectedTerm.startsWith("Fall ")) {
+      // 找到 selectedTerm 在 fallTerms 中的位置
+      const selectedIndex = fallTerms.indexOf(selectedTerm);
+      if (selectedIndex > 0) {
+        // 使用選擇的 term 作為 toTerm，前一個作為 fromTerm
+        toTerm = selectedTerm;
+        fromTerm = fallTerms[selectedIndex - 1];
+      } else {
+        // selectedTerm 是最早的 Fall 或不存在，使用最近的兩個
+        fromTerm = fallTerms[fallTerms.length - 2];
+        toTerm = fallTerms[fallTerms.length - 1];
+      }
     } else {
-      // selectedTerm 是最早的 Fall 或不存在，使用最近的兩個
+      // 未指定或不是 Fall term，使用最近的兩個 Fall terms
       fromTerm = fallTerms[fallTerms.length - 2];
       toTerm = fallTerms[fallTerms.length - 1];
     }
-  } else {
-    // 未指定或不是 Fall term，使用最近的兩個 Fall terms
-    fromTerm = fallTerms[fallTerms.length - 2];
-    toTerm = fallTerms[fallTerms.length - 1];
-  }
 
-  if (!fromTerm || !toTerm) return null;
+    if (!fromTerm || !toTerm) return null;
+  }
 
   // 查詢兩個學期的資料
   const { data, error } = await supabase
@@ -891,10 +1100,13 @@ export async function getRitGrowthScatterData(params?: {
 
   // 計算統計
   const correlation = calculateCorrelation(startRits, growths);
+  const { slope, intercept } = calculateLinearRegression(startRits, growths);
+  const periodType = determinePeriodType(fromTerm, toTerm);
 
   return {
     fromTerm,
     toTerm,
+    periodType,
     points,
     stats: {
       minRit: Math.min(...startRits),
@@ -902,6 +1114,8 @@ export async function getRitGrowthScatterData(params?: {
       minGrowth: Math.min(...growths),
       maxGrowth: Math.max(...growths),
       correlation: Math.round(correlation * 100) / 100,
+      slope,
+      intercept,
     },
   };
 }

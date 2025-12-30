@@ -33,6 +33,7 @@ import { RitGradeHeatmap } from "./RitGradeHeatmap";
 import {
   getCrossGradeStats,
   getAvailableSchoolTerms,
+  getAvailableGrowthPeriods,
   getSchoolGrowthDistribution,
   getRitGrowthScatterData,
   getRitGradeHeatmapData,
@@ -41,6 +42,7 @@ import {
   type SchoolGrowthDistributionData,
   type RitGrowthScatterData,
   type RitGradeHeatmapData,
+  type GrowthPeriodOption,
 } from "@/lib/api/map-school-analytics";
 import type { Course } from "@/lib/map/norms";
 
@@ -62,22 +64,54 @@ export function SchoolTab() {
   const [selectedCourse, setSelectedCourse] = useState<Course | "Average">(
     "Average"
   );
+  // Growth Period selection state
+  const [availableGrowthPeriods, setAvailableGrowthPeriods] = useState<GrowthPeriodOption[]>([]);
+  const [selectedGrowthPeriod, setSelectedGrowthPeriod] = useState<string | undefined>();
+
+  // 解析選擇的 growth period
+  const parseGrowthPeriod = (periodKey: string | undefined) => {
+    if (!periodKey) return { fromTerm: undefined, toTerm: undefined };
+    const [fromTerm, toTerm] = periodKey.split("→").map((s) => s.trim());
+    return { fromTerm, toTerm };
+  };
 
   // 載入資料
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [termsResult, statsResult, growthResult, scatterResult, heatmapResult] =
+      // 取得可用的 terms 和 growth periods
+      const [termsResult, growthPeriodsResult] = await Promise.all([
+        getAvailableSchoolTerms(),
+        getAvailableGrowthPeriods(),
+      ]);
+
+      setAvailableTerms(termsResult);
+      setAvailableGrowthPeriods(growthPeriodsResult);
+
+      // 設定預設 growth period（如果尚未選擇）
+      let currentGrowthPeriod = selectedGrowthPeriod;
+      if (!currentGrowthPeriod && growthPeriodsResult.length > 0) {
+        // 預設選擇第一個（通常是 Fall-to-Fall）
+        const firstPeriod = growthPeriodsResult[0];
+        if (firstPeriod) {
+          currentGrowthPeriod = `${firstPeriod.fromTerm}→${firstPeriod.toTerm}`;
+          setSelectedGrowthPeriod(currentGrowthPeriod);
+        }
+      }
+
+      // 解析 growth period 參數
+      const { fromTerm, toTerm } = parseGrowthPeriod(currentGrowthPeriod);
+
+      // 載入圖表資料
+      const [statsResult, growthResult, scatterResult, heatmapResult] =
         await Promise.all([
-          getAvailableSchoolTerms(),
           getCrossGradeStats({ termTested: selectedTerm }),
-          getSchoolGrowthDistribution({ termTested: selectedTerm }),
-          getRitGrowthScatterData({ termTested: selectedTerm }),
+          getSchoolGrowthDistribution({ fromTerm, toTerm }),
+          getRitGrowthScatterData({ fromTerm, toTerm }),
           getRitGradeHeatmapData({ termTested: selectedTerm }),
         ]);
 
-      setAvailableTerms(termsResult);
       setData(statsResult);
       setGrowthData(growthResult);
       setScatterData(scatterResult);
@@ -93,7 +127,7 @@ export function SchoolTab() {
     } finally {
       setLoading(false);
     }
-  }, [selectedTerm]);
+  }, [selectedTerm, selectedGrowthPeriod]);
 
   // 初始載入
   useEffect(() => {
@@ -184,6 +218,47 @@ export function SchoolTab() {
               <TabsTrigger value="Reading">Reading</TabsTrigger>
             </TabsList>
           </Tabs>
+
+          {/* Growth Period Selector */}
+          {availableGrowthPeriods.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Growth Period:</span>
+              <Select
+                value={selectedGrowthPeriod}
+                onValueChange={(v) => setSelectedGrowthPeriod(v)}
+              >
+                <SelectTrigger className="w-64">
+                  <SelectValue placeholder="Select growth period" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableGrowthPeriods.map((period) => {
+                    const key = `${period.fromTerm}→${period.toTerm}`;
+                    return (
+                      <SelectItem key={key} value={key}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span>{period.label}</span>
+                          <span className="text-xs text-muted-foreground">
+                            (n={period.studentCount})
+                          </span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-xs">
+                    Growth charts require paired data from two terms. Only students
+                    with assessments in both terms are included in growth analysis.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          )}
         </div>
 
         {/* Cross-Grade Chart */}
