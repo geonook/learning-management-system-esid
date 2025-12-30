@@ -4,7 +4,7 @@
  * School Tab Component
  *
  * 全校 MAP 表現總覽
- * 顯示 G3-G6 跨年級比較圖表和摘要表格
+ * 顯示 G3-G6 跨年級比較圖表、摘要表格、成長分佈
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -27,11 +27,14 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { CrossGradeChart } from "./CrossGradeChart";
 import { SchoolSummaryTable } from "./SchoolSummaryTable";
+import { GrowthDistributionChart } from "./GrowthDistributionChart";
 import {
   getCrossGradeStats,
   getAvailableSchoolTerms,
+  getSchoolGrowthDistribution,
   type SchoolOverviewData,
   type CrossGradeStats,
+  type SchoolGrowthDistributionData,
 } from "@/lib/api/map-school-analytics";
 import type { Course } from "@/lib/map/norms";
 
@@ -40,6 +43,8 @@ export function SchoolTab() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<SchoolOverviewData | null>(null);
+  const [growthData, setGrowthData] =
+    useState<SchoolGrowthDistributionData | null>(null);
   const [availableTerms, setAvailableTerms] = useState<string[]>([]);
   const [selectedTerm, setSelectedTerm] = useState<string | undefined>();
   const [selectedCourse, setSelectedCourse] = useState<Course | "Average">(
@@ -51,13 +56,15 @@ export function SchoolTab() {
     setLoading(true);
     setError(null);
     try {
-      const [termsResult, statsResult] = await Promise.all([
+      const [termsResult, statsResult, growthResult] = await Promise.all([
         getAvailableSchoolTerms(),
         getCrossGradeStats({ termTested: selectedTerm }),
+        getSchoolGrowthDistribution(),
       ]);
 
       setAvailableTerms(termsResult);
       setData(statsResult);
+      setGrowthData(growthResult);
 
       // 設定預設選擇的 term
       if (!selectedTerm && statsResult?.termTested) {
@@ -95,6 +102,7 @@ export function SchoolTab() {
         </div>
         <Skeleton className="h-[350px] w-full" />
         <Skeleton className="h-[200px] w-full" />
+        <Skeleton className="h-[300px] w-full" />
       </div>
     );
   }
@@ -198,6 +206,28 @@ export function SchoolTab() {
           </div>
           <SchoolSummaryTable data={filteredData} />
         </div>
+
+        {/* Growth Distribution */}
+        {growthData && (
+          <div className="rounded-lg border bg-card p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <h3 className="text-sm font-medium">Growth Distribution</h3>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-xs">
+                    Shows Fall-to-Fall growth distribution across all grades.
+                    Red bars indicate students with negative growth who may need
+                    intervention.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <GrowthDistributionChart data={growthData} />
+          </div>
+        )}
       </div>
     </TooltipProvider>
   );

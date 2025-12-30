@@ -240,3 +240,198 @@ export async function getAvailableSchoolTerms(): Promise<string[]> {
   const terms = [...new Set(data?.map((d) => d.term_tested) || [])];
   return terms.sort(compareTermTested).reverse();
 }
+
+// ============================================================
+// Growth Distribution API
+// ============================================================
+
+export interface GrowthDistributionBucket {
+  range: string;
+  min: number;
+  max: number;
+  count: number;
+  percentage: number;
+  isNegative: boolean;
+}
+
+export interface SchoolGrowthDistributionData {
+  fromTerm: string;
+  toTerm: string;
+  totalStudents: number;
+  negativeGrowthCount: number;
+  negativeGrowthPercentage: number;
+  meanGrowth: number;
+  distribution: GrowthDistributionBucket[];
+}
+
+/**
+ * 取得全校 Fall-to-Fall 成長分佈
+ *
+ * Permission: All authenticated users
+ */
+export async function getSchoolGrowthDistribution(): Promise<SchoolGrowthDistributionData | null> {
+  await requireAuth();
+  const supabase = createClient();
+
+  const fromTerm = "Fall 2024-2025";
+  const toTerm = "Fall 2025-2026";
+
+  // 查詢兩個學期的資料
+  const { data, error } = await supabase
+    .from("map_assessments")
+    .select(
+      `
+      student_number,
+      term_tested,
+      course,
+      rit_score,
+      grade,
+      student_id,
+      students:student_id (
+        is_active
+      )
+    `
+    )
+    .in("term_tested", [fromTerm, toTerm])
+    .in("grade", [3, 4, 5, 6])
+    .not("student_id", "is", null);
+
+  if (error) {
+    console.error("Error fetching growth distribution:", error);
+    return null;
+  }
+
+  if (!data || data.length === 0) return null;
+
+  // 過濾已停用的學生
+  const activeData = data.filter((d) => {
+    const student = d.students as unknown as { is_active: boolean } | null;
+    return student?.is_active === true;
+  });
+
+  // 按學生分組計算成長
+  interface StudentGrowth {
+    fromLU: number | null;
+    toLU: number | null;
+    fromRD: number | null;
+    toRD: number | null;
+  }
+  const studentMap = new Map<string, StudentGrowth>();
+
+  for (const row of activeData) {
+    let student = studentMap.get(row.student_number);
+    if (!student) {
+      student = { fromLU: null, toLU: null, fromRD: null, toRD: null };
+      studentMap.set(row.student_number, student);
+    }
+
+    const isFrom = row.term_tested === fromTerm;
+    if (row.course === "Language Usage") {
+      if (isFrom) student.fromLU = row.rit_score;
+      else student.toLU = row.rit_score;
+    } else if (row.course === "Reading") {
+      if (isFrom) student.fromRD = row.rit_score;
+      else student.toRD = row.rit_score;
+    }
+  }
+
+  // 計算每個學生的平均成長 (兩科平均)
+  const growths: number[] = [];
+  for (const s of studentMap.values()) {
+    const growthValues: number[] = [];
+    if (s.fromLU !== null && s.toLU !== null) {
+      growthValues.push(s.toLU - s.fromLU);
+    }
+    if (s.fromRD !== null && s.toRD !== null) {
+      growthValues.push(s.toRD - s.fromRD);
+    }
+    if (growthValues.length > 0) {
+      const avgGrowth =
+        growthValues.reduce((a, b) => a + b, 0) / growthValues.length;
+      growths.push(avgGrowth);
+    }
+  }
+
+  if (growths.length === 0) return null;
+
+  // 計算分佈 buckets
+  const buckets: GrowthDistributionBucket[] = [
+    {
+      range: "< -5",
+      min: -Infinity,
+      max: -5,
+      count: 0,
+      percentage: 0,
+      isNegative: true,
+    },
+    {
+      range: "-5 to 0",
+      min: -5,
+      max: 0,
+      count: 0,
+      percentage: 0,
+      isNegative: true,
+    },
+    {
+      range: "0 to 5",
+      min: 0,
+      max: 5,
+      count: 0,
+      percentage: 0,
+      isNegative: false,
+    },
+    {
+      range: "5 to 10",
+      min: 5,
+      max: 10,
+      count: 0,
+      percentage: 0,
+      isNegative: false,
+    },
+    {
+      range: "10 to 15",
+      min: 10,
+      max: 15,
+      count: 0,
+      percentage: 0,
+      isNegative: false,
+    },
+    {
+      range: "> 15",
+      min: 15,
+      max: Infinity,
+      count: 0,
+      percentage: 0,
+      isNegative: false,
+    },
+  ];
+
+  for (const g of growths) {
+    for (const bucket of buckets) {
+      if (g >= bucket.min && g < bucket.max) {
+        bucket.count++;
+        break;
+      }
+    }
+  }
+
+  // 計算百分比
+  const total = growths.length;
+  for (const bucket of buckets) {
+    bucket.percentage = Math.round((bucket.count / total) * 1000) / 10;
+  }
+
+  // 計算負成長統計
+  const negativeCount = growths.filter((g) => g < 0).length;
+  const meanGrowth = growths.reduce((a, b) => a + b, 0) / growths.length;
+
+  return {
+    fromTerm,
+    toTerm,
+    totalStudents: total,
+    negativeGrowthCount: negativeCount,
+    negativeGrowthPercentage: Math.round((negativeCount / total) * 1000) / 10,
+    meanGrowth: Math.round(meanGrowth * 10) / 10,
+    distribution: buckets,
+  };
+}
