@@ -14,6 +14,7 @@ import {
   getNorm,
   getNormAverage,
   parseTermTested,
+  compareTermTested,
   type MapTerm,
   type Course,
 } from "@/lib/map/norms";
@@ -235,7 +236,7 @@ export async function getAvailableSchoolTerms(): Promise<string[]> {
     return [];
   }
 
-  // 取得唯一值
+  // 取得唯一值並按時間排序（從新到舊）
   const terms = [...new Set(data?.map((d) => d.term_tested) || [])];
-  return terms;
+  return terms.sort(compareTermTested).reverse();
 }

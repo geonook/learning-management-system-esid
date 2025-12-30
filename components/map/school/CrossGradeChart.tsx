@@ -33,11 +33,11 @@ interface CrossGradeChartProps {
   height?: number;
 }
 
-// 配色
+// 配色 - KCISLK 學生用綠色更突出
 const SCHOOL_COLORS = {
-  student: "#1f2937", // gray-800 (黑色)
-  norm: NWEA_COLORS.norm, // 灰藍色
-  errorBar: "#6b7280", // gray-500
+  student: "#16a34a", // green-600 (綠色 - 主角)
+  norm: "#64748b", // slate-500 (灰色 - 參考線)
+  errorBar: "#86efac", // green-300 (淺綠 - 誤差棒)
 };
 
 export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
