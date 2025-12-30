@@ -268,9 +268,15 @@ export interface SchoolGrowthDistributionData {
 /**
  * 取得全校 Fall-to-Fall 成長分佈
  *
+ * 根據 termTested 參數決定成長期間：
+ * - 如果 termTested 是 Fall term，則使用該 term 作為 toTerm，前一個 Fall 作為 fromTerm
+ * - 如果未指定或不是 Fall term，則使用最近的兩個 Fall terms
+ *
  * Permission: All authenticated users
  */
-export async function getSchoolGrowthDistribution(): Promise<SchoolGrowthDistributionData | null> {
+export async function getSchoolGrowthDistribution(params?: {
+  termTested?: string;
+}): Promise<SchoolGrowthDistributionData | null> {
   await requireAuth();
   const supabase = createClient();
 
@@ -283,15 +289,35 @@ export async function getSchoolGrowthDistribution(): Promise<SchoolGrowthDistrib
 
   if (!termsData || termsData.length === 0) return null;
 
-  // 取得唯一的 Fall terms 並排序
+  // 取得唯一的 Fall terms 並排序（由舊到新）
   const fallTerms = [...new Set(termsData.map((d) => d.term_tested))].sort(
     compareTermTested
   );
   if (fallTerms.length < 2) return null; // 需要至少兩個 Fall terms
 
-  // 使用最近的兩個 Fall terms
-  const fromTerm = fallTerms[fallTerms.length - 2];
-  const toTerm = fallTerms[fallTerms.length - 1];
+  // 決定 fromTerm 和 toTerm
+  let fromTerm: string;
+  let toTerm: string;
+
+  // 檢查 termTested 是否為 Fall term
+  const selectedTerm = params?.termTested;
+  if (selectedTerm && selectedTerm.startsWith("Fall ")) {
+    // 找到 selectedTerm 在 fallTerms 中的位置
+    const selectedIndex = fallTerms.indexOf(selectedTerm);
+    if (selectedIndex > 0) {
+      // 使用選擇的 term 作為 toTerm，前一個作為 fromTerm
+      toTerm = selectedTerm;
+      fromTerm = fallTerms[selectedIndex - 1];
+    } else {
+      // selectedTerm 是最早的 Fall 或不存在，使用最近的兩個
+      fromTerm = fallTerms[fallTerms.length - 2];
+      toTerm = fallTerms[fallTerms.length - 1];
+    }
+  } else {
+    // 未指定或不是 Fall term，使用最近的兩個 Fall terms
+    fromTerm = fallTerms[fallTerms.length - 2];
+    toTerm = fallTerms[fallTerms.length - 1];
+  }
 
   if (!fromTerm || !toTerm) return null;
 
@@ -695,7 +721,16 @@ export async function getRitGradeHeatmapData(params: {
   };
 }
 
-export async function getRitGrowthScatterData(): Promise<RitGrowthScatterData | null> {
+/**
+ * 取得 RIT-Growth 散佈圖資料
+ *
+ * 根據 termTested 參數決定成長期間：
+ * - 如果 termTested 是 Fall term，則使用該 term 作為 toTerm，前一個 Fall 作為 fromTerm
+ * - 如果未指定或不是 Fall term，則使用最近的兩個 Fall terms
+ */
+export async function getRitGrowthScatterData(params?: {
+  termTested?: string;
+}): Promise<RitGrowthScatterData | null> {
   await requireAuth();
   const supabase = createClient();
 
@@ -713,8 +748,29 @@ export async function getRitGrowthScatterData(): Promise<RitGrowthScatterData | 
   );
   if (fallTerms.length < 2) return null;
 
-  const fromTerm = fallTerms[fallTerms.length - 2];
-  const toTerm = fallTerms[fallTerms.length - 1];
+  // 決定 fromTerm 和 toTerm
+  let fromTerm: string;
+  let toTerm: string;
+
+  // 檢查 termTested 是否為 Fall term
+  const selectedTerm = params?.termTested;
+  if (selectedTerm && selectedTerm.startsWith("Fall ")) {
+    // 找到 selectedTerm 在 fallTerms 中的位置
+    const selectedIndex = fallTerms.indexOf(selectedTerm);
+    if (selectedIndex > 0) {
+      // 使用選擇的 term 作為 toTerm，前一個作為 fromTerm
+      toTerm = selectedTerm;
+      fromTerm = fallTerms[selectedIndex - 1];
+    } else {
+      // selectedTerm 是最早的 Fall 或不存在，使用最近的兩個
+      fromTerm = fallTerms[fallTerms.length - 2];
+      toTerm = fallTerms[fallTerms.length - 1];
+    }
+  } else {
+    // 未指定或不是 Fall term，使用最近的兩個 Fall terms
+    fromTerm = fallTerms[fallTerms.length - 2];
+    toTerm = fallTerms[fallTerms.length - 1];
+  }
 
   if (!fromTerm || !toTerm) return null;
 

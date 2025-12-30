@@ -72,8 +72,8 @@ export function SchoolTab() {
         await Promise.all([
           getAvailableSchoolTerms(),
           getCrossGradeStats({ termTested: selectedTerm }),
-          getSchoolGrowthDistribution(),
-          getRitGrowthScatterData(),
+          getSchoolGrowthDistribution({ termTested: selectedTerm }),
+          getRitGrowthScatterData({ termTested: selectedTerm }),
           getRitGradeHeatmapData({ termTested: selectedTerm }),
         ]);
 
