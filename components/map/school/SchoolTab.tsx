@@ -28,13 +28,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CrossGradeChart } from "./CrossGradeChart";
 import { SchoolSummaryTable } from "./SchoolSummaryTable";
 import { GrowthDistributionChart } from "./GrowthDistributionChart";
+import { RitGrowthScatterChart } from "./RitGrowthScatterChart";
 import {
   getCrossGradeStats,
   getAvailableSchoolTerms,
   getSchoolGrowthDistribution,
+  getRitGrowthScatterData,
   type SchoolOverviewData,
   type CrossGradeStats,
   type SchoolGrowthDistributionData,
+  type RitGrowthScatterData,
 } from "@/lib/api/map-school-analytics";
 import type { Course } from "@/lib/map/norms";
 
@@ -45,6 +48,9 @@ export function SchoolTab() {
   const [data, setData] = useState<SchoolOverviewData | null>(null);
   const [growthData, setGrowthData] =
     useState<SchoolGrowthDistributionData | null>(null);
+  const [scatterData, setScatterData] = useState<RitGrowthScatterData | null>(
+    null
+  );
   const [availableTerms, setAvailableTerms] = useState<string[]>([]);
   const [selectedTerm, setSelectedTerm] = useState<string | undefined>();
   const [selectedCourse, setSelectedCourse] = useState<Course | "Average">(
@@ -56,15 +62,18 @@ export function SchoolTab() {
     setLoading(true);
     setError(null);
     try {
-      const [termsResult, statsResult, growthResult] = await Promise.all([
-        getAvailableSchoolTerms(),
-        getCrossGradeStats({ termTested: selectedTerm }),
-        getSchoolGrowthDistribution(),
-      ]);
+      const [termsResult, statsResult, growthResult, scatterResult] =
+        await Promise.all([
+          getAvailableSchoolTerms(),
+          getCrossGradeStats({ termTested: selectedTerm }),
+          getSchoolGrowthDistribution(),
+          getRitGrowthScatterData(),
+        ]);
 
       setAvailableTerms(termsResult);
       setData(statsResult);
       setGrowthData(growthResult);
+      setScatterData(scatterResult);
 
       // 設定預設選擇的 term
       if (!selectedTerm && statsResult?.termTested) {
@@ -226,6 +235,27 @@ export function SchoolTab() {
               </Tooltip>
             </div>
             <GrowthDistributionChart data={growthData} />
+          </div>
+        )}
+
+        {/* RIT-Growth Scatter Chart */}
+        {scatterData && (
+          <div className="rounded-lg border bg-card p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <h3 className="text-sm font-medium">RIT-Growth Correlation</h3>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-xs">
+                    Shows relationship between starting RIT and growth. Negative
+                    correlation may indicate ceiling effect for high performers.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <RitGrowthScatterChart data={scatterData} />
           </div>
         )}
       </div>

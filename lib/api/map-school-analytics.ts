@@ -435,3 +435,186 @@ export async function getSchoolGrowthDistribution(): Promise<SchoolGrowthDistrib
     distribution: buckets,
   };
 }
+
+// ============================================================
+// RIT-Growth Scatter/Heatmap API
+// ============================================================
+
+export interface RitGrowthDataPoint {
+  startRit: number;
+  growth: number;
+  grade: number;
+}
+
+export interface RitGrowthScatterData {
+  fromTerm: string;
+  toTerm: string;
+  points: RitGrowthDataPoint[];
+  stats: {
+    minRit: number;
+    maxRit: number;
+    minGrowth: number;
+    maxGrowth: number;
+    correlation: number; // R value
+  };
+}
+
+/**
+ * 計算皮爾森相關係數
+ */
+function calculateCorrelation(x: number[], y: number[]): number {
+  const n = x.length;
+  if (n === 0) return 0;
+
+  const sumX = x.reduce((a, b) => a + b, 0);
+  const sumY = y.reduce((a, b) => a + b, 0);
+  const sumXY = x.reduce((sum, xi, i) => sum + xi * (y[i] ?? 0), 0);
+  const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0);
+  const sumY2 = y.reduce((sum, yi) => sum + yi * yi, 0);
+
+  const numerator = n * sumXY - sumX * sumY;
+  const denominator = Math.sqrt(
+    (n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY)
+  );
+
+  if (denominator === 0) return 0;
+  return numerator / denominator;
+}
+
+/**
+ * 取得 RIT-Growth 散佈圖資料
+ *
+ * Permission: All authenticated users
+ */
+export async function getRitGrowthScatterData(): Promise<RitGrowthScatterData | null> {
+  await requireAuth();
+  const supabase = createClient();
+
+  const fromTerm = "Fall 2024-2025";
+  const toTerm = "Fall 2025-2026";
+
+  // 查詢兩個學期的資料
+  const { data, error } = await supabase
+    .from("map_assessments")
+    .select(
+      `
+      student_number,
+      term_tested,
+      course,
+      rit_score,
+      grade,
+      student_id,
+      students:student_id (
+        is_active
+      )
+    `
+    )
+    .in("term_tested", [fromTerm, toTerm])
+    .in("grade", [3, 4, 5, 6])
+    .not("student_id", "is", null);
+
+  if (error) {
+    console.error("Error fetching RIT-Growth data:", error);
+    return null;
+  }
+
+  if (!data || data.length === 0) return null;
+
+  // 過濾已停用的學生
+  const activeData = data.filter((d) => {
+    const student = d.students as unknown as { is_active: boolean } | null;
+    return student?.is_active === true;
+  });
+
+  // 按學生分組
+  interface StudentData {
+    grade: number;
+    fromLU: number | null;
+    toLU: number | null;
+    fromRD: number | null;
+    toRD: number | null;
+  }
+  const studentMap = new Map<string, StudentData>();
+
+  for (const row of activeData) {
+    let student = studentMap.get(row.student_number);
+    if (!student) {
+      student = {
+        grade: row.grade,
+        fromLU: null,
+        toLU: null,
+        fromRD: null,
+        toRD: null,
+      };
+      studentMap.set(row.student_number, student);
+    }
+
+    const isFrom = row.term_tested === fromTerm;
+    if (row.course === "Language Usage") {
+      if (isFrom) student.fromLU = row.rit_score;
+      else student.toLU = row.rit_score;
+    } else if (row.course === "Reading") {
+      if (isFrom) student.fromRD = row.rit_score;
+      else student.toRD = row.rit_score;
+    }
+  }
+
+  // 計算每個學生的起始 RIT 和成長
+  const points: RitGrowthDataPoint[] = [];
+  const startRits: number[] = [];
+  const growths: number[] = [];
+
+  for (const s of studentMap.values()) {
+    // 需要至少一科有完整的 from/to 資料
+    const hasLU = s.fromLU !== null && s.toLU !== null;
+    const hasRD = s.fromRD !== null && s.toRD !== null;
+
+    if (!hasLU && !hasRD) continue;
+
+    // 計算平均起始 RIT 和成長
+    let startRit = 0;
+    let growth = 0;
+    let count = 0;
+
+    if (hasLU) {
+      startRit += s.fromLU!;
+      growth += s.toLU! - s.fromLU!;
+      count++;
+    }
+    if (hasRD) {
+      startRit += s.fromRD!;
+      growth += s.toRD! - s.fromRD!;
+      count++;
+    }
+
+    startRit /= count;
+    growth /= count;
+
+    points.push({
+      startRit: Math.round(startRit * 10) / 10,
+      growth: Math.round(growth * 10) / 10,
+      grade: s.grade,
+    });
+
+    startRits.push(startRit);
+    growths.push(growth);
+  }
+
+  if (points.length === 0) return null;
+
+  // 計算統計
+  const correlation = calculateCorrelation(startRits, growths);
+
+  return {
+    fromTerm,
+    toTerm,
+    points,
+    stats: {
+      minRit: Math.min(...startRits),
+      maxRit: Math.max(...startRits),
+      minGrowth: Math.min(...growths),
+      maxGrowth: Math.max(...growths),
+      correlation: Math.round(correlation * 100) / 100,
+    },
+  };
+}
