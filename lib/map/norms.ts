@@ -113,10 +113,11 @@ const MAP_NORMS_WITH_STDDEV: Record<
 
 /**
  * NWEA 2025 Student Growth Norms
- * 資料來源：NWEA 2025 Norms Quick Reference (官方文件)
- * 提供 Fall-to-Winter, Winter-to-Spring, Fall-to-Spring 三種成長期間
+ * 資料來源：NWEA 2025 Norms Quick Reference + Technical Manual (官方文件)
+ * 提供 Fall-to-Winter, Winter-to-Spring, Fall-to-Spring, Fall-to-Fall 四種成長期間
+ * Fall-to-Fall 代表跨學年成長 (如 G3 Fall → G4 Fall)
  */
-type GrowthPeriod = "fall-to-winter" | "winter-to-spring" | "fall-to-spring";
+type GrowthPeriod = "fall-to-winter" | "winter-to-spring" | "fall-to-spring" | "fall-to-fall";
 
 const MAP_GROWTH_NORMS: Record<
   string,
@@ -127,21 +128,30 @@ const MAP_GROWTH_NORMS: Record<
       "fall-to-winter": { languageUsage: 5, languageUsageStdDev: 8, reading: 5, readingStdDev: 9 },
       "winter-to-spring": { languageUsage: 4, languageUsageStdDev: 8, reading: 4, readingStdDev: 9 },
       "fall-to-spring": { languageUsage: 9, languageUsageStdDev: 9, reading: 9, readingStdDev: 9 },
+      // Fall-to-Fall: G3 Fall → G4 Fall (跨學年成長)
+      // 資料來源：NWEA 2025 Technical Manual Table C.3 & C.5
+      "fall-to-fall": { languageUsage: 10.46, languageUsageStdDev: 9.18, reading: 11.20, readingStdDev: 9.69 },
     },
     4: {
       "fall-to-winter": { languageUsage: 4, languageUsageStdDev: 8, reading: 4, readingStdDev: 8 },
       "winter-to-spring": { languageUsage: 3, languageUsageStdDev: 8, reading: 3, readingStdDev: 8 },
       "fall-to-spring": { languageUsage: 7, languageUsageStdDev: 8, reading: 6, readingStdDev: 9 },
+      // Fall-to-Fall: G4 Fall → G5 Fall
+      "fall-to-fall": { languageUsage: 7.62, languageUsageStdDev: 8.39, reading: 7.68, readingStdDev: 9.11 },
     },
     5: {
       "fall-to-winter": { languageUsage: 3, languageUsageStdDev: 8, reading: 3, readingStdDev: 8 },
       "winter-to-spring": { languageUsage: 2, languageUsageStdDev: 7, reading: 2, readingStdDev: 8 },
       "fall-to-spring": { languageUsage: 5, languageUsageStdDev: 8, reading: 5, readingStdDev: 9 },
+      // Fall-to-Fall: G5 Fall → G6 Fall
+      "fall-to-fall": { languageUsage: 5.34, languageUsageStdDev: 8.25, reading: 5.75, readingStdDev: 8.96 },
     },
     6: {
       "fall-to-winter": { languageUsage: 2, languageUsageStdDev: 8, reading: 2, readingStdDev: 8 },
       "winter-to-spring": { languageUsage: 2, languageUsageStdDev: 8, reading: 1, readingStdDev: 8 },
       "fall-to-spring": { languageUsage: 4, languageUsageStdDev: 8, reading: 3, readingStdDev: 8 },
+      // Fall-to-Fall: G6 Fall → G7 Fall
+      "fall-to-fall": { languageUsage: 3.99, languageUsageStdDev: 8.42, reading: 3.86, readingStdDev: 8.85 },
     },
   },
 };
@@ -387,14 +397,21 @@ export function getGrowthNormByCourse(
 
 /**
  * 輔助函數：將兩個 mapTerm 轉換為成長期間
+ *
+ * @param fromTerm - 起始測驗期
+ * @param toTerm - 結束測驗期
+ * @param isCrossYear - 是否跨學年 (用於 fall-to-fall 判斷)
  */
 export function mapTermsToGrowthPeriod(
   fromTerm: MapTerm,
-  toTerm: MapTerm
+  toTerm: MapTerm,
+  isCrossYear: boolean = false
 ): GrowthPeriod | null {
   if (fromTerm === "fall" && toTerm === "winter") return "fall-to-winter";
   if (fromTerm === "winter" && toTerm === "spring") return "winter-to-spring";
   if (fromTerm === "fall" && toTerm === "spring") return "fall-to-spring";
+  // Fall-to-Fall: 跨學年成長 (如 G3 Fall 2024-25 → G4 Fall 2025-26)
+  if (fromTerm === "fall" && toTerm === "fall" && isCrossYear) return "fall-to-fall";
   return null;
 }
 

@@ -31,7 +31,7 @@ NWEA provides national normative data based on millions of US student test recor
 
 ## 2025 Student Growth Norms (G3-G6)
 
-### Reading Growth
+### Reading Growth (Within-Year)
 
 | Grade | Fall-to-Winter Mean | SD | Winter-to-Spring Mean | SD | Fall-to-Spring Mean | SD |
 |-------|---------------------|----|-----------------------|----|---------------------|-------|
@@ -40,7 +40,7 @@ NWEA provides national normative data based on millions of US student test recor
 | 5 | 3 | 8 | 2 | 8 | 5 | 9 |
 | 6 | 2 | 8 | 1 | 8 | 3 | 8 |
 
-### Language Usage Growth
+### Language Usage Growth (Within-Year)
 
 | Grade | Fall-to-Winter Mean | SD | Winter-to-Spring Mean | SD | Fall-to-Spring Mean | SD |
 |-------|---------------------|----|-----------------------|----|---------------------|-------|
@@ -48,6 +48,30 @@ NWEA provides national normative data based on millions of US student test recor
 | 4 | 4 | 8 | 3 | 8 | 7 | 8 |
 | 5 | 3 | 8 | 2 | 7 | 5 | 8 |
 | 6 | 2 | 8 | 2 | 8 | 4 | 8 |
+
+### Fall-to-Fall Growth (Cross-Year / Grade Advancement)
+
+**資料來源**: NWEA 2025 Technical Manual Table C.3 & C.5
+
+Fall-to-Fall 代表學生從一個年級的秋季到下一個年級的秋季的預期成長。
+
+#### Reading Growth (Fall-to-Fall)
+
+| From Grade → To Grade | Mean | SD |
+|----------------------|------|-----|
+| G3 → G4 | 11.20 | 9.69 |
+| G4 → G5 | 7.68 | 9.11 |
+| G5 → G6 | 5.75 | 8.96 |
+| G6 → G7 | 3.86 | 8.85 |
+
+#### Language Usage Growth (Fall-to-Fall)
+
+| From Grade → To Grade | Mean | SD |
+|----------------------|------|-----|
+| G3 → G4 | 10.46 | 9.18 |
+| G4 → G5 | 7.62 | 8.39 |
+| G5 → G6 | 5.34 | 8.25 |
+| G6 → G7 | 3.99 | 8.42 |
 
 ## TypeScript Implementation
 
@@ -75,7 +99,7 @@ export interface GrowthNormData {
   readingStdDev: number;
 }
 
-type GrowthPeriod = "fall-to-winter" | "winter-to-spring" | "fall-to-spring";
+type GrowthPeriod = "fall-to-winter" | "winter-to-spring" | "fall-to-spring" | "fall-to-fall";
 ```
 
 ### Key Functions
@@ -87,7 +111,7 @@ type GrowthPeriod = "fall-to-winter" | "winter-to-spring" | "fall-to-spring";
 | `getNormDataWithStdDev(year, grade, term)` | `NormDataWithStdDev \| null` | Get complete norm data with SD |
 | `getGrowthNorm(year, grade, period)` | `GrowthNormData \| null` | Get growth norm for a period |
 | `getGrowthNormByCourse(year, grade, period, course)` | `{ mean, stdDev } \| null` | Get growth norm for specific course |
-| `mapTermsToGrowthPeriod(from, to)` | `GrowthPeriod \| null` | Convert terms to growth period |
+| `mapTermsToGrowthPeriod(from, to, isCrossYear?)` | `GrowthPeriod \| null` | Convert terms to growth period (use isCrossYear=true for fall-to-fall) |
 
 ### Usage Examples
 
@@ -104,9 +128,17 @@ const norm = getNorm("2025-2026", 4, "fall", "Reading"); // 196
 // Get G4 Fall Reading standard deviation
 const stdDev = getNormStdDev("2025-2026", 4, "fall", "Reading"); // 18
 
-// Get G4 Fall-to-Spring Reading growth norm
+// Get G4 Fall-to-Spring Reading growth norm (within-year)
 const growth = getGrowthNormByCourse("2025-2026", 4, "fall-to-spring", "Reading");
 // { mean: 6, stdDev: 9 }
+
+// Get G4 Fall-to-Fall Reading growth norm (cross-year: G4 Fall → G5 Fall)
+const crossYearGrowth = getGrowthNormByCourse("2025-2026", 4, "fall-to-fall", "Reading");
+// { mean: 7.68, stdDev: 9.11 }
+
+// Convert terms to growth period (with cross-year flag)
+const period = mapTermsToGrowthPeriod("fall", "fall", true);
+// "fall-to-fall"
 ```
 
 ## Legacy Norms (2024-2025)
