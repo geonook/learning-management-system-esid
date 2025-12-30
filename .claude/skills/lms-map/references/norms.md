@@ -4,10 +4,10 @@
 
 NWEA provides national normative data based on millions of US student test records. KCIS uses these norms to compare school performance against national averages.
 
-**Data Source**: NWEA 2025 Norms Quick Reference (Official)
-- 116 million scores from 13.8 million students across 30,000 schools
+**Data Source**: NWEA 2025 Technical Manual (Official)
+- 116 million scores from 13.8 million students across 29,720 US public schools
 - Testing period: Fall 2022 - Spring 2024
-- URL: https://www.nwea.org/resource-center/fact-sheet/87992/MAP-Growth-2025-norms-quick-reference_NWEA_onesheet.pdf
+- Technical Manual: See `.claude/skills/map-growth-norms-2025/SKILL.md`
 
 ## 2025 Student Achievement Norms (G3-G6)
 
@@ -15,19 +15,19 @@ NWEA provides national normative data based on millions of US student test recor
 
 | Grade | Fall Mean | Fall SD | Winter Mean | Winter SD | Spring Mean | Spring SD |
 |-------|-----------|---------|-------------|-----------|-------------|-----------|
-| 3 | 185 | 18 | 190 | 18 | 194 | 18 |
-| 4 | 196 | 18 | 199 | 18 | 202 | 18 |
-| 5 | 204 | 17 | 206 | 17 | 208 | 17 |
-| 6 | 209 | 17 | 211 | 17 | 212 | 17 |
+| 3 | 184.69 | 18.30 | 189.89 | 18.13 | 193.79 | 18.15 |
+| 4 | 195.92 | 17.99 | 199.45 | 17.76 | 202.09 | 17.74 |
+| 5 | 203.67 | 17.45 | 206.36 | 17.21 | 208.37 | 17.15 |
+| 6 | 208.95 | 16.84 | 210.72 | 16.70 | 212.04 | 16.67 |
 
 ### Language Usage
 
 | Grade | Fall Mean | Fall SD | Winter Mean | Winter SD | Spring Mean | Spring SD |
 |-------|-----------|---------|-------------|-----------|-------------|-----------|
-| 3 | 184 | 17 | 190 | 17 | 193 | 17 |
-| 4 | 195 | 17 | 198 | 16 | 201 | 16 |
-| 5 | 202 | 16 | 205 | 16 | 207 | 16 |
-| 6 | 206 | 16 | 209 | 16 | 210 | 16 |
+| 3 | 184.42 | 17.37 | 189.58 | 17.00 | 193.44 | 16.93 |
+| 4 | 194.69 | 16.81 | 198.45 | 16.46 | 201.27 | 16.26 |
+| 5 | 201.87 | 16.09 | 204.79 | 15.79 | 206.97 | 15.67 |
+| 6 | 206.49 | 15.67 | 208.57 | 15.68 | 210.12 | 15.78 |
 
 ## 2025 Student Growth Norms (G3-G6)
 
@@ -123,14 +123,14 @@ import {
 } from "@/lib/map/norms";
 
 // Get G4 Fall Reading norm
-const norm = getNorm("2025-2026", 4, "fall", "Reading"); // 196
+const norm = getNorm("2025-2026", 4, "fall", "Reading"); // 195.92
 
 // Get G4 Fall Reading standard deviation
-const stdDev = getNormStdDev("2025-2026", 4, "fall", "Reading"); // 18
+const stdDev = getNormStdDev("2025-2026", 4, "fall", "Reading"); // 17.99
 
 // Get G4 Fall-to-Spring Reading growth norm (within-year)
 const growth = getGrowthNormByCourse("2025-2026", 4, "fall-to-spring", "Reading");
-// { mean: 6, stdDev: 9 }
+// { mean: 6.17, stdDev: 8.67 }
 
 // Get G4 Fall-to-Fall Reading growth norm (cross-year: G4 Fall → G5 Fall)
 const crossYearGrowth = getGrowthNormByCourse("2025-2026", 4, "fall-to-fall", "Reading");

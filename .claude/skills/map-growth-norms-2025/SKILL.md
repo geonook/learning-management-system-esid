@@ -23,7 +23,7 @@ Official 2025 NWEA MAP Growth normative data derived from 116M+ test events acro
 ### Achievement Norms
 Cross-sectional RIT performance at specific time points. Answers: "How does this score compare to peers?"
 
-### Growth Norms  
+### Growth Norms
 Change between two assessments. **Conditional** on starting RIT score. Answers: "Is this growth typical for students who started at this level?"
 
 ### Seasonal Timing (Weeks from District Start)
@@ -31,7 +31,7 @@ Change between two assessments. **Conditional** on starting RIT score. Answers: 
 - **Winter**: Week 20 (13-28 weeks)
 - **Spring**: Week 32 (29+ weeks)
 
-## Percentile Calculation
+## Percentile Calculations
 
 ### Achievement Percentile
 
@@ -48,9 +48,9 @@ function calculateAchievementPercentile(
 }
 ```
 
-### Growth Percentile (Conditional)
+### Growth Percentile (Conditional) - Technical Manual Section 3.3.3
 
-Growth percentiles are **conditional on starting RIT**. Higher starting scores have lower expected growth.
+Growth percentiles are **conditional on starting RIT**. Higher starting scores have lower expected growth (regression to mean effect).
 
 ```typescript
 function calculateGrowthPercentile(
@@ -59,13 +59,15 @@ function calculateGrowthPercentile(
   normData: GrowthNormData
 ): number {
   const observedGrowth = endRit - startRit;
-  // Conditional mean adjusted for starting RIT
-  const expectedGrowth = normData.meanGrowth + 
+  // Conditional mean adjusted for starting RIT (Section 3.3.2)
+  const expectedGrowth = normData.meanGrowth +
     normData.regressionCoeff * (startRit - normData.startMean);
   const z = (observedGrowth - expectedGrowth) / normData.conditionalSD;
   return normalCDF(z) * 100;
 }
 ```
+
+→ See: `lib/map/conditional-growth.ts` for full implementation
 
 ## Reference Files
 

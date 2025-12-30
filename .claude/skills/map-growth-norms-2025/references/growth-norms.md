@@ -101,9 +101,11 @@ Expected Fall → Spring growth at 50th percentile:
 | 9 | +1.7 | 212 → 213 |
 | 10 | +1.4 | 213 → 215 |
 
-## Conditional Growth Calculation
+## Conditional Growth Calculation (Technical Manual Section 3.3.2-3.3.3)
 
 ### Mathematical Model
+
+**Source**: NWEA 2025 Technical Manual, Section 3.3.2 (Conditional Growth Population Distribution) & Section 3.3.3 (Conditional Growth Percentiles)
 
 For a student with starting RIT `y₁` at time `t₁` and ending RIT `y₂` at time `t₂`:
 

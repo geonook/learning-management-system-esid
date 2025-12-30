@@ -46,12 +46,23 @@ National percentile reference values by grade and term for comparison.
 → See: [references/norms.md](references/norms.md)
 → **Technical Manual**: [../map-growth-norms-2025/SKILL.md](../map-growth-norms-2025/SKILL.md)
 
-### Conditional Growth Percentile (cGP) - NEW
+### Conditional Growth Percentile (cGP)
 
-成長百分位數是基於起始 RIT 的「條件分佈」，用於公平評估學生成長表現。
+成長百分位數是 NWEA 官方方法（Technical Manual Section 3.3.2-3.3.3），基於起始 RIT 的「條件分佈」，用於公平評估學生成長表現。
+
+**Growth Index vs Growth Percentile (cGP)**:
+
+| 指標 | Growth Index (成長指數) | Growth Percentile (cGP) |
+|------|------------------------|-------------------------|
+| 來源 | CDF 報告欄位 | **Technical Manual 3.3.3** |
+| 公式 | Actual Growth ÷ Expected Growth | 條件正態分佈 Φ(z) |
+| 用途 | 快速判斷是否達標 (Index ≥ 1.0) | 公平比較不同起點學生 (Percentile 1-99) |
+| 優點 | 簡單直觀 | 考慮 regression to mean 效應 |
+| 欄位 | `conditional_growth_index` | 本地計算 |
 
 → See: `lib/map/conditional-growth.ts`
 → See: `lib/map/growth-params.ts`
+→ See: [references/glossary.md](references/glossary.md)
 
 ## Data Flow
 
@@ -155,3 +166,4 @@ npx tsx scripts/import-map-cdf.ts \
 | Chart Specs     | [references/charts.md](references/charts.md)             |
 | Student Page    | [references/student-page.md](references/student-page.md) |
 | **School Tab**  | [references/school-tab.md](references/school-tab.md)     |
+| **Glossary**    | [references/glossary.md](references/glossary.md)         |
