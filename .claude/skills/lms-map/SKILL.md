@@ -7,19 +7,20 @@ description: NWEA MAP Growth assessment data integration for KCIS LMS. Use this 
 
 ## Quick Reference
 
-| Item | Value |
-|------|-------|
-| **Grades** | G3, G4, G5, G6 |
-| **Courses** | Reading, Language Usage |
-| **Terms** | Fall, Spring (per academic year) |
-| **Student ID** | `LE12001` format (school student number) |
-| **Data Source** | CDF (Combined Data File) CSV |
+| Item            | Value                                    |
+| --------------- | ---------------------------------------- |
+| **Grades**      | G3, G4, G5, G6                           |
+| **Courses**     | Reading, Language Usage                  |
+| **Terms**       | Fall, Spring (per academic year)         |
+| **Student ID**  | `LE12001` format (school student number) |
+| **Data Source** | CDF (Combined Data File) CSV             |
 
 ## Core Concepts
 
 ### Benchmark Classification (E1/E2/E3)
 
 Students are classified based on **Spring semester Average RIT score**:
+
 - **Average** = (Language Usage RIT + Reading RIT) / 2
 - Classification used for **next year's English Level placement**
 - E1 (Advanced), E2 (Intermediate), E3 (Developing)
@@ -28,10 +29,10 @@ Students are classified based on **Spring semester Average RIT score**:
 
 ### Growth Index
 
-| Growth Type | Time Span | Data Source | Displayed Metrics |
-|-------------|-----------|-------------|-------------------|
+| Growth Type   | Time Span | Data Source  | Displayed Metrics                              |
+| ------------- | --------- | ------------ | ---------------------------------------------- |
 | Fall → Spring | ~6 months | Official CDF | Growth, Expected, Index, Met/Not Met, Quintile |
-| Spring → Fall | ~4 months | Calculated | Growth only (no official benchmark) |
+| Spring → Fall | ~4 months | Calculated   | Growth only (no official benchmark)            |
 
 - Index = Actual Growth ÷ Expected Growth
 - Index ≥ 1.0 means met or exceeded expectations
@@ -55,31 +56,58 @@ National percentile reference values by grade and term for comparison.
 
 ## Key Files
 
-| Purpose | Location |
-|---------|----------|
-| **Import Script** | `scripts/import-map-cdf.ts` |
-| **Database Types** | `types/database.ts` (map_assessments) |
-| **Student API** | `lib/api/map-student-analytics.ts` |
-| **Stats API** | `lib/api/map-analytics.ts` |
-| **Chart Components** | `components/map/charts/` |
-| **Student Components** | `components/map/student/` |
-| **Color Constants** | `lib/map/colors.ts` |
-| **Utility Functions** | `lib/map/utils.ts` |
-| **Norm Lookup** | `lib/map/norms.ts` |
+| Purpose                | Location                              |
+| ---------------------- | ------------------------------------- |
+| **Import Script**      | `scripts/import-map-cdf.ts`           |
+| **Database Types**     | `types/database.ts` (map_assessments) |
+| **Student API**        | `lib/api/map-student-analytics.ts`    |
+| **Stats API**          | `lib/api/map-analytics.ts`            |
+| **Chart Components**   | `components/map/charts/`              |
+| **Student Components** | `components/map/student/`             |
+| **Color Constants**    | `lib/map/colors.ts`                   |
+| **Utility Functions**  | `lib/map/utils.ts`                    |
+| **Norm Lookup**        | `lib/map/norms.ts`                    |
 
 ## Pages
 
 ### Stats Page (`/browse/stats/map`)
 
 Group-level analysis with tabs:
-- **Overview**: Growth trend charts by English Level (Grid/Single view toggle)
+
+- **School**: Cross-grade (G3-G6) school-wide performance analysis (NEW)
+- **Grades**: (formerly Overview) Growth trend charts by English Level (Grid/Single view toggle)
 - **Growth**: Growth Index distribution, consecutive growth (FA→SP, SP→FA)
 - **Goals**: Goal area performance (Radar + Table)
 - **Lexile**: Reading level distribution
 - **Quality**: Rapid guessing analysis
 - **Transitions**: Benchmark level transitions
 
+### School Tab Components (v1.65+)
+
+| Component                   | File                                                | Description                                   |
+| --------------------------- | --------------------------------------------------- | --------------------------------------------- |
+| **SchoolTab**               | `components/map/school/SchoolTab.tsx`               | Main tab container with term/course selectors |
+| **CrossGradeChart**         | `components/map/school/CrossGradeChart.tsx`         | Line chart comparing G3-G6 RIT vs NWEA Norm   |
+| **SchoolSummaryTable**      | `components/map/school/SchoolSummaryTable.tsx`      | Statistics table with vs Norm indicators      |
+| **GrowthDistributionChart** | `components/map/school/GrowthDistributionChart.tsx` | Fall-to-Fall growth histogram                 |
+| **RitGrowthScatterChart**   | `components/map/school/RitGrowthScatterChart.tsx`   | Starting RIT vs Growth correlation            |
+
+**API Functions** (`lib/api/map-school-analytics.ts`):
+
+- `getCrossGradeStats()` - Cross-grade RIT statistics
+- `getAvailableSchoolTerms()` - Available terms (newest first)
+- `getSchoolGrowthDistribution()` - Growth distribution buckets
+- `getRitGrowthScatterData()` - Scatter plot data with correlation
+
+**Key Features**:
+
+- Grade selector shows "All Grades" when School tab active
+- Dynamic Fall term detection for growth analysis
+- Pearson correlation coefficient for ceiling effect detection
+- Colors: KCISLK=green (#16a34a), Norm=gray (#64748b)
+
 **Chart Features** (v1.64.0):
+
 - Full-width line charts with end-point labels
 - Hybrid view mode: Grid (3 charts) / Single (tabbed)
 - Norm reference line (dashed)
@@ -88,6 +116,7 @@ Group-level analysis with tabs:
 ### Student Page (`/student/[id]` → MAP Tab)
 
 Individual student analysis with 4 collapsible sections:
+
 1. **Current Performance**: Score cards, benchmark status, test validity
 2. **Growth & Progress**: Progress charts, growth index, projections, peer comparison
 3. **Instructional Focus**: Goal areas, Lexile level
@@ -108,12 +137,13 @@ npx tsx scripts/import-map-cdf.ts \
 
 ## References
 
-| Topic | File |
-|-------|------|
-| Data Import | [references/data-import.md](references/data-import.md) |
-| Database Schema | [references/database.md](references/database.md) |
-| Benchmark Rules | [references/benchmarks.md](references/benchmarks.md) |
-| NWEA Norms | [references/norms.md](references/norms.md) |
-| Growth Logic | [references/growth.md](references/growth.md) |
-| Chart Specs | [references/charts.md](references/charts.md) |
-| Student Page | [references/student-page.md](references/student-page.md) |
+| Topic           | File                                                     |
+| --------------- | -------------------------------------------------------- |
+| Data Import     | [references/data-import.md](references/data-import.md)   |
+| Database Schema | [references/database.md](references/database.md)         |
+| Benchmark Rules | [references/benchmarks.md](references/benchmarks.md)     |
+| NWEA Norms      | [references/norms.md](references/norms.md)               |
+| Growth Logic    | [references/growth.md](references/growth.md)             |
+| Chart Specs     | [references/charts.md](references/charts.md)             |
+| Student Page    | [references/student-page.md](references/student-page.md) |
+| **School Tab**  | [references/school-tab.md](references/school-tab.md)     |
