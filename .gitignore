@@ -141,3 +141,7 @@ test-*.html
 # Import data (sensitive)
 data/
 *.csv
+
+# Reference documents (too large for git)
+docs/map/references/
+*.ipynb
