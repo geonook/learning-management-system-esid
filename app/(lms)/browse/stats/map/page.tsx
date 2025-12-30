@@ -70,7 +70,7 @@ const SUPPORTED_GRADES = [3, 4, 5, 6];
 // Analysis Tabs 定義
 const ANALYSIS_TABS = [
   { id: "school", label: "School", icon: School },
-  { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "overview", label: "Grades", icon: LayoutDashboard },
   { id: "growth", label: "Growth", icon: TrendingUp },
   { id: "goals", label: "Goals", icon: Target },
   { id: "lexile", label: "Lexile", icon: BookOpen },
