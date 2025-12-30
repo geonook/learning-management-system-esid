@@ -216,6 +216,583 @@ export interface StudentMapAnalytics {
 }
 
 // ============================================================
+// Unified Data Fetch (Performance Optimization)
+// ============================================================
+
+/**
+ * 完整的學生 MAP 評量資料類型
+ * 用於單次查詢後在記憶體中處理
+ */
+interface StudentMapAssessmentRow {
+  term_tested: string;
+  course: string;
+  rit_score: number;
+  grade: number;
+  lexile_score: string | null;
+  test_percentile: number | null;
+  achievement_quintile: string | null;
+  rapid_guessing_percent: number | null;
+  conditional_growth_index: number | null;
+  conditional_growth_percentile: number | null;
+  growth_quintile: string | null;
+  met_projected_growth: string | null;
+  projected_growth: number | null;
+  observed_growth: number | null;
+  typical_growth: number | null;
+  map_goal_scores: Array<{ goal_name: string; goal_rit_range: string | null }> | null;
+}
+
+/**
+ * 單次查詢取得學生所有 MAP 評量資料
+ * 這是效能優化的核心 - 避免多次重複查詢
+ */
+async function fetchAllStudentMapData(
+  studentNumber: string
+): Promise<StudentMapAssessmentRow[]> {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from("map_assessments")
+    .select(`
+      term_tested,
+      course,
+      rit_score,
+      grade,
+      lexile_score,
+      test_percentile,
+      achievement_quintile,
+      rapid_guessing_percent,
+      conditional_growth_index,
+      conditional_growth_percentile,
+      growth_quintile,
+      met_projected_growth,
+      projected_growth,
+      observed_growth,
+      typical_growth,
+      map_goal_scores (
+        goal_name,
+        goal_rit_range
+      )
+    `)
+    .eq("student_number", studentNumber)
+    .in("course", ["Reading", "Language Usage"])
+    .order("term_tested", { ascending: false });
+
+  if (error || !data) {
+    console.error("[MAP Analytics] Error fetching student data:", error);
+    return [];
+  }
+
+  return data as unknown as StudentMapAssessmentRow[];
+}
+
+// ============================================================
+// In-Memory Processing Functions (使用預先取得的資料)
+// ============================================================
+
+/**
+ * 從預取資料計算 Benchmark 狀態
+ */
+function processBenchmarkStatus(
+  allData: StudentMapAssessmentRow[],
+  _currentGrade: number,
+  termTested?: string
+): StudentBenchmarkStatus | null {
+  if (allData.length === 0) return null;
+
+  // 取得最新的學期
+  const uniqueTerms = [...new Set(allData.map(d => d.term_tested))];
+  const sortedTerms = uniqueTerms.sort((a, b) => -compareTermTested(a, b));
+  const latestTerm = termTested || sortedTerms[0];
+  if (!latestTerm) return null;
+
+  // 取得該學期的兩科成績和測驗時年級
+  const termData = allData.filter((d) => d.term_tested === latestTerm);
+  const readingData = termData.find((d) => d.course === "Reading");
+  const luData = termData.find((d) => d.course === "Language Usage");
+
+  const readingScore = readingData?.rit_score ?? null;
+  const luScore = luData?.rit_score ?? null;
+  const testGrade = readingData?.grade ?? luData?.grade ?? 0;
+  const nextYearGrade = testGrade + 1;
+
+  const average = readingScore !== null && luScore !== null
+    ? calculateMapAverage(luScore, readingScore)
+    : null;
+  const benchmark = average !== null ? classifyBenchmark(testGrade, average) : null;
+  const thresholds = getBenchmarkThresholds(testGrade);
+
+  let distanceToE1: number | null = null;
+  let distanceToE3: number | null = null;
+  if (average !== null && thresholds) {
+    distanceToE1 = thresholds.e1Threshold - average;
+    distanceToE3 = average - thresholds.e2Threshold;
+  }
+
+  return {
+    testGrade,
+    nextYearGrade,
+    termTested: latestTerm,
+    languageUsage: luScore,
+    reading: readingScore,
+    average: average !== null ? Math.round(average * 10) / 10 : null,
+    benchmark,
+    thresholds,
+    distanceToE1: distanceToE1 !== null ? Math.round(distanceToE1 * 10) / 10 : null,
+    distanceToE3: distanceToE3 !== null ? Math.round(distanceToE3 * 10) / 10 : null,
+  };
+}
+
+/**
+ * 從預取資料計算 Growth Index
+ */
+function processGrowthIndex(
+  allData: StudentMapAssessmentRow[],
+  grade: number,
+  academicYear?: string
+): StudentGrowthIndex | null {
+  const year = academicYear || "2024-2025";
+  const fromTerm = `Fall ${year}`;
+  const toTerm = `Spring ${year}`;
+
+  const data = allData.filter(d =>
+    d.term_tested === fromTerm || d.term_tested === toTerm
+  );
+
+  if (data.length === 0) return null;
+
+  const fallReading = data.find((d) => d.term_tested === fromTerm && d.course === "Reading");
+  const fallLU = data.find((d) => d.term_tested === fromTerm && d.course === "Language Usage");
+  const springReading = data.find((d) => d.term_tested === toTerm && d.course === "Reading");
+  const springLU = data.find((d) => d.term_tested === toTerm && d.course === "Language Usage");
+
+  const expectedLU = getExpectedGrowth(year, grade, "Language Usage");
+  const expectedRD = getExpectedGrowth(year, grade, "Reading");
+
+  const fallLURit = fallLU?.rit_score ?? null;
+  const springLURit = springLU?.rit_score ?? null;
+  const fallRDRit = fallReading?.rit_score ?? null;
+  const springRDRit = springReading?.rit_score ?? null;
+
+  const actualLUGrowth = fallLURit !== null && springLURit !== null ? springLURit - fallLURit : null;
+  const actualRDGrowth = fallRDRit !== null && springRDRit !== null ? springRDRit - fallRDRit : null;
+
+  const luIndex = actualLUGrowth !== null && expectedLU !== null && expectedLU !== 0
+    ? actualLUGrowth / expectedLU
+    : null;
+  const rdIndex = actualRDGrowth !== null && expectedRD !== null && expectedRD !== 0
+    ? actualRDGrowth / expectedRD
+    : null;
+
+  const parseMetProjectedGrowth = (value: string | null): boolean | null => {
+    if (value === null) return null;
+    return value.toLowerCase() === 'yes';
+  };
+
+  return {
+    academicYear: year,
+    fromTerm,
+    toTerm,
+    languageUsage: {
+      fromScore: fallLURit,
+      toScore: springLURit,
+      actualGrowth: actualLUGrowth,
+      expectedGrowth: expectedLU,
+      growthIndex: luIndex !== null ? Math.round(luIndex * 100) / 100 : null,
+      officialConditionalGrowthIndex: springLU?.conditional_growth_index ?? null,
+      officialGrowthQuintile: springLU?.growth_quintile ?? null,
+      officialMetProjectedGrowth: parseMetProjectedGrowth(springLU?.met_projected_growth ?? null),
+      officialProjectedGrowth: springLU?.projected_growth ?? null,
+      officialObservedGrowth: springLU?.observed_growth ?? null,
+      officialTypicalGrowth: springLU?.typical_growth ?? null,
+    },
+    reading: {
+      fromScore: fallRDRit,
+      toScore: springRDRit,
+      actualGrowth: actualRDGrowth,
+      expectedGrowth: expectedRD,
+      growthIndex: rdIndex !== null ? Math.round(rdIndex * 100) / 100 : null,
+      officialConditionalGrowthIndex: springReading?.conditional_growth_index ?? null,
+      officialGrowthQuintile: springReading?.growth_quintile ?? null,
+      officialMetProjectedGrowth: parseMetProjectedGrowth(springReading?.met_projected_growth ?? null),
+      officialProjectedGrowth: springReading?.projected_growth ?? null,
+      officialObservedGrowth: springReading?.observed_growth ?? null,
+      officialTypicalGrowth: springReading?.typical_growth ?? null,
+    },
+    gradeAverage: {
+      languageUsageIndex: null,
+      readingIndex: null,
+    },
+  };
+}
+
+/**
+ * 從預取資料計算所有成長紀錄
+ */
+function processAllGrowthRecords(
+  allData: StudentMapAssessmentRow[]
+): GrowthRecord[] {
+  if (allData.length === 0) return [];
+
+  // 按 term_tested 分組
+  interface TermData {
+    termTested: string;
+    academicYear: string;
+    mapTerm: MapTerm;
+    grade: number;
+    reading: {
+      rit: number;
+      conditionalGrowthIndex: number | null;
+      growthQuintile: string | null;
+      metProjectedGrowth: string | null;
+      projectedGrowth: number | null;
+      observedGrowth: number | null;
+      typicalGrowth: number | null;
+    } | null;
+    languageUsage: {
+      rit: number;
+      conditionalGrowthIndex: number | null;
+      growthQuintile: string | null;
+      metProjectedGrowth: string | null;
+      projectedGrowth: number | null;
+      observedGrowth: number | null;
+      typicalGrowth: number | null;
+    } | null;
+  }
+
+  const termDataMap = new Map<string, TermData>();
+
+  for (const row of allData) {
+    const parsed = parseTermTested(row.term_tested);
+    if (!parsed) continue;
+
+    const { academicYear, mapTerm } = parsed;
+    const key = row.term_tested;
+
+    if (!termDataMap.has(key)) {
+      termDataMap.set(key, {
+        termTested: row.term_tested,
+        academicYear,
+        mapTerm,
+        grade: row.grade,
+        reading: null,
+        languageUsage: null,
+      });
+    }
+    const termData = termDataMap.get(key)!;
+
+    const courseData = {
+      rit: row.rit_score,
+      conditionalGrowthIndex: row.conditional_growth_index,
+      growthQuintile: row.growth_quintile,
+      metProjectedGrowth: row.met_projected_growth,
+      projectedGrowth: row.projected_growth,
+      observedGrowth: row.observed_growth,
+      typicalGrowth: row.typical_growth,
+    };
+
+    if (row.course === "Reading") {
+      termData.reading = courseData;
+    } else if (row.course === "Language Usage") {
+      termData.languageUsage = courseData;
+    }
+  }
+
+  const sortedTerms = Array.from(termDataMap.values()).sort((a, b) =>
+    compareTermTested(a.termTested, b.termTested)
+  );
+
+  const results: GrowthRecord[] = [];
+  const parseMetProjectedGrowth = (value: string | null): boolean | null => {
+    if (value === null) return null;
+    return value.toLowerCase() === "yes";
+  };
+
+  const formatTermLabel = (termTested: string): string => {
+    const parsed = parseTermTested(termTested);
+    if (!parsed) return termTested;
+    const { academicYear, mapTerm } = parsed;
+    const yearParts = academicYear.split("-");
+    const shortYear = mapTerm === "fall"
+      ? yearParts[0]?.slice(-2) ?? ""
+      : yearParts[1]?.slice(-2) ?? "";
+    const prefix = mapTerm === "fall" ? "FA" : "SP";
+    return `${prefix}${shortYear}`;
+  };
+
+  for (let i = 1; i < sortedTerms.length; i++) {
+    const fromData = sortedTerms[i - 1];
+    const toData = sortedTerms[i];
+    if (!fromData || !toData) continue;
+
+    const growthType: "fallToSpring" | "springToFall" =
+      fromData.mapTerm === "fall" && toData.mapTerm === "spring"
+        ? "fallToSpring"
+        : "springToFall";
+
+    const isFallToSpring = growthType === "fallToSpring";
+
+    const expectedLU = isFallToSpring
+      ? getExpectedGrowth(toData.academicYear, fromData.grade, "Language Usage")
+      : null;
+    const expectedRD = isFallToSpring
+      ? getExpectedGrowth(toData.academicYear, fromData.grade, "Reading")
+      : null;
+
+    const fromLURit = fromData.languageUsage?.rit ?? null;
+    const toLURit = toData.languageUsage?.rit ?? null;
+    const actualLUGrowth = fromLURit !== null && toLURit !== null ? toLURit - fromLURit : null;
+    const luIndex = isFallToSpring && actualLUGrowth !== null && expectedLU !== null && expectedLU !== 0
+      ? actualLUGrowth / expectedLU
+      : null;
+
+    const fromRDRit = fromData.reading?.rit ?? null;
+    const toRDRit = toData.reading?.rit ?? null;
+    const actualRDGrowth = fromRDRit !== null && toRDRit !== null ? toRDRit - fromRDRit : null;
+    const rdIndex = isFallToSpring && actualRDGrowth !== null && expectedRD !== null && expectedRD !== 0
+      ? actualRDGrowth / expectedRD
+      : null;
+
+    results.push({
+      growthType,
+      fromTermLabel: formatTermLabel(fromData.termTested),
+      toTermLabel: formatTermLabel(toData.termTested),
+      academicYear: toData.academicYear,
+      fromTerm: fromData.termTested,
+      toTerm: toData.termTested,
+      grade: toData.grade,
+      languageUsage: {
+        fromScore: fromLURit,
+        toScore: toLURit,
+        actualGrowth: actualLUGrowth,
+        expectedGrowth: expectedLU,
+        growthIndex: luIndex !== null ? Math.round(luIndex * 100) / 100 : null,
+        officialConditionalGrowthIndex: isFallToSpring ? (toData.languageUsage?.conditionalGrowthIndex ?? null) : null,
+        officialGrowthQuintile: isFallToSpring ? (toData.languageUsage?.growthQuintile ?? null) : null,
+        officialMetProjectedGrowth: isFallToSpring ? parseMetProjectedGrowth(toData.languageUsage?.metProjectedGrowth ?? null) : null,
+        officialProjectedGrowth: isFallToSpring ? (toData.languageUsage?.projectedGrowth ?? null) : null,
+        officialObservedGrowth: isFallToSpring ? (toData.languageUsage?.observedGrowth ?? null) : null,
+        officialTypicalGrowth: isFallToSpring ? (toData.languageUsage?.typicalGrowth ?? null) : null,
+      },
+      reading: {
+        fromScore: fromRDRit,
+        toScore: toRDRit,
+        actualGrowth: actualRDGrowth,
+        expectedGrowth: expectedRD,
+        growthIndex: rdIndex !== null ? Math.round(rdIndex * 100) / 100 : null,
+        officialConditionalGrowthIndex: isFallToSpring ? (toData.reading?.conditionalGrowthIndex ?? null) : null,
+        officialGrowthQuintile: isFallToSpring ? (toData.reading?.growthQuintile ?? null) : null,
+        officialMetProjectedGrowth: isFallToSpring ? parseMetProjectedGrowth(toData.reading?.metProjectedGrowth ?? null) : null,
+        officialProjectedGrowth: isFallToSpring ? (toData.reading?.projectedGrowth ?? null) : null,
+        officialObservedGrowth: isFallToSpring ? (toData.reading?.observedGrowth ?? null) : null,
+        officialTypicalGrowth: isFallToSpring ? (toData.reading?.typicalGrowth ?? null) : null,
+      },
+    });
+  }
+
+  results.sort((a, b) => compareTermTested(a.fromTerm, b.fromTerm));
+  return results;
+}
+
+/**
+ * 從預取資料計算 Goal Performance
+ */
+function processGoalPerformance(
+  allData: StudentMapAssessmentRow[],
+  termTested?: string
+): StudentGoalPerformance | null {
+  if (allData.length === 0) return null;
+
+  // 取得最新的學期
+  let targetTerm = termTested;
+  if (!targetTerm) {
+    const uniqueTerms = [...new Set(allData.map(d => d.term_tested))];
+    const sortedTerms = uniqueTerms.sort((a, b) => -compareTermTested(a, b));
+    targetTerm = sortedTerms[0];
+  }
+  if (!targetTerm) return null;
+
+  const termData = allData.filter(d => d.term_tested === targetTerm);
+
+  // 處理 Reading 資料
+  const readingData = termData.find((d) => d.course === "Reading");
+  let readingResult = null;
+  if (readingData) {
+    const goals = readingData.map_goal_scores || [];
+    readingResult = {
+      overallRit: readingData.rit_score,
+      goals: goals.map((g) => {
+        const midpoint = parseRitRange(g.goal_rit_range);
+        return {
+          goalName: g.goal_name,
+          midpoint,
+          vsOverall: midpoint !== null ? Math.round((midpoint - readingData.rit_score) * 10) / 10 : null,
+        };
+      }),
+    };
+  }
+
+  // 處理 Language Usage 資料
+  const luData = termData.find((d) => d.course === "Language Usage");
+  let luResult = null;
+  if (luData) {
+    const goals = luData.map_goal_scores || [];
+    luResult = {
+      overallRit: luData.rit_score,
+      goals: goals.map((g) => {
+        const midpoint = parseRitRange(g.goal_rit_range);
+        return {
+          goalName: g.goal_name,
+          midpoint,
+          vsOverall: midpoint !== null ? Math.round((midpoint - luData.rit_score) * 10) / 10 : null,
+        };
+      }),
+    };
+  }
+
+  // 識別強弱項
+  const allGoals = [
+    ...(readingResult?.goals || []),
+    ...(luResult?.goals || []),
+  ].filter((g) => g.vsOverall !== null);
+
+  const strengths = allGoals
+    .filter((g) => (g.vsOverall ?? 0) > 0)
+    .sort((a, b) => (b.vsOverall ?? 0) - (a.vsOverall ?? 0))
+    .slice(0, 2)
+    .map((g) => g.goalName);
+
+  const weaknesses = allGoals
+    .filter((g) => (g.vsOverall ?? 0) < 0)
+    .sort((a, b) => (a.vsOverall ?? 0) - (b.vsOverall ?? 0))
+    .slice(0, 2)
+    .map((g) => g.goalName);
+
+  return {
+    termTested: targetTerm,
+    reading: readingResult,
+    languageUsage: luResult,
+    strengths,
+    weaknesses,
+  };
+}
+
+/**
+ * 從預取資料計算 Lexile 狀態
+ */
+function processLexileStatus(
+  allData: StudentMapAssessmentRow[],
+  termTested?: string
+): StudentLexileStatus | null {
+  // 取得 Reading 評量的 Lexile 資料
+  const readingData = allData.filter(d =>
+    d.course === "Reading" && d.lexile_score !== null
+  );
+
+  if (readingData.length === 0) return null;
+
+  const sortedData = [...readingData].sort((a, b) => -compareTermTested(a.term_tested, b.term_tested));
+  const latestTerm = termTested || sortedData[0]?.term_tested;
+  if (!latestTerm) return null;
+  const latestData = sortedData.find((d) => d.term_tested === latestTerm);
+  if (!latestData) return null;
+
+  const lexileScore = parseLexile(latestData.lexile_score);
+  const band = getLexileBand(lexileScore);
+
+  let recommendedRange = null;
+  if (lexileScore !== null) {
+    const min = lexileScore - 100;
+    const max = lexileScore + 100;
+    recommendedRange = {
+      min,
+      max,
+      minFormatted: formatLexile(min),
+      maxFormatted: formatLexile(max),
+    };
+  }
+
+  let growth = null;
+  if (sortedData.length > 1) {
+    const previousData = sortedData[1];
+    if (previousData) {
+      const previousScore = parseLexile(previousData.lexile_score);
+      if (previousScore !== null && lexileScore !== null) {
+        growth = {
+          fromTerm: previousData.term_tested,
+          fromScore: previousScore,
+          change: lexileScore - previousScore,
+        };
+      }
+    }
+  }
+
+  return {
+    termTested: latestTerm,
+    lexileScore,
+    lexileFormatted: formatLexile(lexileScore),
+    band: band ? {
+      label: band.label,
+      description: band.description,
+      color: band.color,
+    } : null,
+    recommendedRange,
+    growth,
+  };
+}
+
+/**
+ * 從預取資料計算 Benchmark 歷史
+ */
+function processBenchmarkHistory(
+  allData: StudentMapAssessmentRow[]
+): BenchmarkHistoryPoint[] {
+  if (allData.length === 0) return [];
+
+  // 按學期分組
+  const termMap = new Map<string, {
+    grade: number;
+    languageUsage: number | null;
+    reading: number | null;
+  }>();
+
+  for (const row of allData) {
+    let termData = termMap.get(row.term_tested);
+    if (!termData) {
+      termData = { grade: row.grade, languageUsage: null, reading: null };
+      termMap.set(row.term_tested, termData);
+    }
+    if (row.course === "Language Usage") {
+      termData.languageUsage = row.rit_score;
+    } else if (row.course === "Reading") {
+      termData.reading = row.rit_score;
+    }
+  }
+
+  const results: BenchmarkHistoryPoint[] = [];
+  const sortedTerms = Array.from(termMap.keys()).sort(compareTermTested);
+
+  for (const termTested of sortedTerms) {
+    const termData = termMap.get(termTested)!;
+    const average = termData.languageUsage !== null && termData.reading !== null
+      ? calculateMapAverage(termData.languageUsage, termData.reading)
+      : null;
+    const benchmark = average !== null ? classifyBenchmark(termData.grade, average) : null;
+
+    results.push({
+      termTested,
+      languageUsage: termData.languageUsage,
+      reading: termData.reading,
+      average: average !== null ? Math.round(average * 10) / 10 : null,
+      benchmark,
+      grade: termData.grade,
+    });
+  }
+
+  return results;
+}
+
+// ============================================================
 // API Functions
 // ============================================================
 
@@ -1032,6 +1609,11 @@ export async function getStudentRankings(
 
 /**
  * 批次取得所有學生 MAP 分析資料
+ *
+ * 效能優化版本：
+ * - 使用單次查詢取得所有 MAP 評量資料
+ * - 在記憶體中處理各項分析指標
+ * - 只有 Rankings 需要額外查詢（需要同級學生資料比較）
  */
 export async function getStudentMapAnalytics(
   studentId: string,
@@ -1039,24 +1621,19 @@ export async function getStudentMapAnalytics(
   grade: number,
   classId: string | null
 ): Promise<StudentMapAnalytics> {
-  // 並行取得所有資料
-  const [
-    benchmarkStatus,
-    growthIndex,
-    growthRecords,
-    goalPerformance,
-    lexileStatus,
-    benchmarkHistory,
-    rankings,
-  ] = await Promise.all([
-    getStudentBenchmarkStatus(studentNumber, grade),
-    getStudentGrowthIndex(studentNumber, grade),
-    getStudentAllGrowthRecords(studentNumber),
-    getStudentGoalPerformance(studentNumber),
-    getStudentLexileStatus(studentNumber),
-    getStudentBenchmarkHistory(studentNumber),
-    getStudentRankings(studentNumber, grade, classId),
-  ]);
+  // 1. 單次查詢取得該學生所有 MAP 評量資料（核心優化）
+  const allData = await fetchAllStudentMapData(studentNumber);
+
+  // 2. 在記憶體中處理各項分析指標（無額外 API 請求）
+  const benchmarkStatus = processBenchmarkStatus(allData, grade);
+  const growthIndex = processGrowthIndex(allData, grade);
+  const growthRecords = processAllGrowthRecords(allData);
+  const goalPerformance = processGoalPerformance(allData);
+  const lexileStatus = processLexileStatus(allData);
+  const benchmarkHistory = processBenchmarkHistory(allData);
+
+  // 3. Rankings 需要額外查詢（需要同級學生資料比較）
+  const rankings = await getStudentRankings(studentNumber, grade, classId);
 
   return {
     benchmarkStatus,
@@ -1156,20 +1733,25 @@ export async function getStudentProgressHistory(
   // 取得所有唯一的學期
   const allTerms = Array.from(termMap.keys()).sort(compareTermTested);
 
-  // 3. 取得各學期的年級平均分數（Grade Average）
-  const gradeAvgMap = new Map<string, { reading: number; languageUsage: number }>();
-
+  // 3. 取得各學期的年級平均分數（Grade Average）- 優化版本：單次批量查詢
+  // 收集所有需要查詢的 (term, grade) 組合
+  const termGradePairs: Array<{ term: string; grade: number }> = [];
   for (const termTested of allTerms) {
     const termData = termMap.get(termTested);
-    if (!termData) continue;
+    if (termData) {
+      termGradePairs.push({ term: termTested, grade: termData.grade });
+    }
+  }
 
-    const testGrade = termData.grade;
+  // 單次查詢取得所有需要的年級平均資料
+  const gradeAvgMap = new Map<string, { reading: number; languageUsage: number }>();
 
-    // 查詢該學期該年級所有學生的成績
-    // 注意：使用 map_assessments.grade（測驗時年級）而非 students.grade（當前年級）
+  if (termGradePairs.length > 0) {
+    // 一次取得所有相關學期的資料
     const { data: gradeData } = await supabase
       .from("map_assessments")
       .select(`
+        term_tested,
         course,
         rit_score,
         grade,
@@ -1177,35 +1759,49 @@ export async function getStudentProgressHistory(
           is_active
         )
       `)
-      .eq("term_tested", termTested)
-      .eq("grade", testGrade)
+      .in("term_tested", allTerms)
+      .in("grade", [3, 4, 5, 6])
       .in("course", ["Reading", "Language Usage"])
       .not("student_id", "is", null);
 
     if (gradeData) {
-      // 過濾活躍學生（使用 map_assessments.grade 已在查詢中過濾年級）
-      const filteredData = gradeData.filter((d) => {
-        const student = d.students as unknown as {
-          is_active: boolean;
-        } | null;
-        return student?.is_active === true;
-      });
+      // 過濾活躍學生並按 term+grade 分組
+      interface TermGradeKey { reading: number[]; languageUsage: number[] }
+      const groupedData = new Map<string, TermGradeKey>();
 
-      const readingScores = filteredData
-        .filter((d) => d.course === "Reading")
-        .map((d) => d.rit_score);
-      const luScores = filteredData
-        .filter((d) => d.course === "Language Usage")
-        .map((d) => d.rit_score);
+      for (const row of gradeData) {
+        const student = row.students as unknown as { is_active: boolean } | null;
+        if (student?.is_active !== true) continue;
 
-      gradeAvgMap.set(termTested, {
-        reading: readingScores.length > 0
-          ? readingScores.reduce((a, b) => a + b, 0) / readingScores.length
-          : 0,
-        languageUsage: luScores.length > 0
-          ? luScores.reduce((a, b) => a + b, 0) / luScores.length
-          : 0,
-      });
+        const key = `${row.term_tested}|${row.grade}`;
+        let group = groupedData.get(key);
+        if (!group) {
+          group = { reading: [], languageUsage: [] };
+          groupedData.set(key, group);
+        }
+
+        if (row.course === "Reading") {
+          group.reading.push(row.rit_score);
+        } else if (row.course === "Language Usage") {
+          group.languageUsage.push(row.rit_score);
+        }
+      }
+
+      // 計算每個 term 的年級平均
+      for (const { term, grade } of termGradePairs) {
+        const key = `${term}|${grade}`;
+        const group = groupedData.get(key);
+        if (group) {
+          gradeAvgMap.set(term, {
+            reading: group.reading.length > 0
+              ? group.reading.reduce((a, b) => a + b, 0) / group.reading.length
+              : 0,
+            languageUsage: group.languageUsage.length > 0
+              ? group.languageUsage.reduce((a, b) => a + b, 0) / group.languageUsage.length
+              : 0,
+          });
+        }
+      }
     }
   }
 

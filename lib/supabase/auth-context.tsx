@@ -35,6 +35,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const userPermissionsRef = useRef<UserPermissions | null>(null)
   // 追蹤初始 session 載入是否完成
   const initialLoadCompleteRef = useRef(false)
+  // 防止 React Strict Mode / SSR 水合導致的重複初始化
+  const hasInitializedRef = useRef(false)
 
   const fetchUserPermissions = async (userId: string): Promise<UserPermissions | null> => {
     try {
@@ -93,9 +95,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [userPermissions])
 
   useEffect(() => {
+    // 防止 React Strict Mode 或 SSR 水合導致的重複初始化
+    if (hasInitializedRef.current) {
+      console.log('[AuthContext] Already initialized, skipping duplicate mount')
+      // 即使跳過初始化，也需要設置 hydrated 狀態以避免 UI 問題
+      setIsHydrated(true)
+      return
+    }
+    hasInitializedRef.current = true
+    console.log('[AuthContext] Initializing auth context...')
+
     // Set hydrated state
     setIsHydrated(true)
-    
+
     // Get initial session
     const getSession = async () => {
       // Check for environment variable to enable mock auth
@@ -226,6 +238,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     )
 
     return () => {
+      console.log('[AuthContext] Cleanup: unsubscribing auth listener')
       subscription.unsubscribe()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
