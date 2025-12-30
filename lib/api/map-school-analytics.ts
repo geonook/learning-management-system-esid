@@ -273,8 +273,26 @@ export async function getSchoolGrowthDistribution(): Promise<SchoolGrowthDistrib
   await requireAuth();
   const supabase = createClient();
 
-  const fromTerm = "Fall 2024-2025";
-  const toTerm = "Fall 2025-2026";
+  // 動態查找可用的 Fall terms (Fall-to-Fall 成長)
+  const { data: termsData } = await supabase
+    .from("map_assessments")
+    .select("term_tested")
+    .like("term_tested", "Fall %")
+    .in("grade", [3, 4, 5, 6]);
+
+  if (!termsData || termsData.length === 0) return null;
+
+  // 取得唯一的 Fall terms 並排序
+  const fallTerms = [...new Set(termsData.map((d) => d.term_tested))].sort(
+    compareTermTested
+  );
+  if (fallTerms.length < 2) return null; // 需要至少兩個 Fall terms
+
+  // 使用最近的兩個 Fall terms
+  const fromTerm = fallTerms[fallTerms.length - 2];
+  const toTerm = fallTerms[fallTerms.length - 1];
+
+  if (!fromTerm || !toTerm) return null;
 
   // 查詢兩個學期的資料
   const { data, error } = await supabase
@@ -490,8 +508,24 @@ export async function getRitGrowthScatterData(): Promise<RitGrowthScatterData | 
   await requireAuth();
   const supabase = createClient();
 
-  const fromTerm = "Fall 2024-2025";
-  const toTerm = "Fall 2025-2026";
+  // 動態查找可用的 Fall terms
+  const { data: termsData } = await supabase
+    .from("map_assessments")
+    .select("term_tested")
+    .like("term_tested", "Fall %")
+    .in("grade", [3, 4, 5, 6]);
+
+  if (!termsData || termsData.length === 0) return null;
+
+  const fallTerms = [...new Set(termsData.map((d) => d.term_tested))].sort(
+    compareTermTested
+  );
+  if (fallTerms.length < 2) return null;
+
+  const fromTerm = fallTerms[fallTerms.length - 2];
+  const toTerm = fallTerms[fallTerms.length - 1];
+
+  if (!fromTerm || !toTerm) return null;
 
   // 查詢兩個學期的資料
   const { data, error } = await supabase
