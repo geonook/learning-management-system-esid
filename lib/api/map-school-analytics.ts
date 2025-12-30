@@ -612,12 +612,14 @@ export async function getRitGradeHeatmapData(params: {
   });
 
   // 定義 RIT 區間 (140-260, 每 10 分一格)
-  const RIT_BUCKETS: { label: string; min: number; max: number }[] = [];
+  // 最後一個 bucket 是 250-260 (包含 260)
+  const RIT_BUCKETS: { label: string; min: number; max: number; isLast: boolean }[] = [];
   for (let rit = 140; rit < 260; rit += 10) {
     RIT_BUCKETS.push({
       label: `${rit}-${rit + 10}`,
       min: rit,
       max: rit + 10,
+      isLast: rit === 250, // 最後一個 bucket
     });
   }
 
@@ -682,9 +684,13 @@ export async function getRitGradeHeatmapData(params: {
   }
 
   // 計數
+  // 注意：最後一個 bucket (250-260) 需要包含 260 分
   for (const s of studentRits) {
     for (const bucket of RIT_BUCKETS) {
-      if (s.rit >= bucket.min && s.rit < bucket.max) {
+      const inBucket = bucket.isLast
+        ? s.rit >= bucket.min && s.rit <= bucket.max  // 最後一個 bucket 包含上限
+        : s.rit >= bucket.min && s.rit < bucket.max;   // 其他 bucket 不包含上限
+      if (inBucket) {
         const key = `${s.grade}-${bucket.label}`;
         cellCounts.set(key, (cellCounts.get(key) ?? 0) + 1);
         break;
