@@ -15,9 +15,12 @@ import {
   getNormAverage,
   parseTermTested,
   compareTermTested,
+  getGrowthNormByCourse,
   type MapTerm,
   type Course,
+  type GrowthPeriod,
 } from "@/lib/map/norms";
+import { generateGaussianCurve } from "@/lib/map/statistics";
 
 // ============================================================
 // Types
@@ -398,6 +401,19 @@ export interface SchoolGrowthDistributionData {
   meanGrowth: number;
   stdDev: number;
   distribution: GrowthDistributionBucket[];
+  // NWEA Norm data (weighted average across grades)
+  nweaNorm: {
+    mean: number;
+    stdDev: number;
+    // Per-grade breakdown for tooltip
+    perGrade: Array<{
+      grade: number;
+      count: number;
+      mean: number;
+      stdDev: number;
+    }>;
+  } | null;
+  nweaNormCurve: Array<{ x: number; y: number }> | null;
 }
 
 /**
@@ -510,6 +526,7 @@ export async function getSchoolGrowthDistribution(params?: {
 
   // 按學生分組計算成長
   interface StudentGrowth {
+    grade: number;
     fromLU: number | null;
     toLU: number | null;
     fromRD: number | null;
@@ -520,7 +537,7 @@ export async function getSchoolGrowthDistribution(params?: {
   for (const row of activeData) {
     let student = studentMap.get(row.student_number);
     if (!student) {
-      student = { fromLU: null, toLU: null, fromRD: null, toRD: null };
+      student = { grade: row.grade, fromLU: null, toLU: null, fromRD: null, toRD: null };
       studentMap.set(row.student_number, student);
     }
 
@@ -534,8 +551,10 @@ export async function getSchoolGrowthDistribution(params?: {
     }
   }
 
-  // 計算每個學生的平均成長 (兩科平均)
+  // 計算每個學生的平均成長 (兩科平均)，並追蹤每年級學生數
   const growths: number[] = [];
+  const gradeStudentCounts: Record<number, number> = { 3: 0, 4: 0, 5: 0, 6: 0 };
+
   for (const s of studentMap.values()) {
     const growthValues: number[] = [];
     if (s.fromLU !== null && s.toLU !== null) {
@@ -548,6 +567,8 @@ export async function getSchoolGrowthDistribution(params?: {
       const avgGrowth =
         growthValues.reduce((a, b) => a + b, 0) / growthValues.length;
       growths.push(avgGrowth);
+      // 追蹤每年級有成長資料的學生數
+      gradeStudentCounts[s.grade] = (gradeStudentCounts[s.grade] || 0) + 1;
     }
   }
 
@@ -625,6 +646,81 @@ export async function getSchoolGrowthDistribution(params?: {
   const meanGrowth = growths.reduce((a, b) => a + b, 0) / growths.length;
   const growthStdDev = calculateStdDev(growths);
 
+  // 計算 NWEA Growth Norm (加權平均)
+  // 將 periodType 轉換為 GrowthPeriod 類型
+  let nweaNorm: SchoolGrowthDistributionData["nweaNorm"] = null;
+  let nweaNormCurve: SchoolGrowthDistributionData["nweaNormCurve"] = null;
+
+  // 只對標準 period types 計算 NWEA Norm
+  if (periodType !== "custom") {
+    const growthPeriod = periodType as GrowthPeriod;
+    const perGradeNorms: Array<{
+      grade: number;
+      count: number;
+      mean: number;
+      stdDev: number;
+    }> = [];
+
+    let weightedMeanSum = 0;
+    let weightedVarSum = 0;
+    let totalWeight = 0;
+
+    // 從 toTerm 解析學年 (e.g., "Fall 2025-2026" -> "2025-2026")
+    const academicYear = toTerm.replace(/^(Fall|Winter|Spring)\s+/, "");
+
+    for (const grade of [3, 4, 5, 6] as const) {
+      const count = gradeStudentCounts[grade] || 0;
+      if (count === 0) continue;
+
+      // 取得該年級的 Reading 和 Language Usage 成長 norm，計算平均
+      const readingNorm = getGrowthNormByCourse(academicYear, grade, growthPeriod, "Reading");
+      const luNorm = getGrowthNormByCourse(academicYear, grade, growthPeriod, "Language Usage");
+
+      if (readingNorm && luNorm) {
+        // 兩科的平均 norm
+        const avgMean = (readingNorm.mean + luNorm.mean) / 2;
+        // 兩科的合成標準差 (假設獨立)
+        const avgStdDev = Math.sqrt(
+          (readingNorm.stdDev * readingNorm.stdDev + luNorm.stdDev * luNorm.stdDev) / 2
+        );
+
+        perGradeNorms.push({
+          grade,
+          count,
+          mean: Math.round(avgMean * 100) / 100,
+          stdDev: Math.round(avgStdDev * 100) / 100,
+        });
+
+        // 加權累計
+        weightedMeanSum += avgMean * count;
+        weightedVarSum += avgStdDev * avgStdDev * count;
+        totalWeight += count;
+      }
+    }
+
+    if (totalWeight > 0 && perGradeNorms.length > 0) {
+      const weightedMean = weightedMeanSum / totalWeight;
+      const weightedStdDev = Math.sqrt(weightedVarSum / totalWeight);
+
+      nweaNorm = {
+        mean: Math.round(weightedMean * 100) / 100,
+        stdDev: Math.round(weightedStdDev * 100) / 100,
+        perGrade: perGradeNorms,
+      };
+
+      // 生成 NWEA Norm 曲線 (用於繪圖)
+      nweaNormCurve = generateGaussianCurve(
+        weightedMean,
+        weightedStdDev,
+        -10, // minX
+        25,  // maxX
+        total, // 使用相同總人數進行比例縮放
+        5,   // binWidth
+        30   // numPoints
+      );
+    }
+  }
+
   return {
     fromTerm,
     toTerm,
@@ -635,6 +731,8 @@ export async function getSchoolGrowthDistribution(params?: {
     meanGrowth: Math.round(meanGrowth * 10) / 10,
     stdDev: Math.round(growthStdDev * 10) / 10,
     distribution: buckets,
+    nweaNorm,
+    nweaNormCurve,
   };
 }
 

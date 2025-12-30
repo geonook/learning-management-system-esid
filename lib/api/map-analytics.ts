@@ -22,8 +22,10 @@ import {
   getNormAverage,
   parseTermTested,
   compareTermTested,
+  getGrowthNormByCourse,
   type MapTerm,
   type Course,
+  type GrowthPeriod,
 } from "@/lib/map/norms";
 
 // ============================================================
@@ -2096,7 +2098,7 @@ export async function getCohortTracking(params: {
 // Goal RIT Distribution API
 // ============================================================
 
-import { calculateMean, calculateStdDev, generateGaussianCurve } from "@/lib/map/statistics";
+import { calculateMean, calculateStdDev, generateGaussianCurve, calculateRSquared } from "@/lib/map/statistics";
 
 /**
  * Goal RIT 分佈資料類型
@@ -2285,6 +2287,275 @@ export async function getGoalRitDistribution(params: {
       gaussianCurve: overallGaussian,
     },
     goals: goalsData,
+  };
+}
+
+// ============================================================
+// Grade-Level Growth Distribution API
+// ============================================================
+
+/**
+ * Per-Grade Growth Distribution Data
+ * 用於 Grades Tab 顯示單一年級的成長分佈 + NWEA Norm 對照
+ */
+export interface GradeGrowthDistributionData {
+  grade: number;
+  course: Course;
+  fromTerm: string;
+  toTerm: string;
+  periodType: GrowthPeriod | "custom";
+
+  // KCIS 學生資料
+  growths: number[];          // 所有學生的成長值
+  totalStudents: number;
+  meanGrowth: number;
+  stdDev: number;
+  maxGrowth: number;
+  minGrowth: number;
+  negativeCount: number;
+  negativePercentage: number;
+
+  // Histogram 資料
+  distribution: {
+    range: string;
+    min: number;
+    max: number;
+    count: number;
+    percentage: number;
+    isNegative: boolean;
+  }[];
+
+  // Gaussian 擬合
+  gaussianCurve: { x: number; y: number }[];
+  gaussianFit: { rSquared: number };
+
+  // NWEA Norm (from norms.ts)
+  nweaNorm: { mean: number; stdDev: number } | null;
+  nweaNormCurve: { x: number; y: number }[] | null;
+}
+
+/**
+ * 取得單一年級的成長分佈資料
+ *
+ * @param grade - 年級 (3-6)
+ * @param course - 課程 ("Reading" | "Language Usage")
+ * @param fromTerm - 起始 term (如 "Fall 2024-2025")
+ * @param toTerm - 結束 term (如 "Fall 2025-2026")
+ *
+ * Permission: All authenticated users
+ */
+export async function getGradeGrowthDistribution(params: {
+  grade: number;
+  course: Course;
+  fromTerm: string;
+  toTerm: string;
+}): Promise<GradeGrowthDistributionData | null> {
+  await requireAuth();
+  const supabase = createClient();
+
+  const { grade, course, fromTerm, toTerm } = params;
+
+  // 解析 term 資訊
+  const fromParsed = parseTermTested(fromTerm);
+  const toParsed = parseTermTested(toTerm);
+
+  if (!fromParsed || !toParsed) {
+    console.error("Invalid term format:", { fromTerm, toTerm });
+    return null;
+  }
+
+  // 判斷 period type
+  let periodType: GrowthPeriod | "custom" = "custom";
+  const isCrossYear = fromParsed.academicYear !== toParsed.academicYear;
+
+  if (fromParsed.mapTerm === "fall" && toParsed.mapTerm === "fall" && isCrossYear) {
+    periodType = "fall-to-fall";
+  } else if (fromParsed.mapTerm === "fall" && toParsed.mapTerm === "spring" && !isCrossYear) {
+    periodType = "fall-to-spring";
+  } else if (fromParsed.mapTerm === "fall" && toParsed.mapTerm === "winter" && !isCrossYear) {
+    periodType = "fall-to-winter";
+  } else if (fromParsed.mapTerm === "winter" && toParsed.mapTerm === "spring" && !isCrossYear) {
+    periodType = "winter-to-spring";
+  }
+
+  // 查詢兩個 term 的 MAP 評量
+  const [fromResult, toResult] = await Promise.all([
+    supabase
+      .from("map_assessments")
+      .select(`
+        student_number,
+        rit_score,
+        students:student_id (
+          grade,
+          is_active
+        )
+      `)
+      .eq("course", course)
+      .eq("term_tested", fromTerm)
+      .not("student_id", "is", null),
+    supabase
+      .from("map_assessments")
+      .select(`
+        student_number,
+        rit_score,
+        students:student_id (
+          grade,
+          is_active
+        )
+      `)
+      .eq("course", course)
+      .eq("term_tested", toTerm)
+      .not("student_id", "is", null),
+  ]);
+
+  if (fromResult.error || toResult.error) {
+    console.error("Error fetching grade growth data:", fromResult.error || toResult.error);
+    return null;
+  }
+
+  // 過濾活躍學生和指定年級
+  // Supabase 回傳 students 為物件（透過 student_id 關聯）
+  const filterByGrade = (
+    data: Array<{
+      student_number: string;
+      rit_score: number;
+      students: unknown;
+    }> | null
+  ) => {
+    if (!data) return [];
+    return data.filter((d) => {
+      const student = d.students as { grade: number; is_active: boolean } | null;
+      return student?.is_active === true && student?.grade === grade;
+    });
+  };
+
+  const fromData = filterByGrade(fromResult.data);
+  const toData = filterByGrade(toResult.data);
+
+  // 建立 student_number -> RIT 的 map
+  const fromRitMap = new Map<string, number>();
+  for (const row of fromData) {
+    fromRitMap.set(row.student_number, row.rit_score);
+  }
+
+  const toRitMap = new Map<string, number>();
+  for (const row of toData) {
+    toRitMap.set(row.student_number, row.rit_score);
+  }
+
+  // 計算配對學生的成長值
+  const growths: number[] = [];
+  for (const [studentNumber, fromRit] of fromRitMap) {
+    const toRit = toRitMap.get(studentNumber);
+    if (toRit !== undefined) {
+      growths.push(toRit - fromRit);
+    }
+  }
+
+  if (growths.length === 0) {
+    return null;
+  }
+
+  // 計算統計
+  const meanGrowth = calculateMean(growths);
+  const stdDev = calculateStdDev(growths);
+  const maxGrowth = Math.max(...growths);
+  const minGrowth = Math.min(...growths);
+  const negativeCount = growths.filter((g) => g < 0).length;
+  const negativePercentage = Math.round((negativeCount / growths.length) * 100);
+
+  // 建立成長分佈 histogram (每 5 RIT 一個 bucket)
+  const BIN_WIDTH = 5;
+  const minBucket = Math.floor(minGrowth / BIN_WIDTH) * BIN_WIDTH - BIN_WIDTH;
+  const maxBucket = Math.ceil(maxGrowth / BIN_WIDTH) * BIN_WIDTH + BIN_WIDTH;
+
+  const distribution: GradeGrowthDistributionData["distribution"] = [];
+  for (let bucketStart = minBucket; bucketStart < maxBucket; bucketStart += BIN_WIDTH) {
+    const bucketEnd = bucketStart + BIN_WIDTH;
+    const count = growths.filter(
+      (g) => g >= bucketStart && g < bucketEnd
+    ).length;
+
+    distribution.push({
+      range: `${bucketStart} to ${bucketEnd}`,
+      min: bucketStart,
+      max: bucketEnd,
+      count,
+      percentage: Math.round((count / growths.length) * 100),
+      isNegative: bucketEnd <= 0,
+    });
+  }
+
+  // 計算 X 軸範圍
+  const xMin = minBucket - BIN_WIDTH;
+  const xMax = maxBucket + BIN_WIDTH;
+
+  // 生成 KCIS 學生的 Gaussian 擬合曲線
+  const gaussianCurve = generateGaussianCurve(
+    meanGrowth,
+    stdDev,
+    xMin,
+    xMax,
+    growths.length,
+    BIN_WIDTH,
+    60
+  );
+
+  // 計算 R²
+  const observed = distribution.map((b) => ({
+    midpoint: (b.min + b.max) / 2,
+    count: b.count,
+  }));
+  const rSquared = calculateRSquared(observed, meanGrowth, stdDev, growths.length, BIN_WIDTH);
+
+  // 取得 NWEA Norm
+  // 對於 fall-to-fall，使用下一年級的 norm（因為學生已升級）
+  // 例如 G4 Fall → G5 Fall，使用 G4 的 fall-to-fall norm（代表 G4→G5 的預期成長）
+  let nweaNorm: { mean: number; stdDev: number } | null = null;
+  let nweaNormCurve: { x: number; y: number }[] | null = null;
+
+  if (periodType !== "custom") {
+    // 使用起始年級的 norm（因為 growth norm 是基於起始年級定義的）
+    // 對於 fall-to-fall，使用上一個年級（因為學生從 G(n-1) 升到 G(n)）
+    const normGrade = periodType === "fall-to-fall" ? grade - 1 : grade;
+    if (normGrade >= 3 && normGrade <= 6) {
+      nweaNorm = getGrowthNormByCourse(toParsed.academicYear, normGrade, periodType, course);
+
+      if (nweaNorm) {
+        // 生成 NWEA Norm 的 Gaussian 曲線
+        // 使用相同的學生數來進行比例一致的視覺對照
+        nweaNormCurve = generateGaussianCurve(
+          nweaNorm.mean,
+          nweaNorm.stdDev,
+          xMin,
+          xMax,
+          growths.length,
+          BIN_WIDTH,
+          60
+        );
+      }
+    }
+  }
+
+  return {
+    grade,
+    course,
+    fromTerm,
+    toTerm,
+    periodType,
+    growths,
+    totalStudents: growths.length,
+    meanGrowth: Math.round(meanGrowth * 100) / 100,
+    stdDev: Math.round(stdDev * 100) / 100,
+    maxGrowth,
+    minGrowth,
+    negativeCount,
+    negativePercentage,
+    distribution,
+    gaussianCurve,
+    gaussianFit: { rSquared: Math.round(rSquared * 100) / 100 },
+    nweaNorm,
+    nweaNormCurve,
   };
 }
 

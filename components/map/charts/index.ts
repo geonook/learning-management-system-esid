@@ -12,3 +12,4 @@ export { MapGoalRadar } from "./MapGoalRadar";
 export { MapGoalTable } from "./MapGoalTable";
 export { MapGoalRitDistribution } from "./MapGoalRitDistribution";
 export { MapConsecutiveGrowth } from "./MapConsecutiveGrowth";
+export { MapGradeGrowthDistribution } from "./MapGradeGrowthDistribution";

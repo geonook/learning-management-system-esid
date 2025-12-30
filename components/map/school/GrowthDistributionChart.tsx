@@ -112,16 +112,21 @@ export function GrowthDistributionChart({
       BIN_WIDTH
     );
 
-    // 合併 bar 資料與 gaussian 曲線資料
-    // 為了在同一圖表顯示，需要合併兩個資料集
+    // 合併 bar 資料與 gaussian 曲線資料 + NWEA Norm 曲線
+    // 為了在同一圖表顯示，需要合併資料集
     const combinedData = bucketsWithMidpoint.map((bucket) => {
       // 找到最接近的 gaussian 值
       const nearestGaussian = curve.find(
         (g) => Math.abs(g.x - bucket.midpoint) < BIN_WIDTH / 2
       );
+      // 找到最接近的 NWEA Norm 曲線值
+      const nearestNorm = data.nweaNormCurve?.find(
+        (n) => Math.abs(n.x - bucket.midpoint) < BIN_WIDTH / 2
+      );
       return {
         ...bucket,
         gaussian: nearestGaussian?.y ?? null,
+        nweaNorm: nearestNorm?.y ?? null,
       };
     });
 
@@ -238,6 +243,36 @@ export function GrowthDistributionChart({
               </TooltipContent>
             </UITooltip>
           </div>
+
+          {/* NWEA Norm 參考值 */}
+          {data.nweaNorm && (
+            <div className="px-3 py-1.5 bg-purple-50 border border-purple-200 rounded-md flex items-center gap-1">
+              <span className="text-purple-700 font-medium text-xs">
+                📊 NWEA Norm: {data.nweaNorm.mean.toFixed(1)} ± {data.nweaNorm.stdDev.toFixed(1)}
+              </span>
+              <UITooltip>
+                <TooltipTrigger asChild>
+                  <Info className="w-3.5 h-3.5 text-purple-500 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-[320px]">
+                  <p className="text-xs mb-2">
+                    <strong>NWEA 2025 Growth Norms</strong> (Weighted Average)
+                  </p>
+                  <div className="text-xs space-y-1">
+                    {data.nweaNorm.perGrade.map((g) => (
+                      <div key={g.grade} className="flex justify-between gap-4">
+                        <span>G{g.grade} ({g.count} students):</span>
+                        <span className="font-medium">{g.mean.toFixed(1)} ± {g.stdDev.toFixed(1)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs mt-2 text-muted-foreground">
+                    Weighted by student count per grade. Represents average of Reading + Language Usage.
+                  </p>
+                </TooltipContent>
+              </UITooltip>
+            </div>
+          )}
         </div>
 
       {/* 直方圖 + 高斯曲線 */}
@@ -284,9 +319,17 @@ export function GrowthDistributionChart({
                     {d?.gaussian !== null && (
                       <div>
                         <span className="text-muted-foreground">
-                          Expected (Gaussian):{" "}
+                          Expected (KCIS):{" "}
                         </span>
                         <span className="font-medium">{d.gaussian.toFixed(1)}</span>
+                      </div>
+                    )}
+                    {d?.nweaNorm !== null && (
+                      <div>
+                        <span className="text-muted-foreground">
+                          Expected (NWEA):{" "}
+                        </span>
+                        <span className="font-medium text-purple-600">{d.nweaNorm.toFixed(1)}</span>
                       </div>
                     )}
                   </div>
@@ -300,14 +343,25 @@ export function GrowthDistributionChart({
               <Cell key={`cell-${index}`} fill={entry.color} />
             ))}
           </Bar>
-          {/* 高斯擬合曲線 */}
+          {/* KCIS 高斯擬合曲線 */}
           <Line
             type="monotone"
             dataKey="gaussian"
             stroke={SCHOOL_CHART_COLORS.gaussianFit}
             strokeWidth={2.5}
             dot={false}
-            name="Gaussian Fit"
+            name="KCIS Gaussian Fit"
+            connectNulls
+          />
+          {/* NWEA Norm 曲線 (紫色虛線) */}
+          <Line
+            type="monotone"
+            dataKey="nweaNorm"
+            stroke="#8b5cf6"
+            strokeWidth={2}
+            strokeDasharray="5 3"
+            dot={false}
+            name="NWEA Norm"
             connectNulls
           />
         </ComposedChart>
@@ -348,8 +402,20 @@ export function GrowthDistributionChart({
             className="w-6 h-0.5"
             style={{ backgroundColor: SCHOOL_CHART_COLORS.gaussianFit }}
           />
-          <span>Gaussian Fit</span>
+          <span>KCIS Gaussian</span>
         </div>
+        {data.nweaNorm && (
+          <div className="flex items-center gap-1">
+            <span
+              className="w-6 h-0.5"
+              style={{
+                backgroundColor: "#8b5cf6",
+                borderStyle: "dashed",
+              }}
+            />
+            <span>NWEA Norm</span>
+          </div>
+        )}
       </div>
 
       {/* 解讀說明 */}
@@ -357,8 +423,8 @@ export function GrowthDistributionChart({
         <p>
           <strong>How to read:</strong> This histogram shows the distribution of RIT
           growth from {data.fromTerm} to {data.toTerm}. Red bars indicate students
-          with negative growth who may need intervention. The curve shows the expected
-          normal distribution.
+          with negative growth who may need intervention. The black curve shows KCIS
+          student distribution fit{data.nweaNorm ? ", and the purple dashed curve shows the NWEA 2025 national norm for comparison" : ""}.
         </p>
       </div>
       </div>

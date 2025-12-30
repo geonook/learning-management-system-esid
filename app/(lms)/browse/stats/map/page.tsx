@@ -44,6 +44,7 @@ import {
   MapTestQualityPie,
   MapBenchmarkTransition,
   MapConsecutiveGrowth,
+  MapGradeGrowthDistribution,
 } from "@/components/map/charts";
 import {
   getMapAnalyticsData,
@@ -54,6 +55,7 @@ import {
   getTestQualityReport,
   getBenchmarkTransition,
   getConsecutiveGrowthAnalysis,
+  getGradeGrowthDistribution,
   type MapAnalyticsData,
   type GrowthAnalysisData,
   type GrowthType,
@@ -63,6 +65,7 @@ import {
   type TestQualityData,
   type BenchmarkTransitionData,
   type ConsecutiveGrowthAnalysisData,
+  type GradeGrowthDistributionData,
 } from "@/lib/api/map-analytics";
 import { isBenchmarkSupported } from "@/lib/map/benchmarks";
 import { formatTermStats } from "@/lib/map/utils";
@@ -152,6 +155,10 @@ export default function MapAnalysisPage() {
   const [qualityData, setQualityData] = useState<TestQualityData | null>(null);
   const [transitionData, setTransitionData] =
     useState<BenchmarkTransitionData | null>(null);
+  // Grade growth distribution cache: key = `${grade}-${course}`
+  const [gradeGrowthCache, setGradeGrowthCache] = useState<
+    Record<string, GradeGrowthDistributionData | null>
+  >({});
 
   // Loading states per tab
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({
@@ -202,6 +209,31 @@ export default function MapAnalysisPage() {
       setLoading("overview", false);
     }
   }, []);
+
+  // Fetch Grade Growth Distribution Data (for Grades Tab)
+  const fetchGradeGrowthData = useCallback(
+    async (grade: number, course: "Reading" | "Language Usage") => {
+      const cacheKey = `${grade}-${course}`;
+      // Skip if already cached
+      if (gradeGrowthCache[cacheKey] !== undefined) return;
+
+      try {
+        // Use Fall-to-Fall growth (1 year growth)
+        const result = await getGradeGrowthDistribution({
+          grade,
+          course,
+          fromTerm: "Fall 2024-2025",
+          toTerm: "Fall 2025-2026",
+        });
+        setGradeGrowthCache((prev) => ({ ...prev, [cacheKey]: result }));
+      } catch (err) {
+        console.error("Error fetching grade growth distribution:", err);
+        // Store null to prevent re-fetching
+        setGradeGrowthCache((prev) => ({ ...prev, [cacheKey]: null }));
+      }
+    },
+    [gradeGrowthCache]
+  );
 
   // Fetch Growth Data (within-year or year-over-year)
   const fetchGrowthData = useCallback(
@@ -376,6 +408,9 @@ export default function MapAnalysisPage() {
       switch (selectedTab) {
         case "overview":
           await fetchOverviewData(selectedGrade);
+          // Also fetch grade growth distribution for both courses
+          fetchGradeGrowthData(selectedGrade, "Reading");
+          fetchGradeGrowthData(selectedGrade, "Language Usage");
           break;
         case "growth":
           if (growthType === "consecutive") {
@@ -411,6 +446,7 @@ export default function MapAnalysisPage() {
     transitionPeriod,
     loadedTabs,
     fetchOverviewData,
+    fetchGradeGrowthData,
     fetchGrowthData,
     fetchConsecutiveGrowthData,
     fetchGoalData,
@@ -680,6 +716,46 @@ export default function MapAnalysisPage() {
                     />
                   </CardContent>
                 </Card>
+              </div>
+
+              {/* Grade Growth Distribution (Colab-style) */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {gradeGrowthCache[`${selectedGrade}-Reading`] && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">
+                        Reading Growth Distribution
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <MapGradeGrowthDistribution
+                        data={gradeGrowthCache[`${selectedGrade}-Reading`]!}
+                        height={300}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
+                {gradeGrowthCache[`${selectedGrade}-Language Usage`] && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">
+                        Language Usage Growth Distribution
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <MapGradeGrowthDistribution
+                        data={gradeGrowthCache[`${selectedGrade}-Language Usage`]!}
+                        height={300}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
+                {!gradeGrowthCache[`${selectedGrade}-Reading`] &&
+                  !gradeGrowthCache[`${selectedGrade}-Language Usage`] && (
+                    <div className="lg:col-span-2 flex items-center justify-center h-[200px] text-muted-foreground text-sm">
+                      <p>Loading grade growth distribution...</p>
+                    </div>
+                  )}
               </div>
 
               {/* Data Info */}
