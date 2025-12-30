@@ -14,12 +14,14 @@ import { requireAuth } from './permissions';
 import {
   classifyBenchmark,
   calculateMapAverage,
+  getBenchmarkThresholds,
   type BenchmarkLevel,
   BENCHMARK_COLORS,
 } from "@/lib/map/benchmarks";
 import {
   getNorm,
   getNormAverage,
+  getNormStdDev,
   parseTermTested,
   compareTermTested,
   getGrowthNormByCourse,
@@ -2556,6 +2558,216 @@ export async function getGradeGrowthDistribution(params: {
     gaussianFit: { rSquared: Math.round(rSquared * 100) / 100 },
     nweaNorm,
     nweaNormCurve,
+  };
+}
+
+// ============================================================
+// Grade-Level RIT Distribution API
+// ============================================================
+
+/**
+ * Per-Grade RIT Distribution Data
+ * 用於 Grades Tab 顯示單一年級的 RIT 分佈 + NWEA Norm + E1/E3 Benchmark
+ */
+export interface GradeRitDistributionData {
+  grade: number;
+  course: Course;
+  termTested: string;
+  mapTerm: MapTerm;
+
+  // KCIS 學生資料
+  ritScores: number[];
+  totalStudents: number;
+  meanRit: number;
+  stdDev: number;
+  maxRit: number;
+  minRit: number;
+
+  // Histogram 資料
+  distribution: {
+    range: string;
+    min: number;
+    max: number;
+    count: number;
+    percentage: number;
+  }[];
+
+  // Gaussian 擬合
+  gaussianCurve: { x: number; y: number }[];
+  gaussianFit: { rSquared: number };
+
+  // NWEA Achievement Norm
+  nweaNorm: { mean: number; stdDev: number } | null;
+  nweaNormCurve: { x: number; y: number }[] | null;
+
+  // Benchmark 閾值 (僅 Average 有效，供參考)
+  benchmarks: {
+    e1Threshold: number;
+    e2Threshold: number;
+  } | null;
+}
+
+/**
+ * 取得單一年級的 RIT 分佈資料
+ *
+ * @param grade - 年級 (3-6)
+ * @param course - 課程 ("Reading" | "Language Usage")
+ * @param termTested - 測驗學期 (如 "Fall 2025-2026")
+ *
+ * Permission: All authenticated users
+ */
+export async function getGradeRitDistribution(params: {
+  grade: number;
+  course: Course;
+  termTested: string;
+}): Promise<GradeRitDistributionData | null> {
+  await requireAuth();
+  const supabase = createClient();
+
+  const { grade, course, termTested } = params;
+
+  // 解析 term 資訊
+  const parsed = parseTermTested(termTested);
+  if (!parsed) {
+    console.error("Invalid term format:", termTested);
+    return null;
+  }
+
+  // 查詢該年級該科目該學期的 MAP 評量
+  const { data, error } = await supabase
+    .from("map_assessments")
+    .select(`
+      student_number,
+      rit_score,
+      students:student_id (
+        grade,
+        is_active
+      )
+    `)
+    .eq("course", course)
+    .eq("term_tested", termTested)
+    .not("student_id", "is", null);
+
+  if (error) {
+    console.error("Error fetching RIT distribution:", error);
+    return null;
+  }
+
+  // 過濾出該年級的活躍學生
+  const filterByGrade = (
+    rawData: Array<{
+      student_number: string;
+      rit_score: number;
+      students: unknown;
+    }> | null
+  ) => {
+    if (!rawData) return [];
+    return rawData.filter((d) => {
+      const student = d.students as { grade: number; is_active: boolean } | null;
+      return student?.is_active === true && student?.grade === grade;
+    });
+  };
+
+  const gradeData = filterByGrade(data);
+
+  if (gradeData.length === 0) {
+    return null;
+  }
+
+  // 收集 RIT 分數
+  const ritScores = gradeData.map((d) => d.rit_score);
+
+  // 計算統計
+  const meanRit = calculateMean(ritScores);
+  const stdDev = calculateStdDev(ritScores);
+  const maxRit = Math.max(...ritScores);
+  const minRit = Math.min(...ritScores);
+
+  // 建立 RIT 分佈 histogram (每 5 RIT 一個 bucket)
+  const BIN_WIDTH = 5;
+  const minBucket = Math.floor(minRit / BIN_WIDTH) * BIN_WIDTH - BIN_WIDTH;
+  const maxBucket = Math.ceil(maxRit / BIN_WIDTH) * BIN_WIDTH + BIN_WIDTH;
+
+  const distribution: GradeRitDistributionData["distribution"] = [];
+  for (let bucketStart = minBucket; bucketStart < maxBucket; bucketStart += BIN_WIDTH) {
+    const bucketEnd = bucketStart + BIN_WIDTH;
+    const count = ritScores.filter(
+      (rit) => rit >= bucketStart && rit < bucketEnd
+    ).length;
+
+    distribution.push({
+      range: `${bucketStart}-${bucketEnd}`,
+      min: bucketStart,
+      max: bucketEnd,
+      count,
+      percentage: Math.round((count / ritScores.length) * 100),
+    });
+  }
+
+  // 計算 X 軸範圍
+  const xMin = minBucket - BIN_WIDTH;
+  const xMax = maxBucket + BIN_WIDTH;
+
+  // 生成 KCIS 學生的 Gaussian 擬合曲線
+  const gaussianCurve = generateGaussianCurve(
+    meanRit,
+    stdDev,
+    xMin,
+    xMax,
+    ritScores.length,
+    BIN_WIDTH,
+    60
+  );
+
+  // 計算 R²
+  const observed = distribution.map((b) => ({
+    midpoint: (b.min + b.max) / 2,
+    count: b.count,
+  }));
+  const rSquared = calculateRSquared(observed, meanRit, stdDev, ritScores.length, BIN_WIDTH);
+
+  // 取得 NWEA Achievement Norm
+  let nweaNorm: { mean: number; stdDev: number } | null = null;
+  let nweaNormCurve: { x: number; y: number }[] | null = null;
+
+  const normMean = getNorm(parsed.academicYear, grade, parsed.mapTerm, course);
+  const normStdDev = getNormStdDev(parsed.academicYear, grade, parsed.mapTerm, course);
+
+  if (normMean !== null && normStdDev !== null) {
+    nweaNorm = { mean: normMean, stdDev: normStdDev };
+
+    // 生成 NWEA Norm 的 Gaussian 曲線
+    nweaNormCurve = generateGaussianCurve(
+      normMean,
+      normStdDev,
+      xMin,
+      xMax,
+      ritScores.length, // 使用相同學生數進行比例對照
+      BIN_WIDTH,
+      60
+    );
+  }
+
+  // 取得 Benchmark 閾值 (僅 G3-G5 有效)
+  const benchmarkThresholds = getBenchmarkThresholds(grade);
+
+  return {
+    grade,
+    course,
+    termTested,
+    mapTerm: parsed.mapTerm,
+    ritScores,
+    totalStudents: ritScores.length,
+    meanRit: Math.round(meanRit * 100) / 100,
+    stdDev: Math.round(stdDev * 100) / 100,
+    maxRit,
+    minRit,
+    distribution,
+    gaussianCurve,
+    gaussianFit: { rSquared: Math.round(rSquared * 100) / 100 },
+    nweaNorm,
+    nweaNormCurve,
+    benchmarks: benchmarkThresholds,
   };
 }
 

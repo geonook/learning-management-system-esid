@@ -45,6 +45,7 @@ import {
   MapBenchmarkTransition,
   MapConsecutiveGrowth,
   MapGradeGrowthDistribution,
+  MapGradeRitDistribution,
 } from "@/components/map/charts";
 import {
   getMapAnalyticsData,
@@ -56,6 +57,7 @@ import {
   getBenchmarkTransition,
   getConsecutiveGrowthAnalysis,
   getGradeGrowthDistribution,
+  getGradeRitDistribution,
   type MapAnalyticsData,
   type GrowthAnalysisData,
   type GrowthType,
@@ -66,6 +68,7 @@ import {
   type BenchmarkTransitionData,
   type ConsecutiveGrowthAnalysisData,
   type GradeGrowthDistributionData,
+  type GradeRitDistributionData,
 } from "@/lib/api/map-analytics";
 import { isBenchmarkSupported } from "@/lib/map/benchmarks";
 import { formatTermStats } from "@/lib/map/utils";
@@ -159,6 +162,10 @@ export default function MapAnalysisPage() {
   const [gradeGrowthCache, setGradeGrowthCache] = useState<
     Record<string, GradeGrowthDistributionData | null>
   >({});
+  // Grade RIT distribution cache: key = `${grade}-${course}-${term}`
+  const [gradeRitCache, setGradeRitCache] = useState<
+    Record<string, GradeRitDistributionData | null>
+  >({});
 
   // Loading states per tab
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({
@@ -233,6 +240,29 @@ export default function MapAnalysisPage() {
       }
     },
     [gradeGrowthCache]
+  );
+
+  // Fetch Grade RIT Distribution Data (for Grades Tab)
+  const fetchGradeRitData = useCallback(
+    async (grade: number, course: "Reading" | "Language Usage", termTested: string) => {
+      const cacheKey = `${grade}-${course}-${termTested}`;
+      // Skip if already cached
+      if (gradeRitCache[cacheKey] !== undefined) return;
+
+      try {
+        const result = await getGradeRitDistribution({
+          grade,
+          course,
+          termTested,
+        });
+        setGradeRitCache((prev) => ({ ...prev, [cacheKey]: result }));
+      } catch (err) {
+        console.error("Error fetching grade RIT distribution:", err);
+        // Store null to prevent re-fetching
+        setGradeRitCache((prev) => ({ ...prev, [cacheKey]: null }));
+      }
+    },
+    [gradeRitCache]
   );
 
   // Fetch Growth Data (within-year or year-over-year)
@@ -411,6 +441,9 @@ export default function MapAnalysisPage() {
           // Also fetch grade growth distribution for both courses
           fetchGradeGrowthData(selectedGrade, "Reading");
           fetchGradeGrowthData(selectedGrade, "Language Usage");
+          // Also fetch grade RIT distribution for both courses (Fall 2025-2026)
+          fetchGradeRitData(selectedGrade, "Reading", "Fall 2025-2026");
+          fetchGradeRitData(selectedGrade, "Language Usage", "Fall 2025-2026");
           break;
         case "growth":
           if (growthType === "consecutive") {
@@ -447,6 +480,7 @@ export default function MapAnalysisPage() {
     loadedTabs,
     fetchOverviewData,
     fetchGradeGrowthData,
+    fetchGradeRitData,
     fetchGrowthData,
     fetchConsecutiveGrowthData,
     fetchGoalData,
@@ -754,6 +788,46 @@ export default function MapAnalysisPage() {
                   !gradeGrowthCache[`${selectedGrade}-Language Usage`] && (
                     <div className="lg:col-span-2 flex items-center justify-center h-[200px] text-muted-foreground text-sm">
                       <p>Loading grade growth distribution...</p>
+                    </div>
+                  )}
+              </div>
+
+              {/* Grade RIT Distribution (Colab-style) */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {gradeRitCache[`${selectedGrade}-Reading-Fall 2025-2026`] && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">
+                        Reading RIT Distribution
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <MapGradeRitDistribution
+                        data={gradeRitCache[`${selectedGrade}-Reading-Fall 2025-2026`]!}
+                        height={300}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
+                {gradeRitCache[`${selectedGrade}-Language Usage-Fall 2025-2026`] && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">
+                        Language Usage RIT Distribution
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <MapGradeRitDistribution
+                        data={gradeRitCache[`${selectedGrade}-Language Usage-Fall 2025-2026`]!}
+                        height={300}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
+                {!gradeRitCache[`${selectedGrade}-Reading-Fall 2025-2026`] &&
+                  !gradeRitCache[`${selectedGrade}-Language Usage-Fall 2025-2026`] && (
+                    <div className="lg:col-span-2 flex items-center justify-center h-[200px] text-muted-foreground text-sm">
+                      <p>Loading grade RIT distribution...</p>
                     </div>
                   )}
               </div>
