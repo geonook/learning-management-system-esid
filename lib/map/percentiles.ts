@@ -23,31 +23,32 @@ interface SDData {
   languageUsage: number;
 }
 
-// NWEA 標準差估計值 (基於 2025 norms 研究)
-// SD 在低年級較大，高年級較小
-// 注意：winter 資料目前未使用，故為 Partial
+// NWEA 2025 Technical Manual 精確標準差值
+// 使用小數點後兩位精確值
 const SD_DATA: Record<number, Partial<Record<MapTerm, SDData>>> = {
   3: {
-    fall: { reading: 17, languageUsage: 16 },
-    spring: { reading: 17, languageUsage: 16 },
+    fall: { reading: 18.30, languageUsage: 17.37 },
+    winter: { reading: 18.13, languageUsage: 17.00 },
+    spring: { reading: 18.15, languageUsage: 16.93 },
   },
   4: {
-    fall: { reading: 16, languageUsage: 15 },
-    spring: { reading: 16, languageUsage: 15 },
+    fall: { reading: 17.99, languageUsage: 16.81 },
+    winter: { reading: 17.76, languageUsage: 16.46 },
+    spring: { reading: 17.74, languageUsage: 16.26 },
   },
   5: {
-    fall: { reading: 16, languageUsage: 15 },
-    spring: { reading: 16, languageUsage: 15 },
+    fall: { reading: 17.45, languageUsage: 16.09 },
+    winter: { reading: 17.21, languageUsage: 15.79 },
+    spring: { reading: 17.15, languageUsage: 15.67 },
   },
   6: {
-    fall: { reading: 15, languageUsage: 15 },
-    spring: { reading: 15, languageUsage: 15 },
+    fall: { reading: 16.84, languageUsage: 15.67 },
+    winter: { reading: 16.70, languageUsage: 15.68 },
+    spring: { reading: 16.67, languageUsage: 15.78 },
   },
 };
 
-// 50th percentile (mean) RIT scores - 2025 Norms
-// 這些值與 norms.ts 中的常模一致
-// 注意：winter 資料目前未使用，故為 Partial
+// 50th percentile (mean) RIT scores - NWEA 2025 Technical Manual 精確值
 const MEAN_RIT: Record<string, Record<number, Partial<Record<MapTerm, SDData>>>> = {
   "2024-2025": {
     3: {
@@ -69,20 +70,24 @@ const MEAN_RIT: Record<string, Record<number, Partial<Record<MapTerm, SDData>>>>
   },
   "2025-2026": {
     3: {
-      fall: { reading: 185, languageUsage: 184 },
-      spring: { reading: 194, languageUsage: 193 },
+      fall: { reading: 184.69, languageUsage: 184.42 },
+      winter: { reading: 189.89, languageUsage: 189.58 },
+      spring: { reading: 193.79, languageUsage: 193.44 },
     },
     4: {
-      fall: { reading: 196, languageUsage: 195 },
-      spring: { reading: 202, languageUsage: 201 },
+      fall: { reading: 195.92, languageUsage: 194.69 },
+      winter: { reading: 199.45, languageUsage: 198.45 },
+      spring: { reading: 202.09, languageUsage: 201.27 },
     },
     5: {
-      fall: { reading: 204, languageUsage: 202 },
-      spring: { reading: 208, languageUsage: 207 },
+      fall: { reading: 203.67, languageUsage: 201.87 },
+      winter: { reading: 206.36, languageUsage: 204.79 },
+      spring: { reading: 208.37, languageUsage: 206.97 },
     },
     6: {
-      fall: { reading: 209, languageUsage: 206 },
-      spring: { reading: 212, languageUsage: 210 },
+      fall: { reading: 208.95, languageUsage: 206.49 },
+      winter: { reading: 210.72, languageUsage: 208.57 },
+      spring: { reading: 212.04, languageUsage: 210.12 },
     },
   },
 };

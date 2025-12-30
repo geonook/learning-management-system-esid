@@ -35,8 +35,8 @@ export type Course = "Language Usage" | "Reading";
 export type Term = MapTerm;
 
 // NWEA 常模數據 (按學年 > 年級 > MAP 測驗期)
-// 資料來源：NWEA 2025 Norms (116 million scores from 13.8 million students, Fall 2022 - Spring 2024)
-// 注意：winter 資料目前未使用，故為 Partial
+// 資料來源：NWEA 2025 Technical Manual (116 million scores from 13.8 million students, Fall 2022 - Spring 2024)
+// 使用 Technical Manual 精確值（小數點後兩位）
 const MAP_NORMS: Record<string, Record<number, Partial<Record<MapTerm, NormData>>>> = {
   // 2024-2025 學年使用舊版常模
   "2024-2025": {
@@ -57,31 +57,35 @@ const MAP_NORMS: Record<string, Record<number, Partial<Record<MapTerm, NormData>
       spring: { languageUsage: 212, reading: 214 },
     },
   },
-  // 2025-2026 學年使用 2025 NWEA Norms (更新版)
+  // 2025-2026 學年使用 2025 NWEA Technical Manual 精確值
   "2025-2026": {
     3: {
-      fall: { languageUsage: 184, reading: 185 },
-      spring: { languageUsage: 193, reading: 194 },
+      fall: { languageUsage: 184.42, reading: 184.69 },
+      winter: { languageUsage: 189.58, reading: 189.89 },
+      spring: { languageUsage: 193.44, reading: 193.79 },
     },
     4: {
-      fall: { languageUsage: 195, reading: 196 },
-      spring: { languageUsage: 201, reading: 202 },
+      fall: { languageUsage: 194.69, reading: 195.92 },
+      winter: { languageUsage: 198.45, reading: 199.45 },
+      spring: { languageUsage: 201.27, reading: 202.09 },
     },
     5: {
-      fall: { languageUsage: 202, reading: 204 },
-      spring: { languageUsage: 207, reading: 208 },
+      fall: { languageUsage: 201.87, reading: 203.67 },
+      winter: { languageUsage: 204.79, reading: 206.36 },
+      spring: { languageUsage: 206.97, reading: 208.37 },
     },
     6: {
-      fall: { languageUsage: 206, reading: 209 },
-      spring: { languageUsage: 210, reading: 212 },
+      fall: { languageUsage: 206.49, reading: 208.95 },
+      winter: { languageUsage: 208.57, reading: 210.72 },
+      spring: { languageUsage: 210.12, reading: 212.04 },
     },
   },
 };
 
 /**
  * NWEA 2025 Student Achievement Norms with Standard Deviation
- * 資料來源：NWEA 2025 Norms Quick Reference (官方文件)
- * https://www.nwea.org/resource-center/fact-sheet/87992/MAP-Growth-2025-norms-quick-reference_NWEA_onesheet.pdf
+ * 資料來源：NWEA 2025 Technical Manual (官方文件)
+ * 使用精確值（小數點後兩位）
  */
 const MAP_NORMS_WITH_STDDEV: Record<
   string,
@@ -89,24 +93,24 @@ const MAP_NORMS_WITH_STDDEV: Record<
 > = {
   "2025-2026": {
     3: {
-      fall: { languageUsage: 184, languageUsageStdDev: 17, reading: 185, readingStdDev: 18 },
-      winter: { languageUsage: 190, languageUsageStdDev: 17, reading: 190, readingStdDev: 18 },
-      spring: { languageUsage: 193, languageUsageStdDev: 17, reading: 194, readingStdDev: 18 },
+      fall: { languageUsage: 184.42, languageUsageStdDev: 17.37, reading: 184.69, readingStdDev: 18.30 },
+      winter: { languageUsage: 189.58, languageUsageStdDev: 17.00, reading: 189.89, readingStdDev: 18.13 },
+      spring: { languageUsage: 193.44, languageUsageStdDev: 16.93, reading: 193.79, readingStdDev: 18.15 },
     },
     4: {
-      fall: { languageUsage: 195, languageUsageStdDev: 17, reading: 196, readingStdDev: 18 },
-      winter: { languageUsage: 198, languageUsageStdDev: 16, reading: 199, readingStdDev: 18 },
-      spring: { languageUsage: 201, languageUsageStdDev: 16, reading: 202, readingStdDev: 18 },
+      fall: { languageUsage: 194.69, languageUsageStdDev: 16.81, reading: 195.92, readingStdDev: 17.99 },
+      winter: { languageUsage: 198.45, languageUsageStdDev: 16.46, reading: 199.45, readingStdDev: 17.76 },
+      spring: { languageUsage: 201.27, languageUsageStdDev: 16.26, reading: 202.09, readingStdDev: 17.74 },
     },
     5: {
-      fall: { languageUsage: 202, languageUsageStdDev: 16, reading: 204, readingStdDev: 17 },
-      winter: { languageUsage: 205, languageUsageStdDev: 16, reading: 206, readingStdDev: 17 },
-      spring: { languageUsage: 207, languageUsageStdDev: 16, reading: 208, readingStdDev: 17 },
+      fall: { languageUsage: 201.87, languageUsageStdDev: 16.09, reading: 203.67, readingStdDev: 17.45 },
+      winter: { languageUsage: 204.79, languageUsageStdDev: 15.79, reading: 206.36, readingStdDev: 17.21 },
+      spring: { languageUsage: 206.97, languageUsageStdDev: 15.67, reading: 208.37, readingStdDev: 17.15 },
     },
     6: {
-      fall: { languageUsage: 206, languageUsageStdDev: 16, reading: 209, readingStdDev: 17 },
-      winter: { languageUsage: 209, languageUsageStdDev: 16, reading: 211, readingStdDev: 17 },
-      spring: { languageUsage: 210, languageUsageStdDev: 16, reading: 212, readingStdDev: 17 },
+      fall: { languageUsage: 206.49, languageUsageStdDev: 15.67, reading: 208.95, readingStdDev: 16.84 },
+      winter: { languageUsage: 208.57, languageUsageStdDev: 15.68, reading: 210.72, readingStdDev: 16.70 },
+      spring: { languageUsage: 210.12, languageUsageStdDev: 15.78, reading: 212.04, readingStdDev: 16.67 },
     },
   },
 };

@@ -44,6 +44,14 @@ Students are classified based on **Spring semester Average RIT score**:
 National percentile reference values by grade and term for comparison.
 
 → See: [references/norms.md](references/norms.md)
+→ **Technical Manual**: [../map-growth-norms-2025/SKILL.md](../map-growth-norms-2025/SKILL.md)
+
+### Conditional Growth Percentile (cGP) - NEW
+
+成長百分位數是基於起始 RIT 的「條件分佈」，用於公平評估學生成長表現。
+
+→ See: `lib/map/conditional-growth.ts`
+→ See: `lib/map/growth-params.ts`
 
 ## Data Flow
 
