@@ -153,6 +153,38 @@ function FallToSpringCard({ record }: { record: GrowthRecord }) {
                   )}
                 </div>
               </div>
+              {/* 顯示 Conditional Growth Percentile */}
+              {languageUsage.conditionalGrowthPercentile !== null && (
+                <div className="flex justify-between items-center pt-0.5">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="text-text-tertiary text-xs cursor-help flex items-center gap-0.5">
+                          Percentile
+                          <Info className="w-2.5 h-2.5 opacity-60" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-[240px]">
+                        <p className="text-xs">
+                          <strong>Growth Percentile</strong> (cGP)<br/>
+                          考慮起始分數的條件成長百分位數。<br/>
+                          比較相同起點學生的成長表現。
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <span className={cn(
+                    "px-1.5 py-0.5 rounded text-xs font-medium",
+                    languageUsage.conditionalGrowthPercentile >= 60
+                      ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                      : languageUsage.conditionalGrowthPercentile >= 40
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                      : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                  )}>
+                    {languageUsage.conditionalGrowthPercentile}th
+                  </span>
+                </div>
+              )}
               {/* 顯示官方 Growth Quintile */}
               {luQuintileInfo && (
                 <div className="flex justify-between items-center pt-0.5">
@@ -238,6 +270,38 @@ function FallToSpringCard({ record }: { record: GrowthRecord }) {
                   )}
                 </div>
               </div>
+              {/* 顯示 Conditional Growth Percentile */}
+              {reading.conditionalGrowthPercentile !== null && (
+                <div className="flex justify-between items-center pt-0.5">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="text-text-tertiary text-xs cursor-help flex items-center gap-0.5">
+                          Percentile
+                          <Info className="w-2.5 h-2.5 opacity-60" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-[240px]">
+                        <p className="text-xs">
+                          <strong>Growth Percentile</strong> (cGP)<br/>
+                          考慮起始分數的條件成長百分位數。<br/>
+                          比較相同起點學生的成長表現。
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <span className={cn(
+                    "px-1.5 py-0.5 rounded text-xs font-medium",
+                    reading.conditionalGrowthPercentile >= 60
+                      ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                      : reading.conditionalGrowthPercentile >= 40
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                      : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                  )}>
+                    {reading.conditionalGrowthPercentile}th
+                  </span>
+                </div>
+              )}
               {/* 顯示官方 Growth Quintile */}
               {rdQuintileInfo && (
                 <div className="flex justify-between items-center pt-0.5">

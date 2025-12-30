@@ -2093,6 +2093,202 @@ export async function getCohortTracking(params: {
 }
 
 // ============================================================
+// Goal RIT Distribution API
+// ============================================================
+
+import { calculateMean, calculateStdDev, generateGaussianCurve } from "@/lib/map/statistics";
+
+/**
+ * Goal RIT 分佈資料類型
+ * 用於 Goals Tab 顯示各 Goal 區域的 RIT 分佈曲線
+ */
+export interface GoalRitDistributionData {
+  course: Course;
+  grade: number;
+  termTested: string;
+  // 整體 RIT 統計
+  overallStats: {
+    mean: number;
+    sd: number;
+    count: number;
+    gaussianCurve: { x: number; y: number }[];
+  };
+  // 各 Goal 區域統計
+  goals: {
+    name: string;
+    shortName: string;
+    color: string;
+    stats: {
+      mean: number;
+      sd: number;
+      count: number;
+    };
+    gaussianCurve: { x: number; y: number }[];
+  }[];
+}
+
+/**
+ * Goal 區域顏色配置
+ */
+const GOAL_COLORS: Record<string, { color: string; shortName: string }> = {
+  // Reading Goals
+  "Informational Text": { color: "#3b82f6", shortName: "Info" },      // blue-500
+  "Literary Text": { color: "#10b981", shortName: "Literary" },       // emerald-500
+  "Vocabulary": { color: "#f59e0b", shortName: "Vocab" },             // amber-500
+  // Language Usage Goals
+  "Writing": { color: "#3b82f6", shortName: "Writing" },              // blue-500
+  "Grammar and Usage": { color: "#10b981", shortName: "Grammar" },    // emerald-500
+  "Mechanics": { color: "#f59e0b", shortName: "Mechanics" },          // amber-500
+};
+
+/**
+ * 取得 Goal RIT 分佈資料
+ *
+ * 返回整體 RIT 分佈和各 Goal 區域的分佈曲線，用於 overlay 顯示
+ *
+ * Permission: All authenticated users
+ */
+export async function getGoalRitDistribution(params: {
+  grade: number;
+  course: Course;
+  termTested: string;
+}): Promise<GoalRitDistributionData | null> {
+  await requireAuth();
+  const supabase = createClient();
+
+  // 取得 MAP 評量和 Goal Scores
+  const { data, error } = await supabase
+    .from("map_assessments")
+    .select(`
+      id,
+      student_number,
+      rit_score,
+      students:student_id (
+        grade,
+        is_active
+      ),
+      map_goal_scores (
+        goal_name,
+        goal_rit_range
+      )
+    `)
+    .eq("course", params.course)
+    .eq("term_tested", params.termTested)
+    .not("student_id", "is", null);
+
+  if (error) {
+    console.error("Error fetching goal RIT distribution:", error);
+    return null;
+  }
+
+  if (!data || data.length === 0) return null;
+
+  // 過濾活躍學生和指定年級
+  const filteredData = data.filter((d) => {
+    const student = d.students as unknown as { grade: number; is_active: boolean } | null;
+    return student?.is_active === true && student?.grade === params.grade;
+  });
+
+  if (filteredData.length === 0) return null;
+
+  // 收集整體 RIT 分數
+  const allRitScores: number[] = filteredData.map((d) => d.rit_score);
+
+  // 計算整體統計
+  const overallMean = calculateMean(allRitScores);
+  const overallSd = calculateStdDev(allRitScores);
+
+  // 決定 X 軸範圍（使用 ±3σ 或資料範圍）
+  const minRit = Math.min(...allRitScores);
+  const maxRit = Math.max(...allRitScores);
+  const xMin = Math.max(100, Math.min(minRit - 10, overallMean - 3 * overallSd));
+  const xMax = Math.min(300, Math.max(maxRit + 10, overallMean + 3 * overallSd));
+  const binWidth = 5; // 每 5 RIT 一個 bin
+
+  // 生成整體高斯曲線
+  const overallGaussian = generateGaussianCurve(
+    overallMean,
+    overallSd,
+    xMin,
+    xMax,
+    allRitScores.length,
+    binWidth,
+    60
+  );
+
+  // 收集各 Goal 的 RIT 分數
+  const goalNames = params.course === "Reading"
+    ? READING_GOALS.map((g) => g.name)
+    : LANGUAGE_USAGE_GOALS.map((g) => g.name);
+
+  const goalRitScores = new Map<string, number[]>();
+  for (const name of goalNames) {
+    goalRitScores.set(name, []);
+  }
+
+  for (const row of filteredData) {
+    const goals = row.map_goal_scores as Array<{ goal_name: string; goal_rit_range: string | null }> || [];
+    for (const goal of goals) {
+      const midpoint = parseRitRange(goal.goal_rit_range);
+      if (midpoint !== null) {
+        const existing = goalRitScores.get(goal.goal_name);
+        if (existing) {
+          existing.push(midpoint);
+        }
+      }
+    }
+  }
+
+  // 計算各 Goal 統計和高斯曲線
+  const goalsData: GoalRitDistributionData["goals"] = [];
+
+  for (const name of goalNames) {
+    const scores = goalRitScores.get(name) || [];
+    if (scores.length === 0) continue;
+
+    const goalMean = calculateMean(scores);
+    const goalSd = calculateStdDev(scores);
+    const config = GOAL_COLORS[name] || { color: "#6b7280", shortName: name.slice(0, 6) };
+
+    // 生成 Goal 高斯曲線（使用相同 X 範圍以便 overlay）
+    const goalGaussian = generateGaussianCurve(
+      goalMean,
+      goalSd,
+      xMin,
+      xMax,
+      scores.length,
+      binWidth,
+      60
+    );
+
+    goalsData.push({
+      name,
+      shortName: config.shortName,
+      color: config.color,
+      stats: {
+        mean: Math.round(goalMean * 10) / 10,
+        sd: Math.round(goalSd * 10) / 10,
+        count: scores.length,
+      },
+      gaussianCurve: goalGaussian,
+    });
+  }
+
+  return {
+    course: params.course,
+    grade: params.grade,
+    termTested: params.termTested,
+    overallStats: {
+      mean: Math.round(overallMean * 10) / 10,
+      sd: Math.round(overallSd * 10) / 10,
+      count: allRitScores.length,
+      gaussianCurve: overallGaussian,
+    },
+    goals: goalsData,
+  };
+}
+
+// ============================================================
 // Export utilities
 // ============================================================
 

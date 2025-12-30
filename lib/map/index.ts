@@ -3,6 +3,8 @@ export * from "./benchmarks";
 export * from "./norms";
 export * from "./kcis-expected";
 export * from "./statistics";
+export * from "./conditional-growth";
+export * from "./growth-params";
 // colors.ts - 排除重複的 BENCHMARK_COLORS（已在 benchmarks.ts 定義）
 export {
   NWEA_COLORS,

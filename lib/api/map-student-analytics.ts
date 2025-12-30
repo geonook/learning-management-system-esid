@@ -23,6 +23,10 @@ import {
 import { parseRitRange } from "@/lib/map/goals";
 import { parseLexile, getLexileBand, formatLexile } from "@/lib/map/lexile";
 import { getPercentileRange } from "@/lib/map/percentiles";
+import {
+  calculateConditionalGrowthPercentile,
+  getGrowthParams,
+} from "@/lib/map";
 
 // ============================================================
 // Types
@@ -50,6 +54,9 @@ export interface CourseGrowthData {
   actualGrowth: number | null;
   expectedGrowth: number | null;
   growthIndex: number | null;
+  // Conditional Growth Percentile (cGP) - 基於起始 RIT 的條件成長百分位數
+  // 考慮 regression to mean 效應，公平比較不同起點學生
+  conditionalGrowthPercentile: number | null;  // 1-99
   // Official CDF growth data
   officialConditionalGrowthIndex: number | null;
   officialGrowthQuintile: string | null;
@@ -384,6 +391,25 @@ function processGrowthIndex(
     ? actualRDGrowth / expectedRD
     : null;
 
+  // 計算 Conditional Growth Percentile (cGP)
+  // 使用 NWEA 2025 Growth Norms 參數
+  let luCGP: number | null = null;
+  let rdCGP: number | null = null;
+
+  if (fallLURit !== null && springLURit !== null) {
+    const luParams = getGrowthParams(year, grade, "fall-to-spring", "Language Usage");
+    if (luParams) {
+      luCGP = calculateConditionalGrowthPercentile(fallLURit, springLURit, luParams);
+    }
+  }
+
+  if (fallRDRit !== null && springRDRit !== null) {
+    const rdParams = getGrowthParams(year, grade, "fall-to-spring", "Reading");
+    if (rdParams) {
+      rdCGP = calculateConditionalGrowthPercentile(fallRDRit, springRDRit, rdParams);
+    }
+  }
+
   const parseMetProjectedGrowth = (value: string | null): boolean | null => {
     if (value === null) return null;
     return value.toLowerCase() === 'yes';
@@ -399,6 +425,7 @@ function processGrowthIndex(
       actualGrowth: actualLUGrowth,
       expectedGrowth: expectedLU,
       growthIndex: luIndex !== null ? Math.round(luIndex * 100) / 100 : null,
+      conditionalGrowthPercentile: luCGP,
       officialConditionalGrowthIndex: springLU?.conditional_growth_index ?? null,
       officialGrowthQuintile: springLU?.growth_quintile ?? null,
       officialMetProjectedGrowth: parseMetProjectedGrowth(springLU?.met_projected_growth ?? null),
@@ -412,6 +439,7 @@ function processGrowthIndex(
       actualGrowth: actualRDGrowth,
       expectedGrowth: expectedRD,
       growthIndex: rdIndex !== null ? Math.round(rdIndex * 100) / 100 : null,
+      conditionalGrowthPercentile: rdCGP,
       officialConditionalGrowthIndex: springReading?.conditional_growth_index ?? null,
       officialGrowthQuintile: springReading?.growth_quintile ?? null,
       officialMetProjectedGrowth: parseMetProjectedGrowth(springReading?.met_projected_growth ?? null),
@@ -553,6 +581,24 @@ function processAllGrowthRecords(
       ? actualRDGrowth / expectedRD
       : null;
 
+    // 計算 cGP（只針對 Fall-to-Spring）
+    let luCGP: number | null = null;
+    let rdCGP: number | null = null;
+
+    if (isFallToSpring && fromLURit !== null && toLURit !== null) {
+      const luParams = getGrowthParams(toData.academicYear, fromData.grade, "fall-to-spring", "Language Usage");
+      if (luParams) {
+        luCGP = calculateConditionalGrowthPercentile(fromLURit, toLURit, luParams);
+      }
+    }
+
+    if (isFallToSpring && fromRDRit !== null && toRDRit !== null) {
+      const rdParams = getGrowthParams(toData.academicYear, fromData.grade, "fall-to-spring", "Reading");
+      if (rdParams) {
+        rdCGP = calculateConditionalGrowthPercentile(fromRDRit, toRDRit, rdParams);
+      }
+    }
+
     results.push({
       growthType,
       fromTermLabel: formatTermLabel(fromData.termTested),
@@ -567,6 +613,7 @@ function processAllGrowthRecords(
         actualGrowth: actualLUGrowth,
         expectedGrowth: expectedLU,
         growthIndex: luIndex !== null ? Math.round(luIndex * 100) / 100 : null,
+        conditionalGrowthPercentile: luCGP,
         officialConditionalGrowthIndex: isFallToSpring ? (toData.languageUsage?.conditionalGrowthIndex ?? null) : null,
         officialGrowthQuintile: isFallToSpring ? (toData.languageUsage?.growthQuintile ?? null) : null,
         officialMetProjectedGrowth: isFallToSpring ? parseMetProjectedGrowth(toData.languageUsage?.metProjectedGrowth ?? null) : null,
@@ -580,6 +627,7 @@ function processAllGrowthRecords(
         actualGrowth: actualRDGrowth,
         expectedGrowth: expectedRD,
         growthIndex: rdIndex !== null ? Math.round(rdIndex * 100) / 100 : null,
+        conditionalGrowthPercentile: rdCGP,
         officialConditionalGrowthIndex: isFallToSpring ? (toData.reading?.conditionalGrowthIndex ?? null) : null,
         officialGrowthQuintile: isFallToSpring ? (toData.reading?.growthQuintile ?? null) : null,
         officialMetProjectedGrowth: isFallToSpring ? parseMetProjectedGrowth(toData.reading?.metProjectedGrowth ?? null) : null,
@@ -940,6 +988,24 @@ export async function getStudentGrowthIndex(
     return value.toLowerCase() === 'yes';
   };
 
+  // 計算 cGP
+  let luCGP: number | null = null;
+  let rdCGP: number | null = null;
+
+  if (fallLURit !== null && springLURit !== null) {
+    const luParams = getGrowthParams(year, grade, "fall-to-spring", "Language Usage");
+    if (luParams) {
+      luCGP = calculateConditionalGrowthPercentile(fallLURit, springLURit, luParams);
+    }
+  }
+
+  if (fallRDRit !== null && springRDRit !== null) {
+    const rdParams = getGrowthParams(year, grade, "fall-to-spring", "Reading");
+    if (rdParams) {
+      rdCGP = calculateConditionalGrowthPercentile(fallRDRit, springRDRit, rdParams);
+    }
+  }
+
   return {
     academicYear: year,
     fromTerm,
@@ -950,6 +1016,7 @@ export async function getStudentGrowthIndex(
       actualGrowth: actualLUGrowth,
       expectedGrowth: expectedLU,
       growthIndex: luIndex !== null ? Math.round(luIndex * 100) / 100 : null,
+      conditionalGrowthPercentile: luCGP,
       // Official CDF data (from Spring assessment)
       officialConditionalGrowthIndex: springLU?.conditional_growth_index ?? null,
       officialGrowthQuintile: springLU?.growth_quintile ?? null,
@@ -964,6 +1031,7 @@ export async function getStudentGrowthIndex(
       actualGrowth: actualRDGrowth,
       expectedGrowth: expectedRD,
       growthIndex: rdIndex !== null ? Math.round(rdIndex * 100) / 100 : null,
+      conditionalGrowthPercentile: rdCGP,
       // Official CDF data (from Spring assessment)
       officialConditionalGrowthIndex: springReading?.conditional_growth_index ?? null,
       officialGrowthQuintile: springReading?.growth_quintile ?? null,
@@ -1150,6 +1218,24 @@ export async function getStudentAllGrowthRecords(
         ? actualRDGrowth / expectedRD
         : null;
 
+    // 計算 cGP（只針對 Fall-to-Spring）
+    let luCGP: number | null = null;
+    let rdCGP: number | null = null;
+
+    if (isFallToSpring && fromLURit !== null && toLURit !== null) {
+      const luParams = getGrowthParams(toData.academicYear, fromData.grade, "fall-to-spring", "Language Usage");
+      if (luParams) {
+        luCGP = calculateConditionalGrowthPercentile(fromLURit, toLURit, luParams);
+      }
+    }
+
+    if (isFallToSpring && fromRDRit !== null && toRDRit !== null) {
+      const rdParams = getGrowthParams(toData.academicYear, fromData.grade, "fall-to-spring", "Reading");
+      if (rdParams) {
+        rdCGP = calculateConditionalGrowthPercentile(fromRDRit, toRDRit, rdParams);
+      }
+    }
+
     results.push({
       growthType,
       fromTermLabel: formatTermLabel(fromData.termTested),
@@ -1164,6 +1250,7 @@ export async function getStudentAllGrowthRecords(
         actualGrowth: actualLUGrowth,
         expectedGrowth: expectedLU,
         growthIndex: luIndex !== null ? Math.round(luIndex * 100) / 100 : null,
+        conditionalGrowthPercentile: luCGP,
         // Official CDF data (only available for Fall → Spring from Spring assessment)
         officialConditionalGrowthIndex: isFallToSpring
           ? (toData.languageUsage?.conditionalGrowthIndex ?? null)
@@ -1190,6 +1277,7 @@ export async function getStudentAllGrowthRecords(
         actualGrowth: actualRDGrowth,
         expectedGrowth: expectedRD,
         growthIndex: rdIndex !== null ? Math.round(rdIndex * 100) / 100 : null,
+        conditionalGrowthPercentile: rdCGP,
         // Official CDF data (only available for Fall → Spring from Spring assessment)
         officialConditionalGrowthIndex: isFallToSpring
           ? (toData.reading?.conditionalGrowthIndex ?? null)

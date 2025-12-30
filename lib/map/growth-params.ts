@@ -21,7 +21,9 @@ export const TYPICAL_CORRELATIONS = {
   'spring-to-fall': 0.85,  // 跨學年
 } as const;
 
-export type GrowthPeriod = keyof typeof TYPICAL_CORRELATIONS;
+// 不 export，避免與 norms.ts 的 GrowthPeriod 衝突
+// 使用 norms.ts 的 GrowthPeriod 作為主要型別
+type GrowthParamsPeriod = keyof typeof TYPICAL_CORRELATIONS;
 
 /**
  * NWEA 2025 Growth Norm Parameters

@@ -38,6 +38,7 @@ import {
   MapGrowthDistribution,
   MapGoalRadar,
   MapGoalTable,
+  MapGoalRitDistribution,
   MapLexileDistribution,
   MapLexileStats,
   MapTestQualityPie,
@@ -48,6 +49,7 @@ import {
   getMapAnalyticsData,
   getGrowthAnalysis,
   getGoalPerformance,
+  getGoalRitDistribution,
   getLexileAnalysis,
   getTestQualityReport,
   getBenchmarkTransition,
@@ -56,6 +58,7 @@ import {
   type GrowthAnalysisData,
   type GrowthType,
   type GoalPerformanceData,
+  type GoalRitDistributionData,
   type LexileAnalysisData,
   type TestQualityData,
   type BenchmarkTransitionData,
@@ -140,6 +143,10 @@ export default function MapAnalysisPage() {
   const [goalData, setGoalData] = useState<{
     reading: GoalPerformanceData | null;
     languageUsage: GoalPerformanceData | null;
+  }>({ reading: null, languageUsage: null });
+  const [goalRitData, setGoalRitData] = useState<{
+    reading: GoalRitDistributionData | null;
+    languageUsage: GoalRitDistributionData | null;
   }>({ reading: null, languageUsage: null });
   const [lexileData, setLexileData] = useState<LexileAnalysisData | null>(null);
   const [qualityData, setQualityData] = useState<TestQualityData | null>(null);
@@ -249,18 +256,21 @@ export default function MapAnalysisPage() {
     }
   }, []);
 
-  // Fetch Goal Data (both courses)
+  // Fetch Goal Data (both courses + RIT distribution)
   const fetchGoalData = useCallback(async (grade: number) => {
     setLoading("goals", true);
     setError("goals", null);
     try {
       // Use the most recent term
       const termTested = "Fall 2025-2026";
-      const [reading, languageUsage] = await Promise.all([
+      const [reading, languageUsage, readingRit, languageUsageRit] = await Promise.all([
         getGoalPerformance({ grade, course: "Reading", termTested }),
         getGoalPerformance({ grade, course: "Language Usage", termTested }),
+        getGoalRitDistribution({ grade, course: "Reading", termTested }),
+        getGoalRitDistribution({ grade, course: "Language Usage", termTested }),
       ]);
       setGoalData({ reading, languageUsage });
+      setGoalRitData({ reading: readingRit, languageUsage: languageUsageRit });
     } catch (err) {
       console.error("Error fetching goal data:", err);
       setError("goals", "Failed to load goal data");
@@ -930,6 +940,45 @@ export default function MapAnalysisPage() {
                     </CardContent>
                   </Card>
                 </div>
+
+                {/* Goal RIT Distribution Charts */}
+                {(goalRitData.reading || goalRitData.languageUsage) && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base">
+                          Reading Goal RIT Distribution
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {goalRitData.reading ? (
+                          <MapGoalRitDistribution data={goalRitData.reading} />
+                        ) : (
+                          <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                            No Reading RIT distribution data
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base">
+                          Language Usage Goal RIT Distribution
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {goalRitData.languageUsage ? (
+                          <MapGoalRitDistribution data={goalRitData.languageUsage} />
+                        ) : (
+                          <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                            No Language Usage RIT distribution data
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
               </>
             )}
           {!loadingStates.goals &&
