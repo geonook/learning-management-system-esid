@@ -4,19 +4,21 @@
  * Cross-Grade Performance Chart
  *
  * 跨年級比較圖表，顯示 G3-G6 的平均 RIT 分數
- * 包含 NWEA Norm 線和誤差棒（標準差）
+ * 包含 NWEA Norm 線、KCIS Expected 線和誤差棒（標準差）
  *
  * Features:
  * - X 軸: Grade (G3, G4, G5, G6)
  * - Y 軸: RIT Score
- * - 黑線: KCISLK 學生平均 (with error bars)
- * - 藍色虛線: NWEA Norm
+ * - 綠線: KCISLK 學生平均 (with error bars)
+ * - 灰色虛線: NWEA Norm
+ * - 紫色虛線: KCIS Expected (E2) with ±1 SD band
  */
 
 import { useMemo } from "react";
 import {
-  LineChart,
+  ComposedChart,
   Line,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -25,7 +27,8 @@ import {
   ErrorBar,
   Legend,
 } from "recharts";
-import { NWEA_COLORS } from "@/lib/map/colors";
+import { NWEA_COLORS, KCIS_EXPECTED_COLORS } from "@/lib/map/colors";
+import { KCIS_EXPECTED } from "@/lib/map/kcis-expected";
 import type { CrossGradeStats } from "@/lib/api/map-school-analytics";
 
 interface CrossGradeChartProps {
@@ -38,14 +41,18 @@ const SCHOOL_COLORS = {
   student: "#16a34a", // green-600 (綠色 - 主角)
   norm: "#64748b", // slate-500 (灰色 - 參考線)
   errorBar: "#86efac", // green-300 (淺綠 - 誤差棒)
+  expected: KCIS_EXPECTED_COLORS.line, // 紫色 - KCIS Expected
+  expectedBand: KCIS_EXPECTED_COLORS.band,
+  expectedBandOpacity: KCIS_EXPECTED_COLORS.bandOpacity,
 };
 
 export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
-  // 轉換資料格式
+  // 轉換資料格式，包含 KCIS Expected 數據
   const chartData = useMemo(() => {
     const grades = [3, 4, 5, 6];
     return grades.map((grade) => {
       const gradeData = data.find((d) => d.grade === grade);
+      const kcisData = KCIS_EXPECTED[grade];
       return {
         grade: `G${grade}`,
         gradeNum: grade,
@@ -54,11 +61,15 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
         norm: gradeData?.norm ?? null,
         studentCount: gradeData?.studentCount ?? 0,
         vsNorm: gradeData?.vsNorm ?? null,
+        // KCIS Expected (E2) 數據
+        expected: kcisData?.mean ?? null,
+        expectedUpper: kcisData ? kcisData.mean + kcisData.stdDev : null,
+        expectedLower: kcisData ? kcisData.mean - kcisData.stdDev : null,
       };
     });
   }, [data]);
 
-  // 計算 Y 軸範圍
+  // 計算 Y 軸範圍（包含 KCIS Expected 範圍）
   const { yMin, yMax } = useMemo(() => {
     const allValues: number[] = [];
     chartData.forEach((d) => {
@@ -68,6 +79,13 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
       }
       if (d.norm !== null) {
         allValues.push(d.norm);
+      }
+      // 加入 KCIS Expected 範圍
+      if (d.expectedUpper !== null) {
+        allValues.push(d.expectedUpper);
+      }
+      if (d.expectedLower !== null) {
+        allValues.push(d.expectedLower);
       }
     });
 
@@ -94,7 +112,7 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
   return (
     <div className="w-full">
       <ResponsiveContainer width="100%" height={height}>
-        <LineChart
+        <ComposedChart
           data={chartData}
           margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
         >
@@ -119,7 +137,7 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
           <Tooltip
             content={({ active, payload, label }) => {
               if (!active || !payload || payload.length === 0) return null;
-              const data = payload[0]?.payload;
+              const pointData = payload[0]?.payload;
               return (
                 <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
                   <p className="font-medium text-sm mb-2">{label}</p>
@@ -131,11 +149,26 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
                       />
                       <span className="text-muted-foreground">KCISLK:</span>
                       <span className="font-mono font-medium">
-                        {data?.mean?.toFixed(1) ?? "N/A"}
+                        {pointData?.mean?.toFixed(1) ?? "N/A"}
                       </span>
-                      {data?.stdDev > 0 && (
+                      {pointData?.stdDev > 0 && (
                         <span className="text-muted-foreground">
-                          (±{data.stdDev.toFixed(1)})
+                          (±{pointData.stdDev.toFixed(1)})
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: SCHOOL_COLORS.expected }}
+                      />
+                      <span className="text-muted-foreground">KCIS Expected:</span>
+                      <span className="font-mono font-medium">
+                        {pointData?.expected?.toFixed(1) ?? "N/A"}
+                      </span>
+                      {pointData?.expected && pointData?.expectedUpper && (
+                        <span className="text-muted-foreground">
+                          (±{(pointData.expectedUpper - pointData.expected).toFixed(1)})
                         </span>
                       )}
                     </div>
@@ -146,26 +179,26 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
                       />
                       <span className="text-muted-foreground">NWEA Norm:</span>
                       <span className="font-mono font-medium">
-                        {data?.norm ?? "N/A"}
+                        {pointData?.norm ?? "N/A"}
                       </span>
                     </div>
-                    {data?.vsNorm !== null && (
+                    {pointData?.vsNorm !== null && (
                       <div className="flex items-center gap-2 pt-1 border-t border-border mt-1">
                         <span className="text-muted-foreground">vs Norm:</span>
                         <span
                           className={`font-mono font-medium ${
-                            data.vsNorm >= 0
+                            pointData.vsNorm >= 0
                               ? "text-green-600 dark:text-green-400"
                               : "text-red-600 dark:text-red-400"
                           }`}
                         >
-                          {data.vsNorm >= 0 ? "+" : ""}
-                          {data.vsNorm.toFixed(1)}
+                          {pointData.vsNorm >= 0 ? "+" : ""}
+                          {pointData.vsNorm.toFixed(1)}
                         </span>
                       </div>
                     )}
                     <div className="text-muted-foreground pt-1">
-                      n = {data?.studentCount ?? 0} students
+                      n = {pointData?.studentCount ?? 0} students
                     </div>
                   </div>
                 </div>
@@ -180,7 +213,40 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
             )}
           />
 
-          {/* NWEA Norm 線 (藍色虛線) */}
+          {/* KCIS Expected ±1 SD 帶狀區域 (紫色半透明) */}
+          <Area
+            type="monotone"
+            dataKey="expectedUpper"
+            stroke="none"
+            fill={SCHOOL_COLORS.expectedBand}
+            fillOpacity={SCHOOL_COLORS.expectedBandOpacity}
+            name="KCIS Expected Range"
+            legendType="none"
+            connectNulls
+          />
+          <Area
+            type="monotone"
+            dataKey="expectedLower"
+            stroke="none"
+            fill="#fff"
+            fillOpacity={1}
+            legendType="none"
+            connectNulls
+          />
+
+          {/* KCIS Expected (E2) 線 (紫色虛線) */}
+          <Line
+            type="monotone"
+            dataKey="expected"
+            name="KCIS Expected (E2)"
+            stroke={SCHOOL_COLORS.expected}
+            strokeWidth={2}
+            strokeDasharray="8 4"
+            dot={{ fill: SCHOOL_COLORS.expected, r: 4 }}
+            connectNulls
+          />
+
+          {/* NWEA Norm 線 (灰色虛線) */}
           <Line
             type="monotone"
             dataKey="norm"
@@ -192,7 +258,7 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
             connectNulls
           />
 
-          {/* KCISLK 學生平均 (黑線 + 誤差棒) */}
+          {/* KCISLK 學生平均 (綠線 + 誤差棒) */}
           <Line
             type="monotone"
             dataKey="mean"
@@ -215,18 +281,24 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
               direction="y"
             />
           </Line>
-        </LineChart>
+        </ComposedChart>
       </ResponsiveContainer>
 
       {/* 圖表說明 */}
       <div className="mt-2 px-4 text-xs text-muted-foreground space-y-1">
         <p>
           <strong>How to read:</strong> This chart compares KCISLK student
-          performance across grades with NWEA national norms.
+          performance across grades with NWEA national norms and KCIS expected levels.
         </p>
         <p>
-          Error bars show ±1 standard deviation. Points above the dashed line
-          indicate performance above national average.
+          <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ backgroundColor: SCHOOL_COLORS.student }} />
+          <strong>Green line:</strong> KCISLK students (error bars = ±1 SD)
+          {" | "}
+          <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ backgroundColor: SCHOOL_COLORS.expected }} />
+          <strong>Purple line:</strong> KCIS Expected (E2) with ±1 SD band
+          {" | "}
+          <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ backgroundColor: SCHOOL_COLORS.norm }} />
+          <strong>Gray line:</strong> NWEA Norm
         </p>
       </div>
     </div>

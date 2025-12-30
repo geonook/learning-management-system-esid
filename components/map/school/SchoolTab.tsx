@@ -29,15 +29,18 @@ import { CrossGradeChart } from "./CrossGradeChart";
 import { SchoolSummaryTable } from "./SchoolSummaryTable";
 import { GrowthDistributionChart } from "./GrowthDistributionChart";
 import { RitGrowthScatterChart } from "./RitGrowthScatterChart";
+import { RitGradeHeatmap } from "./RitGradeHeatmap";
 import {
   getCrossGradeStats,
   getAvailableSchoolTerms,
   getSchoolGrowthDistribution,
   getRitGrowthScatterData,
+  getRitGradeHeatmapData,
   type SchoolOverviewData,
   type CrossGradeStats,
   type SchoolGrowthDistributionData,
   type RitGrowthScatterData,
+  type RitGradeHeatmapData,
 } from "@/lib/api/map-school-analytics";
 import type { Course } from "@/lib/map/norms";
 
@@ -51,6 +54,9 @@ export function SchoolTab() {
   const [scatterData, setScatterData] = useState<RitGrowthScatterData | null>(
     null
   );
+  const [heatmapData, setHeatmapData] = useState<RitGradeHeatmapData | null>(
+    null
+  );
   const [availableTerms, setAvailableTerms] = useState<string[]>([]);
   const [selectedTerm, setSelectedTerm] = useState<string | undefined>();
   const [selectedCourse, setSelectedCourse] = useState<Course | "Average">(
@@ -62,18 +68,20 @@ export function SchoolTab() {
     setLoading(true);
     setError(null);
     try {
-      const [termsResult, statsResult, growthResult, scatterResult] =
+      const [termsResult, statsResult, growthResult, scatterResult, heatmapResult] =
         await Promise.all([
           getAvailableSchoolTerms(),
           getCrossGradeStats({ termTested: selectedTerm }),
           getSchoolGrowthDistribution(),
           getRitGrowthScatterData(),
+          getRitGradeHeatmapData({ termTested: selectedTerm }),
         ]);
 
       setAvailableTerms(termsResult);
       setData(statsResult);
       setGrowthData(growthResult);
       setScatterData(scatterResult);
+      setHeatmapData(heatmapResult);
 
       // 設定預設選擇的 term
       if (!selectedTerm && statsResult?.termTested) {
@@ -215,6 +223,27 @@ export function SchoolTab() {
           </div>
           <SchoolSummaryTable data={filteredData} />
         </div>
+
+        {/* RIT-Grade Heatmap */}
+        {heatmapData && (
+          <div className="rounded-lg border bg-card p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <h3 className="text-sm font-medium">RIT Distribution by Grade</h3>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-xs">
+                    2D heatmap showing RIT score distribution across grade
+                    levels. Darker cells indicate more students in that range.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <RitGradeHeatmap data={heatmapData} />
+          </div>
+        )}
 
         {/* Growth Distribution */}
         {growthData && (

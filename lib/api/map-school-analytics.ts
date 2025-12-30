@@ -261,6 +261,7 @@ export interface SchoolGrowthDistributionData {
   negativeGrowthCount: number;
   negativeGrowthPercentage: number;
   meanGrowth: number;
+  stdDev: number;
   distribution: GrowthDistributionBucket[];
 }
 
@@ -442,6 +443,7 @@ export async function getSchoolGrowthDistribution(): Promise<SchoolGrowthDistrib
   // 計算負成長統計
   const negativeCount = growths.filter((g) => g < 0).length;
   const meanGrowth = growths.reduce((a, b) => a + b, 0) / growths.length;
+  const growthStdDev = calculateStdDev(growths);
 
   return {
     fromTerm,
@@ -450,6 +452,7 @@ export async function getSchoolGrowthDistribution(): Promise<SchoolGrowthDistrib
     negativeGrowthCount: negativeCount,
     negativeGrowthPercentage: Math.round((negativeCount / total) * 1000) / 10,
     meanGrowth: Math.round(meanGrowth * 10) / 10,
+    stdDev: Math.round(growthStdDev * 10) / 10,
     distribution: buckets,
   };
 }
@@ -504,6 +507,194 @@ function calculateCorrelation(x: number[], y: number[]): number {
  *
  * Permission: All authenticated users
  */
+// ============================================================
+// RIT-Grade Heatmap API
+// ============================================================
+
+export interface HeatmapCell {
+  grade: number;
+  ritBucket: string; // e.g., "160-170"
+  ritMin: number;
+  ritMax: number;
+  count: number;
+}
+
+export interface RitGradeHeatmapData {
+  termTested: string;
+  cells: HeatmapCell[];
+  maxCount: number;
+  totalStudents: number;
+  ritBuckets: string[];
+}
+
+/**
+ * 取得 RIT vs Grade 熱力圖資料
+ *
+ * Permission: All authenticated users
+ */
+export async function getRitGradeHeatmapData(params: {
+  termTested?: string;
+  course?: Course | "Average";
+}): Promise<RitGradeHeatmapData | null> {
+  await requireAuth();
+  const supabase = createClient();
+
+  // 決定要使用的 term
+  let targetTerm = params.termTested;
+  if (!targetTerm) {
+    const { data: termsData } = await supabase
+      .from("map_assessments")
+      .select("term_tested")
+      .order("term_tested", { ascending: false })
+      .limit(1);
+
+    targetTerm = termsData?.[0]?.term_tested;
+  }
+
+  if (!targetTerm) return null;
+
+  // 查詢該學期的所有 G3-G6 資料
+  const { data, error } = await supabase
+    .from("map_assessments")
+    .select(
+      `
+      grade,
+      course,
+      rit_score,
+      student_id,
+      student_number,
+      students:student_id (
+        is_active
+      )
+    `
+    )
+    .eq("term_tested", targetTerm)
+    .in("grade", [3, 4, 5, 6])
+    .not("student_id", "is", null);
+
+  if (error) {
+    console.error("Error fetching heatmap data:", error);
+    return null;
+  }
+
+  if (!data || data.length === 0) return null;
+
+  // 過濾已停用的學生
+  const activeData = data.filter((d) => {
+    const student = d.students as unknown as { is_active: boolean } | null;
+    return student?.is_active === true;
+  });
+
+  // 定義 RIT 區間 (140-260, 每 10 分一格)
+  const RIT_BUCKETS: { label: string; min: number; max: number }[] = [];
+  for (let rit = 140; rit < 260; rit += 10) {
+    RIT_BUCKETS.push({
+      label: `${rit}-${rit + 10}`,
+      min: rit,
+      max: rit + 10,
+    });
+  }
+
+  // 按學生分組計算 RIT（如果是 Average 需要計算兩科平均）
+  interface StudentRit {
+    grade: number;
+    rit: number;
+  }
+  const studentRits: StudentRit[] = [];
+
+  if (params.course === "Average" || !params.course) {
+    // 計算兩科平均
+    const studentMap = new Map<
+      string,
+      { grade: number; lu: number | null; rd: number | null }
+    >();
+
+    for (const row of activeData) {
+      let student = studentMap.get(row.student_number);
+      if (!student) {
+        student = { grade: row.grade, lu: null, rd: null };
+        studentMap.set(row.student_number, student);
+      }
+
+      if (row.course === "Language Usage") {
+        student.lu = row.rit_score;
+      } else if (row.course === "Reading") {
+        student.rd = row.rit_score;
+      }
+    }
+
+    for (const s of studentMap.values()) {
+      // 計算平均（至少需要一科有分數）
+      if (s.lu !== null && s.rd !== null) {
+        studentRits.push({ grade: s.grade, rit: (s.lu + s.rd) / 2 });
+      } else if (s.lu !== null) {
+        studentRits.push({ grade: s.grade, rit: s.lu });
+      } else if (s.rd !== null) {
+        studentRits.push({ grade: s.grade, rit: s.rd });
+      }
+    }
+  } else {
+    // 單科
+    for (const row of activeData) {
+      if (row.course === params.course) {
+        studentRits.push({ grade: row.grade, rit: row.rit_score });
+      }
+    }
+  }
+
+  if (studentRits.length === 0) return null;
+
+  // 計算每個 cell 的學生數
+  const cellCounts = new Map<string, number>();
+  const grades = [3, 4, 5, 6];
+
+  // 初始化所有 cell 為 0
+  for (const grade of grades) {
+    for (const bucket of RIT_BUCKETS) {
+      cellCounts.set(`${grade}-${bucket.label}`, 0);
+    }
+  }
+
+  // 計數
+  for (const s of studentRits) {
+    for (const bucket of RIT_BUCKETS) {
+      if (s.rit >= bucket.min && s.rit < bucket.max) {
+        const key = `${s.grade}-${bucket.label}`;
+        cellCounts.set(key, (cellCounts.get(key) ?? 0) + 1);
+        break;
+      }
+    }
+  }
+
+  // 構建結果
+  const cells: HeatmapCell[] = [];
+  let maxCount = 0;
+
+  for (const grade of grades) {
+    for (const bucket of RIT_BUCKETS) {
+      const key = `${grade}-${bucket.label}`;
+      const count = cellCounts.get(key) ?? 0;
+      if (count > maxCount) maxCount = count;
+
+      cells.push({
+        grade,
+        ritBucket: bucket.label,
+        ritMin: bucket.min,
+        ritMax: bucket.max,
+        count,
+      });
+    }
+  }
+
+  return {
+    termTested: targetTerm,
+    cells,
+    maxCount,
+    totalStudents: studentRits.length,
+    ritBuckets: RIT_BUCKETS.map((b) => b.label),
+  };
+}
+
 export async function getRitGrowthScatterData(): Promise<RitGrowthScatterData | null> {
   await requireAuth();
   const supabase = createClient();

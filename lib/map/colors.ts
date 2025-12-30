@@ -155,6 +155,33 @@ export const GROWTH_DISTRIBUTION_COLORS = {
 } as const;
 
 /**
+ * KCIS Expected 配色
+ * 用於 School Tab 跨年級圖表中的 KCIS Expected (E2) 線
+ */
+export const KCIS_EXPECTED_COLORS = {
+  /** E2 期望線 - 紫色 */
+  line: "#a855f7",
+  /** ±1 SD 帶狀區域 - 紫色半透明 */
+  band: "#a855f7",
+  /** 帶狀區域透明度 */
+  bandOpacity: 0.15,
+} as const;
+
+/**
+ * School Tab 專用配色
+ */
+export const SCHOOL_CHART_COLORS = {
+  /** KCISLK 學生平均 - 綠色 */
+  kcislk: "#16a34a",
+  /** NWEA Norm - 灰色 */
+  norm: "#64748b",
+  /** KCIS Expected - 紫色 */
+  expected: "#a855f7",
+  /** 高斯擬合曲線 - 紫色 */
+  gaussianFit: "#a855f7",
+} as const;
+
+/**
  * 根據成長指數取得顏色（舊版 3 分類，已棄用）
  * @deprecated 請使用 getGrowthQuintileColor 取得官方 5 分類配色
  */

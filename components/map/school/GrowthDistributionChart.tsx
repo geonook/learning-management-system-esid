@@ -5,22 +5,29 @@
  *
  * 成長分佈直方圖，顯示 Fall-to-Fall 成長分佈
  * 紅色標記負成長學生
+ * 包含高斯擬合曲線和 R² 品質指標
  */
 
 import { useMemo } from "react";
 import {
-  BarChart,
+  ComposedChart,
   Bar,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
   Cell,
-  ReferenceLine,
 } from "recharts";
 import { AlertTriangle } from "lucide-react";
 import type { SchoolGrowthDistributionData } from "@/lib/api/map-school-analytics";
+import {
+  generateGaussianCurve,
+  calculateRSquared,
+  interpretRSquared,
+} from "@/lib/map/statistics";
+import { SCHOOL_CHART_COLORS } from "@/lib/map/colors";
 
 interface GrowthDistributionChartProps {
   data: SchoolGrowthDistributionData;
@@ -36,13 +43,17 @@ const GROWTH_COLORS = {
   veryHigh: "#16a34a", // green-600
 };
 
+// Bin width for histogram (matching the bucket ranges)
+const BIN_WIDTH = 5;
+
 export function GrowthDistributionChart({
   data,
   height = 280,
 }: GrowthDistributionChartProps) {
-  // 為每個 bucket 分配顏色
-  const chartData = useMemo(() => {
-    return data.distribution.map((bucket) => {
+  // 為每個 bucket 分配顏色，並加入高斯擬合值
+  const { chartData, gaussianCurve, rSquared } = useMemo(() => {
+    // 計算每個 bucket 的中點用於高斯擬合
+    const bucketsWithMidpoint = data.distribution.map((bucket) => {
       let color: string;
       if (bucket.isNegative) {
         color = GROWTH_COLORS.negative;
@@ -56,12 +67,66 @@ export function GrowthDistributionChart({
         color = GROWTH_COLORS.veryHigh;
       }
 
+      // 計算 bucket 中點（處理無限範圍）
+      const midpoint =
+        bucket.min === -Infinity
+          ? bucket.max - BIN_WIDTH / 2
+          : bucket.max === Infinity
+            ? bucket.min + BIN_WIDTH / 2
+            : (bucket.min + bucket.max) / 2;
+
       return {
         ...bucket,
         color,
+        midpoint,
       };
     });
-  }, [data.distribution]);
+
+    // 生成高斯擬合曲線
+    const curve = generateGaussianCurve(
+      data.meanGrowth,
+      data.stdDev,
+      -10, // minX
+      25, // maxX
+      data.totalStudents,
+      BIN_WIDTH,
+      30 // numPoints
+    );
+
+    // 計算 R²
+    const observed = bucketsWithMidpoint.map((b) => ({
+      midpoint: b.midpoint,
+      count: b.count,
+    }));
+    const r2 = calculateRSquared(
+      observed,
+      data.meanGrowth,
+      data.stdDev,
+      data.totalStudents,
+      BIN_WIDTH
+    );
+
+    // 合併 bar 資料與 gaussian 曲線資料
+    // 為了在同一圖表顯示，需要合併兩個資料集
+    const combinedData = bucketsWithMidpoint.map((bucket) => {
+      // 找到最接近的 gaussian 值
+      const nearestGaussian = curve.find(
+        (g) => Math.abs(g.x - bucket.midpoint) < BIN_WIDTH / 2
+      );
+      return {
+        ...bucket,
+        gaussian: nearestGaussian?.y ?? null,
+      };
+    });
+
+    return {
+      chartData: combinedData,
+      gaussianCurve: curve,
+      rSquared: r2,
+    };
+  }, [data]);
+
+  const r2Interpretation = interpretRSquared(rSquared);
 
   return (
     <div className="w-full">
@@ -77,13 +142,13 @@ export function GrowthDistributionChart({
       )}
 
       {/* 統計摘要 */}
-      <div className="mb-4 flex gap-4 text-sm">
+      <div className="mb-4 flex flex-wrap gap-3 text-sm">
         <div className="px-3 py-1.5 bg-muted rounded-md">
           <span className="text-muted-foreground">Students: </span>
           <span className="font-medium">{data.totalStudents}</span>
         </div>
         <div className="px-3 py-1.5 bg-muted rounded-md">
-          <span className="text-muted-foreground">Mean Growth: </span>
+          <span className="text-muted-foreground">Mean: </span>
           <span
             className={`font-medium ${
               data.meanGrowth >= 0 ? "text-green-600" : "text-red-600"
@@ -91,6 +156,15 @@ export function GrowthDistributionChart({
           >
             {data.meanGrowth >= 0 ? "+" : ""}
             {data.meanGrowth}
+          </span>
+          <span className="text-muted-foreground ml-1">
+            (SD: {data.stdDev})
+          </span>
+        </div>
+        <div className="px-3 py-1.5 bg-muted rounded-md">
+          <span className="text-muted-foreground">Gaussian Fit R²: </span>
+          <span className="font-medium" style={{ color: r2Interpretation.color }}>
+            {rSquared.toFixed(2)} ({r2Interpretation.quality})
           </span>
         </div>
         <div className="px-3 py-1.5 bg-muted rounded-md">
@@ -101,9 +175,9 @@ export function GrowthDistributionChart({
         </div>
       </div>
 
-      {/* 直方圖 */}
+      {/* 直方圖 + 高斯曲線 */}
       <ResponsiveContainer width="100%" height={height}>
-        <BarChart
+        <ComposedChart
           data={chartData}
           margin={{ top: 10, right: 20, left: 20, bottom: 20 }}
         >
@@ -142,18 +216,36 @@ export function GrowthDistributionChart({
                       </span>
                       <span className="font-medium">{d?.percentage}%</span>
                     </div>
+                    {d?.gaussian !== null && (
+                      <div>
+                        <span className="text-muted-foreground">
+                          Expected (Gaussian):{" "}
+                        </span>
+                        <span className="font-medium">{d.gaussian.toFixed(1)}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
             }}
           />
-          <ReferenceLine x="0 to 5" stroke="#94a3b8" strokeDasharray="3 3" />
+          {/* 直方圖 */}
           <Bar dataKey="count" radius={[4, 4, 0, 0]}>
             {chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.color} />
             ))}
           </Bar>
-        </BarChart>
+          {/* 高斯擬合曲線 */}
+          <Line
+            type="monotone"
+            dataKey="gaussian"
+            stroke={SCHOOL_CHART_COLORS.gaussianFit}
+            strokeWidth={2.5}
+            dot={false}
+            name="Gaussian Fit"
+            connectNulls
+          />
+        </ComposedChart>
       </ResponsiveContainer>
 
       {/* 圖例 */}
@@ -185,6 +277,13 @@ export function GrowthDistributionChart({
             style={{ backgroundColor: GROWTH_COLORS.high }}
           />
           <span>High (10+)</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span
+            className="w-6 h-0.5"
+            style={{ backgroundColor: SCHOOL_CHART_COLORS.gaussianFit }}
+          />
+          <span>Gaussian Fit</span>
         </div>
       </div>
     </div>
