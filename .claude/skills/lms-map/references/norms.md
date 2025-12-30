@@ -4,157 +4,143 @@
 
 NWEA provides national normative data based on millions of US student test records. KCIS uses these norms to compare school performance against national averages.
 
-## Norm Values (2024-2025)
+**Data Source**: NWEA 2025 Norms Quick Reference (Official)
+- 116 million scores from 13.8 million students across 30,000 schools
+- Testing period: Fall 2022 - Spring 2024
+- URL: https://www.nwea.org/resource-center/fact-sheet/87992/MAP-Growth-2025-norms-quick-reference_NWEA_onesheet.pdf
 
-### Grade 3
+## 2025 Student Achievement Norms (G3-G6)
 
-| Term | Language Usage | Reading | Average |
-|------|----------------|---------|---------|
-| Fall 2024-2025 | 188 | 187 | 187.5 |
-| Spring 2024-2025 | 198 | 197 | 197.5 |
-| **Expected Growth** | +10 | +10 | +10 |
+### Reading
 
-### Grade 4
+| Grade | Fall Mean | Fall SD | Winter Mean | Winter SD | Spring Mean | Spring SD |
+|-------|-----------|---------|-------------|-----------|-------------|-----------|
+| 3 | 185 | 18 | 190 | 18 | 194 | 18 |
+| 4 | 196 | 18 | 199 | 18 | 202 | 18 |
+| 5 | 204 | 17 | 206 | 17 | 208 | 17 |
+| 6 | 209 | 17 | 211 | 17 | 212 | 17 |
 
-| Term | Language Usage | Reading | Average |
-|------|----------------|---------|---------|
-| Fall 2024-2025 | 197 | 197 | 197 |
-| Spring 2024-2025 | 205 | 205 | 205 |
-| **Expected Growth** | +8 | +8 | +8 |
+### Language Usage
 
-### Grade 5
+| Grade | Fall Mean | Fall SD | Winter Mean | Winter SD | Spring Mean | Spring SD |
+|-------|-----------|---------|-------------|-----------|-------------|-----------|
+| 3 | 184 | 17 | 190 | 17 | 193 | 17 |
+| 4 | 195 | 17 | 198 | 16 | 201 | 16 |
+| 5 | 202 | 16 | 205 | 16 | 207 | 16 |
+| 6 | 206 | 16 | 209 | 16 | 210 | 16 |
 
-| Term | Language Usage | Reading | Average |
-|------|----------------|---------|---------|
-| Fall 2024-2025 | 204 | 204 | 204 |
-| Spring 2024-2025 | 210 | 211 | 210.5 |
-| **Expected Growth** | +6 | +7 | +6.5 |
+## 2025 Student Growth Norms (G3-G6)
 
-## Norm Table Schema
+### Reading Growth
 
-```sql
-CREATE TABLE map_norms (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  academic_year TEXT NOT NULL,        -- '2024-2025'
-  map_term TEXT NOT NULL,             -- 'fall', 'winter', 'spring' (distinct from ELA term 1-4)
-  grade INTEGER NOT NULL,             -- 3, 4, 5, 6
-  course TEXT NOT NULL,               -- 'Reading', 'Language Usage'
-  norm_rit INTEGER NOT NULL,          -- National average RIT
-  created_at TIMESTAMPTZ DEFAULT now(),
+| Grade | Fall-to-Winter Mean | SD | Winter-to-Spring Mean | SD | Fall-to-Spring Mean | SD |
+|-------|---------------------|----|-----------------------|----|---------------------|-------|
+| 3 | 5 | 9 | 4 | 9 | 9 | 9 |
+| 4 | 4 | 8 | 3 | 8 | 6 | 9 |
+| 5 | 3 | 8 | 2 | 8 | 5 | 9 |
+| 6 | 2 | 8 | 1 | 8 | 3 | 8 |
 
-  UNIQUE(academic_year, map_term, grade, course)
-);
-```
+### Language Usage Growth
 
-## Seed Data
+| Grade | Fall-to-Winter Mean | SD | Winter-to-Spring Mean | SD | Fall-to-Spring Mean | SD |
+|-------|---------------------|----|-----------------------|----|---------------------|-------|
+| 3 | 5 | 8 | 4 | 8 | 9 | 9 |
+| 4 | 4 | 8 | 3 | 8 | 7 | 8 |
+| 5 | 3 | 8 | 2 | 7 | 5 | 8 |
+| 6 | 2 | 8 | 2 | 8 | 4 | 8 |
 
-```sql
-INSERT INTO map_norms (academic_year, map_term, grade, course, norm_rit) VALUES
--- Grade 3
-('2024-2025', 'fall', 3, 'Language Usage', 188),
-('2024-2025', 'fall', 3, 'Reading', 187),
-('2024-2025', 'spring', 3, 'Language Usage', 198),
-('2024-2025', 'spring', 3, 'Reading', 197),
--- Grade 4
-('2024-2025', 'fall', 4, 'Language Usage', 197),
-('2024-2025', 'fall', 4, 'Reading', 197),
-('2024-2025', 'spring', 4, 'Language Usage', 205),
-('2024-2025', 'spring', 4, 'Reading', 205),
--- Grade 5
-('2024-2025', 'fall', 5, 'Language Usage', 204),
-('2024-2025', 'fall', 5, 'Reading', 204),
-('2024-2025', 'spring', 5, 'Language Usage', 210),
-('2024-2025', 'spring', 5, 'Reading', 211);
-```
+## TypeScript Implementation
 
-## TypeScript Constants
+**File**: `lib/map/norms.ts`
+
+### Interfaces
 
 ```typescript
-interface NormData {
+export interface NormData {
   languageUsage: number;
   reading: number;
 }
 
-// MapTerm: NWEA testing period (fall/winter/spring)
-// Note: Distinct from ELA Term (1/2/3/4) in types/academic-year.ts
-type MapTerm = 'fall' | 'winter' | 'spring';
-type MapTermNorms = Partial<Record<MapTerm, NormData>>;
-
-const MAP_NORMS_2024_2025: Record<number, MapTermNorms> = {
-  3: {
-    fall: { languageUsage: 188, reading: 187 },
-    spring: { languageUsage: 198, reading: 197 },
-  },
-  4: {
-    fall: { languageUsage: 197, reading: 197 },
-    spring: { languageUsage: 205, reading: 205 },
-  },
-  5: {
-    fall: { languageUsage: 204, reading: 204 },
-    spring: { languageUsage: 210, reading: 211 },
-  },
-};
-
-function getNorm(
-  grade: number,
-  mapTerm: MapTerm,
-  course: 'Language Usage' | 'Reading'
-): number | null {
-  const gradeNorms = MAP_NORMS_2024_2025[grade];
-  if (!gradeNorms) return null;
-
-  const termNorms = gradeNorms[mapTerm];
-  if (!termNorms) return null;
-
-  return course === 'Language Usage'
-    ? termNorms.languageUsage
-    : termNorms.reading;
+export interface NormDataWithStdDev {
+  languageUsage: number;
+  languageUsageStdDev: number;
+  reading: number;
+  readingStdDev: number;
 }
+
+export interface GrowthNormData {
+  languageUsage: number;
+  languageUsageStdDev: number;
+  reading: number;
+  readingStdDev: number;
+}
+
+type GrowthPeriod = "fall-to-winter" | "winter-to-spring" | "fall-to-spring";
 ```
 
-## Comparison Query
+### Key Functions
 
-```sql
--- Compare school average vs national norm
-SELECT
-  ma.grade,
-  ma.map_term,
-  ma.course,
-  COUNT(*) as student_count,
-  ROUND(AVG(ma.rit_score), 1) as school_avg,
-  n.norm_rit as national_norm,
-  ROUND(AVG(ma.rit_score) - n.norm_rit, 1) as diff_from_norm
-FROM map_assessments ma
-JOIN map_norms n ON
-  n.academic_year = ma.academic_year
-  AND n.map_term = ma.map_term
-  AND n.grade = ma.grade
-  AND n.course = ma.course
-WHERE ma.academic_year = '2024-2025'
-GROUP BY ma.grade, ma.map_term, ma.course, n.norm_rit
-ORDER BY ma.grade, ma.map_term, ma.course;
-```
+| Function | Returns | Description |
+|----------|---------|-------------|
+| `getNorm(year, grade, term, course)` | `number \| null` | Get RIT norm mean |
+| `getNormStdDev(year, grade, term, course)` | `number \| null` | Get RIT norm standard deviation |
+| `getNormDataWithStdDev(year, grade, term)` | `NormDataWithStdDev \| null` | Get complete norm data with SD |
+| `getGrowthNorm(year, grade, period)` | `GrowthNormData \| null` | Get growth norm for a period |
+| `getGrowthNormByCourse(year, grade, period, course)` | `{ mean, stdDev } \| null` | Get growth norm for specific course |
+| `mapTermsToGrowthPeriod(from, to)` | `GrowthPeriod \| null` | Convert terms to growth period |
 
-## Expected Growth Calculation
+### Usage Examples
 
 ```typescript
-function getExpectedGrowth(grade: number, course: string): number | null {
-  const norms = MAP_NORMS_2024_2025[grade];
-  if (!norms) return null;
-  
-  const key = course === 'Language Usage' ? 'languageUsage' : 'reading';
-  return norms.spring[key] - norms.fall[key];
-}
+import {
+  getNorm,
+  getNormStdDev,
+  getGrowthNormByCourse
+} from "@/lib/map/norms";
 
-// Usage
-getExpectedGrowth(3, 'Language Usage'); // 10
-getExpectedGrowth(4, 'Reading');        // 8
-getExpectedGrowth(5, 'Reading');        // 7
+// Get G4 Fall Reading norm
+const norm = getNorm("2025-2026", 4, "fall", "Reading"); // 196
+
+// Get G4 Fall Reading standard deviation
+const stdDev = getNormStdDev("2025-2026", 4, "fall", "Reading"); // 18
+
+// Get G4 Fall-to-Spring Reading growth norm
+const growth = getGrowthNormByCourse("2025-2026", 4, "fall-to-spring", "Reading");
+// { mean: 6, stdDev: 9 }
 ```
+
+## Legacy Norms (2024-2025)
+
+For backward compatibility, older norms are still available:
+
+### Grade 3
+| Term | Language Usage | Reading |
+|------|----------------|---------|
+| Fall | 188 | 187 |
+| Spring | 198 | 197 |
+
+### Grade 4
+| Term | Language Usage | Reading |
+|------|----------------|---------|
+| Fall | 197 | 197 |
+| Spring | 205 | 205 |
+
+### Grade 5
+| Term | Language Usage | Reading |
+|------|----------------|---------|
+| Fall | 204 | 204 |
+| Spring | 210 | 211 |
+
+### Grade 6
+| Term | Language Usage | Reading |
+|------|----------------|---------|
+| Fall | 208 | 210 |
+| Spring | 212 | 214 |
 
 ## Notes
 
-- Norms are updated by NWEA periodically (typically every few years)
-- Current norms based on 2024-2025 academic year
-- G6 norms not currently tracked (students graduate)
-- Source: NWEA MAP Growth Normative Data
+- **2025 Norms**: Based on Fall 2022 - Spring 2024 data, updated August 2025
+- **SD (Standard Deviation)**: Measures score variability within a grade level
+- **Growth Norms**: Expected growth between testing periods
+- **Academic Year Format**: "2024-2025", "2025-2026"
+- **MapTerm vs ELA Term**: MapTerm (fall/winter/spring) is distinct from ELA Term (1/2/3/4)
