@@ -25,8 +25,6 @@ import {
   LayoutGrid,
   Square,
   School,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -45,7 +43,6 @@ import {
   MapLexileStats,
   MapTestQualityPie,
   MapBenchmarkTransition,
-  MapConsecutiveGrowth,
   MapGradeGrowthDistribution,
   MapGradeRitDistribution,
 } from "@/components/map/charts";
@@ -57,7 +54,6 @@ import {
   getLexileAnalysis,
   getTestQualityReport,
   getBenchmarkTransition,
-  getConsecutiveGrowthAnalysis,
   getGradeGrowthDistribution,
   getGradeRitDistribution,
   type MapAnalyticsData,
@@ -68,7 +64,6 @@ import {
   type LexileAnalysisData,
   type TestQualityData,
   type BenchmarkTransitionData,
-  type ConsecutiveGrowthAnalysisData,
   type GradeGrowthDistributionData,
   type GradeRitDistributionData,
 } from "@/lib/api/map-analytics";
@@ -134,10 +129,8 @@ export default function MapAnalysisPage() {
   const [selectedGrade, setSelectedGrade] = useState(5);
   // Analysis tab selection
   const [selectedTab, setSelectedTab] = useState("overview");
-  // Growth type selection (extended to include "consecutive")
-  type ExtendedGrowthType = GrowthType | "consecutive";
-  const [growthType, setGrowthType] =
-    useState<ExtendedGrowthType>("within-year");
+  // Growth type selection
+  const [growthType, setGrowthType] = useState<GrowthType>("within-year");
   // Transition period selection
   const [transitionPeriod, setTransitionPeriod] =
     useState<TransitionPeriod>("fall-to-spring");
@@ -155,16 +148,8 @@ export default function MapAnalysisPage() {
   const [growthDataCache, setGrowthDataCache] = useState<
     Record<string, GrowthAnalysisData | null>
   >({});
-  // Consecutive growth data per grade
-  const [consecutiveGrowthCache, setConsecutiveGrowthCache] = useState<
-    Record<number, ConsecutiveGrowthAnalysisData | null>
-  >({});
   // Derived growthData for current selection
-  const growthData =
-    growthType !== "consecutive"
-      ? growthDataCache[`${selectedGrade}-${growthType}`] ?? null
-      : null;
-  const consecutiveGrowthData = consecutiveGrowthCache[selectedGrade] ?? null;
+  const growthData = growthDataCache[`${selectedGrade}-${growthType}`] ?? null;
   const [goalData, setGoalData] = useState<{
     reading: GoalPerformanceData | null;
     languageUsage: GoalPerformanceData | null;
@@ -210,8 +195,6 @@ export default function MapAnalysisPage() {
     growthPeriodOptions[0]?.id ?? "fall-to-spring-2024-2025"
   );
   const selectedGrowthPeriod = growthPeriodOptions.find(p => p.id === selectedGrowthPeriodId);
-  // Expandable state for "All Growth Records" section
-  const [showAllGrowthRecords, setShowAllGrowthRecords] = useState(false);
 
   // 衍生資料（根據當前選擇從快取取得）
   const crossGradeGrowthData = crossGradeGrowthCache[growthType] ?? null;
@@ -358,24 +341,6 @@ export default function MapAnalysisPage() {
     },
     [growthDataCache]
   );
-
-  // Fetch Consecutive Growth Data (all consecutive term pairs)
-  const fetchConsecutiveGrowthData = useCallback(async (grade: number) => {
-    // 快取檢查
-    if (consecutiveGrowthCache[grade] !== undefined) return;
-
-    setLoading("growth", true);
-    setError("growth", null);
-    try {
-      const result = await getConsecutiveGrowthAnalysis({ grade });
-      setConsecutiveGrowthCache((prev) => ({ ...prev, [grade]: result }));
-    } catch (err) {
-      console.error("Error fetching consecutive growth data:", err);
-      setError("growth", "Failed to load consecutive growth data");
-    } finally {
-      setLoading("growth", false);
-    }
-  }, [consecutiveGrowthCache]);
 
   // Fetch Cross-Grade Growth Data (for new Growth Overview section)
   const fetchCrossGradeGrowthData = useCallback(async (type: GrowthType) => {
@@ -600,15 +565,11 @@ export default function MapAnalysisPage() {
           fetchGradeRitData(selectedGrade, "Language Usage", "Fall 2025-2026");
           break;
         case "growth":
-          if (growthType === "consecutive") {
-            await fetchConsecutiveGrowthData(selectedGrade);
-          } else {
-            await fetchGrowthData(selectedGrade, growthType);
-            // 同時載入新版 Growth Tab 資料
-            fetchCrossGradeGrowthData(growthType);
-            fetchGrowthSpotlightData(selectedGrade, spotlightCourse, growthType);
-            fetchClassComparisonData(selectedGrade, spotlightCourse, growthType);
-          }
+          await fetchGrowthData(selectedGrade, growthType);
+          // 同時載入新版 Growth Tab 資料
+          fetchCrossGradeGrowthData(growthType);
+          fetchGrowthSpotlightData(selectedGrade, spotlightCourse, growthType);
+          fetchClassComparisonData(selectedGrade, spotlightCourse, growthType);
           break;
         case "goals":
           await fetchGoalData(selectedGrade);
@@ -642,7 +603,6 @@ export default function MapAnalysisPage() {
     fetchGradeGrowthData,
     fetchGradeRitData,
     fetchGrowthData,
-    fetchConsecutiveGrowthData,
     fetchCrossGradeGrowthData,
     fetchGrowthSpotlightData,
     fetchClassComparisonData,
@@ -653,7 +613,7 @@ export default function MapAnalysisPage() {
   ]);
 
   // Handle growth type change - trigger reload
-  const handleGrowthTypeChange = (type: ExtendedGrowthType) => {
+  const handleGrowthTypeChange = (type: GrowthType) => {
     setGrowthType(type);
     // useEffect 會自動檢查並載入（如果尚未載入）
   };
@@ -1053,10 +1013,8 @@ export default function MapAnalysisPage() {
           {loadingStates.growth && renderSkeleton(2)}
           {errorStates.growth && renderError(errorStates.growth)}
 
-          {/* Within-Year or Year-over-Year View */}
-          {!loadingStates.growth &&
-            !errorStates.growth &&
-            growthType !== "consecutive" && (
+          {/* Growth Analysis View */}
+          {!loadingStates.growth && !errorStates.growth && (
               <>
                 {/* Cross-Grade Growth Overview */}
                 <CrossGradeGrowthChart
@@ -1103,7 +1061,7 @@ export default function MapAnalysisPage() {
                         variant={spotlightCourse === "Reading" ? "default" : "outline"}
                         onClick={() => {
                           setSpotlightCourse("Reading");
-                          fetchGrowthSpotlightData(selectedGrade, "Reading", growthType as GrowthType);
+                          fetchGrowthSpotlightData(selectedGrade, "Reading", growthType);
                         }}
                       >
                         Reading
@@ -1113,7 +1071,7 @@ export default function MapAnalysisPage() {
                         variant={spotlightCourse === "Language Usage" ? "default" : "outline"}
                         onClick={() => {
                           setSpotlightCourse("Language Usage");
-                          fetchGrowthSpotlightData(selectedGrade, "Language Usage", growthType as GrowthType);
+                          fetchGrowthSpotlightData(selectedGrade, "Language Usage", growthType);
                         }}
                       >
                         Language Usage
@@ -1152,51 +1110,9 @@ export default function MapAnalysisPage() {
               </>
             )}
 
-          {/* All Growth Records (Expandable) */}
-          {!loadingStates.growth &&
-            !errorStates.growth &&
-            growthType !== "consecutive" && (
-              <Card className="border-dashed">
-                <CardHeader className="pb-2">
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-between"
-                    onClick={() => {
-                      setShowAllGrowthRecords(!showAllGrowthRecords);
-                      // Fetch consecutive data if not already loaded
-                      if (!showAllGrowthRecords && !consecutiveGrowthCache[selectedGrade]) {
-                        fetchConsecutiveGrowthData(selectedGrade);
-                      }
-                    }}
-                  >
-                    <span className="text-sm font-medium">
-                      View All Growth Records (Consecutive Pairs)
-                    </span>
-                    {showAllGrowthRecords ? (
-                      <ChevronUp className="w-4 h-4" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4" />
-                    )}
-                  </Button>
-                </CardHeader>
-                {showAllGrowthRecords && (
-                  <CardContent>
-                    {consecutiveGrowthData ? (
-                      <MapConsecutiveGrowth data={consecutiveGrowthData} />
-                    ) : (
-                      <div className="flex items-center justify-center h-[100px] text-muted-foreground text-sm">
-                        Loading all growth records...
-                      </div>
-                    )}
-                  </CardContent>
-                )}
-              </Card>
-            )}
-
           {/* No Data States */}
           {!loadingStates.growth &&
             !errorStates.growth &&
-            growthType !== "consecutive" &&
             (!growthData || growthData.byLevel.length === 0) &&
             renderNoData(`No growth data for Grade ${selectedGrade}`)}
         </TabsContent>
