@@ -28,7 +28,7 @@ import {
   ErrorBar,
   Legend,
 } from "recharts";
-import { NWEA_COLORS, KCIS_EXPECTED_COLORS, BENCHMARK_COLORS } from "@/lib/map/colors";
+import { KCIS_EXPECTED_COLORS, BENCHMARK_COLORS } from "@/lib/map/colors";
 import { KCIS_EXPECTED } from "@/lib/map/kcis-expected";
 import type { CrossGradeStats } from "@/lib/api/map-school-analytics";
 
@@ -53,6 +53,12 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
 
   // 深色模式下使用深色背景遮蓋，淺色模式用白色
   const bandMaskColor = isDark ? "#0f172a" : "#ffffff";  // slate-950 for dark
+
+  // 深色模式配色調整 - 提高對比度
+  const gridColor = isDark ? "#334155" : "#e5e7eb";  // slate-700 for dark, gray-200 for light
+  const normColor = isDark ? "#94a3b8" : "#64748b";  // slate-400 for dark, slate-500 for light
+  const e1Color = isDark ? "#4ade80" : "#22c55e";    // green-400 for dark, green-500 for light
+  const e3Color = isDark ? "#f87171" : "#ef4444";    // red-400 for dark, red-500 for light
 
   // 轉換資料格式，包含 KCIS Expected 數據
   // 只顯示有實際數據的年級（解決 G6 空資料問題）
@@ -153,7 +159,7 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
           data={chartData}
           margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke={NWEA_COLORS.gridLine} />
+          <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
           <XAxis
             dataKey="grade"
             tick={{ fontSize: 12 }}
@@ -308,7 +314,7 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
             type="monotone"
             dataKey="e1"
             name="E1 Threshold"
-            stroke={BENCHMARK_COLORS.E1}
+            stroke={e1Color}
             strokeWidth={1.5}
             strokeDasharray="4 4"
             dot={false}
@@ -320,7 +326,7 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
             type="monotone"
             dataKey="e3"
             name="E3 Threshold"
-            stroke={BENCHMARK_COLORS.E3}
+            stroke={e3Color}
             strokeWidth={1.5}
             strokeDasharray="4 4"
             dot={false}
@@ -332,10 +338,10 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
             type="monotone"
             dataKey="norm"
             name="NWEA Norm"
-            stroke={SCHOOL_COLORS.norm}
+            stroke={normColor}
             strokeWidth={2}
             strokeDasharray="5 5"
-            dot={{ fill: SCHOOL_COLORS.norm, r: 4 }}
+            dot={{ fill: normColor, r: 4 }}
             connectNulls
           />
 
