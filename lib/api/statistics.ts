@@ -16,7 +16,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
-import { requireRole } from './permissions';
+import { requireServerRole } from './permissions-server';
 import {
   calculateAverage,
   calculateMax,
@@ -72,7 +72,7 @@ interface RawClassData {
 export async function getClassStatistics(
   filters?: StatisticsFilters
 ): Promise<ClassStatistics[]> {
-  await requireRole(['admin', 'office_member'])
+  await requireServerRole(['admin', 'office_member'])
   const supabase = createClient();
 
   // 1. Fetch all classes
@@ -384,7 +384,7 @@ export async function getGradeLevelStatistics(
   courseType: CourseType,
   filters?: { academic_year?: string; term?: 1 | 2 | 3 | 4 }
 ): Promise<GradeLevelStatistics[]> {
-  await requireRole(['admin', 'office_member'])
+  await requireServerRole(['admin', 'office_member'])
   // Fetch all grades in PARALLEL using Promise.all for 3-5x speedup
   // Instead of sequential 6 queries, we run them concurrently
   const grades = [1, 2, 3, 4, 5, 6];
@@ -459,7 +459,7 @@ export async function getGradeLevelSummary(
   courseType: CourseType,
   filters?: { academic_year?: string; term?: 1 | 2 | 3 | 4 }
 ): Promise<GradeLevelSummary[]> {
-  await requireRole(['admin', 'office_member'])
+  await requireServerRole(['admin', 'office_member'])
   const stats = await getGradeLevelStatistics(courseType, filters);
 
   return stats.map(s => ({
@@ -484,7 +484,7 @@ export async function getGradeLevelSummary(
 export async function getClassRanking(
   filters: RankingFilters
 ): Promise<{ rankings: ClassRanking[]; gradeAverage: GradeLevelAverage }> {
-  await requireRole(['admin', 'office_member'])
+  await requireServerRole(['admin', 'office_member'])
   const { grade_level, course_type, metric = 'term_avg', academic_year, term } = filters;
 
   // Get class statistics for this grade level and course type
@@ -563,7 +563,7 @@ export async function getClassRanking(
 export async function getStudentGrades(
   filters?: StatisticsFilters
 ): Promise<StudentGradeRow[]> {
-  await requireRole(['admin', 'office_member'])
+  await requireServerRole(['admin', 'office_member'])
   const supabase = createClient();
 
   // 1. Fetch students with their classes
@@ -862,7 +862,7 @@ export interface QuickStats {
  * @param filters - Optional filters including academic_year
  */
 export async function getQuickStats(filters?: { academic_year?: string }): Promise<QuickStats> {
-  await requireRole(['admin', 'office_member'])
+  await requireServerRole(['admin', 'office_member'])
   const supabase = createClient();
 
   // Build class query with academic_year filter
@@ -908,7 +908,7 @@ export async function getQuickStats(filters?: { academic_year?: string }): Promi
  * Permission: Admin/Office only
  */
 export async function getAvailableGradeLevels(): Promise<string[]> {
-  await requireRole(['admin', 'office_member'])
+  await requireServerRole(['admin', 'office_member'])
   const supabase = createClient();
 
   const { data, error } = await supabase

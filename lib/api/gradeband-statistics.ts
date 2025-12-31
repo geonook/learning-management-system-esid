@@ -16,7 +16,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
-import { requireRole } from './permissions';
+import { requireServerRole } from './permissions-server';
 import {
   calculateAverage,
   calculateMax,
@@ -95,7 +95,7 @@ import { parseGradeBand } from '@/lib/utils/gradeband';
 export async function getGradeBandQuickStats(
   filters: GradeBandFilters
 ): Promise<GradeBandQuickStats> {
-  await requireRole(['admin', 'head', 'office_member'])
+  await requireServerRole(['admin', 'head', 'office_member'])
   const supabase = createClient();
   const grades = parseGradeBand(filters.grade_band);
 
@@ -275,7 +275,7 @@ export async function getGradeBandQuickStats(
 export async function getGradeBandClassStatistics(
   filters: GradeBandFilters
 ): Promise<ClassStatistics[]> {
-  await requireRole(['admin', 'head', 'office_member'])
+  await requireServerRole(['admin', 'head', 'office_member'])
   const supabase = createClient();
   const grades = parseGradeBand(filters.grade_band);
 
@@ -546,7 +546,7 @@ export async function getGradeBandGradeLevelStatistics(
   filters: GradeBandFilters,
   courseType: CourseType
 ): Promise<GradeLevelStatistics[]> {
-  await requireRole(['admin', 'head', 'office_member'])
+  await requireServerRole(['admin', 'head', 'office_member'])
   const grades = parseGradeBand(filters.grade_band);
 
   // Fetch all grades in parallel
@@ -616,7 +616,7 @@ export async function getGradeBandGradeLevelSummary(
   filters: GradeBandFilters,
   courseType: CourseType
 ): Promise<GradeLevelSummary[]> {
-  await requireRole(['admin', 'head', 'office_member'])
+  await requireServerRole(['admin', 'head', 'office_member'])
   const stats = await getGradeBandGradeLevelStatistics(filters, courseType);
 
   return stats.map(s => ({
@@ -642,7 +642,7 @@ export async function getGradeBandClassRanking(
   filters: GradeBandFilters,
   metric: 'term_avg' | 'pass_rate' | 'excellent_rate' = 'term_avg'
 ): Promise<{ rankings: ClassRanking[]; gradeAverage: GradeLevelAverage }> {
-  await requireRole(['admin', 'head', 'office_member'])
+  await requireServerRole(['admin', 'head', 'office_member'])
   const classStats = await getGradeBandClassStatistics(filters);
 
   if (classStats.length === 0) {
@@ -713,7 +713,7 @@ export async function getGradeBandClassRanking(
 export async function getGradeBandStudentGrades(
   filters: GradeBandFilters
 ): Promise<StudentGradeRow[]> {
-  await requireRole(['admin', 'head', 'office_member'])
+  await requireServerRole(['admin', 'head', 'office_member'])
   const supabase = createClient();
   const grades = parseGradeBand(filters.grade_band);
 
