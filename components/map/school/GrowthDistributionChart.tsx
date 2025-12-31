@@ -418,21 +418,25 @@ export function GrowthDistributionChart({
           <span>High (10+)</span>
         </div>
         <div className="flex items-center gap-1">
-          <span
-            className="w-6 h-0.5"
-            style={{ backgroundColor: SCHOOL_CHART_COLORS.gaussianFit }}
-          />
+          <svg width="24" height="4" className="flex-shrink-0">
+            <line
+              x1="0" y1="2" x2="24" y2="2"
+              stroke={SCHOOL_CHART_COLORS.gaussianFit}
+              strokeWidth="2.5"
+            />
+          </svg>
           <span>KCIS Gaussian</span>
         </div>
         {data.nweaNorm && (
           <div className="flex items-center gap-1">
-            <span
-              className="w-6 h-0.5"
-              style={{
-                backgroundColor: "#8b5cf6",
-                borderStyle: "dashed",
-              }}
-            />
+            <svg width="24" height="4" className="flex-shrink-0">
+              <line
+                x1="0" y1="2" x2="24" y2="2"
+                stroke="#8b5cf6"
+                strokeWidth="2"
+                strokeDasharray="5 3"
+              />
+            </svg>
             <span>NWEA Norm</span>
           </div>
         )}
