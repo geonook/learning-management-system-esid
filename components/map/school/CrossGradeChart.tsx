@@ -15,6 +15,7 @@
  */
 
 import { useMemo } from "react";
+import { useTheme } from "next-themes";
 import {
   ComposedChart,
   Line,
@@ -47,6 +48,12 @@ const SCHOOL_COLORS = {
 };
 
 export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
+  // 深色模式下使用深色背景遮蓋，淺色模式用白色
+  const bandMaskColor = isDark ? "#0f172a" : "#ffffff";  // slate-950 for dark
+
   // 轉換資料格式，包含 KCIS Expected 數據
   // 只顯示有實際數據的年級（解決 G6 空資料問題）
   const { chartData, missingGrades } = useMemo(() => {
@@ -248,7 +255,7 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
             type="monotone"
             dataKey="expectedLower"
             stroke="none"
-            fill="#fff"
+            fill={bandMaskColor}
             fillOpacity={1}
             legendType="none"
             connectNulls

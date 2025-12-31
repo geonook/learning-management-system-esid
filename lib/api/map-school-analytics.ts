@@ -1138,7 +1138,7 @@ export async function getRitGrowthScatterData(params?: {
     let student = studentMap.get(row.student_number);
     if (!student) {
       student = {
-        grade: row.grade,
+        grade: 0,  // 初始化為 0，稍後由 fromTerm 資料設定
         fromLU: null,
         toLU: null,
         fromRD: null,
@@ -1148,6 +1148,13 @@ export async function getRitGrowthScatterData(params?: {
     }
 
     const isFrom = row.term_tested === fromTerm;
+
+    // 只用 fromTerm 的年級作為「起始年級」
+    // 這確保 Fall-to-Fall 成長圖顯示學生在成長期間開始時的年級
+    if (isFrom && student.grade === 0) {
+      student.grade = row.grade;
+    }
+
     if (row.course === "Language Usage") {
       if (isFrom) student.fromLU = row.rit_score;
       else student.toLU = row.rit_score;

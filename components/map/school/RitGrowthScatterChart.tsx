@@ -343,11 +343,15 @@ export function RitGrowthScatterChart({
       </div>
 
       {/* 解讀說明 */}
-      <div className="mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
+      <div className="mt-3 pt-3 border-t border-border text-xs text-muted-foreground space-y-1">
         <p>
           <strong>How to read:</strong> Each dot represents a student. Points
           below the dashed line show negative growth. The purple trend line
           shows the linear regression fit. {correlationInterpretation.text}.
+        </p>
+        <p className="text-muted-foreground/80">
+          <strong>Note:</strong> Grade shown is the <em>starting grade</em> ({data.fromTerm}).
+          Students who were G3 in {data.fromTerm} are now G4 in {data.toTerm}.
         </p>
       </div>
       </div>

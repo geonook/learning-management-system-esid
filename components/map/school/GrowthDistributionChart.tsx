@@ -216,10 +216,22 @@ export function GrowthDistributionChart({
           </div>
 
           {/* 正成長百分比 */}
-          <div className="px-3 py-1.5 bg-green-50 border border-green-200 rounded-md">
+          <div className="px-3 py-1.5 bg-green-50 border border-green-200 rounded-md flex items-center gap-1">
             <span className="text-green-700 font-medium text-xs">
               ✅ {positiveGrowthPercentage}% showed positive growth
             </span>
+            <UITooltip>
+              <TooltipTrigger asChild>
+                <Info className="w-3.5 h-3.5 text-green-500 cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[280px]">
+                <p className="text-xs">
+                  <strong>{data.totalStudents - data.negativeGrowthCount}</strong> out of{" "}
+                  <strong>{data.totalStudents}</strong> students showed RIT score improvement
+                  (growth {">"} 0). This is a simple count, not a measure of growth quality.
+                </p>
+              </TooltipContent>
+            </UITooltip>
           </div>
 
           {/* R² 擬合品質 */}
@@ -232,13 +244,21 @@ export function GrowthDistributionChart({
               <TooltipTrigger asChild>
                 <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
               </TooltipTrigger>
-              <TooltipContent className="max-w-[280px]">
-                <p className="text-xs">
-                  <strong>{r2Interpretation.quality}</strong> - {r2Interpretation.color === "#22c55e"
-                    ? "Distribution closely follows normal curve"
+              <TooltipContent className="max-w-[320px]">
+                <p className="text-xs mb-2">
+                  <strong>R² (Goodness of Fit)</strong> measures how well the histogram
+                  matches a normal (bell curve) distribution.
+                </p>
+                <p className="text-xs mb-2">
+                  R² = {rSquared.toFixed(2)} means <strong>{Math.round(rSquared * 100)}%</strong> of
+                  the variation in student growth is explained by the normal curve.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {r2Interpretation.color === "#22c55e"
+                    ? "✅ High R² (≥0.8): Growth is normally distributed - typical for large student populations."
                     : r2Interpretation.color === "#eab308"
-                    ? "Distribution roughly follows normal curve"
-                    : "Distribution deviates from normal curve (may indicate subgroups)"}
+                    ? "⚠️ Moderate R² (0.5-0.8): Some deviation from normal - may indicate distinct subgroups."
+                    : "❌ Low R² (<0.5): Significant deviation - investigate for outliers or bimodal patterns."}
                 </p>
               </TooltipContent>
             </UITooltip>
@@ -419,13 +439,19 @@ export function GrowthDistributionChart({
       </div>
 
       {/* 解讀說明 */}
-      <div className="mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
+      <div className="mt-3 pt-3 border-t border-border text-xs text-muted-foreground space-y-1">
         <p>
           <strong>How to read:</strong> This histogram shows the distribution of RIT
           growth from {data.fromTerm} to {data.toTerm}. Red bars indicate students
-          with negative growth who may need intervention. The black curve shows KCIS
-          student distribution fit{data.nweaNorm ? ", and the purple dashed curve shows the NWEA 2025 national norm for comparison" : ""}.
+          with negative growth who may need intervention.
         </p>
+        {data.nweaNorm && (
+          <p>
+            <strong>Curves explained:</strong> The <span style={{ color: SCHOOL_CHART_COLORS.gaussianFit }}>purple solid curve</span> (KCIS Gaussian)
+            is fitted to our students&apos; actual data. The <span style={{ color: "#8b5cf6" }}>purple dashed curve</span> (NWEA Norm)
+            shows the expected distribution based on NWEA 2025 national norms for comparison.
+          </p>
+        )}
       </div>
       </div>
     </TooltipProvider>
