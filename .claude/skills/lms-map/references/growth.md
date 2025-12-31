@@ -9,7 +9,31 @@ Track student RIT score progression across multiple terms to visualize academic 
 | Growth Type | Time Span | Data Source | Displayed Metrics |
 |-------------|-----------|-------------|-------------------|
 | **Fall → Spring** | ~6 months | Official CDF | Growth, Expected, Index, Met/Not Met, Quintile |
+| **Fall → Fall** | ~12 months | NWEA 2025 Norms | Growth, Expected, Index |
 | **Spring → Fall** | ~4 months | Calculated | Growth only (no official benchmark) |
+
+### Cross-Grade Growth (Fall-to-Fall)
+
+Fall-to-Fall growth spans academic years and involves grade advancement:
+
+| Period | Grade Change | Norm Source |
+|--------|--------------|-------------|
+| G3 Fall → G4 Fall | G3 → G4 | G3 norms (Technical Manual Table C.3/C.5) |
+| G4 Fall → G5 Fall | G4 → G5 | G4 norms |
+| G5 Fall → G6 Fall | G5 → G6 | G5 norms |
+
+**NWEA 2025 Fall-to-Fall Expected Growth** (from `lib/map/norms.ts`):
+
+| Starting Grade | Reading | Language Usage |
+|----------------|---------|----------------|
+| G3 | 9 | 9 |
+| G4 | 5 | 6 |
+| G5 | 4 | 4 |
+| G6 | 3 | 3 |
+
+**Key Implementation Files**:
+- `lib/map/norms.ts` - `getExpectedGrowth()` function
+- `lib/api/map-growth-analytics.ts` - Growth calculations
 
 ## Growth Index Calculation
 
@@ -30,6 +54,54 @@ When crossing academic years (no official CDF):
 const growth = toRit - fromRit;
 // DO NOT calculate expected or index (no official benchmark for summer)
 ```
+
+### fromGrade Tracking (v1.66.1+)
+
+**Why track starting grade?**
+- NWEA growth norms are based on the **starting grade**, not the ending grade
+- Fall-to-Fall growth spans academic years (e.g., G3 Fall → G4 Fall)
+- Must use G3 norms for a student who was G3 at the start, even if now G4
+
+**Implementation**:
+```typescript
+interface StudentGrowth {
+  fromGrade: number | null;  // Grade at start of growth period
+  grade: number;             // Current grade (for display)
+  // ...
+}
+
+// Use fromGrade for norm lookup
+const expectedGrowth = getExpectedGrowth(fromTerm, toTerm, fromGrade, course);
+```
+
+**Example**:
+- Student in G4 Fall 2025
+- Looking at Fall 2024 → Fall 2025 growth
+- Student was G3 in Fall 2024
+- Use G3 norms (Reading: 9, LU: 9), NOT G4 norms
+
+### Null Value Handling (v1.66.1+)
+
+Growth Index returns `null` when:
+1. **Spring → Fall**: No official NWEA benchmark for summer
+2. **Missing norms**: Grade/course combination not in lookup table
+3. **Invalid periods**: Unsupported term transitions
+
+**Correct Implementation**:
+```typescript
+// ✅ Correct: Handle null gracefully
+const expectedGrowth = getExpectedGrowth(fromTerm, toTerm, fromGrade, course);
+const growthIndex = expectedGrowth !== null && expectedGrowth !== 0
+  ? actualGrowth / expectedGrowth
+  : null;
+
+// ❌ Wrong: Never use ?? 1 fallback (causes Index distortion)
+// const expectedGrowth = getExpectedGrowth(...) ?? 1;
+```
+
+**UI Display**:
+- `null` Growth Index → Show "N/A"
+- `null` vsNorm → Show "—"
 
 ## Growth Data Structure
 
