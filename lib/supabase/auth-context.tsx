@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { User } from '@supabase/supabase-js'
 import { supabase } from './client'
 import type { UserPermissions } from '@/lib/api/teacher-data'
+import { authUserCache } from '@/lib/api/auth-cache'
 
 interface AuthContextType {
   user: User | null
@@ -78,6 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshPermissions = async () => {
     if (user) {
+      authUserCache.clear() // 強制重新查詢
       const permissions = await fetchUserPermissions(user.id)
       setUserPermissions(permissions)
     }
@@ -87,6 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut()
     setUser(null)
     setUserPermissions(null)
+    authUserCache.clear() // 清除快取
   }
 
   // 同步 ref 與 state，確保 onAuthStateChange 回調讀取到最新值

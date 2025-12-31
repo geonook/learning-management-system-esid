@@ -73,7 +73,7 @@ export function SchoolSummaryTable({ data }: SchoolSummaryTableProps) {
                   {row.stdDev.toFixed(1)}
                 </TableCell>
                 <TableCell className="text-right text-muted-foreground font-mono">
-                  {row.norm ?? "-"}
+                  {row.norm !== null ? row.norm.toFixed(1) : "-"}
                 </TableCell>
                 <TableCell
                   className={cn("text-right", getDiffStyle(row.vsNorm))}

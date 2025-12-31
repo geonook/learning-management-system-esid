@@ -16,6 +16,7 @@
  */
 
 import { createClient } from '@/lib/supabase/client'
+import { authUserCache } from './auth-cache'
 
 // ============================================================================
 // Types
@@ -53,20 +54,28 @@ export interface PermissionResult {
  * Get current authenticated user from Supabase Auth
  * This is the ONLY trusted source for user identity
  *
+ * Uses memory cache to avoid repeated database queries.
+ * Cache is validated against current auth session to prevent stale data.
+ *
  * @returns CurrentUser or null if not authenticated
  */
 export async function getCurrentUser(): Promise<CurrentUser | null> {
   const supabase = createClient()
 
-  // Get authenticated user from Supabase Auth
+  // Get authenticated user from Supabase Auth (必要的安全檢查)
   const { data: { user }, error: authError } = await supabase.auth.getUser()
 
   if (authError || !user) {
-    console.log('[permissions] No authenticated user')
+    authUserCache.clear()
     return null
   }
 
-  // Fetch user profile from database
+  // 檢查快取是否有效（userId 一致且未過期）
+  if (authUserCache.isValidFor(user.id)) {
+    return authUserCache.get()
+  }
+
+  // 快取過期或無效，查詢資料庫
   const { data: profile, error: profileError } = await supabase
     .from('users')
     .select('id, role, grade_band, track, teacher_type, full_name, is_active')
@@ -75,15 +84,17 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
 
   if (profileError || !profile) {
     console.error('[permissions] Failed to fetch user profile:', profileError)
+    authUserCache.clear()
     return null
   }
 
   if (!profile.is_active) {
     console.log('[permissions] User is inactive:', user.id)
+    authUserCache.clear()
     return null
   }
 
-  return {
+  const currentUser: CurrentUser = {
     id: profile.id,
     role: profile.role as UserRole,
     gradeBand: profile.grade_band,
@@ -91,6 +102,11 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     teacherType: profile.teacher_type as CourseType | null,
     fullName: profile.full_name
   }
+
+  // 更新快取
+  authUserCache.set(currentUser)
+
+  return currentUser
 }
 
 /**
