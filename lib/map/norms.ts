@@ -127,6 +127,34 @@ const MAP_GROWTH_NORMS: Record<
   string,
   Record<number, Partial<Record<GrowthPeriod, GrowthNormData>>>
 > = {
+  // 2024-2025 學年使用 2020 Norms（同 MAP_NORMS 的 2024-2025 值）
+  // 這些是近似值，用於計算 Growth Index
+  "2024-2025": {
+    3: {
+      "fall-to-winter": { languageUsage: 5, languageUsageStdDev: 8, reading: 5, readingStdDev: 9 },
+      "winter-to-spring": { languageUsage: 5, languageUsageStdDev: 8, reading: 5, readingStdDev: 9 },
+      "fall-to-spring": { languageUsage: 10, languageUsageStdDev: 9, reading: 10, readingStdDev: 9 },
+      "fall-to-fall": { languageUsage: 9, languageUsageStdDev: 9, reading: 9, readingStdDev: 10 },
+    },
+    4: {
+      "fall-to-winter": { languageUsage: 4, languageUsageStdDev: 8, reading: 4, readingStdDev: 8 },
+      "winter-to-spring": { languageUsage: 4, languageUsageStdDev: 8, reading: 4, readingStdDev: 8 },
+      "fall-to-spring": { languageUsage: 8, languageUsageStdDev: 8, reading: 8, readingStdDev: 9 },
+      "fall-to-fall": { languageUsage: 6, languageUsageStdDev: 8, reading: 5, readingStdDev: 9 },
+    },
+    5: {
+      "fall-to-winter": { languageUsage: 3, languageUsageStdDev: 8, reading: 4, readingStdDev: 8 },
+      "winter-to-spring": { languageUsage: 3, languageUsageStdDev: 7, reading: 3, readingStdDev: 8 },
+      "fall-to-spring": { languageUsage: 6, languageUsageStdDev: 8, reading: 7, readingStdDev: 9 },
+      "fall-to-fall": { languageUsage: 4, languageUsageStdDev: 8, reading: 4, readingStdDev: 9 },
+    },
+    6: {
+      "fall-to-winter": { languageUsage: 2, languageUsageStdDev: 8, reading: 2, readingStdDev: 8 },
+      "winter-to-spring": { languageUsage: 2, languageUsageStdDev: 8, reading: 2, readingStdDev: 8 },
+      "fall-to-spring": { languageUsage: 4, languageUsageStdDev: 8, reading: 4, readingStdDev: 8 },
+      "fall-to-fall": { languageUsage: 3, languageUsageStdDev: 8, reading: 3, readingStdDev: 9 },
+    },
+  },
   "2025-2026": {
     3: {
       "fall-to-winter": { languageUsage: 5, languageUsageStdDev: 8, reading: 5, readingStdDev: 9 },
