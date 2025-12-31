@@ -1,3 +1,8 @@
+---
+name: lms-auth
+description: LMS authentication system including SSO integration, useAuthReady hook patterns, four-layer security architecture, and permission checking. Use this skill when implementing auth flows, handling user sessions, fixing auth-related bugs, or understanding role-based access control.
+---
+
 # LMS Auth Skill
 
 > 認證系統、SSO 整合、useAuthReady hook 標準模式、四層安全架構
@@ -56,7 +61,7 @@ export async function getStudents() {
 
 **永遠使用 `useAuthReady` hook，不要直接使用 `useAuth`**
 
-### ✅ 正確模式
+### 正確模式
 
 ```typescript
 import { useAuthReady } from "@/hooks/useAuthReady";
@@ -69,7 +74,7 @@ useEffect(() => {
 }, [userId]);  // primitive 依賴，穩定
 ```
 
-### ❌ 錯誤模式
+### 錯誤模式
 
 ```typescript
 const { user, loading } = useAuth();
@@ -117,7 +122,7 @@ interface UseAuthReadyReturn {
 ### 根本原因：React 閉包
 
 ```typescript
-// ❌ 錯誤：userPermissions 是閉包捕獲的初始值（null）
+// 錯誤：userPermissions 是閉包捕獲的初始值（null）
 useEffect(() => {
   supabase.auth.onAuthStateChange((event, session) => {
     if (userPermissions?.userId === session?.user?.id) {
@@ -130,7 +135,7 @@ useEffect(() => {
 ### 解決方案：使用 useRef
 
 ```typescript
-// ✅ 正確：使用 ref 追蹤最新的 userPermissions
+// 正確：使用 ref 追蹤最新的 userPermissions
 const userPermissionsRef = useRef<UserPermissions | null>(null);
 
 // 同步 ref 與 state
@@ -190,7 +195,7 @@ LMS (Token Exchange) → Supabase User Sync → Session Creation → Dashboard
 | teacher (IT) | teacher | IT | international |
 | teacher (LT) | teacher | LT | local |
 | teacher (KCFS) | teacher | KCFS | null |
-| viewer | ❌ Denied | - | - |
+| viewer | Denied | - | - |
 
 ### 安全措施
 

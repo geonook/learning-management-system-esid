@@ -1,3 +1,8 @@
+---
+name: lms-architecture
+description: LMS-ESID core architecture including one-class-three-teachers system, course structure, grade levels, role permissions, and database schema. Use this skill when understanding teacher types (LT/IT/KCFS/HT), course relationships, class naming conventions, academic year data, or table relationships.
+---
+
 # LMS Architecture Skill
 
 > LMS-ESID 專案的核心架構知識，包含一班三師系統、課程架構、年段系統

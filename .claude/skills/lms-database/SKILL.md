@@ -1,9 +1,14 @@
+---
+name: lms-database
+description: Supabase database query patterns, RLS policies, migration records, and nested join patterns. Use this skill when writing database queries, understanding RLS behavior, debugging query errors, or implementing new migrations.
+---
+
 # LMS Database Skill
 
 > Supabase 資料庫查詢模式、RLS 政策、Migration 記錄
 > Last Updated: 2025-12-29
 >
-> **相關 Skill**: [kcis-school-config.md](kcis-school-config.md) - 學校專屬設定
+> **相關 Skill**: [kcis-school-config](../kcis-school-config/SKILL.md) - 學校專屬設定
 
 ## Database Connection Strings
 
@@ -33,7 +38,7 @@ scores → exam_id (FK) → exams → course_id (FK) → courses → class_id (F
 
 **注意**：`exams` 表**沒有** `class_id` 欄位（Migration 035 已移除），只有 `course_id`。
 
-### ✅ 正確模式
+### 正確模式
 
 ```typescript
 const { data } = await supabase
@@ -57,11 +62,11 @@ const { data } = await supabase
 // 過濾時使用 exam.course.class_id
 const filtered = data.filter(s => {
   const examData = s.exam as { course_id: string; course: { class_id: string; ... } };
-  return classIdSet.has(examData.course.class_id);  // ✅ 正確
+  return classIdSet.has(examData.course.class_id);  // 正確
 });
 ```
 
-### ❌ 錯誤模式
+### 錯誤模式
 
 ```typescript
 exam:exams!inner(
@@ -80,7 +85,7 @@ exam:exams!inner(
 ### 效能最佳實踐
 
 ```typescript
-// ✅ 永遠加上限制條件避免全表掃描
+// 永遠加上限制條件避免全表掃描
 .in('student_id', studentIds)
 .in('exam_id', examIds)
 .eq('class_id', classId)

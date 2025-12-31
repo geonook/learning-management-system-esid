@@ -1,3 +1,8 @@
+---
+name: lms-features
+description: LMS feature implementations including Browse Gradebook, Course Kanban, Communications, Statistics Module, MAP Analytics, Teacher Schedule, and Attendance System. Use this skill when implementing or modifying these features, understanding their data structures, or debugging feature-specific issues.
+---
+
 # LMS Features Skill
 
 > Browse Gradebook、Course Kanban、Communications、Statistics Module、MAP Analytics、Teacher Schedule
@@ -132,10 +137,10 @@ CREATE TABLE course_tasks (
 
 | 角色 | 可見課程 | 可編輯 |
 |------|----------|--------|
-| Teacher | 自己任課的課程 | ✅ |
-| Head Teacher | 自己 track 類型的課程 | ❌ 唯讀 |
-| Admin | 所有課程 | ✅ |
-| Office Member | 所有課程 | ❌ 唯讀 |
+| Teacher | 自己任課的課程 | 是 |
+| Head Teacher | 自己 track 類型的課程 | 否（唯讀） |
+| Admin | 所有課程 | 是 |
+| Office Member | 所有課程 | 否（唯讀） |
 
 ### 相關檔案
 

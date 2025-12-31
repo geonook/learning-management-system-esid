@@ -1,3 +1,8 @@
+---
+name: lms-troubleshooting
+description: Solved issues, common errors, and debugging techniques for LMS. Use this skill when debugging issues, understanding error codes, fixing RLS problems, or troubleshooting environment variable issues.
+---
+
 # LMS Troubleshooting Skill
 
 > 已解決問題、常見錯誤、除錯技巧
@@ -19,14 +24,14 @@ Supabase nested join 語法理解錯誤：
 ### 解決方案
 
 ```typescript
-// ❌ 錯誤
+// 錯誤
 exam:exams!inner(
   class_id,  // 這個欄位與 courses!inner 無關
   course:courses!inner(course_type)
 )
 // 然後過濾 exam.class_id → 永遠不匹配
 
-// ✅ 正確
+// 正確
 exam:exams!inner(
   course_id,
   course:courses!inner(
@@ -323,7 +328,7 @@ ALTER TABLE exams RENAME COLUMN is_published TO is_active;
 **所有使用 `exams.class_id` 的查詢需改為 nested join**：
 
 ```typescript
-// ❌ 錯誤（Production 會返回 400）
+// 錯誤（Production 會返回 400）
 .select(`
   exam:exams!inner(
     class_id,
@@ -331,7 +336,7 @@ ALTER TABLE exams RENAME COLUMN is_published TO is_active;
   )
 `)
 
-// ✅ 正確
+// 正確
 .select(`
   exam:exams!inner(
     course_id,

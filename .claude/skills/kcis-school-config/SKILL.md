@@ -1,7 +1,11 @@
+---
+name: kcis-school-config
+description: KCIS Linkou Campus elementary school configuration and terminology. Use this skill when implementing school-specific features, understanding course types (LT/IT/KCFS), role permissions, English levels (E1/E2/E3), grading systems, attendance status, or academic calendar settings.
+---
+
 # KCIS School Configuration
 
 > 康橋國際學校林口校區 - 小學部專屬設定與術語
-> Last Updated: 2025-12-22
 
 ## 學校資訊
 
@@ -196,10 +200,10 @@ LT 課程的必要通話時段：
 
 **只使用 email 匹配**，不使用 teacher_id 或 teacher_name：
 ```typescript
-// ✅ 正確
+// 正確
 const matches = entries.filter(e => e.teacher_email === user.email);
 
-// ❌ 錯誤 - 不要使用
+// 錯誤 - 不要使用
 const matches = entries.filter(e => e.teacher_id === user.id);
 ```
 
