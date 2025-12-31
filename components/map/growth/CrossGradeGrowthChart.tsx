@@ -62,9 +62,11 @@ export function CrossGradeGrowthChart({
     reading: g.reading.growthIndex,
     readingGrowth: g.reading.avgGrowth,
     readingCount: g.reading.studentCount,
+    readingCGP: g.reading.avgCGP,
     languageUsage: g.languageUsage.growthIndex,
     languageGrowth: g.languageUsage.avgGrowth,
     languageCount: g.languageUsage.studentCount,
+    languageCGP: g.languageUsage.avgCGP,
   }));
 
   // 自訂 Tooltip
@@ -89,9 +91,14 @@ export function CrossGradeGrowthChart({
             <div className="flex-1">
               <p className="text-xs text-muted-foreground">Reading</p>
               <p className="font-medium">
-                Growth Index: <span style={{ color: getGrowthQuintileColor(gradeData?.reading) }}>
+                Index: <span style={{ color: getGrowthQuintileColor(gradeData?.reading) }}>
                   {gradeData?.reading?.toFixed(2) ?? "N/A"}
                 </span>
+                {gradeData?.readingCGP !== null && gradeData?.readingCGP !== undefined && (
+                  <span className="ml-2 text-muted-foreground">
+                    cGP: <span className="text-foreground">{gradeData.readingCGP}<sup className="text-[9px]">th</sup></span>
+                  </span>
+                )}
               </p>
               <p className="text-xs text-muted-foreground">
                 Avg Growth: +{gradeData?.readingGrowth?.toFixed(1)} RIT ({gradeData?.readingCount} students)
@@ -113,9 +120,14 @@ export function CrossGradeGrowthChart({
             <div className="flex-1">
               <p className="text-xs text-muted-foreground">Language Usage</p>
               <p className="font-medium">
-                Growth Index: <span style={{ color: getGrowthQuintileColor(gradeData?.languageUsage) }}>
+                Index: <span style={{ color: getGrowthQuintileColor(gradeData?.languageUsage) }}>
                   {gradeData?.languageUsage?.toFixed(2) ?? "N/A"}
                 </span>
+                {gradeData?.languageCGP !== null && gradeData?.languageCGP !== undefined && (
+                  <span className="ml-2 text-muted-foreground">
+                    cGP: <span className="text-foreground">{gradeData.languageCGP}<sup className="text-[9px]">th</sup></span>
+                  </span>
+                )}
               </p>
               <p className="text-xs text-muted-foreground">
                 Avg Growth: +{gradeData?.languageGrowth?.toFixed(1)} RIT ({gradeData?.languageCount} students)
@@ -144,13 +156,15 @@ export function CrossGradeGrowthChart({
                 <TooltipTrigger asChild>
                   <Info className="w-4 h-4 text-muted-foreground cursor-help" />
                 </TooltipTrigger>
-                <TooltipContent className="max-w-[320px]">
+                <TooltipContent className="max-w-[340px]">
                   <p className="text-xs mb-2">
                     <strong>Growth Index</strong> = Actual Growth / Expected Growth
                   </p>
                   <p className="text-xs mb-2">
-                    A value of <strong>1.0</strong> means students met the expected growth.
-                    Above 1.0 = exceeded expectations, below 1.0 = below expectations.
+                    <strong>cGP (Conditional Growth Percentile)</strong> = Percentile ranking that accounts for starting RIT score (1-99)
+                  </p>
+                  <p className="text-xs mb-2">
+                    Index of <strong>1.0</strong> = met expectations. cGP of <strong>50</strong> = average growth for similar starting scores.
                   </p>
                   <p className="text-xs text-muted-foreground">
                     This chart shows all grades (G3-G6) side by side for quick comparison.

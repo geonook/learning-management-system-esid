@@ -37,11 +37,13 @@ export interface CrossGradeGrowthData {
     reading: {
       avgGrowth: number;
       growthIndex: number | null;  // null when no NWEA norm available
+      avgCGP: number | null;  // Average Conditional Growth Percentile (1-99)
       studentCount: number;
     };
     languageUsage: {
       avgGrowth: number;
       growthIndex: number | null;  // null when no NWEA norm available
+      avgCGP: number | null;  // Average Conditional Growth Percentile (1-99)
       studentCount: number;
     };
   }>;
@@ -62,6 +64,7 @@ export interface GrowthSpotlightStudent {
   toScore: number;
   growth: number;
   growthIndex: number | null;
+  cgp: number | null;  // Conditional Growth Percentile (1-99)
   course: Course;
   flag?: 'negative' | 'low_growth' | 'rapid_guess';
 }
@@ -85,6 +88,7 @@ export interface ClassComparisonData {
     className: string;
     avgGrowth: number;
     growthIndex: number | null;  // null when no NWEA norm available
+    avgCGP: number | null;  // Average Conditional Growth Percentile (1-99)
     studentCount: number;
     vsNorm: number | null;  // null when no NWEA norm available
     distribution: {
@@ -97,6 +101,7 @@ export interface ClassComparisonData {
   gradeAverage: {
     avgGrowth: number;
     growthIndex: number | null;  // null when no NWEA norm available
+    avgCGP: number | null;  // Average Conditional Growth Percentile (1-99)
     studentCount: number;
   };
 }
@@ -174,6 +179,7 @@ export async function getCrossGradeGrowth(params: {
   const grades = [3, 4, 5, 6];
 
   // 查詢所有年級的 MAP 資料
+  // 包含 conditional_growth_percentile 欄位（CDF 官方值）
   const { data, error } = await supabase
     .from("map_assessments")
     .select(`
@@ -182,6 +188,8 @@ export async function getCrossGradeGrowth(params: {
       term_tested,
       rit_score,
       grade,
+      conditional_growth_percentile,
+      fall_to_fall_conditional_growth_percentile,
       students:student_id (
         grade,
         level,
@@ -205,6 +213,7 @@ export async function getCrossGradeGrowth(params: {
     toGrade: number | null;    // 結束年級
     from: { reading: number | null; languageUsage: number | null };
     to: { reading: number | null; languageUsage: number | null };
+    cgp: { reading: number | null; languageUsage: number | null };  // CDF 官方 cGP
   }>();
 
   for (const row of data ?? []) {
@@ -220,6 +229,7 @@ export async function getCrossGradeGrowth(params: {
         toGrade: null,
         from: { reading: null, languageUsage: null },
         to: { reading: null, languageUsage: null },
+        cgp: { reading: null, languageUsage: null },
       });
     }
 
@@ -232,6 +242,11 @@ export async function getCrossGradeGrowth(params: {
     } else if (row.term_tested === toTerm) {
       record.toGrade = row.grade;  // 記錄結束年級
       record.to[courseKey] = row.rit_score;
+      // CDF 官方 cGP
+      const rowAny = row as Record<string, unknown>;
+      record.cgp[courseKey] = (rowAny.conditional_growth_percentile as number | null)
+        ?? (rowAny.fall_to_fall_conditional_growth_percentile as number | null)
+        ?? null;
     }
   }
 
@@ -257,6 +272,9 @@ export async function getCrossGradeGrowth(params: {
     const rdGrowthIndex = rdExpected !== null && rdExpected !== 0
       ? Math.round((rdAvgGrowth / rdExpected) * 100) / 100
       : null;
+    // 計算 Reading 平均 cGP
+    const rdCGPs = rdStudents.map(s => s.cgp.reading).filter((c): c is number => c !== null);
+    const rdAvgCGP = rdCGPs.length > 0 ? Math.round(rdCGPs.reduce((a, b) => a + b, 0) / rdCGPs.length) : null;
 
     // Language Usage
     const luStudents = gradeStudents.filter(s => s.from.languageUsage !== null && s.to.languageUsage !== null);
@@ -267,17 +285,22 @@ export async function getCrossGradeGrowth(params: {
     const luGrowthIndex = luExpected !== null && luExpected !== 0
       ? Math.round((luAvgGrowth / luExpected) * 100) / 100
       : null;
+    // 計算 Language Usage 平均 cGP
+    const luCGPs = luStudents.map(s => s.cgp.languageUsage).filter((c): c is number => c !== null);
+    const luAvgCGP = luCGPs.length > 0 ? Math.round(luCGPs.reduce((a, b) => a + b, 0) / luCGPs.length) : null;
 
     result.grades.push({
       grade,
       reading: {
         avgGrowth: Math.round(rdAvgGrowth * 10) / 10,
         growthIndex: rdGrowthIndex,
+        avgCGP: rdAvgCGP,
         studentCount: rdStudents.length,
       },
       languageUsage: {
         avgGrowth: Math.round(luAvgGrowth * 10) / 10,
         growthIndex: luGrowthIndex,
+        avgCGP: luAvgCGP,
         studentCount: luStudents.length,
       },
     });
@@ -310,6 +333,7 @@ export async function getGrowthSpotlight(params: {
   const { grade, course, fromTerm, toTerm, limit = 5 } = params;
 
   // 建立查詢
+  // 包含 conditional_growth_percentile 欄位（CDF 官方值）
   let query = supabase
     .from("map_assessments")
     .select(`
@@ -321,6 +345,8 @@ export async function getGrowthSpotlight(params: {
       rit_score,
       grade,
       rapid_guessing_percent,
+      conditional_growth_percentile,
+      fall_to_fall_conditional_growth_percentile,
       students:student_id (
         id,
         grade,
@@ -362,6 +388,8 @@ export async function getGrowthSpotlight(params: {
     fromScore: number | null;
     toScore: number | null;
     rapidGuessing: number | null;
+    // CDF 官方 cGP（優先使用）
+    officialCGP: number | null;
   }
 
   const studentMap = new Map<string, StudentGrowth>();
@@ -399,6 +427,7 @@ export async function getGrowthSpotlight(params: {
         fromScore: null,
         toScore: null,
         rapidGuessing: null,
+        officialCGP: null,  // 稍後從 toTerm 記錄
       });
     }
 
@@ -410,6 +439,12 @@ export async function getGrowthSpotlight(params: {
     } else if (row.term_tested === toTerm) {
       record.toScore = row.rit_score;
       record.rapidGuessing = row.rapid_guessing_percent;
+      // CDF 官方 cGP：Fall-to-Spring 使用 conditional_growth_percentile，
+      // Fall-to-Fall 使用 fall_to_fall_conditional_growth_percentile
+      const rowAny = row as Record<string, unknown>;
+      record.officialCGP = (rowAny.conditional_growth_percentile as number | null)
+        ?? (rowAny.fall_to_fall_conditional_growth_percentile as number | null)
+        ?? null;
     }
   }
 
@@ -455,6 +490,7 @@ export async function getGrowthSpotlight(params: {
       toScore: student.toScore,
       growth,
       growthIndex: growthIndex !== null ? Math.round(growthIndex * 100) / 100 : null,
+      cgp: student.officialCGP,  // CDF 官方 Growth Percentile
       course,
       flag,
     });
@@ -506,6 +542,7 @@ export async function getClassGrowthComparison(params: {
   const { grade, course, fromTerm, toTerm } = params;
 
   // 查詢該年級所有學生的 MAP 資料
+  // 包含 conditional_growth_percentile 欄位（CDF 官方值）
   const { data, error } = await supabase
     .from("map_assessments")
     .select(`
@@ -514,6 +551,8 @@ export async function getClassGrowthComparison(params: {
       term_tested,
       rit_score,
       grade,
+      conditional_growth_percentile,
+      fall_to_fall_conditional_growth_percentile,
       students:student_id (
         id,
         grade,
@@ -542,6 +581,7 @@ export async function getClassGrowthComparison(params: {
     className: string | null;
     fromScore: number | null;
     toScore: number | null;
+    officialCGP: number | null;  // CDF 官方 cGP
   }
 
   const studentMap = new Map<string, StudentRecord>();
@@ -571,6 +611,7 @@ export async function getClassGrowthComparison(params: {
         className: classInfo?.name ?? null,
         fromScore: null,
         toScore: null,
+        officialCGP: null,
       });
     }
 
@@ -580,6 +621,11 @@ export async function getClassGrowthComparison(params: {
       record.fromScore = row.rit_score;
     } else if (row.term_tested === toTerm) {
       record.toScore = row.rit_score;
+      // CDF 官方 cGP
+      const rowAny = row as Record<string, unknown>;
+      record.officialCGP = (rowAny.conditional_growth_percentile as number | null)
+        ?? (rowAny.fall_to_fall_conditional_growth_percentile as number | null)
+        ?? null;
     }
   }
 
@@ -588,9 +634,11 @@ export async function getClassGrowthComparison(params: {
     classId: string;
     className: string;
     growths: number[];
+    cgps: number[];  // 收集班級內所有學生的 cGP
   }>();
 
   const allGrowths: number[] = [];
+  const allCGPs: number[] = [];  // 收集年級內所有學生的 cGP
   // 移除 ?? 1 fallback：當沒有 NWEA norm 時，Growth Index 應為 null
   const expectedGrowth = getExpectedGrowth(fromTerm, toTerm, grade, course);
 
@@ -600,16 +648,24 @@ export async function getClassGrowthComparison(params: {
 
     const growth = student.toScore - student.fromScore;
     allGrowths.push(growth);
+    if (student.officialCGP !== null) {
+      allCGPs.push(student.officialCGP);
+    }
 
     if (!classBuckets.has(student.classId)) {
       classBuckets.set(student.classId, {
         classId: student.classId,
         className: student.className,
         growths: [],
+        cgps: [],
       });
     }
 
-    classBuckets.get(student.classId)!.growths.push(growth);
+    const bucket = classBuckets.get(student.classId)!;
+    bucket.growths.push(growth);
+    if (student.officialCGP !== null) {
+      bucket.cgps.push(student.officialCGP);
+    }
   }
 
   // 計算班級統計
@@ -621,6 +677,11 @@ export async function getClassGrowthComparison(params: {
     const avgGrowth = bucket.growths.reduce((a, b) => a + b, 0) / bucket.growths.length;
     const growthIndex = expectedGrowth !== null && expectedGrowth !== 0
       ? avgGrowth / expectedGrowth
+      : null;
+
+    // 計算班級平均 cGP
+    const avgCGP = bucket.cgps.length > 0
+      ? Math.round(bucket.cgps.reduce((a, b) => a + b, 0) / bucket.cgps.length)
       : null;
 
     // 成長分佈
@@ -636,6 +697,7 @@ export async function getClassGrowthComparison(params: {
       className: bucket.className,
       avgGrowth: Math.round(avgGrowth * 10) / 10,
       growthIndex: growthIndex !== null ? Math.round(growthIndex * 100) / 100 : null,
+      avgCGP,
       studentCount: bucket.growths.length,
       vsNorm: expectedGrowth !== null ? Math.round((avgGrowth - expectedGrowth) * 10) / 10 : null,
       distribution,
@@ -657,6 +719,9 @@ export async function getClassGrowthComparison(params: {
   const gradeGrowthIndex = expectedGrowth !== null && expectedGrowth !== 0
     ? gradeAvgGrowth / expectedGrowth
     : null;
+  const gradeAvgCGP = allCGPs.length > 0
+    ? Math.round(allCGPs.reduce((a, b) => a + b, 0) / allCGPs.length)
+    : null;
 
   return {
     grade,
@@ -667,6 +732,7 @@ export async function getClassGrowthComparison(params: {
     gradeAverage: {
       avgGrowth: Math.round(gradeAvgGrowth * 10) / 10,
       growthIndex: gradeGrowthIndex !== null ? Math.round(gradeGrowthIndex * 100) / 100 : null,
+      avgCGP: gradeAvgCGP,
       studentCount: allGrowths.length,
     },
   };

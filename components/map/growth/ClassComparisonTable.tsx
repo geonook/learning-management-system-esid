@@ -35,7 +35,7 @@ interface ClassComparisonTableProps {
   loading?: boolean;
 }
 
-type SortKey = "className" | "avgGrowth" | "growthIndex" | "studentCount" | "vsNorm";
+type SortKey = "className" | "avgGrowth" | "growthIndex" | "avgCGP" | "studentCount" | "vsNorm";
 type SortDirection = "asc" | "desc";
 
 export function ClassComparisonTable({ data, loading }: ClassComparisonTableProps) {
@@ -135,6 +135,24 @@ export function ClassComparisonTable({ data, loading }: ClassComparisonTableProp
     );
   };
 
+  const formatAvgCGP = (value: number | null) => {
+    if (value === null) {
+      return <span className="text-muted-foreground">N/A</span>;
+    }
+    // Color coding based on percentile
+    let color = "text-foreground";
+    if (value >= 75) color = "text-green-600 dark:text-green-400";
+    else if (value >= 50) color = "text-blue-600 dark:text-blue-400";
+    else if (value >= 25) color = "text-yellow-600 dark:text-yellow-400";
+    else color = "text-red-600 dark:text-red-400";
+
+    return (
+      <span className={`font-medium ${color}`}>
+        {value}<sup className="text-[10px]">th</sup>
+      </span>
+    );
+  };
+
   // 計算分佈百分比
   const getDistributionPercent = (dist: ClassComparisonData["classes"][0]["distribution"], key: keyof typeof dist, total: number) => {
     return total > 0 ? Math.round((dist[key] / total) * 100) : 0;
@@ -152,13 +170,14 @@ export function ClassComparisonTable({ data, loading }: ClassComparisonTableProp
                 <TooltipTrigger asChild>
                   <Info className="w-4 h-4 text-muted-foreground cursor-help" />
                 </TooltipTrigger>
-                <TooltipContent className="max-w-[300px]">
+                <TooltipContent className="max-w-[320px]">
                   <p className="text-xs mb-2">
                     Compare growth across different classes in G{data.grade}.
                   </p>
                   <ul className="text-xs space-y-1">
                     <li><strong>Avg Growth:</strong> Average RIT point increase</li>
                     <li><strong>Growth Index:</strong> Actual / Expected (1.0 = target)</li>
+                    <li><strong>Avg cGP:</strong> Conditional Growth Percentile (accounts for starting RIT)</li>
                     <li><strong>vs Norm:</strong> Difference from expected growth</li>
                   </ul>
                 </TooltipContent>
@@ -215,8 +234,17 @@ export function ClassComparisonTable({ data, loading }: ClassComparisonTableProp
                     onClick={() => handleSort("growthIndex")}
                   >
                     <div className="flex items-center justify-end">
-                      Growth Index
+                      Index
                       <SortIcon columnKey="growthIndex" />
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-muted/50 text-right"
+                    onClick={() => handleSort("avgCGP")}
+                  >
+                    <div className="flex items-center justify-end">
+                      Avg cGP
+                      <SortIcon columnKey="avgCGP" />
                     </div>
                   </TableHead>
                   <TableHead
@@ -252,6 +280,9 @@ export function ClassComparisonTable({ data, loading }: ClassComparisonTableProp
                     </TableCell>
                     <TableCell className="text-right">
                       {formatGrowthIndex(classData.growthIndex)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatAvgCGP(classData.avgCGP)}
                     </TableCell>
                     <TableCell className="text-right">
                       {formatVsNorm(classData.vsNorm)}
@@ -306,6 +337,9 @@ export function ClassComparisonTable({ data, loading }: ClassComparisonTableProp
                   </TableCell>
                   <TableCell className="text-right">
                     {formatGrowthIndex(data.gradeAverage.growthIndex)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatAvgCGP(data.gradeAverage.avgCGP)}
                   </TableCell>
                   <TableCell className="text-right text-muted-foreground">
                     -

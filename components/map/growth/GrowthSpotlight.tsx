@@ -100,9 +100,18 @@ function StudentCard({
         <span className={isPositive ? "text-green-600 dark:text-green-400 font-medium" : "text-red-600 dark:text-red-400 font-medium"}>
           {student.toScore}
         </span>
+      </div>
+
+      {/* Growth Metrics: Index + cGP */}
+      <div className="flex items-center gap-3 text-xs">
         {student.growthIndex !== null && (
-          <span className="ml-auto text-xs">
-            Index: {student.growthIndex.toFixed(2)}
+          <span className="text-muted-foreground">
+            Index: <span className="font-medium text-foreground">{student.growthIndex.toFixed(2)}</span>
+          </span>
+        )}
+        {student.cgp !== null && (
+          <span className="text-muted-foreground">
+            cGP: <span className="font-medium text-foreground">{student.cgp}<sup className="text-[10px]">th</sup></span>
           </span>
         )}
       </div>
