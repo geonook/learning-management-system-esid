@@ -200,9 +200,10 @@ export default function MapAnalysisPage() {
   const selectedGrowthPeriod = growthPeriodOptions.find(p => p.id === selectedGrowthPeriodId);
 
   // 衍生資料（根據當前選擇從快取取得）
-  const crossGradeGrowthData = crossGradeGrowthCache[growthType] ?? null;
-  const growthSpotlightData = growthSpotlightCache[`${selectedGrade}-${spotlightCourse}-${growthType}`] ?? null;
-  const classComparisonData = classComparisonCache[`${selectedGrade}-${spotlightCourse}-${growthType}`] ?? null;
+  // 使用 selectedGrowthPeriodId 作為快取鍵（而非 growthType）
+  const crossGradeGrowthData = crossGradeGrowthCache[selectedGrowthPeriodId] ?? null;
+  const growthSpotlightData = growthSpotlightCache[`${selectedGrade}-${spotlightCourse}-${selectedGrowthPeriodId}`] ?? null;
+  const classComparisonData = classComparisonCache[`${selectedGrade}-${spotlightCourse}-${selectedGrowthPeriodId}`] ?? null;
 
   // Loading states per tab
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({
@@ -346,56 +347,40 @@ export default function MapAnalysisPage() {
   );
 
   // Fetch Cross-Grade Growth Data (for new Growth Overview section)
-  const fetchCrossGradeGrowthData = useCallback(async (type: GrowthType) => {
+  // 使用 period.id 作為快取鍵，使用 period.fromTerm/toTerm 作為 API 參數
+  const fetchCrossGradeGrowthData = useCallback(async (period: GrowthPeriodOption) => {
+    const cacheKey = period.id;
     // 快取檢查
-    if (crossGradeGrowthCache[type] !== undefined) return;
+    if (crossGradeGrowthCache[cacheKey] !== undefined) return;
 
     try {
-      let fromTerm: string;
-      let toTerm: string;
-
-      if (type === "within-year") {
-        fromTerm = "Fall 2024-2025";
-        toTerm = "Spring 2024-2025";
-      } else {
-        fromTerm = "Fall 2024-2025";
-        toTerm = "Fall 2025-2026";
-      }
-
-      const result = await getCrossGradeGrowth({ fromTerm, toTerm });
-      setCrossGradeGrowthCache((prev) => ({ ...prev, [type]: result }));
+      const result = await getCrossGradeGrowth({
+        fromTerm: period.fromTerm,
+        toTerm: period.toTerm,
+      });
+      setCrossGradeGrowthCache((prev) => ({ ...prev, [cacheKey]: result }));
     } catch (err) {
       console.error("Error fetching cross-grade growth data:", err);
     }
   }, [crossGradeGrowthCache]);
 
   // Fetch Growth Spotlight Data
+  // 使用 period.id 作為快取鍵的一部分，使用 period.fromTerm/toTerm 作為 API 參數
   const fetchGrowthSpotlightData = useCallback(async (
     grade: number,
     course: "Reading" | "Language Usage",
-    type: GrowthType
+    period: GrowthPeriodOption
   ) => {
-    const cacheKey = `${grade}-${course}-${type}`;
+    const cacheKey = `${grade}-${course}-${period.id}`;
     // 快取檢查
     if (growthSpotlightCache[cacheKey] !== undefined) return;
 
     try {
-      let fromTerm: string;
-      let toTerm: string;
-
-      if (type === "within-year") {
-        fromTerm = "Fall 2024-2025";
-        toTerm = "Spring 2024-2025";
-      } else {
-        fromTerm = "Fall 2024-2025";
-        toTerm = "Fall 2025-2026";
-      }
-
       const result = await getGrowthSpotlight({
         grade,
         course,
-        fromTerm,
-        toTerm,
+        fromTerm: period.fromTerm,
+        toTerm: period.toTerm,
         limit: 5,
       });
       setGrowthSpotlightCache((prev) => ({ ...prev, [cacheKey]: result }));
@@ -405,32 +390,22 @@ export default function MapAnalysisPage() {
   }, [growthSpotlightCache]);
 
   // Fetch Class Comparison Data
+  // 使用 period.id 作為快取鍵的一部分，使用 period.fromTerm/toTerm 作為 API 參數
   const fetchClassComparisonData = useCallback(async (
     grade: number,
     course: "Reading" | "Language Usage",
-    type: GrowthType
+    period: GrowthPeriodOption
   ) => {
-    const cacheKey = `${grade}-${course}-${type}`;
+    const cacheKey = `${grade}-${course}-${period.id}`;
     // 快取檢查
     if (classComparisonCache[cacheKey] !== undefined) return;
 
     try {
-      let fromTerm: string;
-      let toTerm: string;
-
-      if (type === "within-year") {
-        fromTerm = "Fall 2024-2025";
-        toTerm = "Spring 2024-2025";
-      } else {
-        fromTerm = "Fall 2024-2025";
-        toTerm = "Fall 2025-2026";
-      }
-
       const result = await getClassGrowthComparison({
         grade,
         course,
-        fromTerm,
-        toTerm,
+        fromTerm: period.fromTerm,
+        toTerm: period.toTerm,
       });
       setClassComparisonCache((prev) => ({ ...prev, [cacheKey]: result }));
     } catch (err) {
@@ -547,7 +522,8 @@ export default function MapAnalysisPage() {
       // 計算當前標籤的快取鍵
       let tabKey: string;
       if (selectedTab === "growth") {
-        tabKey = `${selectedTab}-${selectedGrade}-${growthType}`;
+        // 使用 selectedGrowthPeriodId 作為 key，確保切換期間時觸發重新載入
+        tabKey = `${selectedTab}-${selectedGrade}-${selectedGrowthPeriodId}`;
       } else if (selectedTab === "transitions") {
         tabKey = `${selectedTab}-${selectedGrade}-${transitionPeriod}`;
       } else {
@@ -569,10 +545,12 @@ export default function MapAnalysisPage() {
           break;
         case "growth":
           await fetchGrowthData(selectedGrade, growthType);
-          // 同時載入新版 Growth Tab 資料
-          fetchCrossGradeGrowthData(growthType);
-          fetchGrowthSpotlightData(selectedGrade, spotlightCourse, growthType);
-          fetchClassComparisonData(selectedGrade, spotlightCourse, growthType);
+          // 同時載入新版 Growth Tab 資料（使用 selectedGrowthPeriod 的動態 term）
+          if (selectedGrowthPeriod) {
+            fetchCrossGradeGrowthData(selectedGrowthPeriod);
+            fetchGrowthSpotlightData(selectedGrade, spotlightCourse, selectedGrowthPeriod);
+            fetchClassComparisonData(selectedGrade, spotlightCourse, selectedGrowthPeriod);
+          }
           break;
         case "goals":
           await fetchGoalData(selectedGrade);
@@ -599,6 +577,7 @@ export default function MapAnalysisPage() {
     selectedTab,
     selectedGrade,
     growthType,
+    selectedGrowthPeriod,  // 新增：當選擇的 growth period 變化時觸發重新載入
     transitionPeriod,
     spotlightCourse,
     refreshTrigger, // 用於手動觸發重新載入
@@ -1076,7 +1055,9 @@ export default function MapAnalysisPage() {
                         variant={spotlightCourse === "Reading" ? "default" : "outline"}
                         onClick={() => {
                           setSpotlightCourse("Reading");
-                          fetchGrowthSpotlightData(selectedGrade, "Reading", growthType);
+                          if (selectedGrowthPeriod) {
+                            fetchGrowthSpotlightData(selectedGrade, "Reading", selectedGrowthPeriod);
+                          }
                         }}
                       >
                         Reading
@@ -1086,7 +1067,9 @@ export default function MapAnalysisPage() {
                         variant={spotlightCourse === "Language Usage" ? "default" : "outline"}
                         onClick={() => {
                           setSpotlightCourse("Language Usage");
-                          fetchGrowthSpotlightData(selectedGrade, "Language Usage", growthType);
+                          if (selectedGrowthPeriod) {
+                            fetchGrowthSpotlightData(selectedGrade, "Language Usage", selectedGrowthPeriod);
+                          }
                         }}
                       >
                         Language Usage
