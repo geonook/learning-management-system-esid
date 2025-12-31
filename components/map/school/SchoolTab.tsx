@@ -4,11 +4,15 @@
  * School Tab Component
  *
  * 全校 MAP 表現總覽
- * 顯示 G3-G6 跨年級比較圖表、摘要表格、成長分佈
+ * 分為兩大區塊：
+ * 1. Achievement Analysis (成就分析) - 單一時間點的表現
+ * 2. Growth Analysis (成長分析) - 兩個時間點之間的進步
+ *
+ * 設計目標：讓沒有 MAP 背景知識的使用者也能理解
  */
 
-import { useState, useEffect, useCallback } from "react";
-import { RefreshCw, Info } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { RefreshCw, Info, TrendingUp, BarChart3, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -25,6 +29,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CrossGradeChart } from "./CrossGradeChart";
 import { SchoolSummaryTable } from "./SchoolSummaryTable";
 import { GrowthDistributionChart } from "./GrowthDistributionChart";
@@ -134,10 +139,27 @@ export function SchoolTab() {
     loadData();
   }, [loadData]);
 
-  // 處理 term 變更
+  // 處理 term 變更 - 智慧連動 Growth Period
   const handleTermChange = (term: string) => {
     setSelectedTerm(term);
+
+    // 智慧連動：當選擇 Term 時，自動設定對應的 Growth Period
+    // 找到以該 term 為 toTerm 的 growth period
+    const matchingPeriod = availableGrowthPeriods.find(
+      (p) => p.toTerm === term
+    );
+    if (matchingPeriod) {
+      setSelectedGrowthPeriod(
+        `${matchingPeriod.fromTerm}→${matchingPeriod.toTerm}`
+      );
+    }
   };
+
+  // 解析當前的 growth period 用於顯示
+  const currentGrowthPeriodInfo = useMemo(() => {
+    const { fromTerm, toTerm } = parseGrowthPeriod(selectedGrowthPeriod);
+    return { fromTerm, toTerm };
+  }, [selectedGrowthPeriod]);
 
   // 過濾資料（依選擇的 course）
   const filteredData: CrossGradeStats[] =
@@ -182,15 +204,51 @@ export function SchoolTab() {
               Cross-grade analysis for all G3-G6 students
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={loadData}>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Glossary Tooltip */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <HelpCircle className="w-4 h-4 mr-1" />
+                  Glossary
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-sm p-4" side="bottom">
+                <div className="space-y-2 text-xs">
+                  <p className="font-semibold text-sm mb-2">Common Terms</p>
+                  <div>
+                    <span className="font-medium">RIT Score:</span>{" "}
+                    MAP test scale (150-260), higher = better
+                  </div>
+                  <div>
+                    <span className="font-medium">NWEA Norm:</span>{" "}
+                    U.S. national average for same grade/term
+                  </div>
+                  <div>
+                    <span className="font-medium">Achievement:</span>{" "}
+                    Performance at one point in time
+                  </div>
+                  <div>
+                    <span className="font-medium">Growth:</span>{" "}
+                    Improvement between two test dates
+                  </div>
+                  <div>
+                    <span className="font-medium">E1/E2/E3:</span>{" "}
+                    E1=Exceeds, E2=Meets, E3=Below expectations
+                  </div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+            <Button variant="outline" size="sm" onClick={loadData}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
         </div>
 
-        {/* Controls */}
+        {/* Global Controls */}
         <div className="flex items-center gap-4 flex-wrap">
-          {/* Term Selector */}
+          {/* Term Selector - controls both Achievement and Growth */}
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Term:</span>
             <Select value={selectedTerm} onValueChange={handleTermChange}>
@@ -205,6 +263,17 @@ export function SchoolTab() {
                 ))}
               </SelectContent>
             </Select>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <p className="text-xs">
+                  Select a test term. Achievement charts show this term&apos;s results.
+                  Growth charts automatically compare with the previous year.
+                </p>
+              </TooltipContent>
+            </Tooltip>
           </div>
 
           {/* Course Tabs */}
@@ -218,149 +287,168 @@ export function SchoolTab() {
               <TabsTrigger value="Reading">Reading</TabsTrigger>
             </TabsList>
           </Tabs>
+        </div>
 
-          {/* Growth Period Selector */}
-          {availableGrowthPeriods.length > 0 && (
+        {/* ============================================ */}
+        {/* SECTION 1: Achievement Analysis */}
+        {/* ============================================ */}
+        <Card>
+          <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Growth Period:</span>
-              <Select
-                value={selectedGrowthPeriod}
-                onValueChange={(v) => setSelectedGrowthPeriod(v)}
-              >
-                <SelectTrigger className="w-64">
-                  <SelectValue placeholder="Select growth period" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableGrowthPeriods.map((period) => {
-                    const key = `${period.fromTerm}→${period.toTerm}`;
-                    return (
-                      <SelectItem key={key} value={key}>
-                        <div className="flex items-center justify-between gap-2">
-                          <span>{period.label}</span>
-                          <span className="text-xs text-muted-foreground">
-                            (n={period.studentCount})
-                          </span>
+              <BarChart3 className="w-5 h-5 text-blue-600" />
+              <CardTitle className="text-base">Achievement Analysis</CardTitle>
+            </div>
+            <CardDescription>
+              How did students perform on the MAP test in{" "}
+              <span className="font-medium text-foreground">{selectedTerm || "this term"}</span>?
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Cross-Grade Chart */}
+            <div className="rounded-lg border bg-card/50 p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <h3 className="text-sm font-medium">Cross-Grade Performance</h3>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p className="text-xs">
+                      Compares KCIS student average RIT with U.S. national norms.
+                      Error bars show ±1 standard deviation (68% of students fall within this range).
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <CrossGradeChart data={filteredData} />
+            </div>
+
+            {/* Summary Table */}
+            <div className="rounded-lg border bg-card/50 p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <h3 className="text-sm font-medium">Summary Statistics</h3>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p className="text-xs">
+                      Key metrics for each grade.{" "}
+                      <span className="text-green-600">Green</span> = above national norm,{" "}
+                      <span className="text-red-600">Red</span> = below.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <SchoolSummaryTable data={filteredData} />
+            </div>
+
+            {/* RIT-Grade Heatmap */}
+            {heatmapData && (
+              <div className="rounded-lg border bg-card/50 p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <h3 className="text-sm font-medium">RIT Distribution Heatmap</h3>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p className="text-xs">
+                        Shows how students are distributed across RIT ranges.
+                        Darker colors = more students in that range.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <RitGradeHeatmap data={heatmapData} />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* ============================================ */}
+        {/* SECTION 2: Growth Analysis */}
+        {/* ============================================ */}
+        {(growthData || scatterData) && (
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-green-600" />
+                <CardTitle className="text-base">Growth Analysis</CardTitle>
+              </div>
+              <CardDescription>
+                How much did students grow from{" "}
+                <span className="font-medium text-foreground">
+                  {currentGrowthPeriodInfo.fromTerm || "previous term"}
+                </span>{" "}
+                to{" "}
+                <span className="font-medium text-foreground">
+                  {currentGrowthPeriodInfo.toTerm || "current term"}
+                </span>?
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="w-3.5 h-3.5 ml-1 inline text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p className="text-xs">
+                      Growth analysis requires students to have taken tests in BOTH terms.
+                      Students missing either test are not included.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Growth Distribution */}
+              {growthData && (
+                <div className="rounded-lg border bg-card/50 p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <h3 className="text-sm font-medium">Growth Distribution</h3>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p className="text-xs">
+                          Shows how much RIT growth each student achieved.
+                          <span className="text-red-600"> Red bars</span> = students who went backward
+                          (may need extra support).
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <GrowthDistributionChart data={growthData} />
+                </div>
+              )}
+
+              {/* RIT-Growth Scatter Chart */}
+              {scatterData && (
+                <div className="rounded-lg border bg-card/50 p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <h3 className="text-sm font-medium">Starting RIT vs Growth</h3>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <div className="text-xs space-y-2">
+                          <p>
+                            Shows relationship between where students started and how much they grew.
+                          </p>
+                          <p className="text-blue-600">
+                            <strong>Why negative correlation?</strong> This is normal!
+                            Students who start high have less room to grow (ceiling effect).
+                            It&apos;s a statistical pattern, not a teaching problem.
+                          </p>
                         </div>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <p className="text-xs">
-                    Growth charts require paired data from two terms. Only students
-                    with assessments in both terms are included in growth analysis.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          )}
-        </div>
-
-        {/* Cross-Grade Chart */}
-        <div className="rounded-lg border bg-card p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <h3 className="text-sm font-medium">Cross-Grade Performance</h3>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                <p className="text-xs">
-                  Compares KCISLK student performance across G3-G6 with NWEA
-                  national norms. Error bars show ±1 standard deviation.
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-          <CrossGradeChart data={filteredData} />
-        </div>
-
-        {/* Summary Table */}
-        <div className="rounded-lg border bg-card p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <h3 className="text-sm font-medium">Summary Table</h3>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                <p className="text-xs">
-                  Shows key metrics for each grade compared to NWEA national
-                  norms. Green indicates above norm, red indicates below.
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-          <SchoolSummaryTable data={filteredData} />
-        </div>
-
-        {/* RIT-Grade Heatmap */}
-        {heatmapData && (
-          <div className="rounded-lg border bg-card p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <h3 className="text-sm font-medium">RIT Distribution by Grade</h3>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <p className="text-xs">
-                    2D heatmap showing RIT score distribution across grade
-                    levels. Darker cells indicate more students in that range.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <RitGradeHeatmap data={heatmapData} />
-          </div>
-        )}
-
-        {/* Growth Distribution */}
-        {growthData && (
-          <div className="rounded-lg border bg-card p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <h3 className="text-sm font-medium">Growth Distribution</h3>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <p className="text-xs">
-                    Shows Fall-to-Fall growth distribution across all grades.
-                    Red bars indicate students with negative growth who may need
-                    intervention.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <GrowthDistributionChart data={growthData} />
-          </div>
-        )}
-
-        {/* RIT-Growth Scatter Chart */}
-        {scatterData && (
-          <div className="rounded-lg border bg-card p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <h3 className="text-sm font-medium">RIT-Growth Correlation</h3>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <p className="text-xs">
-                    Shows relationship between starting RIT and growth. Negative
-                    correlation may indicate ceiling effect for high performers.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <RitGrowthScatterChart data={scatterData} />
-          </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <RitGrowthScatterChart data={scatterData} />
+                </div>
+              )}
+            </CardContent>
+          </Card>
         )}
       </div>
     </TooltipProvider>

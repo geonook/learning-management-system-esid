@@ -51,14 +51,18 @@ export interface SchoolOverviewData {
 // ============================================================
 
 /**
- * 計算標準差
+ * 計算樣本標準差 (使用 Bessel's correction: N-1)
+ *
+ * 注意：這是樣本標準差，用於推論母體。
+ * 對於小樣本（n < 30），使用 N-1 更為準確。
  */
 function calculateStdDev(scores: number[]): number {
-  if (scores.length === 0) return 0;
+  if (scores.length <= 1) return 0;
   const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
   const squaredDiffs = scores.map((score) => Math.pow(score - mean, 2));
+  // 使用 N-1 (Bessel's correction) 來計算樣本標準差
   const avgSquaredDiff =
-    squaredDiffs.reduce((a, b) => a + b, 0) / scores.length;
+    squaredDiffs.reduce((a, b) => a + b, 0) / (scores.length - 1);
   return Math.sqrt(avgSquaredDiff);
 }
 

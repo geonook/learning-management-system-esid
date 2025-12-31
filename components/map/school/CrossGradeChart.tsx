@@ -48,9 +48,24 @@ const SCHOOL_COLORS = {
 
 export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
   // 轉換資料格式，包含 KCIS Expected 數據
-  const chartData = useMemo(() => {
-    const grades = [3, 4, 5, 6];
-    return grades.map((grade) => {
+  // 只顯示有實際數據的年級（解決 G6 空資料問題）
+  const { chartData, missingGrades } = useMemo(() => {
+    const allGrades = [3, 4, 5, 6];
+    const gradesWithData: number[] = [];
+    const gradesWithoutData: number[] = [];
+
+    // 先檢查哪些年級有資料
+    allGrades.forEach((grade) => {
+      const gradeData = data.find((d) => d.grade === grade);
+      if (gradeData && gradeData.studentCount > 0) {
+        gradesWithData.push(grade);
+      } else {
+        gradesWithoutData.push(grade);
+      }
+    });
+
+    // 只為有資料的年級生成圖表資料
+    const chartItems = gradesWithData.map((grade) => {
       const gradeData = data.find((d) => d.grade === grade);
       const kcisData = KCIS_EXPECTED[grade];
       return {
@@ -67,6 +82,11 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
         expectedLower: kcisData ? kcisData.mean - kcisData.stdDev : null,
       };
     });
+
+    return {
+      chartData: chartItems,
+      missingGrades: gradesWithoutData,
+    };
   }, [data]);
 
   // 計算 Y 軸範圍（包含 KCIS Expected 範圍）
@@ -300,6 +320,12 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
           <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ backgroundColor: SCHOOL_COLORS.norm }} />
           <strong>Gray line:</strong> NWEA Norm
         </p>
+        {/* 缺失年級提示 */}
+        {missingGrades.length > 0 && (
+          <p className="text-amber-600 dark:text-amber-400">
+            <strong>Note:</strong> G{missingGrades.join(", G")} not shown (no data available for this term).
+          </p>
+        )}
       </div>
     </div>
   );
