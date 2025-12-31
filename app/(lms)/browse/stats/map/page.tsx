@@ -25,6 +25,8 @@ import {
   LayoutGrid,
   Square,
   School,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -82,6 +84,10 @@ import {
   CrossGradeGrowthChart,
   GrowthSpotlight,
   ClassComparisonTable,
+  GrowthPeriodSelector,
+  GrowthContextBanner,
+  createGrowthPeriodOptions,
+  type GrowthPeriodOption,
 } from "@/components/map/growth";
 import { isBenchmarkSupported } from "@/lib/map/benchmarks";
 import { formatTermStats } from "@/lib/map/utils";
@@ -195,6 +201,17 @@ export default function MapAnalysisPage() {
   >({});
   // Selected course for Growth Spotlight
   const [spotlightCourse, setSpotlightCourse] = useState<"Reading" | "Language Usage">("Reading");
+
+  // Growth Period Options (generated from available terms)
+  // For now, hardcode available terms - later can be fetched from API
+  const availableTerms = ["Fall 2024-2025", "Spring 2024-2025", "Fall 2025-2026"];
+  const growthPeriodOptions = createGrowthPeriodOptions(availableTerms);
+  const [selectedGrowthPeriodId, setSelectedGrowthPeriodId] = useState<string>(
+    growthPeriodOptions[0]?.id ?? "fall-to-spring-2024-2025"
+  );
+  const selectedGrowthPeriod = growthPeriodOptions.find(p => p.id === selectedGrowthPeriodId);
+  // Expandable state for "All Growth Records" section
+  const [showAllGrowthRecords, setShowAllGrowthRecords] = useState(false);
 
   // 衍生資料（根據當前選擇從快取取得）
   const crossGradeGrowthData = crossGradeGrowthCache[growthType] ?? null;
@@ -641,6 +658,22 @@ export default function MapAnalysisPage() {
     // useEffect 會自動檢查並載入（如果尚未載入）
   };
 
+  // Handle growth period change (new dropdown-based selector)
+  const handleGrowthPeriodChange = (periodId: string) => {
+    setSelectedGrowthPeriodId(periodId);
+    const period = growthPeriodOptions.find(p => p.id === periodId);
+    if (period) {
+      // Map period type to ExtendedGrowthType
+      if (period.type === "within-year") {
+        setGrowthType("within-year");
+      } else if (period.type === "year-over-year") {
+        setGrowthType("year-over-year");
+      }
+      // Note: "summer" type doesn't have NWEA benchmark, treat as year-over-year for display
+      // The component will handle showing "no benchmark" appropriately
+    }
+  };
+
   // Handle transition period change - trigger reload
   const handleTransitionPeriodChange = (period: TransitionPeriod) => {
     setTransitionPeriod(period);
@@ -993,77 +1026,29 @@ export default function MapAnalysisPage() {
 
         {/* Growth Tab */}
         <TabsContent value="growth" className="space-y-6 mt-6">
-          {/* Growth Type Selector */}
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                  <h3 className="font-medium text-sm mb-1">
-                    Growth Analysis Type
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    {growthType === "within-year"
-                      ? "Measures student progress within a single academic year (Fall → Spring)"
-                      : growthType === "year-over-year"
-                      ? "Measures student progress over one year (Fall → Fall of next year)"
-                      : "Shows all consecutive test growths (Fall→Spring and Spring→Fall)"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Button
-                    size="sm"
-                    variant={
-                      growthType === "within-year" ? "default" : "outline"
-                    }
-                    onClick={() => handleGrowthTypeChange("within-year")}
-                    disabled={loadingStates.growth}
-                  >
-                    Within Year
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={
-                      growthType === "year-over-year" ? "default" : "outline"
-                    }
-                    onClick={() => handleGrowthTypeChange("year-over-year")}
-                    disabled={loadingStates.growth}
-                  >
-                    Year-over-Year
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={
-                      growthType === "consecutive" ? "default" : "outline"
-                    }
-                    onClick={() => handleGrowthTypeChange("consecutive")}
-                    disabled={loadingStates.growth}
-                  >
-                    Consecutive
-                  </Button>
-                </div>
-              </div>
+          {/* Growth Period Selector */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex-1 w-full sm:max-w-md">
+              <GrowthPeriodSelector
+                periods={growthPeriodOptions}
+                selectedId={selectedGrowthPeriodId}
+                onChange={handleGrowthPeriodChange}
+                disabled={loadingStates.growth}
+              />
+            </div>
+          </div>
 
-              {/* Explanation Box */}
-              <div className="mt-4 p-3 bg-muted/50 rounded-lg text-xs space-y-2">
-                <p>
-                  <strong>Within Year:</strong> Fall 2024-2025 → Spring
-                  2024-2025 (same grade, same year)
-                </p>
-                <p>
-                  <strong>Year-over-Year:</strong> Fall 2024-2025 → Fall
-                  2025-2026 (advance one grade)
-                </p>
-                <p>
-                  <strong>Consecutive:</strong> All consecutive tests (FA→SP
-                  with full metrics, SP→FA with growth only)
-                </p>
-                <p className="text-muted-foreground">
-                  Growth Index = Actual Growth ÷ Expected Growth | 1.0 = on
-                  target | &gt; 1.0 = above expected | &lt; 1.0 = below expected
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Context Banner */}
+          {selectedGrowthPeriod && (
+            <GrowthContextBanner
+              period={selectedGrowthPeriod}
+              studentCount={crossGradeGrowthData?.grades.reduce(
+                (sum, g) => sum + Math.max(g.reading.studentCount, g.languageUsage.studentCount),
+                0
+              ) ?? 0}
+              isLoading={loadingStates.growth}
+            />
+          )}
 
           {loadingStates.growth && renderSkeleton(2)}
           {errorStates.growth && renderError(errorStates.growth)}
@@ -1073,8 +1058,11 @@ export default function MapAnalysisPage() {
             !errorStates.growth &&
             growthType !== "consecutive" && (
               <>
-                {/* Cross-Grade Growth Overview (NEW) */}
-                <CrossGradeGrowthChart data={crossGradeGrowthData} />
+                {/* Cross-Grade Growth Overview */}
+                <CrossGradeGrowthChart
+                  data={crossGradeGrowthData}
+                  hasOfficialBenchmark={selectedGrowthPeriod?.hasOfficialBenchmark ?? true}
+                />
 
                 {/* Growth Index and Distribution */}
                 {growthData && (
@@ -1164,15 +1152,44 @@ export default function MapAnalysisPage() {
               </>
             )}
 
-          {/* Consecutive Growth View */}
+          {/* All Growth Records (Expandable) */}
           {!loadingStates.growth &&
             !errorStates.growth &&
-            growthType === "consecutive" &&
-            consecutiveGrowthData && (
-              <Card>
-                <CardContent className="pt-4">
-                  <MapConsecutiveGrowth data={consecutiveGrowthData} />
-                </CardContent>
+            growthType !== "consecutive" && (
+              <Card className="border-dashed">
+                <CardHeader className="pb-2">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-between"
+                    onClick={() => {
+                      setShowAllGrowthRecords(!showAllGrowthRecords);
+                      // Fetch consecutive data if not already loaded
+                      if (!showAllGrowthRecords && !consecutiveGrowthCache[selectedGrade]) {
+                        fetchConsecutiveGrowthData(selectedGrade);
+                      }
+                    }}
+                  >
+                    <span className="text-sm font-medium">
+                      View All Growth Records (Consecutive Pairs)
+                    </span>
+                    {showAllGrowthRecords ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </Button>
+                </CardHeader>
+                {showAllGrowthRecords && (
+                  <CardContent>
+                    {consecutiveGrowthData ? (
+                      <MapConsecutiveGrowth data={consecutiveGrowthData} />
+                    ) : (
+                      <div className="flex items-center justify-center h-[100px] text-muted-foreground text-sm">
+                        Loading all growth records...
+                      </div>
+                    )}
+                  </CardContent>
+                )}
               </Card>
             )}
 
@@ -1182,14 +1199,6 @@ export default function MapAnalysisPage() {
             growthType !== "consecutive" &&
             (!growthData || growthData.byLevel.length === 0) &&
             renderNoData(`No growth data for Grade ${selectedGrade}`)}
-          {!loadingStates.growth &&
-            !errorStates.growth &&
-            growthType === "consecutive" &&
-            (!consecutiveGrowthData ||
-              consecutiveGrowthData.records.length === 0) &&
-            renderNoData(
-              `No consecutive growth data for Grade ${selectedGrade}`
-            )}
         </TabsContent>
 
         {/* Goals Tab */}

@@ -194,7 +194,7 @@ export function ClassComparisonTable({ data, loading }: ClassComparisonTableProp
             </Button>
           </div>
           <CardDescription>
-            {data.course} | {data.fromTerm.split(' ')[0]} → {data.toTerm.split(' ')[0]}
+            {data.course} | {data.fromTerm} → {data.toTerm}
           </CardDescription>
         </CardHeader>
         <CardContent>

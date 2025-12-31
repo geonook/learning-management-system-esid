@@ -33,6 +33,8 @@ import { NWEA_COLORS, getGrowthQuintileColor } from "@/lib/map/colors";
 interface CrossGradeGrowthChartProps {
   data: CrossGradeGrowthData | null;
   height?: number;
+  /** Whether NWEA official benchmark is available for this growth period */
+  hasOfficialBenchmark?: boolean;
 }
 
 // 課程顏色
@@ -44,6 +46,7 @@ const COURSE_COLORS = {
 export function CrossGradeGrowthChart({
   data,
   height = 280,
+  hasOfficialBenchmark = true,
 }: CrossGradeGrowthChartProps) {
   if (!data || data.grades.length === 0) {
     return (
@@ -174,7 +177,8 @@ export function CrossGradeGrowthChart({
             </div>
           </div>
           <CardDescription>
-            {data.growthPeriod} | Target: 1.0
+            {data.fromTerm} → {data.toTerm}
+            {hasOfficialBenchmark && " | Target: 1.0"}
           </CardDescription>
         </CardHeader>
         <CardContent>

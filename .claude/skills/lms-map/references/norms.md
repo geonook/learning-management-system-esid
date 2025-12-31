@@ -54,24 +54,25 @@ NWEA provides national normative data based on millions of US student test recor
 **資料來源**: NWEA 2025 Technical Manual Table C.3 & C.5
 
 Fall-to-Fall 代表學生從一個年級的秋季到下一個年級的秋季的預期成長。
+注意：此數據在 Technical Manual 中是以「起始年級」(From Grade) 為索引。
 
 #### Reading Growth (Fall-to-Fall)
 
 | From Grade → To Grade | Mean | SD |
 |----------------------|------|-----|
-| G3 → G4 | 11.20 | 9.69 |
-| G4 → G5 | 7.68 | 9.11 |
-| G5 → G6 | 5.75 | 8.96 |
-| G6 → G7 | 3.86 | 8.85 |
+| G3 → G4 | 14.98 | 10.50 |
+| G4 → G5 | 11.20 | 9.69 |
+| G5 → G6 | 7.68 | 9.11 |
+| G6 → G7 | 5.75 | 8.96 |
 
 #### Language Usage Growth (Fall-to-Fall)
 
 | From Grade → To Grade | Mean | SD |
 |----------------------|------|-----|
-| G3 → G4 | 10.46 | 9.18 |
-| G4 → G5 | 7.62 | 8.39 |
-| G5 → G6 | 5.34 | 8.25 |
-| G6 → G7 | 3.99 | 8.42 |
+| G3 → G4 | 14.65 | 10.12 |
+| G4 → G5 | 10.46 | 9.18 |
+| G5 → G6 | 7.62 | 8.39 |
+| G6 → G7 | 5.34 | 8.25 |
 
 ## TypeScript Implementation
 

@@ -318,6 +318,7 @@ export async function getCrossGradeGrowth(params: {
  * 取得成長明星/需關注學生資料
  *
  * 識別成長最多的學生（Growth Stars）和需要關注的學生（負成長或低成長）
+ * 使用 student_class_history 表獲取歷史班級資料，確保班級名稱與 MAP 測驗時一致
  */
 export async function getGrowthSpotlight(params: {
   grade?: number;
@@ -331,6 +332,25 @@ export async function getGrowthSpotlight(params: {
 
   const supabase = createClient();
   const { grade, course, fromTerm, toTerm, limit = 5 } = params;
+
+  // 從 fromTerm 提取 academic year，用於查詢歷史班級
+  const academicYear = extractAcademicYear(fromTerm);
+
+  // 查詢該學年的學生班級歷史（如果有）
+  let classHistoryMap = new Map<string, string>();
+  if (academicYear && grade) {
+    const { data: historyData } = await supabase
+      .from("student_class_history")
+      .select("student_number, english_class")
+      .eq("academic_year", academicYear)
+      .eq("grade", grade);
+
+    if (historyData) {
+      for (const h of historyData) {
+        classHistoryMap.set(h.student_number, h.english_class);
+      }
+    }
+  }
 
   // 建立查詢
   // 包含 conditional_growth_percentile 欄位（CDF 官方值）
@@ -411,9 +431,11 @@ export async function getGrowthSpotlight(params: {
 
     const key = row.student_number;
     if (!studentMap.has(key)) {
-      // Handle nested class data
+      // 優先使用歷史班級資料，fallback 到當前班級
+      const historicalClass = classHistoryMap.get(key);
       const classData = student.classes;
       const classInfo = (Array.isArray(classData) ? classData[0] : classData) as { id: string; name: string } | null;
+      const currentClassName = classInfo?.name ?? null;
 
       studentMap.set(key, {
         studentId: student.id,
@@ -423,7 +445,7 @@ export async function getGrowthSpotlight(params: {
         fromGrade: null,  // 稍後在 fromTerm 時記錄
         grade: row.grade,
         level: student.level ?? 'E2',
-        className: classInfo?.name ?? null,
+        className: historicalClass ?? currentClassName,  // 使用歷史班級或當前班級
         fromScore: null,
         toScore: null,
         rapidGuessing: null,
