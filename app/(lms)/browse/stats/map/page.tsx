@@ -13,7 +13,7 @@
  * - Transitions: Benchmark Transition Matrix
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Target,
   RefreshCw,
@@ -180,12 +180,26 @@ export default function MapAnalysisPage() {
     Record<string, GradeRitDistributionData | null>
   >({});
 
-  // New Growth Tab data states
-  const [crossGradeGrowthData, setCrossGradeGrowthData] = useState<CrossGradeGrowthData | null>(null);
-  const [growthSpotlightData, setGrowthSpotlightData] = useState<GrowthSpotlightData | null>(null);
-  const [classComparisonData, setClassComparisonData] = useState<ClassComparisonData | null>(null);
+  // New Growth Tab data states (使用快取物件模式)
+  // 快取 key: growthType (within-year | year-over-year)
+  const [crossGradeGrowthCache, setCrossGradeGrowthCache] = useState<
+    Record<string, CrossGradeGrowthData | null>
+  >({});
+  // 快取 key: `${grade}-${course}-${growthType}`
+  const [growthSpotlightCache, setGrowthSpotlightCache] = useState<
+    Record<string, GrowthSpotlightData | null>
+  >({});
+  // 快取 key: `${grade}-${course}-${growthType}`
+  const [classComparisonCache, setClassComparisonCache] = useState<
+    Record<string, ClassComparisonData | null>
+  >({});
   // Selected course for Growth Spotlight
   const [spotlightCourse, setSpotlightCourse] = useState<"Reading" | "Language Usage">("Reading");
+
+  // 衍生資料（根據當前選擇從快取取得）
+  const crossGradeGrowthData = crossGradeGrowthCache[growthType] ?? null;
+  const growthSpotlightData = growthSpotlightCache[`${selectedGrade}-${spotlightCourse}-${growthType}`] ?? null;
+  const classComparisonData = classComparisonCache[`${selectedGrade}-${spotlightCourse}-${growthType}`] ?? null;
 
   // Loading states per tab
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({
@@ -209,8 +223,10 @@ export default function MapAnalysisPage() {
     }
   );
 
-  // Track which tabs have been loaded
-  const [loadedTabs, setLoadedTabs] = useState<Set<string>>(new Set());
+  // Track which tabs have been loaded (使用 ref 避免觸發不必要的渲染)
+  const loadedTabsRef = useRef<Set<string>>(new Set());
+  // 用於觸發重新載入的 state（僅在需要刷新時使用）
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Helper to set loading state
   const setLoading = (tab: string, loading: boolean) => {
@@ -288,6 +304,10 @@ export default function MapAnalysisPage() {
   // Fetch Growth Data (within-year or year-over-year)
   const fetchGrowthData = useCallback(
     async (grade: number, type: GrowthType) => {
+      const cacheKey = `${grade}-${type}`;
+      // 快取檢查：如果已有資料則跳過
+      if (growthDataCache[cacheKey] !== undefined) return;
+
       setLoading("growth", true);
       setError("growth", null);
       try {
@@ -311,7 +331,6 @@ export default function MapAnalysisPage() {
         }
 
         // Store in cache by grade and type
-        const cacheKey = `${grade}-${type}`;
         setGrowthDataCache((prev) => ({ ...prev, [cacheKey]: result }));
       } catch (err) {
         console.error("Error fetching growth data:", err);
@@ -320,11 +339,14 @@ export default function MapAnalysisPage() {
         setLoading("growth", false);
       }
     },
-    []
+    [growthDataCache]
   );
 
   // Fetch Consecutive Growth Data (all consecutive term pairs)
   const fetchConsecutiveGrowthData = useCallback(async (grade: number) => {
+    // 快取檢查
+    if (consecutiveGrowthCache[grade] !== undefined) return;
+
     setLoading("growth", true);
     setError("growth", null);
     try {
@@ -336,10 +358,13 @@ export default function MapAnalysisPage() {
     } finally {
       setLoading("growth", false);
     }
-  }, []);
+  }, [consecutiveGrowthCache]);
 
   // Fetch Cross-Grade Growth Data (for new Growth Overview section)
   const fetchCrossGradeGrowthData = useCallback(async (type: GrowthType) => {
+    // 快取檢查
+    if (crossGradeGrowthCache[type] !== undefined) return;
+
     try {
       let fromTerm: string;
       let toTerm: string;
@@ -353,11 +378,11 @@ export default function MapAnalysisPage() {
       }
 
       const result = await getCrossGradeGrowth({ fromTerm, toTerm });
-      setCrossGradeGrowthData(result);
+      setCrossGradeGrowthCache((prev) => ({ ...prev, [type]: result }));
     } catch (err) {
       console.error("Error fetching cross-grade growth data:", err);
     }
-  }, []);
+  }, [crossGradeGrowthCache]);
 
   // Fetch Growth Spotlight Data
   const fetchGrowthSpotlightData = useCallback(async (
@@ -365,6 +390,10 @@ export default function MapAnalysisPage() {
     course: "Reading" | "Language Usage",
     type: GrowthType
   ) => {
+    const cacheKey = `${grade}-${course}-${type}`;
+    // 快取檢查
+    if (growthSpotlightCache[cacheKey] !== undefined) return;
+
     try {
       let fromTerm: string;
       let toTerm: string;
@@ -384,11 +413,11 @@ export default function MapAnalysisPage() {
         toTerm,
         limit: 5,
       });
-      setGrowthSpotlightData(result);
+      setGrowthSpotlightCache((prev) => ({ ...prev, [cacheKey]: result }));
     } catch (err) {
       console.error("Error fetching growth spotlight data:", err);
     }
-  }, []);
+  }, [growthSpotlightCache]);
 
   // Fetch Class Comparison Data
   const fetchClassComparisonData = useCallback(async (
@@ -396,6 +425,10 @@ export default function MapAnalysisPage() {
     course: "Reading" | "Language Usage",
     type: GrowthType
   ) => {
+    const cacheKey = `${grade}-${course}-${type}`;
+    // 快取檢查
+    if (classComparisonCache[cacheKey] !== undefined) return;
+
     try {
       let fromTerm: string;
       let toTerm: string;
@@ -414,11 +447,11 @@ export default function MapAnalysisPage() {
         fromTerm,
         toTerm,
       });
-      setClassComparisonData(result);
+      setClassComparisonCache((prev) => ({ ...prev, [cacheKey]: result }));
     } catch (err) {
       console.error("Error fetching class comparison data:", err);
     }
-  }, []);
+  }, [classComparisonCache]);
 
   // Fetch Goal Data (both courses + RIT distribution)
   const fetchGoalData = useCallback(async (grade: number) => {
@@ -523,27 +556,29 @@ export default function MapAnalysisPage() {
   );
 
   // Load data when tab changes (lazy loading)
+  // 優化：使用 ref 追蹤已載入標籤，減少依賴項數量
   useEffect(() => {
     const loadTabData = async () => {
-      // Skip if already loaded for this grade (and growth type for growth tab, transition period for transitions tab)
+      // 計算當前標籤的快取鍵
       let tabKey: string;
       if (selectedTab === "growth") {
         tabKey = `${selectedTab}-${selectedGrade}-${growthType}`;
       } else if (selectedTab === "transitions") {
         tabKey = `${selectedTab}-${selectedGrade}-${transitionPeriod}`;
       } else {
-        // All other tabs (including quality) are grade-specific
         tabKey = `${selectedTab}-${selectedGrade}`;
       }
-      if (loadedTabs.has(tabKey)) return;
+
+      // 使用 ref 檢查是否已載入（不觸發重新渲染）
+      if (loadedTabsRef.current.has(tabKey)) return;
 
       switch (selectedTab) {
         case "overview":
           await fetchOverviewData(selectedGrade);
-          // Also fetch grade growth distribution for both courses
+          // 同時載入年級成長分佈資料（兩門課程）
           fetchGradeGrowthData(selectedGrade, "Reading");
           fetchGradeGrowthData(selectedGrade, "Language Usage");
-          // Also fetch grade RIT distribution for both courses (Fall 2025-2026)
+          // 同時載入年級 RIT 分佈資料
           fetchGradeRitData(selectedGrade, "Reading", "Fall 2025-2026");
           fetchGradeRitData(selectedGrade, "Language Usage", "Fall 2025-2026");
           break;
@@ -552,7 +587,7 @@ export default function MapAnalysisPage() {
             await fetchConsecutiveGrowthData(selectedGrade);
           } else {
             await fetchGrowthData(selectedGrade, growthType);
-            // Also fetch new Growth Tab data
+            // 同時載入新版 Growth Tab 資料
             fetchCrossGradeGrowthData(growthType);
             fetchGrowthSpotlightData(selectedGrade, spotlightCourse, growthType);
             fetchClassComparisonData(selectedGrade, spotlightCourse, growthType);
@@ -574,7 +609,8 @@ export default function MapAnalysisPage() {
           break;
       }
 
-      setLoadedTabs((prev) => new Set(prev).add(tabKey));
+      // 更新 ref（不觸發重新渲染）
+      loadedTabsRef.current.add(tabKey);
     };
 
     loadTabData();
@@ -584,7 +620,7 @@ export default function MapAnalysisPage() {
     growthType,
     transitionPeriod,
     spotlightCourse,
-    loadedTabs,
+    refreshTrigger, // 用於手動觸發重新載入
     fetchOverviewData,
     fetchGradeGrowthData,
     fetchGradeRitData,
@@ -602,37 +638,35 @@ export default function MapAnalysisPage() {
   // Handle growth type change - trigger reload
   const handleGrowthTypeChange = (type: ExtendedGrowthType) => {
     setGrowthType(type);
-    // Reset loaded tabs to trigger reload for growth tab
-    const tabKey = `growth-${selectedGrade}-${type}`;
-    if (!loadedTabs.has(tabKey)) {
-      // Will be loaded by the useEffect
-    }
+    // useEffect 會自動檢查並載入（如果尚未載入）
   };
 
   // Handle transition period change - trigger reload
   const handleTransitionPeriodChange = (period: TransitionPeriod) => {
     setTransitionPeriod(period);
-    // Reset loaded tabs to trigger reload for transitions tab
-    const tabKey = `transitions-${selectedGrade}-${period}`;
-    if (!loadedTabs.has(tabKey)) {
-      // Will be loaded by the useEffect
-    }
+    // useEffect 會自動檢查並載入（如果尚未載入）
   };
 
   // Reset loaded tabs when grade changes
   const handleGradeChange = (value: string) => {
     setSelectedGrade(parseInt(value, 10));
-    setLoadedTabs(new Set()); // Reset loaded tabs to trigger reload
+    loadedTabsRef.current.clear(); // 清空已載入標籤
+    setRefreshTrigger((prev) => prev + 1); // 觸發重新載入
   };
 
   // Refresh current tab
   const handleRefresh = () => {
-    const tabKey = `${selectedTab}-${selectedGrade}`;
-    setLoadedTabs((prev) => {
-      const next = new Set(prev);
-      next.delete(tabKey);
-      return next;
-    });
+    // 計算當前標籤的快取鍵
+    let tabKey: string;
+    if (selectedTab === "growth") {
+      tabKey = `${selectedTab}-${selectedGrade}-${growthType}`;
+    } else if (selectedTab === "transitions") {
+      tabKey = `${selectedTab}-${selectedGrade}-${transitionPeriod}`;
+    } else {
+      tabKey = `${selectedTab}-${selectedGrade}`;
+    }
+    loadedTabsRef.current.delete(tabKey); // 移除快取標記
+    setRefreshTrigger((prev) => prev + 1); // 觸發重新載入
   };
 
   // Render loading skeleton

@@ -10,6 +10,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { requireAuth } from "./permissions";
+import { mapAnalyticsCache, CACHE_KEYS } from "./map-analytics-cache";
 import {
   getNorm,
   getNormAverage,
@@ -231,6 +232,11 @@ export async function getCrossGradeStats(params: {
  */
 export async function getAvailableSchoolTerms(): Promise<string[]> {
   await requireAuth();
+
+  // 快取檢查
+  const cached = mapAnalyticsCache.get<string[]>(CACHE_KEYS.AVAILABLE_TERMS);
+  if (cached) return cached;
+
   const supabase = createClient();
 
   const { data, error } = await supabase
@@ -245,7 +251,12 @@ export async function getAvailableSchoolTerms(): Promise<string[]> {
 
   // 取得唯一值並按時間排序（從新到舊）
   const terms = [...new Set(data?.map((d) => d.term_tested) || [])];
-  return terms.sort(compareTermTested).reverse();
+  const result = terms.sort(compareTermTested).reverse();
+
+  // 設定快取
+  mapAnalyticsCache.set(CACHE_KEYS.AVAILABLE_TERMS, result);
+
+  return result;
 }
 
 // ============================================================
@@ -272,43 +283,51 @@ export interface GrowthPeriodOption {
  */
 export async function getAvailableGrowthPeriods(): Promise<GrowthPeriodOption[]> {
   await requireAuth();
+
+  // 快取檢查
+  const cached = mapAnalyticsCache.get<GrowthPeriodOption[]>(CACHE_KEYS.AVAILABLE_GROWTH_PERIODS);
+  if (cached) return cached;
+
   const supabase = createClient();
 
-  // 查詢所有可用的 terms
-  const { data: termsData } = await supabase
+  // 優化：一次查詢所有需要的資料（student_number + term_tested）
+  // 同時 JOIN students 表以過濾已停用學生
+  const { data: allData } = await supabase
     .from("map_assessments")
-    .select("term_tested")
+    .select("student_number, term_tested, student_id, students:student_id (is_active)")
     .in("grade", [3, 4, 5, 6])
     .not("student_id", "is", null);
 
-  if (!termsData || termsData.length === 0) return [];
+  if (!allData || allData.length === 0) return [];
+
+  // 過濾已停用的學生
+  const activeData = allData.filter((d) => {
+    const student = d.students as unknown as { is_active: boolean } | null;
+    return student?.is_active === true;
+  });
 
   // 取得唯一 terms 並排序
-  const uniqueTerms = [...new Set(termsData.map((d) => d.term_tested))].sort(
+  const uniqueTerms = [...new Set(activeData.map((d) => d.term_tested))].sort(
     compareTermTested
   );
 
   if (uniqueTerms.length < 2) return [];
 
-  const options: GrowthPeriodOption[] = [];
-
-  // 生成可能的 period 組合
-  // 1. Fall-to-Fall (跨學年)
+  // 收集所有需要計算的 term 配對
+  const termPairs: Array<{ fromTerm: string; toTerm: string; periodType: GrowthPeriodType; label: string }> = [];
   const fallTerms = uniqueTerms.filter((t) => t.startsWith("Fall "));
+
+  // 1. Fall-to-Fall (跨學年)
   for (let i = 0; i < fallTerms.length - 1; i++) {
     const fromTerm = fallTerms[i];
     const toTerm = fallTerms[i + 1];
     if (fromTerm && toTerm) {
-      const count = await countPairedStudents(supabase, fromTerm, toTerm);
-      if (count > 0) {
-        options.push({
-          fromTerm,
-          toTerm,
-          label: `${fromTerm} → ${toTerm} (1 year)`,
-          studentCount: count,
-          periodType: "fall-to-fall",
-        });
-      }
+      termPairs.push({
+        fromTerm,
+        toTerm,
+        periodType: "fall-to-fall",
+        label: `${fromTerm} → ${toTerm} (1 year)`,
+      });
     }
   }
 
@@ -319,67 +338,72 @@ export async function getAvailableGrowthPeriods(): Promise<GrowthPeriodOption[]>
 
     const springTerm = `Spring ${parsed.academicYear}`;
     if (uniqueTerms.includes(springTerm)) {
-      const count = await countPairedStudents(supabase, fallTerm, springTerm);
-      if (count > 0) {
-        options.push({
-          fromTerm: fallTerm,
-          toTerm: springTerm,
-          label: `${fallTerm} → ${springTerm} (within year)`,
-          studentCount: count,
-          periodType: "fall-to-spring",
-        });
-      }
+      termPairs.push({
+        fromTerm: fallTerm,
+        toTerm: springTerm,
+        periodType: "fall-to-spring",
+        label: `${fallTerm} → ${springTerm} (within year)`,
+      });
+    }
+  }
+
+  // 優化：一次計算所有配對的學生數（在記憶體中）
+  const pairCounts = calculateAllPairedCounts(activeData, termPairs);
+
+  // 建立結果
+  const options: GrowthPeriodOption[] = [];
+  for (const pair of termPairs) {
+    const count = pairCounts.get(`${pair.fromTerm}|${pair.toTerm}`) ?? 0;
+    if (count > 0) {
+      options.push({
+        fromTerm: pair.fromTerm,
+        toTerm: pair.toTerm,
+        label: pair.label,
+        studentCount: count,
+        periodType: pair.periodType,
+      });
     }
   }
 
   // 依 toTerm 排序（最近的在前）
-  return options.sort((a, b) => compareTermTested(b.toTerm, a.toTerm));
+  const result = options.sort((a, b) => compareTermTested(b.toTerm, a.toTerm));
+
+  // 設定快取
+  mapAnalyticsCache.set(CACHE_KEYS.AVAILABLE_GROWTH_PERIODS, result);
+
+  return result;
 }
 
 /**
- * 計算兩個 term 之間有完整配對資料的學生數
+ * 批量計算所有 term 配對的學生數
+ * 優化：一次查詢所有資料，在記憶體中計算配對數
  */
-async function countPairedStudents(
-  supabase: ReturnType<typeof createClient>,
-  fromTerm: string,
-  toTerm: string
-): Promise<number> {
-  const { data } = await supabase
-    .from("map_assessments")
-    .select("student_number, term_tested, course, student_id, students:student_id (is_active)")
-    .in("term_tested", [fromTerm, toTerm])
-    .in("grade", [3, 4, 5, 6])
-    .not("student_id", "is", null);
-
-  if (!data || data.length === 0) return 0;
-
-  // 過濾已停用的學生
-  const activeData = data.filter((d) => {
-    const student = d.students as unknown as { is_active: boolean } | null;
-    return student?.is_active === true;
-  });
-
-  // 按學生分組，計算有完整配對的學生數
-  const studentMap = new Map<string, { hasFrom: boolean; hasTo: boolean }>();
-
-  for (const row of activeData) {
-    let student = studentMap.get(row.student_number);
-    if (!student) {
-      student = { hasFrom: false, hasTo: false };
-      studentMap.set(row.student_number, student);
+function calculateAllPairedCounts(
+  data: Array<{
+    student_number: string;
+    term_tested: string;
+  }>,
+  termPairs: Array<{ fromTerm: string; toTerm: string }>
+): Map<string, number> {
+  // 建立 student → terms 的 mapping
+  const studentTerms = new Map<string, Set<string>>();
+  for (const row of data) {
+    if (!studentTerms.has(row.student_number)) {
+      studentTerms.set(row.student_number, new Set());
     }
-
-    if (row.term_tested === fromTerm) student.hasFrom = true;
-    if (row.term_tested === toTerm) student.hasTo = true;
+    studentTerms.get(row.student_number)!.add(row.term_tested);
   }
 
-  // 計算有完整配對的學生數
-  let count = 0;
-  for (const s of studentMap.values()) {
-    if (s.hasFrom && s.hasTo) count++;
+  // 計算每個 term pair 的配對學生數
+  const counts = new Map<string, number>();
+  for (const { fromTerm, toTerm } of termPairs) {
+    let count = 0;
+    for (const terms of studentTerms.values()) {
+      if (terms.has(fromTerm) && terms.has(toTerm)) count++;
+    }
+    counts.set(`${fromTerm}|${toTerm}`, count);
   }
-
-  return count;
+  return counts;
 }
 
 // ============================================================
