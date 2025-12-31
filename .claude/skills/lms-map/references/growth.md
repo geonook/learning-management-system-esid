@@ -186,7 +186,65 @@ function SpringToFallCard({ record }: { record: GrowthRecord }) {
 }
 ```
 
-## Consecutive Growth (Stats Page)
+## Growth Tab (Stats Page) - v1.66.1+
+
+### Key Components
+
+| Component | File | Description |
+|-----------|------|-------------|
+| **GrowthPeriodSelector** | `components/map/growth/GrowthPeriodSelector.tsx` | Dropdown for selecting growth period |
+| **GrowthContextBanner** | `components/map/growth/GrowthContextBanner.tsx` | Shows current period, student count, benchmark status |
+| **CrossGradeGrowthChart** | `components/map/growth/CrossGradeGrowthChart.tsx` | Bar chart comparing G3-G6 Growth Index |
+| **GrowthSpotlight** | `components/map/growth/GrowthSpotlight.tsx` | Student-level growth details with cGP |
+| **ClassComparisonTable** | `components/map/growth/ClassComparisonTable.tsx` | Sortable table comparing classes |
+
+### Growth Period Types
+
+| Type | Example | Benchmark | Duration |
+|------|---------|-----------|----------|
+| **Within-Year** | Fall → Spring | ✅ NWEA Official | ~6 months |
+| **Year-over-Year** | Fall → Fall | ✅ NWEA Official (Table C.3/C.5) | ~12 months |
+| **Summer** | Spring → Fall | ❌ No benchmark | ~4 months |
+
+### Dynamic Period Selection (IMPORTANT)
+
+All Growth Tab fetch functions use dynamic `GrowthPeriodOption`:
+
+```typescript
+// ✅ Correct: Use period.fromTerm/toTerm from GrowthPeriodSelector
+const fetchCrossGradeGrowthData = useCallback(async (period: GrowthPeriodOption) => {
+  const cacheKey = period.id;  // Use period.id for cache
+  const result = await getCrossGradeGrowth({
+    fromTerm: period.fromTerm,  // Dynamic!
+    toTerm: period.toTerm,      // Dynamic!
+  });
+}, []);
+
+// ❌ Wrong: Hardcoded terms (BUG fixed in v1.66.1)
+// if (type === "within-year") {
+//   fromTerm = "Fall 2024-2025";  // NEVER hardcode!
+// }
+```
+
+### isGraduated Field (v1.66.1+)
+
+For historical data (e.g., Fall 2023-2024 → Spring 2023-2024), students who were G6 at that time have since graduated. The `isGraduated` field tracks this:
+
+```typescript
+interface CrossGradeGrowthData {
+  grades: Array<{
+    grade: number;       // fromGrade (starting grade)
+    toGrade: number;     // ending grade (used for X-axis)
+    isGraduated: boolean; // true if these students have graduated
+    reading: { ... };
+    languageUsage: { ... };
+  }>;
+}
+```
+
+**UI Display**: X-axis shows `G7 (Grad.)` for graduated G6 students.
+
+## Consecutive Growth (Legacy)
 
 For group-level analysis, use `MapConsecutiveGrowth` component which shows:
 - Growth by English Level (E1, E2, E3, All)

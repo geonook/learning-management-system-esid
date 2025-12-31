@@ -93,13 +93,36 @@ National percentile reference values by grade and term for comparison.
 
 Group-level analysis with tabs:
 
-- **School**: Cross-grade (G3-G6) school-wide performance analysis (NEW)
+- **School**: Cross-grade (G3-G6) school-wide performance analysis
 - **Grades**: (formerly Overview) Growth trend charts by English Level (Grid/Single view toggle)
-- **Growth**: Growth Index distribution, consecutive growth (FA→SP, SP→FA)
+- **Growth**: Growth analysis with period selector, cross-grade comparison, class comparison (v1.66.1+)
 - **Goals**: Goal area performance (Radar + Table)
 - **Lexile**: Reading level distribution
 - **Quality**: Rapid guessing analysis
 - **Transitions**: Benchmark level transitions
+
+### Growth Tab Components (v1.66.1+)
+
+| Component                   | File                                                | Description                                   |
+| --------------------------- | --------------------------------------------------- | --------------------------------------------- |
+| **GrowthPeriodSelector**    | `components/map/growth/GrowthPeriodSelector.tsx`    | Dropdown for selecting growth period          |
+| **GrowthContextBanner**     | `components/map/growth/GrowthContextBanner.tsx`     | Shows current period, student count, benchmark status |
+| **CrossGradeGrowthChart**   | `components/map/growth/CrossGradeGrowthChart.tsx`   | Bar chart comparing G3-G6 Growth Index        |
+| **GrowthSpotlight**         | `components/map/growth/GrowthSpotlight.tsx`         | Student-level growth details with cGP         |
+| **ClassComparisonTable**    | `components/map/growth/ClassComparisonTable.tsx`    | Sortable table comparing classes              |
+
+**API Functions** (`lib/api/map-growth-analytics.ts`):
+
+- `getCrossGradeGrowth()` - Cross-grade growth index comparison
+- `getGrowthSpotlight()` - Student-level growth data with cGP
+- `getClassComparison()` - Class-level comparison
+
+**Key Features**:
+
+- Dynamic period selection (Within-Year, Year-over-Year, Summer)
+- `isGraduated` field for historical G6 students
+- cGP (Conditional Growth Percentile) display
+- Quintile-based color coding
 
 ### School Tab Components (v1.65+)
 
