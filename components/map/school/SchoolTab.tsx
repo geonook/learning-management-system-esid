@@ -11,7 +11,7 @@
  * 設計目標：讓沒有 MAP 背景知識的使用者也能理解
  */
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { RefreshCw, Info, TrendingUp, BarChart3, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -82,7 +82,17 @@ export function SchoolTab() {
     return { fromTerm, toTerm };
   };
 
+  // 使用 ref 追蹤初始化狀態，避免依賴 state 導致無限迴圈
+  const isInitializedRef = useRef(false);
+  const selectedTermRef = useRef(selectedTerm);
+  const selectedGrowthPeriodRef = useRef(selectedGrowthPeriod);
+
+  // 同步 ref
+  useEffect(() => { selectedTermRef.current = selectedTerm; }, [selectedTerm]);
+  useEffect(() => { selectedGrowthPeriodRef.current = selectedGrowthPeriod; }, [selectedGrowthPeriod]);
+
   // 載入資料 - Progressive loading (Achievement first, then Growth)
+  // 注意：不依賴 selectedTerm/selectedGrowthPeriod，使用 ref 讀取避免無限迴圈
   const loadData = useCallback(async () => {
     setTermsLoading(true);
     setAchievementLoading(true);
@@ -103,7 +113,8 @@ export function SchoolTab() {
       setTermsLoading(false);
 
       // 設定預設 growth period（如果尚未選擇）
-      let currentGrowthPeriod = selectedGrowthPeriod;
+      // 使用 ref 讀取當前值，避免觸發依賴變化
+      let currentGrowthPeriod = selectedGrowthPeriodRef.current;
       if (!currentGrowthPeriod && growthPeriodsResult.length > 0) {
         const firstPeriod = growthPeriodsResult[0];
         if (firstPeriod) {
@@ -115,16 +126,17 @@ export function SchoolTab() {
       // ========================================
       // Phase 2: 載入 Achievement（優先顯示）
       // ========================================
+      const termForQuery = selectedTermRef.current;
       const [statsResult, heatmapResult] = await Promise.all([
-        getCrossGradeStats({ termTested: selectedTerm }),
-        getRitGradeHeatmapData({ termTested: selectedTerm }),
+        getCrossGradeStats({ termTested: termForQuery }),
+        getRitGradeHeatmapData({ termTested: termForQuery }),
       ]);
 
       setData(statsResult);
       setHeatmapData(heatmapResult);
 
-      // 設定預設選擇的 term
-      if (!selectedTerm && statsResult?.termTested) {
+      // 設定預設選擇的 term（僅在初始化時）
+      if (!termForQuery && statsResult?.termTested) {
         setSelectedTerm(statsResult.termTested);
       }
 
@@ -143,6 +155,8 @@ export function SchoolTab() {
       setScatterData(scatterResult);
       setGrowthLoading(false); // ← Growth 完成
 
+      isInitializedRef.current = true;
+
     } catch (err) {
       console.error("Error loading school data:", err);
       setError("Failed to load data");
@@ -150,12 +164,19 @@ export function SchoolTab() {
       setAchievementLoading(false);
       setGrowthLoading(false);
     }
-  }, [selectedTerm, selectedGrowthPeriod]);
+  }, []); // 空依賴，永不重建
 
-  // 初始載入
+  // 初始載入（僅執行一次）
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // 監聽 term 變化，重新載入資料（用戶手動變更時）
+  useEffect(() => {
+    if (!isInitializedRef.current) return; // 跳過初始化階段
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTerm, selectedGrowthPeriod]);
 
   // 處理 term 變更 - 智慧連動 Growth Period
   const handleTermChange = (term: string) => {
