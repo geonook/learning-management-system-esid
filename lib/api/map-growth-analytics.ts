@@ -526,9 +526,19 @@ export async function getGrowthSpotlight(params: {
 }
 
 /**
+ * 從 term_tested 提取 academic year
+ * @example "Fall 2024-2025" -> "2024-2025"
+ */
+function extractAcademicYear(termTested: string): string | null {
+  const match = termTested.match(/(\d{4}-\d{4})/);
+  return match?.[1] ?? null;
+}
+
+/**
  * 取得班級成長比較資料
  *
  * 比較同年級不同班級的成長表現
+ * 使用 student_class_history 表獲取歷史班級資料，確保班級名稱與 MAP 測驗時一致
  */
 export async function getClassGrowthComparison(params: {
   grade: number;
@@ -540,6 +550,25 @@ export async function getClassGrowthComparison(params: {
   const supabase = createClient();
 
   const { grade, course, fromTerm, toTerm } = params;
+
+  // 從 fromTerm 提取 academic year，用於查詢歷史班級
+  const academicYear = extractAcademicYear(fromTerm);
+
+  // 查詢該學年的學生班級歷史（如果有）
+  let classHistoryMap = new Map<string, string>();
+  if (academicYear) {
+    const { data: historyData } = await supabase
+      .from("student_class_history")
+      .select("student_number, english_class")
+      .eq("academic_year", academicYear)
+      .eq("grade", grade);
+
+    if (historyData) {
+      for (const h of historyData) {
+        classHistoryMap.set(h.student_number, h.english_class);
+      }
+    }
+  }
 
   // 查詢該年級所有學生的 MAP 資料
   // 包含 conditional_growth_percentile 欄位（CDF 官方值）
@@ -577,7 +606,6 @@ export async function getClassGrowthComparison(params: {
 
   // 建立學生資料 Map
   interface StudentRecord {
-    classId: string | null;
     className: string | null;
     fromScore: number | null;
     toScore: number | null;
@@ -603,12 +631,14 @@ export async function getClassGrowthComparison(params: {
 
     const key = row.student_number;
     if (!studentMap.has(key)) {
+      // 優先使用歷史班級資料，fallback 到當前班級
+      const historicalClass = classHistoryMap.get(key);
       const classData = student.classes;
       const classInfo = Array.isArray(classData) ? classData[0] : classData;
+      const currentClassName = classInfo?.name ?? null;
 
       studentMap.set(key, {
-        classId: student.class_id,
-        className: classInfo?.name ?? null,
+        className: historicalClass ?? currentClassName,
         fromScore: null,
         toScore: null,
         officialCGP: null,
@@ -629,9 +659,8 @@ export async function getClassGrowthComparison(params: {
     }
   }
 
-  // 按班級分組計算
+  // 按班級分組計算（使用 className 作為 key，因為歷史班級沒有 classId）
   const classBuckets = new Map<string, {
-    classId: string;
     className: string;
     growths: number[];
     cgps: number[];  // 收集班級內所有學生的 cGP
@@ -644,7 +673,7 @@ export async function getClassGrowthComparison(params: {
 
   for (const [, student] of studentMap) {
     if (student.fromScore === null || student.toScore === null) continue;
-    if (!student.classId || !student.className) continue;
+    if (!student.className) continue;
 
     const growth = student.toScore - student.fromScore;
     allGrowths.push(growth);
@@ -652,16 +681,15 @@ export async function getClassGrowthComparison(params: {
       allCGPs.push(student.officialCGP);
     }
 
-    if (!classBuckets.has(student.classId)) {
-      classBuckets.set(student.classId, {
-        classId: student.classId,
+    if (!classBuckets.has(student.className)) {
+      classBuckets.set(student.className, {
         className: student.className,
         growths: [],
         cgps: [],
       });
     }
 
-    const bucket = classBuckets.get(student.classId)!;
+    const bucket = classBuckets.get(student.className)!;
     bucket.growths.push(growth);
     if (student.officialCGP !== null) {
       bucket.cgps.push(student.officialCGP);
@@ -693,7 +721,7 @@ export async function getClassGrowthComparison(params: {
     };
 
     classes.push({
-      classId: bucket.classId,
+      classId: bucket.className,  // Use className as ID since historical classes don't have classId
       className: bucket.className,
       avgGrowth: Math.round(avgGrowth * 10) / 10,
       growthIndex: growthIndex !== null ? Math.round(growthIndex * 100) / 100 : null,
