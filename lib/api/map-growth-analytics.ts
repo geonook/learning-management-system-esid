@@ -33,8 +33,9 @@ import {
 
 export interface CrossGradeGrowthData {
   grades: Array<{
-    grade: number;      // fromGrade: 起始年級（用於 NWEA norm 查詢）
-    toGrade: number;    // 結束年級（用於 X 軸標籤顯示）
+    grade: number;         // fromGrade: 起始年級（用於 NWEA norm 查詢）
+    toGrade: number;       // 結束年級（用於 X 軸標籤顯示）
+    isGraduated: boolean;  // 該年級學生是否已畢業（toTerm 是過去且 toGrade >= 6）
     reading: {
       avgGrowth: number;
       growthIndex: number | null;  // null when no NWEA norm available
@@ -296,9 +297,17 @@ export async function getCrossGradeGrowth(params: {
     const isYearOverYear = fromTerm.toLowerCase().includes("fall") && toTerm.toLowerCase().includes("fall");
     const toGrade = isYearOverYear ? grade + 1 : grade;
 
+    // 判斷是否為畢業生（歷史資料中的 G6 學生）
+    // 當前學年：2025-2026
+    // 如果 toTerm 是過去學年（例如 2024-2025）且 toGrade >= 6，則為畢業生
+    const currentAcademicYear = "2025-2026";
+    const toTermYear = extractAcademicYear(toTerm);
+    const isGraduated = toTermYear !== null && toTermYear !== currentAcademicYear && toGrade >= 6;
+
     result.grades.push({
       grade,       // fromGrade：起始年級
       toGrade,     // 結束年級（用於 X 軸顯示）
+      isGraduated, // 該年級學生是否已畢業
       reading: {
         avgGrowth: Math.round(rdAvgGrowth * 10) / 10,
         growthIndex: rdGrowthIndex,

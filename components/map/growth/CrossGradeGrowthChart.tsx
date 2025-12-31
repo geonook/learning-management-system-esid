@@ -62,9 +62,11 @@ export function CrossGradeGrowthChart({
   const chartData = data.grades
     .filter((g) => g.reading.studentCount > 0 || g.languageUsage.studentCount > 0)
     .map((g) => ({
-      grade: `G${g.toGrade}`,      // X 軸顯示結束年級
+      // X 軸顯示結束年級，畢業生加上標註
+      grade: g.isGraduated ? `G${g.toGrade} (Grad.)` : `G${g.toGrade}`,
       gradeNum: g.grade,           // fromGrade：用於 NWEA norm 查詢
       toGradeNum: g.toGrade,       // toGrade：用於 tooltip 顯示
+      isGraduated: g.isGraduated,  // 用於 tooltip 顯示畢業狀態
       reading: g.reading.growthIndex,
       readingGrowth: g.reading.avgGrowth,
       readingCount: g.reading.studentCount,
@@ -86,6 +88,11 @@ export function CrossGradeGrowthChart({
     return (
       <div className="bg-popover border border-border rounded-md p-3 shadow-md text-sm">
         <p className="font-semibold mb-2">{label} Growth Analysis</p>
+        {gradeData?.isGraduated && (
+          <p className="text-xs text-amber-600 dark:text-amber-400 mb-2">
+            These students have since graduated
+          </p>
+        )}
 
         <div className="space-y-2">
           {/* Reading */}
