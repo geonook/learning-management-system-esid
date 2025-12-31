@@ -36,19 +36,19 @@ export interface CrossGradeGrowthData {
     grade: number;
     reading: {
       avgGrowth: number;
-      growthIndex: number;
+      growthIndex: number | null;  // null when no NWEA norm available
       studentCount: number;
     };
     languageUsage: {
       avgGrowth: number;
-      growthIndex: number;
+      growthIndex: number | null;  // null when no NWEA norm available
       studentCount: number;
     };
   }>;
   fromTerm: string;
   toTerm: string;
   growthPeriod: string;
-  nweaExpected: Record<number, { reading: number; languageUsage: number }>;
+  nweaExpected: Record<number, { reading: number | null; languageUsage: number | null }>;
 }
 
 export interface GrowthSpotlightStudent {
@@ -84,9 +84,9 @@ export interface ClassComparisonData {
     classId: string;
     className: string;
     avgGrowth: number;
-    growthIndex: number;
+    growthIndex: number | null;  // null when no NWEA norm available
     studentCount: number;
-    vsNorm: number;
+    vsNorm: number | null;  // null when no NWEA norm available
     distribution: {
       negative: number;
       low: number;
@@ -96,7 +96,7 @@ export interface ClassComparisonData {
   }>;
   gradeAverage: {
     avgGrowth: number;
-    growthIndex: number;
+    growthIndex: number | null;  // null when no NWEA norm available
     studentCount: number;
   };
 }
@@ -198,9 +198,11 @@ export async function getCrossGradeGrowth(params: {
   }
 
   // 過濾 active 學生並建立 student map
+  // 重要：使用 fromGrade 追蹤起始年級，用於 NWEA Growth Norms 查找
   type StudentData = { grade: number; level: string | null; is_active: boolean };
   const studentMap = new Map<string, {
-    grade: number;
+    fromGrade: number | null;  // 起始年級（用於常模查找）
+    toGrade: number | null;    // 結束年級
     from: { reading: number | null; languageUsage: number | null };
     to: { reading: number | null; languageUsage: number | null };
   }>();
@@ -214,7 +216,8 @@ export async function getCrossGradeGrowth(params: {
     const key = row.student_number;
     if (!studentMap.has(key)) {
       studentMap.set(key, {
-        grade: row.grade,
+        fromGrade: null,
+        toGrade: null,
         from: { reading: null, languageUsage: null },
         to: { reading: null, languageUsage: null },
       });
@@ -224,8 +227,10 @@ export async function getCrossGradeGrowth(params: {
     const courseKey = row.course === "Reading" ? "reading" : "languageUsage";
 
     if (row.term_tested === fromTerm) {
+      record.fromGrade = row.grade;  // 記錄起始年級
       record.from[courseKey] = row.rit_score;
     } else if (row.term_tested === toTerm) {
+      record.toGrade = row.grade;  // 記錄結束年級
       record.to[courseKey] = row.rit_score;
     }
   }
@@ -240,32 +245,39 @@ export async function getCrossGradeGrowth(params: {
   };
 
   for (const grade of grades) {
-    const gradeStudents = Array.from(studentMap.values()).filter(s => s.grade === grade);
+    // 使用 fromGrade 過濾學生（確保使用起始年級進行常模查找）
+    const gradeStudents = Array.from(studentMap.values()).filter(s => s.fromGrade === grade);
 
     // Reading
     const rdStudents = gradeStudents.filter(s => s.from.reading !== null && s.to.reading !== null);
     const rdGrowths = rdStudents.map(s => (s.to.reading ?? 0) - (s.from.reading ?? 0));
     const rdAvgGrowth = rdGrowths.length > 0 ? rdGrowths.reduce((a, b) => a + b, 0) / rdGrowths.length : 0;
-    const rdExpected = getExpectedGrowth(fromTerm, toTerm, grade, "Reading") ?? 1;
-    const rdGrowthIndex = rdExpected !== 0 ? rdAvgGrowth / rdExpected : 0;
+    // 移除 ?? 1 fallback：當沒有 NWEA norm 時，Growth Index 應為 null
+    const rdExpected = getExpectedGrowth(fromTerm, toTerm, grade, "Reading");
+    const rdGrowthIndex = rdExpected !== null && rdExpected !== 0
+      ? Math.round((rdAvgGrowth / rdExpected) * 100) / 100
+      : null;
 
     // Language Usage
     const luStudents = gradeStudents.filter(s => s.from.languageUsage !== null && s.to.languageUsage !== null);
     const luGrowths = luStudents.map(s => (s.to.languageUsage ?? 0) - (s.from.languageUsage ?? 0));
     const luAvgGrowth = luGrowths.length > 0 ? luGrowths.reduce((a, b) => a + b, 0) / luGrowths.length : 0;
-    const luExpected = getExpectedGrowth(fromTerm, toTerm, grade, "Language Usage") ?? 1;
-    const luGrowthIndex = luExpected !== 0 ? luAvgGrowth / luExpected : 0;
+    // 移除 ?? 1 fallback
+    const luExpected = getExpectedGrowth(fromTerm, toTerm, grade, "Language Usage");
+    const luGrowthIndex = luExpected !== null && luExpected !== 0
+      ? Math.round((luAvgGrowth / luExpected) * 100) / 100
+      : null;
 
     result.grades.push({
       grade,
       reading: {
         avgGrowth: Math.round(rdAvgGrowth * 10) / 10,
-        growthIndex: Math.round(rdGrowthIndex * 100) / 100,
+        growthIndex: rdGrowthIndex,
         studentCount: rdStudents.length,
       },
       languageUsage: {
         avgGrowth: Math.round(luAvgGrowth * 10) / 10,
-        growthIndex: Math.round(luGrowthIndex * 100) / 100,
+        growthIndex: luGrowthIndex,
         studentCount: luStudents.length,
       },
     });
@@ -337,12 +349,14 @@ export async function getGrowthSpotlight(params: {
   }
 
   // 建立學生成長資料
+  // 重要：使用 fromGrade 追蹤起始年級，用於 NWEA Growth Norms 查找
   interface StudentGrowth {
     studentId: string;
     studentNumber: string;
     firstName: string | null;
     lastName: string | null;
-    grade: number;
+    fromGrade: number | null;  // 起始年級（用於常模查找）
+    grade: number;  // 當前年級（用於顯示）
     level: string;
     className: string | null;
     fromScore: number | null;
@@ -378,6 +392,7 @@ export async function getGrowthSpotlight(params: {
         studentNumber: row.student_number,
         firstName: row.student_first_name,
         lastName: row.student_last_name,
+        fromGrade: null,  // 稍後在 fromTerm 時記錄
         grade: row.grade,
         level: student.level ?? 'E2',
         className: classInfo?.name ?? null,
@@ -391,6 +406,7 @@ export async function getGrowthSpotlight(params: {
 
     if (row.term_tested === fromTerm) {
       record.fromScore = row.rit_score;
+      record.fromGrade = row.grade;  // 記錄起始年級，用於 NWEA 常模查找
     } else if (row.term_tested === toTerm) {
       record.toScore = row.rit_score;
       record.rapidGuessing = row.rapid_guessing_percent;
@@ -399,7 +415,6 @@ export async function getGrowthSpotlight(params: {
 
   // 計算成長並排序
   const canViewNames = canViewStudentNames(currentUser.role);
-  const expectedGrowth = getExpectedGrowth(fromTerm, toTerm, grade ?? 4, course) ?? 1;
 
   const studentsWithGrowth: GrowthSpotlightStudent[] = [];
 
@@ -408,7 +423,14 @@ export async function getGrowthSpotlight(params: {
     if (student.fromScore === null || student.toScore === null) continue;
 
     const growth = student.toScore - student.fromScore;
-    const growthIndex = expectedGrowth !== 0 ? growth / expectedGrowth : null;
+
+    // 使用學生自己的 fromGrade 查找 NWEA 常模
+    // 移除 ?? 1 fallback：當沒有 NWEA norm 時，Growth Index 應為 null
+    const studentGrade = student.fromGrade ?? grade ?? 4;
+    const expectedGrowth = getExpectedGrowth(fromTerm, toTerm, studentGrade, course);
+    const growthIndex = expectedGrowth !== null && expectedGrowth !== 0
+      ? growth / expectedGrowth
+      : null;
 
     // 判斷旗標
     let flag: GrowthSpotlightStudent['flag'];
@@ -569,7 +591,8 @@ export async function getClassGrowthComparison(params: {
   }>();
 
   const allGrowths: number[] = [];
-  const expectedGrowth = getExpectedGrowth(fromTerm, toTerm, grade, course) ?? 1;
+  // 移除 ?? 1 fallback：當沒有 NWEA norm 時，Growth Index 應為 null
+  const expectedGrowth = getExpectedGrowth(fromTerm, toTerm, grade, course);
 
   for (const [, student] of studentMap) {
     if (student.fromScore === null || student.toScore === null) continue;
@@ -596,7 +619,9 @@ export async function getClassGrowthComparison(params: {
     if (bucket.growths.length === 0) continue;
 
     const avgGrowth = bucket.growths.reduce((a, b) => a + b, 0) / bucket.growths.length;
-    const growthIndex = expectedGrowth !== 0 ? avgGrowth / expectedGrowth : 0;
+    const growthIndex = expectedGrowth !== null && expectedGrowth !== 0
+      ? avgGrowth / expectedGrowth
+      : null;
 
     // 成長分佈
     const distribution = {
@@ -610,21 +635,28 @@ export async function getClassGrowthComparison(params: {
       classId: bucket.classId,
       className: bucket.className,
       avgGrowth: Math.round(avgGrowth * 10) / 10,
-      growthIndex: Math.round(growthIndex * 100) / 100,
+      growthIndex: growthIndex !== null ? Math.round(growthIndex * 100) / 100 : null,
       studentCount: bucket.growths.length,
-      vsNorm: Math.round((avgGrowth - expectedGrowth) * 10) / 10,
+      vsNorm: expectedGrowth !== null ? Math.round((avgGrowth - expectedGrowth) * 10) / 10 : null,
       distribution,
     });
   }
 
-  // 排序（按成長指數降序）
-  classes.sort((a, b) => b.growthIndex - a.growthIndex);
+  // 排序（按成長指數降序，null 值排在最後）
+  classes.sort((a, b) => {
+    if (a.growthIndex === null && b.growthIndex === null) return 0;
+    if (a.growthIndex === null) return 1;
+    if (b.growthIndex === null) return -1;
+    return b.growthIndex - a.growthIndex;
+  });
 
   // 計算年級平均
   const gradeAvgGrowth = allGrowths.length > 0
     ? allGrowths.reduce((a, b) => a + b, 0) / allGrowths.length
     : 0;
-  const gradeGrowthIndex = expectedGrowth !== 0 ? gradeAvgGrowth / expectedGrowth : 0;
+  const gradeGrowthIndex = expectedGrowth !== null && expectedGrowth !== 0
+    ? gradeAvgGrowth / expectedGrowth
+    : null;
 
   return {
     grade,
@@ -634,7 +666,7 @@ export async function getClassGrowthComparison(params: {
     classes,
     gradeAverage: {
       avgGrowth: Math.round(gradeAvgGrowth * 10) / 10,
-      growthIndex: Math.round(gradeGrowthIndex * 100) / 100,
+      growthIndex: gradeGrowthIndex !== null ? Math.round(gradeGrowthIndex * 100) / 100 : null,
       studentCount: allGrowths.length,
     },
   };

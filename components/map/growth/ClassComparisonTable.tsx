@@ -70,7 +70,7 @@ export function ClassComparisonTable({ data, loading }: ClassComparisonTableProp
     );
   }
 
-  // 排序
+  // 排序（處理 null 值：null 排在最後）
   const sortedClasses = [...data.classes].sort((a, b) => {
     const aValue = a[sortKey];
     const bValue = b[sortKey];
@@ -80,6 +80,11 @@ export function ClassComparisonTable({ data, loading }: ClassComparisonTableProp
         ? aValue.localeCompare(bValue)
         : bValue.localeCompare(aValue);
     }
+
+    // 處理 null 值
+    if (aValue === null && bValue === null) return 0;
+    if (aValue === null) return 1;  // null 排在最後
+    if (bValue === null) return -1;
 
     return sortDirection === "asc"
       ? (aValue as number) - (bValue as number)
@@ -106,7 +111,10 @@ export function ClassComparisonTable({ data, loading }: ClassComparisonTableProp
     );
   };
 
-  const formatGrowthIndex = (value: number) => {
+  const formatGrowthIndex = (value: number | null) => {
+    if (value === null) {
+      return <span className="text-muted-foreground">N/A</span>;
+    }
     const color = getGrowthQuintileColor(value);
     return (
       <span style={{ color }} className="font-medium">
@@ -115,7 +123,10 @@ export function ClassComparisonTable({ data, loading }: ClassComparisonTableProp
     );
   };
 
-  const formatVsNorm = (value: number) => {
+  const formatVsNorm = (value: number | null) => {
+    if (value === null) {
+      return <span className="text-muted-foreground">N/A</span>;
+    }
     const isPositive = value >= 0;
     return (
       <span className={isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
