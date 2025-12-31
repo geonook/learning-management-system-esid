@@ -70,6 +70,19 @@ import {
   type GradeGrowthDistributionData,
   type GradeRitDistributionData,
 } from "@/lib/api/map-analytics";
+import {
+  getCrossGradeGrowth,
+  getGrowthSpotlight,
+  getClassGrowthComparison,
+  type CrossGradeGrowthData,
+  type GrowthSpotlightData,
+  type ClassComparisonData,
+} from "@/lib/api/map-growth-analytics";
+import {
+  CrossGradeGrowthChart,
+  GrowthSpotlight,
+  ClassComparisonTable,
+} from "@/components/map/growth";
 import { isBenchmarkSupported } from "@/lib/map/benchmarks";
 import { formatTermStats } from "@/lib/map/utils";
 import { SchoolTab } from "@/components/map/school";
@@ -166,6 +179,13 @@ export default function MapAnalysisPage() {
   const [gradeRitCache, setGradeRitCache] = useState<
     Record<string, GradeRitDistributionData | null>
   >({});
+
+  // New Growth Tab data states
+  const [crossGradeGrowthData, setCrossGradeGrowthData] = useState<CrossGradeGrowthData | null>(null);
+  const [growthSpotlightData, setGrowthSpotlightData] = useState<GrowthSpotlightData | null>(null);
+  const [classComparisonData, setClassComparisonData] = useState<ClassComparisonData | null>(null);
+  // Selected course for Growth Spotlight
+  const [spotlightCourse, setSpotlightCourse] = useState<"Reading" | "Language Usage">("Reading");
 
   // Loading states per tab
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({
@@ -318,6 +338,88 @@ export default function MapAnalysisPage() {
     }
   }, []);
 
+  // Fetch Cross-Grade Growth Data (for new Growth Overview section)
+  const fetchCrossGradeGrowthData = useCallback(async (type: GrowthType) => {
+    try {
+      let fromTerm: string;
+      let toTerm: string;
+
+      if (type === "within-year") {
+        fromTerm = "Fall 2024-2025";
+        toTerm = "Spring 2024-2025";
+      } else {
+        fromTerm = "Fall 2024-2025";
+        toTerm = "Fall 2025-2026";
+      }
+
+      const result = await getCrossGradeGrowth({ fromTerm, toTerm });
+      setCrossGradeGrowthData(result);
+    } catch (err) {
+      console.error("Error fetching cross-grade growth data:", err);
+    }
+  }, []);
+
+  // Fetch Growth Spotlight Data
+  const fetchGrowthSpotlightData = useCallback(async (
+    grade: number,
+    course: "Reading" | "Language Usage",
+    type: GrowthType
+  ) => {
+    try {
+      let fromTerm: string;
+      let toTerm: string;
+
+      if (type === "within-year") {
+        fromTerm = "Fall 2024-2025";
+        toTerm = "Spring 2024-2025";
+      } else {
+        fromTerm = "Fall 2024-2025";
+        toTerm = "Fall 2025-2026";
+      }
+
+      const result = await getGrowthSpotlight({
+        grade,
+        course,
+        fromTerm,
+        toTerm,
+        limit: 5,
+      });
+      setGrowthSpotlightData(result);
+    } catch (err) {
+      console.error("Error fetching growth spotlight data:", err);
+    }
+  }, []);
+
+  // Fetch Class Comparison Data
+  const fetchClassComparisonData = useCallback(async (
+    grade: number,
+    course: "Reading" | "Language Usage",
+    type: GrowthType
+  ) => {
+    try {
+      let fromTerm: string;
+      let toTerm: string;
+
+      if (type === "within-year") {
+        fromTerm = "Fall 2024-2025";
+        toTerm = "Spring 2024-2025";
+      } else {
+        fromTerm = "Fall 2024-2025";
+        toTerm = "Fall 2025-2026";
+      }
+
+      const result = await getClassGrowthComparison({
+        grade,
+        course,
+        fromTerm,
+        toTerm,
+      });
+      setClassComparisonData(result);
+    } catch (err) {
+      console.error("Error fetching class comparison data:", err);
+    }
+  }, []);
+
   // Fetch Goal Data (both courses + RIT distribution)
   const fetchGoalData = useCallback(async (grade: number) => {
     setLoading("goals", true);
@@ -450,6 +552,10 @@ export default function MapAnalysisPage() {
             await fetchConsecutiveGrowthData(selectedGrade);
           } else {
             await fetchGrowthData(selectedGrade, growthType);
+            // Also fetch new Growth Tab data
+            fetchCrossGradeGrowthData(growthType);
+            fetchGrowthSpotlightData(selectedGrade, spotlightCourse, growthType);
+            fetchClassComparisonData(selectedGrade, spotlightCourse, growthType);
           }
           break;
         case "goals":
@@ -477,12 +583,16 @@ export default function MapAnalysisPage() {
     selectedGrade,
     growthType,
     transitionPeriod,
+    spotlightCourse,
     loadedTabs,
     fetchOverviewData,
     fetchGradeGrowthData,
     fetchGradeRitData,
     fetchGrowthData,
     fetchConsecutiveGrowthData,
+    fetchCrossGradeGrowthData,
+    fetchGrowthSpotlightData,
+    fetchClassComparisonData,
     fetchGoalData,
     fetchLexileData,
     fetchQualityData,
@@ -927,56 +1037,96 @@ export default function MapAnalysisPage() {
           {/* Within-Year or Year-over-Year View */}
           {!loadingStates.growth &&
             !errorStates.growth &&
-            growthType !== "consecutive" &&
-            growthData && (
+            growthType !== "consecutive" && (
               <>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {/* Growth Index Chart */}
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base">
-                        Growth Index by English Level
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <MapGrowthIndexChart data={growthData} />
-                    </CardContent>
-                  </Card>
+                {/* Cross-Grade Growth Overview (NEW) */}
+                <CrossGradeGrowthChart data={crossGradeGrowthData} />
 
-                  {/* Growth Distribution */}
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base">
-                        Growth Distribution
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <MapGrowthDistribution data={growthData} />
-                    </CardContent>
-                  </Card>
+                {/* Growth Index and Distribution */}
+                {growthData && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Growth Index Chart */}
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base">
+                          G{selectedGrade} Growth Index by English Level
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <MapGrowthIndexChart data={growthData} />
+                      </CardContent>
+                    </Card>
+
+                    {/* Growth Distribution */}
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base">
+                          G{selectedGrade} Growth Distribution
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <MapGrowthDistribution data={growthData} />
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+
+                {/* Student Spotlight - Course Selector + Cards (NEW) */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">Student Spotlight</span>
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant={spotlightCourse === "Reading" ? "default" : "outline"}
+                        onClick={() => {
+                          setSpotlightCourse("Reading");
+                          fetchGrowthSpotlightData(selectedGrade, "Reading", growthType as GrowthType);
+                        }}
+                      >
+                        Reading
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={spotlightCourse === "Language Usage" ? "default" : "outline"}
+                        onClick={() => {
+                          setSpotlightCourse("Language Usage");
+                          fetchGrowthSpotlightData(selectedGrade, "Language Usage", growthType as GrowthType);
+                        }}
+                      >
+                        Language Usage
+                      </Button>
+                    </div>
+                  </div>
+                  <GrowthSpotlight data={growthSpotlightData} />
                 </div>
 
+                {/* Class Comparison Table (NEW) */}
+                <ClassComparisonTable data={classComparisonData} />
+
                 {/* Summary Info */}
-                <Card className="bg-muted/30">
-                  <CardContent className="pt-4">
-                    <div className="text-center text-sm">
-                      <p className="font-medium">
-                        {growthData.growthType === "within-year"
-                          ? `${growthData.fromTerm} → ${growthData.toTerm}`
-                          : `G${growthData.fromGrade} ${
-                              growthData.fromTerm.split(" ")[0]
-                            } → G${growthData.toGrade} ${
-                              growthData.toTerm.split(" ")[0]
-                            }`}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {growthData.growthType === "within-year"
-                          ? "Within-year growth: Tracking student progress from Fall to Spring within the same academic year"
-                          : "Year-over-year growth: Tracking student progress after advancing one grade level"}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
+                {growthData && (
+                  <Card className="bg-muted/30">
+                    <CardContent className="pt-4">
+                      <div className="text-center text-sm">
+                        <p className="font-medium">
+                          {growthData.growthType === "within-year"
+                            ? `${growthData.fromTerm} → ${growthData.toTerm}`
+                            : `G${growthData.fromGrade} ${
+                                growthData.fromTerm.split(" ")[0]
+                              } → G${growthData.toGrade} ${
+                                growthData.toTerm.split(" ")[0]
+                              }`}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {growthData.growthType === "within-year"
+                            ? "Within-year growth: Tracking student progress from Fall to Spring within the same academic year"
+                            : "Year-over-year growth: Tracking student progress after advancing one grade level"}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </>
             )}
 
