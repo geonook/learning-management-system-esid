@@ -205,6 +205,28 @@ export function MapGradeRitDistribution({
             >
               R² = {data.gaussianFit.rSquared.toFixed(2)}
             </span>
+            <UITooltip>
+              <TooltipTrigger asChild>
+                <Info className="w-3 h-3 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[320px]">
+                <p className="text-xs mb-2">
+                  <strong>R² (Goodness of Fit)</strong> measures how well the histogram
+                  matches a normal (bell curve) distribution.
+                </p>
+                <p className="text-xs mb-2">
+                  R² = {data.gaussianFit.rSquared.toFixed(2)} means <strong>{Math.round(data.gaussianFit.rSquared * 100)}%</strong> of
+                  the variation in student RIT scores is explained by the normal curve.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {r2Interpretation.color === "#22c55e"
+                    ? "✅ High R² (≥0.8): RIT scores are normally distributed."
+                    : r2Interpretation.color === "#eab308"
+                    ? "⚠️ Moderate R² (0.5-0.8): Some deviation from normal."
+                    : "❌ Low R² (<0.5): Significant deviation - investigate for outliers."}
+                </p>
+              </TooltipContent>
+            </UITooltip>
           </div>
         </div>
 
@@ -425,7 +447,7 @@ export function MapGradeRitDistribution({
         </div>
 
         {/* 解讀說明 */}
-        <div className="mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
+        <div className="mt-3 pt-3 border-t border-border text-xs text-muted-foreground space-y-1">
           <p>
             <strong>How to read:</strong> Histogram shows KCIS G{data.grade}{" "}
             {data.course} RIT distribution for {data.termTested}. Black curve is
@@ -446,6 +468,13 @@ export function MapGradeRitDistribution({
               </>
             )}
           </p>
+          {data.nweaNorm && (
+            <p>
+              <strong>Curves explained:</strong> The <span className="font-medium">black solid curve</span> (KCIS Fit)
+              is fitted to our students&apos; actual data. The <span className="text-purple-600 dark:text-purple-400 font-medium">purple dashed curve</span> (NWEA Norm)
+              shows the expected distribution based on NWEA 2025 national norms for comparison.
+            </p>
+          )}
         </div>
       </div>
     </TooltipProvider>

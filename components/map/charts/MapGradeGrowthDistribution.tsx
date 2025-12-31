@@ -213,13 +213,47 @@ export function MapGradeGrowthDistribution({
             >
               R² = {data.gaussianFit.rSquared.toFixed(2)}
             </span>
+            <UITooltip>
+              <TooltipTrigger asChild>
+                <Info className="w-3 h-3 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[320px]">
+                <p className="text-xs mb-2">
+                  <strong>R² (Goodness of Fit)</strong> measures how well the histogram
+                  matches a normal (bell curve) distribution.
+                </p>
+                <p className="text-xs mb-2">
+                  R² = {data.gaussianFit.rSquared.toFixed(2)} means <strong>{Math.round(data.gaussianFit.rSquared * 100)}%</strong> of
+                  the variation in student growth is explained by the normal curve.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {r2Interpretation.color === "#22c55e"
+                    ? "✅ High R² (≥0.8): Growth is normally distributed."
+                    : r2Interpretation.color === "#eab308"
+                    ? "⚠️ Moderate R² (0.5-0.8): Some deviation from normal."
+                    : "❌ Low R² (<0.5): Significant deviation - investigate for outliers."}
+                </p>
+              </TooltipContent>
+            </UITooltip>
           </div>
 
           {/* 正成長百分比 */}
-          <div className="px-2.5 py-1 bg-green-50 border border-green-200 rounded-md">
-            <span className="text-green-700 font-medium text-xs">
+          <div className="px-2.5 py-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md flex items-center gap-1">
+            <span className="text-green-700 dark:text-green-400 font-medium text-xs">
               ✅ {positiveGrowthPercentage}% positive growth
             </span>
+            <UITooltip>
+              <TooltipTrigger asChild>
+                <Info className="w-3 h-3 text-green-500 cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[280px]">
+                <p className="text-xs">
+                  <strong>{data.totalStudents - data.negativeCount}</strong> out of{" "}
+                  <strong>{data.totalStudents}</strong> students showed RIT score improvement
+                  (growth {">"} 0). This is a simple count, not a measure of growth quality.
+                </p>
+              </TooltipContent>
+            </UITooltip>
           </div>
         </div>
 
@@ -413,7 +447,7 @@ export function MapGradeGrowthDistribution({
         </div>
 
         {/* 解讀說明 */}
-        <div className="mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
+        <div className="mt-3 pt-3 border-t border-border text-xs text-muted-foreground space-y-1">
           <p>
             <strong>How to read:</strong> Histogram shows KCIS G{data.grade}{" "}
             {data.course} growth distribution. Black curve is Gaussian fit to
@@ -428,6 +462,13 @@ export function MapGradeGrowthDistribution({
             )}{" "}
             Red shaded area indicates negative growth.
           </p>
+          {data.nweaNorm && (
+            <p>
+              <strong>Curves explained:</strong> The <span className="font-medium">black solid curve</span> (KCIS Fit)
+              is fitted to our students&apos; actual data. The <span className="text-purple-600 dark:text-purple-400 font-medium">purple dashed curve</span> (NWEA Norm)
+              shows the expected distribution based on NWEA 2025 national norms for comparison.
+            </p>
+          )}
         </div>
       </div>
     </TooltipProvider>
