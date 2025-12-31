@@ -25,11 +25,15 @@ import {
   LayoutGrid,
   Square,
   School,
+  Users,
+  CheckCircle2,
+  AlertTriangle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import {
   MapGrowthLineChart,
   MapBenchmarkDonutChart,
@@ -80,7 +84,6 @@ import {
   GrowthSpotlight,
   ClassComparisonTable,
   GrowthPeriodSelector,
-  GrowthContextBanner,
   createGrowthPeriodOptions,
   type GrowthPeriodOption,
 } from "@/components/map/growth";
@@ -986,9 +989,9 @@ export default function MapAnalysisPage() {
 
         {/* Growth Tab */}
         <TabsContent value="growth" className="space-y-6 mt-6">
-          {/* Growth Period Selector */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="flex-1 w-full sm:max-w-md">
+          {/* Growth Period Selector + Inline Stats */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-wrap">
+            <div className="flex-shrink-0 w-full sm:w-auto sm:min-w-[280px]">
               <GrowthPeriodSelector
                 periods={growthPeriodOptions}
                 selectedId={selectedGrowthPeriodId}
@@ -996,19 +999,31 @@ export default function MapAnalysisPage() {
                 disabled={loadingStates.growth}
               />
             </div>
+            {/* Inline Stats Badges */}
+            {selectedGrowthPeriod && !loadingStates.growth && crossGradeGrowthData && (
+              <div className="flex items-center gap-2 text-sm">
+                <Badge variant="outline" className="font-normal">
+                  <Users className="w-3 h-3 mr-1" />
+                  {crossGradeGrowthData.grades.reduce(
+                    (sum, g) => sum + Math.max(g.reading.studentCount, g.languageUsage.studentCount),
+                    0
+                  ).toLocaleString()} students
+                </Badge>
+                {selectedGrowthPeriod.hasOfficialBenchmark && (
+                  <Badge variant="outline" className="font-normal text-green-600 border-green-200 dark:text-green-400 dark:border-green-800">
+                    <CheckCircle2 className="w-3 h-3 mr-1" />
+                    NWEA Official
+                  </Badge>
+                )}
+                {!selectedGrowthPeriod.hasOfficialBenchmark && (
+                  <Badge variant="outline" className="font-normal text-yellow-600 border-yellow-200 dark:text-yellow-400 dark:border-yellow-800">
+                    <AlertTriangle className="w-3 h-3 mr-1" />
+                    No Benchmark
+                  </Badge>
+                )}
+              </div>
+            )}
           </div>
-
-          {/* Context Banner */}
-          {selectedGrowthPeriod && (
-            <GrowthContextBanner
-              period={selectedGrowthPeriod}
-              studentCount={crossGradeGrowthData?.grades.reduce(
-                (sum, g) => sum + Math.max(g.reading.studentCount, g.languageUsage.studentCount),
-                0
-              ) ?? 0}
-              isLoading={loadingStates.growth}
-            />
-          )}
 
           {loadingStates.growth && renderSkeleton(2)}
           {errorStates.growth && renderError(errorStates.growth)}

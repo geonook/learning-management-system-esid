@@ -33,7 +33,8 @@ import {
 
 export interface CrossGradeGrowthData {
   grades: Array<{
-    grade: number;
+    grade: number;      // fromGrade: 起始年級（用於 NWEA norm 查詢）
+    toGrade: number;    // 結束年級（用於 X 軸標籤顯示）
     reading: {
       avgGrowth: number;
       growthIndex: number | null;  // null when no NWEA norm available
@@ -289,8 +290,15 @@ export async function getCrossGradeGrowth(params: {
     const luCGPs = luStudents.map(s => s.cgp.languageUsage).filter((c): c is number => c !== null);
     const luAvgCGP = luCGPs.length > 0 ? Math.round(luCGPs.reduce((a, b) => a + b, 0) / luCGPs.length) : null;
 
+    // 計算 toGrade（結束年級）
+    // Within-Year (Fall → Spring): toGrade = fromGrade（同學年）
+    // Year-over-Year (Fall → Fall): toGrade = fromGrade + 1（升一年級）
+    const isYearOverYear = fromTerm.toLowerCase().includes("fall") && toTerm.toLowerCase().includes("fall");
+    const toGrade = isYearOverYear ? grade + 1 : grade;
+
     result.grades.push({
-      grade,
+      grade,       // fromGrade：起始年級
+      toGrade,     // 結束年級（用於 X 軸顯示）
       reading: {
         avgGrowth: Math.round(rdAvgGrowth * 10) / 10,
         growthIndex: rdGrowthIndex,

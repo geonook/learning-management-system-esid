@@ -251,5 +251,19 @@ export function createGrowthPeriodOptions(
     }
   }
 
+  // Sort options by toTerm (most recent first)
+  // Parse toTerm to get year and season for sorting
+  const getToTermSortKey = (option: GrowthPeriodOption): number => {
+    const match = option.toTerm.match(/(Fall|Winter|Spring)\s+(\d{4})-(\d{4})/i);
+    if (!match) return 0;
+    const season = match[1]?.toLowerCase();
+    const year = parseInt(match[3] ?? "0", 10); // Use end year (e.g., 2025 from 2024-2025)
+    // Season order: Spring > Winter > Fall (within same year)
+    const seasonOrder = season === "spring" ? 2 : season === "winter" ? 1 : 0;
+    return year * 10 + seasonOrder;
+  };
+
+  options.sort((a, b) => getToTermSortKey(b) - getToTermSortKey(a));
+
   return options;
 }

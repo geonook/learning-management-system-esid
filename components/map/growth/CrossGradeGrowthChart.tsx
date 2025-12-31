@@ -58,19 +58,22 @@ export function CrossGradeGrowthChart({
     );
   }
 
-  // 準備圖表資料
-  const chartData = data.grades.map((g) => ({
-    grade: `G${g.grade}`,
-    gradeNum: g.grade,
-    reading: g.reading.growthIndex,
-    readingGrowth: g.reading.avgGrowth,
-    readingCount: g.reading.studentCount,
-    readingCGP: g.reading.avgCGP,
-    languageUsage: g.languageUsage.growthIndex,
-    languageGrowth: g.languageUsage.avgGrowth,
-    languageCount: g.languageUsage.studentCount,
-    languageCGP: g.languageUsage.avgCGP,
-  }));
+  // 準備圖表資料（使用 toGrade 作為 X 軸標籤，過濾無資料年級）
+  const chartData = data.grades
+    .filter((g) => g.reading.studentCount > 0 || g.languageUsage.studentCount > 0)
+    .map((g) => ({
+      grade: `G${g.toGrade}`,      // X 軸顯示結束年級
+      gradeNum: g.grade,           // fromGrade：用於 NWEA norm 查詢
+      toGradeNum: g.toGrade,       // toGrade：用於 tooltip 顯示
+      reading: g.reading.growthIndex,
+      readingGrowth: g.reading.avgGrowth,
+      readingCount: g.reading.studentCount,
+      readingCGP: g.reading.avgCGP,
+      languageUsage: g.languageUsage.growthIndex,
+      languageGrowth: g.languageUsage.avgGrowth,
+      languageCount: g.languageUsage.studentCount,
+      languageCGP: g.languageUsage.avgCGP,
+    }));
 
   // 自訂 Tooltip
   const CustomTooltip = ({ active, payload, label }: any) => {
