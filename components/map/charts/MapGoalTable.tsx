@@ -107,8 +107,8 @@ export function MapGoalTable({
                 <ul className="list-disc list-inside space-y-0.5">
                   <li><strong>Avg</strong>: Average goal RIT score (midpoint)</li>
                   <li><strong>vs Overall</strong>: Difference from overall RIT score</li>
-                  <li className="text-green-600">• Positive values: Goal score above overall RIT</li>
-                  <li className="text-red-600">• Negative values: Goal score below overall RIT</li>
+                  <li className="text-green-600 dark:text-green-400">• Positive values: Goal score above overall RIT</li>
+                  <li className="text-red-600 dark:text-red-400">• Negative values: Goal score below overall RIT</li>
                 </ul>
               </div>
             </TooltipContent>

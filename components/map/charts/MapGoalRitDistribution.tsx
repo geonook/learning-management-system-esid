@@ -10,6 +10,7 @@
  * Uses recharts ComposedChart with Area overlays
  */
 
+import { useTheme } from "next-themes";
 import {
   ComposedChart,
   Line,
@@ -41,6 +42,12 @@ export function MapGoalRitDistribution({
   data,
   height = 320,
 }: MapGoalRitDistributionProps) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
+  // Overall line color adapts to theme
+  const overallLineColor = isDark ? "#e5e7eb" : "#1f2937"; // gray-200 / gray-800
+
   if (!data || data.goals.length === 0) {
     return (
       <div className="flex items-center justify-center h-[300px] text-muted-foreground">
@@ -180,7 +187,7 @@ export function MapGoalRitDistribution({
               type="monotone"
               dataKey="overall"
               name="Overall"
-              stroke="#1f2937"
+              stroke={overallLineColor}
               strokeWidth={2.5}
               dot={false}
               connectNulls

@@ -28,7 +28,7 @@ import {
   ErrorBar,
   Legend,
 } from "recharts";
-import { NWEA_COLORS, KCIS_EXPECTED_COLORS } from "@/lib/map/colors";
+import { NWEA_COLORS, KCIS_EXPECTED_COLORS, BENCHMARK_COLORS } from "@/lib/map/colors";
 import { KCIS_EXPECTED } from "@/lib/map/kcis-expected";
 import type { CrossGradeStats } from "@/lib/api/map-school-analytics";
 
@@ -87,6 +87,9 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
         expected: kcisData?.mean ?? null,
         expectedUpper: kcisData ? kcisData.mean + kcisData.stdDev : null,
         expectedLower: kcisData ? kcisData.mean - kcisData.stdDev : null,
+        // E1/E3 閾值
+        e1: kcisData?.e1 ?? null,
+        e3: kcisData?.e3 ?? null,
       };
     });
 
@@ -113,6 +116,13 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
       }
       if (d.expectedLower !== null) {
         allValues.push(d.expectedLower);
+      }
+      // 加入 E1/E3 閾值
+      if (d.e1 !== null) {
+        allValues.push(d.e1);
+      }
+      if (d.e3 !== null) {
+        allValues.push(d.e3);
       }
     });
 
@@ -199,6 +209,26 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
                         </span>
                       )}
                     </div>
+                    {/* E1/E3 閾值 */}
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: BENCHMARK_COLORS.E1 }}
+                      />
+                      <span className="text-muted-foreground">E1:</span>
+                      <span className="font-mono font-medium">
+                        {pointData?.e1?.toFixed(0) ?? "N/A"}
+                      </span>
+                      <span className="mx-1 text-muted-foreground">|</span>
+                      <span
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: BENCHMARK_COLORS.E3 }}
+                      />
+                      <span className="text-muted-foreground">E3:</span>
+                      <span className="font-mono font-medium">
+                        {pointData?.e3?.toFixed(0) ?? "N/A"}
+                      </span>
+                    </div>
                     <div className="flex items-center gap-2">
                       <span
                         className="w-2 h-2 rounded-full"
@@ -273,6 +303,30 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
             connectNulls
           />
 
+          {/* E1 閾值虛線 (綠色) */}
+          <Line
+            type="monotone"
+            dataKey="e1"
+            name="E1 Threshold"
+            stroke={BENCHMARK_COLORS.E1}
+            strokeWidth={1.5}
+            strokeDasharray="4 4"
+            dot={false}
+            connectNulls
+          />
+
+          {/* E3 閾值虛線 (紅色) */}
+          <Line
+            type="monotone"
+            dataKey="e3"
+            name="E3 Threshold"
+            stroke={BENCHMARK_COLORS.E3}
+            strokeWidth={1.5}
+            strokeDasharray="4 4"
+            dot={false}
+            connectNulls
+          />
+
           {/* NWEA Norm 線 (灰色虛線) */}
           <Line
             type="monotone"
@@ -319,13 +373,19 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
         </p>
         <p>
           <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ backgroundColor: SCHOOL_COLORS.student }} />
-          <strong>Green line:</strong> KCISLK students (error bars = ±1 SD)
+          <strong>Green solid:</strong> KCISLK students (±1 SD)
           {" | "}
           <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ backgroundColor: SCHOOL_COLORS.expected }} />
-          <strong>Purple line:</strong> KCIS Expected (E2) with ±1 SD band
+          <strong>Purple dashed:</strong> E2 (with ±1 SD band)
+          {" | "}
+          <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ backgroundColor: BENCHMARK_COLORS.E1 }} />
+          <strong>Green dashed:</strong> E1
+          {" | "}
+          <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ backgroundColor: BENCHMARK_COLORS.E3 }} />
+          <strong>Red dashed:</strong> E3
           {" | "}
           <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ backgroundColor: SCHOOL_COLORS.norm }} />
-          <strong>Gray line:</strong> NWEA Norm
+          <strong>Gray dashed:</strong> NWEA Norm
         </p>
         {/* 缺失年級提示 */}
         {missingGrades.length > 0 && (

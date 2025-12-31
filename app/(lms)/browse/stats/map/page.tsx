@@ -1016,6 +1016,25 @@ export default function MapAnalysisPage() {
             !errorStates.goals &&
             (goalData.reading || goalData.languageUsage) && (
               <>
+                {/* Explanation Box */}
+                <div className="p-3 bg-muted/50 dark:bg-muted/30 rounded-lg text-xs space-y-2">
+                  <p>
+                    <strong>Radar Chart:</strong> Shows relative performance across
+                    goal areas. Each axis represents a different skill area (e.g.,
+                    Literary Text, Informational Text, Vocabulary).
+                  </p>
+                  <p>
+                    <strong>Goal Table:</strong> Compares each goal area RIT score
+                    to overall RIT. Positive difference = strength, negative = area
+                    for improvement.
+                  </p>
+                  <p className="text-muted-foreground">
+                    Goal areas vary by course: Reading has Literary/Informational
+                    Text + Vocabulary | Language Usage has
+                    Grammar/Mechanics/Usage.
+                  </p>
+                </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Reading Goals */}
                   <Card>
@@ -1177,6 +1196,27 @@ export default function MapAnalysisPage() {
           {errorStates.quality && renderError(errorStates.quality)}
           {!loadingStates.quality && !errorStates.quality && qualityData && (
             <>
+              {/* Explanation Box */}
+              <div className="p-3 bg-muted/50 dark:bg-muted/30 rounded-lg text-xs space-y-2">
+                <p>
+                  <strong>Rapid Guessing:</strong> NWEA detects when students
+                  answer too quickly to have read the question. High rapid
+                  guessing percentages may indicate disengagement or test anxiety.
+                </p>
+                <p>
+                  <strong>Normal (≤15%):</strong> Reliable test results. |{" "}
+                  <strong>Caution (15-30%):</strong> Some questions may not
+                  reflect true ability. |{" "}
+                  <strong>Flagged (&gt;30%):</strong> Scores may be invalid;
+                  consider retesting.
+                </p>
+                <p className="text-muted-foreground">
+                  NWEA recommends investigating students with &gt;30% rapid
+                  guessing to ensure RIT scores accurately reflect their
+                  abilities.
+                </p>
+              </div>
+
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Quality Pie Chart */}
                 <Card>

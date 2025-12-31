@@ -19,6 +19,13 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { Info } from "lucide-react";
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { GrowthAnalysisData } from "@/lib/api/map-analytics";
 
 interface MapGrowthDistributionProps {
@@ -103,14 +110,36 @@ export function MapGrowthDistribution({
   };
 
   return (
-    <div className="w-full">
-      <h4 className="text-sm font-medium mb-1 text-center">
-        {formatTitle()}
-      </h4>
-      <p className="text-xs text-muted-foreground text-center mb-2">
-        {formatSubtitle()}
-      </p>
-      <ResponsiveContainer width="100%" height={height}>
+    <TooltipProvider>
+      <div className="w-full">
+        <div className="flex items-center justify-center gap-1 mb-1">
+          <h4 className="text-sm font-medium text-center">
+            {formatTitle()}
+          </h4>
+          <UITooltip>
+            <TooltipTrigger asChild>
+              <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent className="max-w-[300px]">
+              <div className="text-xs space-y-1">
+                <p><strong>Growth Distribution:</strong></p>
+                <p>
+                  Shows how student growth is distributed across different RIT
+                  point ranges. Each bar represents the count of students who
+                  achieved that level of growth.
+                </p>
+                <p className="mt-1 text-muted-foreground">
+                  Negative (&lt;0) = declined | 0-5 = minimal | 5-10 = typical |
+                  10-15 = strong | 15+ = exceptional
+                </p>
+              </div>
+            </TooltipContent>
+          </UITooltip>
+        </div>
+        <p className="text-xs text-muted-foreground text-center mb-2">
+          {formatSubtitle()}
+        </p>
+        <ResponsiveContainer width="100%" height={height}>
         <BarChart
           data={chartData}
           margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
@@ -171,6 +200,7 @@ export function MapGrowthDistribution({
           ))}
         </div>
       </div>
-    </div>
+      </div>
+    </TooltipProvider>
   );
 }

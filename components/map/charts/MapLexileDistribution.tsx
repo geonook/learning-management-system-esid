@@ -105,7 +105,7 @@ export function MapLexileDistribution({
                 value: "Students",
                 angle: -90,
                 position: "insideLeft",
-                style: { fontSize: 12 },
+                style: { fontSize: 12, fill: "hsl(var(--muted-foreground))" },
               }}
             />
             <Tooltip
