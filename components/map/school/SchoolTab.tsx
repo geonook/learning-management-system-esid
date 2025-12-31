@@ -52,8 +52,10 @@ import {
 import type { Course } from "@/lib/map/norms";
 
 export function SchoolTab() {
-  // State
-  const [loading, setLoading] = useState(true);
+  // State - Progressive loading
+  const [termsLoading, setTermsLoading] = useState(true);
+  const [achievementLoading, setAchievementLoading] = useState(true);
+  const [growthLoading, setGrowthLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<SchoolOverviewData | null>(null);
   const [growthData, setGrowthData] =
@@ -80,12 +82,17 @@ export function SchoolTab() {
     return { fromTerm, toTerm };
   };
 
-  // 載入資料
+  // 載入資料 - Progressive loading (Achievement first, then Growth)
   const loadData = useCallback(async () => {
-    setLoading(true);
+    setTermsLoading(true);
+    setAchievementLoading(true);
+    setGrowthLoading(true);
     setError(null);
+
     try {
-      // 取得可用的 terms 和 growth periods
+      // ========================================
+      // Phase 1: 載入 terms（控制元件需要）
+      // ========================================
       const [termsResult, growthPeriodsResult] = await Promise.all([
         getAvailableSchoolTerms(),
         getAvailableGrowthPeriods(),
@@ -93,11 +100,11 @@ export function SchoolTab() {
 
       setAvailableTerms(termsResult);
       setAvailableGrowthPeriods(growthPeriodsResult);
+      setTermsLoading(false);
 
       // 設定預設 growth period（如果尚未選擇）
       let currentGrowthPeriod = selectedGrowthPeriod;
       if (!currentGrowthPeriod && growthPeriodsResult.length > 0) {
-        // 預設選擇第一個（通常是 Fall-to-Fall）
         const firstPeriod = growthPeriodsResult[0];
         if (firstPeriod) {
           currentGrowthPeriod = `${firstPeriod.fromTerm}→${firstPeriod.toTerm}`;
@@ -105,32 +112,43 @@ export function SchoolTab() {
         }
       }
 
-      // 解析 growth period 參數
-      const { fromTerm, toTerm } = parseGrowthPeriod(currentGrowthPeriod);
-
-      // 載入圖表資料
-      const [statsResult, growthResult, scatterResult, heatmapResult] =
-        await Promise.all([
-          getCrossGradeStats({ termTested: selectedTerm }),
-          getSchoolGrowthDistribution({ fromTerm, toTerm }),
-          getRitGrowthScatterData({ fromTerm, toTerm }),
-          getRitGradeHeatmapData({ termTested: selectedTerm }),
-        ]);
+      // ========================================
+      // Phase 2: 載入 Achievement（優先顯示）
+      // ========================================
+      const [statsResult, heatmapResult] = await Promise.all([
+        getCrossGradeStats({ termTested: selectedTerm }),
+        getRitGradeHeatmapData({ termTested: selectedTerm }),
+      ]);
 
       setData(statsResult);
-      setGrowthData(growthResult);
-      setScatterData(scatterResult);
       setHeatmapData(heatmapResult);
 
       // 設定預設選擇的 term
       if (!selectedTerm && statsResult?.termTested) {
         setSelectedTerm(statsResult.termTested);
       }
+
+      setAchievementLoading(false); // ← Achievement 完成，立即顯示
+
+      // ========================================
+      // Phase 3: 載入 Growth（延後載入）
+      // ========================================
+      const { fromTerm, toTerm } = parseGrowthPeriod(currentGrowthPeriod);
+      const [growthResult, scatterResult] = await Promise.all([
+        getSchoolGrowthDistribution({ fromTerm, toTerm }),
+        getRitGrowthScatterData({ fromTerm, toTerm }),
+      ]);
+
+      setGrowthData(growthResult);
+      setScatterData(scatterResult);
+      setGrowthLoading(false); // ← Growth 完成
+
     } catch (err) {
       console.error("Error loading school data:", err);
       setError("Failed to load data");
-    } finally {
-      setLoading(false);
+      setTermsLoading(false);
+      setAchievementLoading(false);
+      setGrowthLoading(false);
     }
   }, [selectedTerm, selectedGrowthPeriod]);
 
@@ -165,17 +183,38 @@ export function SchoolTab() {
   const filteredData: CrossGradeStats[] =
     data?.grades.filter((g) => g.course === selectedCourse) ?? [];
 
-  // Loading skeleton
-  if (loading) {
+  // Initial loading skeleton - only show if terms are not loaded yet
+  if (termsLoading) {
     return (
       <div className="space-y-6 p-4">
         <div className="flex items-center gap-4">
           <Skeleton className="h-10 w-48" />
           <Skeleton className="h-10 w-32" />
         </div>
-        <Skeleton className="h-[350px] w-full" />
-        <Skeleton className="h-[200px] w-full" />
-        <Skeleton className="h-[300px] w-full" />
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-blue-600 animate-pulse" />
+              <Skeleton className="h-5 w-40" />
+            </div>
+            <Skeleton className="h-4 w-64 mt-2" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[350px] w-full" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-green-600 animate-pulse" />
+              <Skeleton className="h-5 w-32" />
+            </div>
+            <Skeleton className="h-4 w-56 mt-2" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[300px] w-full" />
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -202,6 +241,15 @@ export function SchoolTab() {
             <h2 className="text-lg font-semibold">School-wide Performance</h2>
             <p className="text-sm text-muted-foreground">
               Cross-grade analysis for all G3-G6 students
+              {/* Loading indicator */}
+              {(achievementLoading || growthLoading) && (
+                <span className="ml-2 inline-flex items-center gap-1 text-blue-600 dark:text-blue-400">
+                  <RefreshCw className="w-3 h-3 animate-spin" />
+                  <span className="text-xs">
+                    {achievementLoading ? "Loading achievement..." : "Loading growth..."}
+                  </span>
+                </span>
+              )}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -295,73 +343,98 @@ export function SchoolTab() {
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-blue-600" />
+              <BarChart3 className={`w-5 h-5 text-blue-600 ${achievementLoading ? "animate-pulse" : ""}`} />
               <CardTitle className="text-base">Achievement Analysis</CardTitle>
             </div>
             <CardDescription>
-              How did students perform on the MAP test in{" "}
-              <span className="font-medium text-foreground">{selectedTerm || "this term"}</span>?
+              {achievementLoading ? (
+                <span className="flex items-center gap-2">
+                  <span className="inline-block w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                  Loading achievement data...
+                </span>
+              ) : (
+                <>
+                  How did students perform on the MAP test in{" "}
+                  <span className="font-medium text-foreground">{selectedTerm || "this term"}</span>?
+                </>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Cross-Grade Chart */}
-            <div className="rounded-lg border bg-card/50 p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <h3 className="text-sm font-medium">Cross-Grade Performance</h3>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">
-                    <p className="text-xs">
-                      Compares KCIS student average RIT with U.S. national norms.
-                      Error bars show ±1 standard deviation (68% of students fall within this range).
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <CrossGradeChart data={filteredData} />
-            </div>
-
-            {/* Summary Table */}
-            <div className="rounded-lg border bg-card/50 p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <h3 className="text-sm font-medium">Summary Statistics</h3>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">
-                    <p className="text-xs">
-                      Key metrics for each grade.{" "}
-                      <span className="text-green-600">Green</span> = above national norm,{" "}
-                      <span className="text-red-600">Red</span> = below.
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <SchoolSummaryTable data={filteredData} />
-            </div>
-
-            {/* RIT-Grade Heatmap */}
-            {heatmapData && (
-              <div className="rounded-lg border bg-card/50 p-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <h3 className="text-sm font-medium">RIT Distribution Heatmap</h3>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <p className="text-xs">
-                        Shows how students are distributed across RIT ranges.
-                        Darker colors = more students in that range.
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
+            {achievementLoading ? (
+              /* Achievement Loading Skeleton */
+              <div className="space-y-6">
+                <div className="rounded-lg border bg-card/50 p-4">
+                  <Skeleton className="h-5 w-48 mb-4" />
+                  <Skeleton className="h-[350px] w-full" />
                 </div>
-                <RitGradeHeatmap data={heatmapData} />
+                <div className="rounded-lg border bg-card/50 p-4">
+                  <Skeleton className="h-5 w-40 mb-4" />
+                  <Skeleton className="h-[150px] w-full" />
+                </div>
               </div>
+            ) : (
+              <>
+                {/* Cross-Grade Chart */}
+                <div className="rounded-lg border bg-card/50 p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <h3 className="text-sm font-medium">Cross-Grade Performance</h3>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p className="text-xs">
+                          Compares KCIS student average RIT with U.S. national norms.
+                          Error bars show ±1 standard deviation (68% of students fall within this range).
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <CrossGradeChart data={filteredData} />
+                </div>
+
+                {/* Summary Table */}
+                <div className="rounded-lg border bg-card/50 p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <h3 className="text-sm font-medium">Summary Statistics</h3>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p className="text-xs">
+                          Key metrics for each grade.{" "}
+                          <span className="text-green-600">Green</span> = above national norm,{" "}
+                          <span className="text-red-600">Red</span> = below.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <SchoolSummaryTable data={filteredData} />
+                </div>
+
+                {/* RIT-Grade Heatmap */}
+                {heatmapData && (
+                  <div className="rounded-lg border bg-card/50 p-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <h3 className="text-sm font-medium">RIT Distribution Heatmap</h3>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p className="text-xs">
+                            Shows how students are distributed across RIT ranges.
+                            Darker colors = more students in that range.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <RitGradeHeatmap data={heatmapData} />
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
@@ -369,83 +442,111 @@ export function SchoolTab() {
         {/* ============================================ */}
         {/* SECTION 2: Growth Analysis */}
         {/* ============================================ */}
-        {(growthData || scatterData) && (
+        {(growthLoading || growthData || scatterData) && (
           <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-green-600" />
+                <TrendingUp className={`w-5 h-5 text-green-600 ${growthLoading ? "animate-pulse" : ""}`} />
                 <CardTitle className="text-base">Growth Analysis</CardTitle>
               </div>
               <CardDescription>
-                How much did students grow from{" "}
-                <span className="font-medium text-foreground">
-                  {currentGrowthPeriodInfo.fromTerm || "previous term"}
-                </span>{" "}
-                to{" "}
-                <span className="font-medium text-foreground">
-                  {currentGrowthPeriodInfo.toTerm || "current term"}
-                </span>?
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="w-3.5 h-3.5 ml-1 inline text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">
-                    <p className="text-xs">
-                      Growth analysis requires students to have taken tests in BOTH terms.
-                      Students missing either test are not included.
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Growth Distribution */}
-              {growthData && (
-                <div className="rounded-lg border bg-card/50 p-4">
-                  <div className="flex items-center gap-2 mb-4">
-                    <h3 className="text-sm font-medium">Growth Distribution</h3>
+                {growthLoading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    Analyzing student growth between terms...
+                  </span>
+                ) : (
+                  <>
+                    How much did students grow from{" "}
+                    <span className="font-medium text-foreground">
+                      {currentGrowthPeriodInfo.fromTerm || "previous term"}
+                    </span>{" "}
+                    to{" "}
+                    <span className="font-medium text-foreground">
+                      {currentGrowthPeriodInfo.toTerm || "current term"}
+                    </span>?
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                        <Info className="w-3.5 h-3.5 ml-1 inline text-muted-foreground cursor-help" />
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
                         <p className="text-xs">
-                          Shows how much RIT growth each student achieved.
-                          <span className="text-red-600"> Red bars</span> = students who went backward
-                          (may need extra support).
+                          Growth analysis requires students to have taken tests in BOTH terms.
+                          Students missing either test are not included.
                         </p>
                       </TooltipContent>
                     </Tooltip>
+                  </>
+                )}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {growthLoading ? (
+                /* Growth Loading Skeleton with hint */
+                <div className="space-y-6">
+                  <div className="rounded-lg border bg-card/50 p-4">
+                    <Skeleton className="h-5 w-40 mb-4" />
+                    <Skeleton className="h-[300px] w-full" />
+                    <p className="text-xs text-muted-foreground text-center mt-4">
+                      Comparing student scores across test periods...
+                    </p>
                   </div>
-                  <GrowthDistributionChart data={growthData} />
+                  <div className="rounded-lg border bg-card/50 p-4">
+                    <Skeleton className="h-5 w-48 mb-4" />
+                    <Skeleton className="h-[350px] w-full" />
+                  </div>
                 </div>
-              )}
+              ) : (
+                <>
+                  {/* Growth Distribution */}
+                  {growthData && (
+                    <div className="rounded-lg border bg-card/50 p-4">
+                      <div className="flex items-center gap-2 mb-4">
+                        <h3 className="text-sm font-medium">Growth Distribution</h3>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p className="text-xs">
+                              Shows how much RIT growth each student achieved.
+                              <span className="text-red-600"> Red bars</span> = students who went backward
+                              (may need extra support).
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <GrowthDistributionChart data={growthData} />
+                    </div>
+                  )}
 
-              {/* RIT-Growth Scatter Chart */}
-              {scatterData && (
-                <div className="rounded-lg border bg-card/50 p-4">
-                  <div className="flex items-center gap-2 mb-4">
-                    <h3 className="text-sm font-medium">Starting RIT vs Growth</h3>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">
-                        <div className="text-xs space-y-2">
-                          <p>
-                            Shows relationship between where students started and how much they grew.
-                          </p>
-                          <p className="text-blue-600">
-                            <strong>Why negative correlation?</strong> This is normal!
-                            Students who start high have less room to grow (ceiling effect).
-                            It&apos;s a statistical pattern, not a teaching problem.
-                          </p>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                  <RitGrowthScatterChart data={scatterData} />
-                </div>
+                  {/* RIT-Growth Scatter Chart */}
+                  {scatterData && (
+                    <div className="rounded-lg border bg-card/50 p-4">
+                      <div className="flex items-center gap-2 mb-4">
+                        <h3 className="text-sm font-medium">Starting RIT vs Growth</h3>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <div className="text-xs space-y-2">
+                              <p>
+                                Shows relationship between where students started and how much they grew.
+                              </p>
+                              <p className="text-blue-600">
+                                <strong>Why negative correlation?</strong> This is normal!
+                                Students who start high have less room to grow (ceiling effect).
+                                It&apos;s a statistical pattern, not a teaching problem.
+                              </p>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <RitGrowthScatterChart data={scatterData} />
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
