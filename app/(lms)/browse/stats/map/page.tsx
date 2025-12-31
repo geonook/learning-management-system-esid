@@ -232,6 +232,24 @@ export default function MapAnalysisPage() {
   // 用於觸發重新載入的 state（僅在需要刷新時使用）
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  // Cache refs - 避免 useCallback 依賴 cache state 導致無限迴圈
+  // 問題：cache state 在 useCallback 依賴陣列會導致 callback 重建 → useEffect 重新執行 → 無限迴圈
+  // 解決：使用 ref 追蹤 cache 狀態，在 callback 中檢查 ref 而非 state
+  const gradeGrowthCacheRef = useRef<Record<string, GradeGrowthDistributionData | null>>({});
+  const gradeRitCacheRef = useRef<Record<string, GradeRitDistributionData | null>>({});
+  const growthDataCacheRef = useRef<Record<string, GrowthAnalysisData | null>>({});
+  const crossGradeGrowthCacheRef = useRef<Record<string, CrossGradeGrowthData | null>>({});
+  const growthSpotlightCacheRef = useRef<Record<string, GrowthSpotlightData | null>>({});
+  const classComparisonCacheRef = useRef<Record<string, ClassComparisonData | null>>({});
+
+  // 同步 cache state 到 ref（每次 cache 更新時自動同步）
+  useEffect(() => { gradeGrowthCacheRef.current = gradeGrowthCache; }, [gradeGrowthCache]);
+  useEffect(() => { gradeRitCacheRef.current = gradeRitCache; }, [gradeRitCache]);
+  useEffect(() => { growthDataCacheRef.current = growthDataCache; }, [growthDataCache]);
+  useEffect(() => { crossGradeGrowthCacheRef.current = crossGradeGrowthCache; }, [crossGradeGrowthCache]);
+  useEffect(() => { growthSpotlightCacheRef.current = growthSpotlightCache; }, [growthSpotlightCache]);
+  useEffect(() => { classComparisonCacheRef.current = classComparisonCache; }, [classComparisonCache]);
+
   // Helper to set loading state
   const setLoading = (tab: string, loading: boolean) => {
     setLoadingStates((prev) => ({ ...prev, [tab]: loading }));
@@ -258,11 +276,12 @@ export default function MapAnalysisPage() {
   }, []);
 
   // Fetch Grade Growth Distribution Data (for Grades Tab)
+  // 使用 ref 檢查快取，避免 cache state 在依賴陣列導致無限迴圈
   const fetchGradeGrowthData = useCallback(
     async (grade: number, course: "Reading" | "Language Usage") => {
       const cacheKey = `${grade}-${course}`;
-      // Skip if already cached
-      if (gradeGrowthCache[cacheKey] !== undefined) return;
+      // Skip if already cached (使用 ref 檢查，不觸發 callback 重建)
+      if (gradeGrowthCacheRef.current[cacheKey] !== undefined) return;
 
       try {
         // Use Fall-to-Fall growth (1 year growth)
@@ -279,15 +298,16 @@ export default function MapAnalysisPage() {
         setGradeGrowthCache((prev) => ({ ...prev, [cacheKey]: null }));
       }
     },
-    [gradeGrowthCache]
+    [] // 空依賴，永不重建
   );
 
   // Fetch Grade RIT Distribution Data (for Grades Tab)
+  // 使用 ref 檢查快取，避免 cache state 在依賴陣列導致無限迴圈
   const fetchGradeRitData = useCallback(
     async (grade: number, course: "Reading" | "Language Usage", termTested: string) => {
       const cacheKey = `${grade}-${course}-${termTested}`;
-      // Skip if already cached
-      if (gradeRitCache[cacheKey] !== undefined) return;
+      // Skip if already cached (使用 ref 檢查，不觸發 callback 重建)
+      if (gradeRitCacheRef.current[cacheKey] !== undefined) return;
 
       try {
         const result = await getGradeRitDistribution({
@@ -302,15 +322,16 @@ export default function MapAnalysisPage() {
         setGradeRitCache((prev) => ({ ...prev, [cacheKey]: null }));
       }
     },
-    [gradeRitCache]
+    [] // 空依賴，永不重建
   );
 
   // Fetch Growth Data (within-year or year-over-year)
+  // 使用 ref 檢查快取，避免 cache state 在依賴陣列導致無限迴圈
   const fetchGrowthData = useCallback(
     async (grade: number, type: GrowthType) => {
       const cacheKey = `${grade}-${type}`;
-      // 快取檢查：如果已有資料則跳過
-      if (growthDataCache[cacheKey] !== undefined) return;
+      // 快取檢查：使用 ref 檢查（不觸發 callback 重建）
+      if (growthDataCacheRef.current[cacheKey] !== undefined) return;
 
       setLoading("growth", true);
       setError("growth", null);
@@ -343,15 +364,16 @@ export default function MapAnalysisPage() {
         setLoading("growth", false);
       }
     },
-    [growthDataCache]
+    [] // 空依賴，永不重建
   );
 
   // Fetch Cross-Grade Growth Data (for new Growth Overview section)
   // 使用 period.id 作為快取鍵，使用 period.fromTerm/toTerm 作為 API 參數
+  // 使用 ref 檢查快取，避免 cache state 在依賴陣列導致無限迴圈
   const fetchCrossGradeGrowthData = useCallback(async (period: GrowthPeriodOption) => {
     const cacheKey = period.id;
-    // 快取檢查
-    if (crossGradeGrowthCache[cacheKey] !== undefined) return;
+    // 快取檢查（使用 ref 檢查，不觸發 callback 重建）
+    if (crossGradeGrowthCacheRef.current[cacheKey] !== undefined) return;
 
     try {
       const result = await getCrossGradeGrowth({
@@ -362,18 +384,19 @@ export default function MapAnalysisPage() {
     } catch (err) {
       console.error("Error fetching cross-grade growth data:", err);
     }
-  }, [crossGradeGrowthCache]);
+  }, []); // 空依賴，永不重建
 
   // Fetch Growth Spotlight Data
   // 使用 period.id 作為快取鍵的一部分，使用 period.fromTerm/toTerm 作為 API 參數
+  // 使用 ref 檢查快取，避免 cache state 在依賴陣列導致無限迴圈
   const fetchGrowthSpotlightData = useCallback(async (
     grade: number,
     course: "Reading" | "Language Usage",
     period: GrowthPeriodOption
   ) => {
     const cacheKey = `${grade}-${course}-${period.id}`;
-    // 快取檢查
-    if (growthSpotlightCache[cacheKey] !== undefined) return;
+    // 快取檢查（使用 ref 檢查，不觸發 callback 重建）
+    if (growthSpotlightCacheRef.current[cacheKey] !== undefined) return;
 
     try {
       const result = await getGrowthSpotlight({
@@ -387,18 +410,19 @@ export default function MapAnalysisPage() {
     } catch (err) {
       console.error("Error fetching growth spotlight data:", err);
     }
-  }, [growthSpotlightCache]);
+  }, []); // 空依賴，永不重建
 
   // Fetch Class Comparison Data
   // 使用 period.id 作為快取鍵的一部分，使用 period.fromTerm/toTerm 作為 API 參數
+  // 使用 ref 檢查快取，避免 cache state 在依賴陣列導致無限迴圈
   const fetchClassComparisonData = useCallback(async (
     grade: number,
     course: "Reading" | "Language Usage",
     period: GrowthPeriodOption
   ) => {
     const cacheKey = `${grade}-${course}-${period.id}`;
-    // 快取檢查
-    if (classComparisonCache[cacheKey] !== undefined) return;
+    // 快取檢查（使用 ref 檢查，不觸發 callback 重建）
+    if (classComparisonCacheRef.current[cacheKey] !== undefined) return;
 
     try {
       const result = await getClassGrowthComparison({
@@ -411,7 +435,7 @@ export default function MapAnalysisPage() {
     } catch (err) {
       console.error("Error fetching class comparison data:", err);
     }
-  }, [classComparisonCache]);
+  }, []); // 空依賴，永不重建
 
   // Fetch Goal Data (both courses + RIT distribution)
   const fetchGoalData = useCallback(async (grade: number) => {
@@ -573,25 +597,20 @@ export default function MapAnalysisPage() {
     };
 
     loadTabData();
+    // 注意：移除所有 fetch callback 從依賴陣列
+    // 原因：callback 現在使用 ref 檢查快取，不再依賴 cache state
+    // 若保留 callback 在依賴陣列，會因 ESLint exhaustive-deps 規則而警告
+    // 但實際上 callback 永不重建（空依賴），所以可以安全地從依賴中移除
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     selectedTab,
     selectedGrade,
     growthType,
-    selectedGrowthPeriod,  // 新增：當選擇的 growth period 變化時觸發重新載入
+    selectedGrowthPeriod,  // 當選擇的 growth period 變化時觸發重新載入
     transitionPeriod,
     spotlightCourse,
     refreshTrigger, // 用於手動觸發重新載入
-    fetchOverviewData,
-    fetchGradeGrowthData,
-    fetchGradeRitData,
-    fetchGrowthData,
-    fetchCrossGradeGrowthData,
-    fetchGrowthSpotlightData,
-    fetchClassComparisonData,
-    fetchGoalData,
-    fetchLexileData,
-    fetchQualityData,
-    fetchTransitionData,
+    // 移除所有 fetch callback - 它們使用空依賴陣列，永不重建
   ]);
 
   // Handle growth type change - trigger reload
