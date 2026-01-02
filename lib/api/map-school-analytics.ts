@@ -286,7 +286,10 @@ export async function getAvailableGrowthPeriods(): Promise<GrowthPeriodOption[]>
 
   // 快取檢查
   const cached = mapAnalyticsCache.get<GrowthPeriodOption[]>(CACHE_KEYS.AVAILABLE_GROWTH_PERIODS);
-  if (cached) return cached;
+  if (cached) {
+    console.log('[getAvailableGrowthPeriods] Returning cached result:', cached.length, 'periods');
+    return cached;
+  }
 
   const supabase = createClient();
 
@@ -367,6 +370,8 @@ export async function getAvailableGrowthPeriods(): Promise<GrowthPeriodOption[]>
 
   // 依 toTerm 排序（最近的在前）
   const result = options.sort((a, b) => compareTermTested(b.toTerm, a.toTerm));
+
+  console.log('[getAvailableGrowthPeriods] Computed result:', result.map(r => `${r.fromTerm}→${r.toTerm} (${r.studentCount})`));
 
   // 設定快取
   mapAnalyticsCache.set(CACHE_KEYS.AVAILABLE_GROWTH_PERIODS, result);
@@ -1080,6 +1085,8 @@ export async function getRitGrowthScatterData(params?: {
   await requireAuth();
   const supabase = createClient();
 
+  console.log('[getRitGrowthScatterData] Called with params:', params);
+
   // 決定 fromTerm 和 toTerm
   let fromTerm: string;
   let toTerm: string;
@@ -1088,6 +1095,7 @@ export async function getRitGrowthScatterData(params?: {
   if (params?.fromTerm && params?.toTerm) {
     fromTerm = params.fromTerm;
     toTerm = params.toTerm;
+    console.log('[getRitGrowthScatterData] Using explicit terms:', { fromTerm, toTerm });
   } else {
     // 向下相容：動態查找可用的 Fall terms
     const { data: termsData } = await supabase

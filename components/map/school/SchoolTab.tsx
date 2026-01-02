@@ -112,13 +112,21 @@ export function SchoolTab() {
       setAvailableGrowthPeriods(growthPeriodsResult);
       setTermsLoading(false);
 
+      console.log('[SchoolTab] Phase 1 complete:', {
+        termsCount: termsResult.length,
+        periodsCount: growthPeriodsResult.length,
+        periods: growthPeriodsResult.map(p => `${p.fromTerm}→${p.toTerm}`)
+      });
+
       // 設定預設 growth period（如果尚未選擇）
       // 使用 ref 讀取當前值，避免觸發依賴變化
       let currentGrowthPeriod = selectedGrowthPeriodRef.current;
+      console.log('[SchoolTab] Current growth period from ref:', currentGrowthPeriod);
       if (!currentGrowthPeriod && growthPeriodsResult.length > 0) {
         const firstPeriod = growthPeriodsResult[0];
         if (firstPeriod) {
           currentGrowthPeriod = `${firstPeriod.fromTerm}→${firstPeriod.toTerm}`;
+          console.log('[SchoolTab] Setting default growth period:', currentGrowthPeriod);
           setSelectedGrowthPeriod(currentGrowthPeriod);
         }
       }
