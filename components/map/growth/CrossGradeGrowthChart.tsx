@@ -275,11 +275,15 @@ export function CrossGradeGrowthChart({
           <div className="mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
             <p>
               <strong>How to read:</strong> Each bar represents a grade&apos;s Growth Index.
-              Colors indicate quintile: <span className="text-green-600">Green</span> (High/HiAvg),{" "}
-              <span className="text-blue-600">Blue</span> (Avg),{" "}
-              <span className="text-yellow-600">Yellow</span> (LoAvg),{" "}
-              <span className="text-red-600">Red</span> (Low).
               Bars above the dashed line exceeded growth expectations.
+            </p>
+            <p className="mt-1">
+              <strong>Growth Quintile:</strong>{" "}
+              <span style={{ color: "#22c55e" }}>■</span> High (≥1.5),{" "}
+              <span style={{ color: "#10b981" }}>■</span> HiAvg (≥1.1),{" "}
+              <span style={{ color: "#3b82f6" }}>■</span> Avg (≥0.9),{" "}
+              <span style={{ color: "#f59e0b" }}>■</span> LoAvg (≥0.5),{" "}
+              <span style={{ color: "#ef4444" }}>■</span> Low (&lt;0.5).
             </p>
           </div>
         </CardContent>

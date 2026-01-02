@@ -28,7 +28,7 @@ import {
   ErrorBar,
   Legend,
 } from "recharts";
-import { KCIS_EXPECTED_COLORS, BENCHMARK_COLORS } from "@/lib/map/colors";
+import { KCIS_EXPECTED_COLORS, BENCHMARK_COLORS, SCHOOL_CHART_COLORS } from "@/lib/map/colors";
 import { KCIS_EXPECTED } from "@/lib/map/kcis-expected";
 import type { CrossGradeStats } from "@/lib/api/map-school-analytics";
 
@@ -36,16 +36,6 @@ interface CrossGradeChartProps {
   data: CrossGradeStats[];
   height?: number;
 }
-
-// 配色 - KCISLK 學生用綠色更突出
-const SCHOOL_COLORS = {
-  student: "#16a34a", // green-600 (綠色 - 主角)
-  norm: "#64748b", // slate-500 (灰色 - 參考線)
-  errorBar: "#86efac", // green-300 (淺綠 - 誤差棒)
-  expected: KCIS_EXPECTED_COLORS.line, // 紫色 - KCIS Expected
-  expectedBand: KCIS_EXPECTED_COLORS.band,
-  expectedBandOpacity: KCIS_EXPECTED_COLORS.bandOpacity,
-};
 
 export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
   const { resolvedTheme } = useTheme();
@@ -188,7 +178,7 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
                     <div className="flex items-center gap-2">
                       <span
                         className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: SCHOOL_COLORS.student }}
+                        style={{ backgroundColor: SCHOOL_CHART_COLORS.kcislk }}
                       />
                       <span className="text-muted-foreground">KCISLK:</span>
                       <span className="font-mono font-medium">
@@ -203,7 +193,7 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
                     <div className="flex items-center gap-2">
                       <span
                         className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: SCHOOL_COLORS.expected }}
+                        style={{ backgroundColor: KCIS_EXPECTED_COLORS.line }}
                       />
                       <span className="text-muted-foreground">KCIS Expected:</span>
                       <span className="font-mono font-medium">
@@ -238,7 +228,7 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
                     <div className="flex items-center gap-2">
                       <span
                         className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: SCHOOL_COLORS.norm }}
+                        style={{ backgroundColor: SCHOOL_CHART_COLORS.norm }}
                       />
                       <span className="text-muted-foreground">NWEA Norm:</span>
                       <span className="font-mono font-medium">
@@ -281,8 +271,8 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
             type="monotone"
             dataKey="expectedUpper"
             stroke="none"
-            fill={SCHOOL_COLORS.expectedBand}
-            fillOpacity={SCHOOL_COLORS.expectedBandOpacity}
+            fill={KCIS_EXPECTED_COLORS.band}
+            fillOpacity={KCIS_EXPECTED_COLORS.bandOpacity}
             name="KCIS Expected Range"
             legendType="none"
             connectNulls
@@ -302,10 +292,10 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
             type="monotone"
             dataKey="expected"
             name="KCIS Expected (E2)"
-            stroke={SCHOOL_COLORS.expected}
+            stroke={KCIS_EXPECTED_COLORS.line}
             strokeWidth={2}
             strokeDasharray="8 4"
-            dot={{ fill: SCHOOL_COLORS.expected, r: 4 }}
+            dot={{ fill: KCIS_EXPECTED_COLORS.line, r: 4 }}
             connectNulls
           />
 
@@ -350,10 +340,10 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
             type="monotone"
             dataKey="mean"
             name="KCISLK Students"
-            stroke={SCHOOL_COLORS.student}
+            stroke={SCHOOL_CHART_COLORS.kcislk}
             strokeWidth={2.5}
             dot={{
-              fill: SCHOOL_COLORS.student,
+              fill: SCHOOL_CHART_COLORS.kcislk,
               r: 5,
               stroke: "#fff",
               strokeWidth: 2,
@@ -364,7 +354,7 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
               dataKey="stdDev"
               width={6}
               strokeWidth={1.5}
-              stroke={SCHOOL_COLORS.errorBar}
+              stroke={SCHOOL_CHART_COLORS.errorBar}
               direction="y"
             />
           </Line>
@@ -378,10 +368,10 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
           performance across grades with NWEA national norms and KCIS expected levels.
         </p>
         <p>
-          <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ backgroundColor: SCHOOL_COLORS.student }} />
+          <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ backgroundColor: SCHOOL_CHART_COLORS.kcislk }} />
           <strong>Green solid:</strong> KCISLK students (±1 SD)
           {" | "}
-          <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ backgroundColor: SCHOOL_COLORS.expected }} />
+          <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ backgroundColor: KCIS_EXPECTED_COLORS.line }} />
           <strong>Purple dashed:</strong> E2 (with ±1 SD band)
           {" | "}
           <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ backgroundColor: BENCHMARK_COLORS.E1 }} />
@@ -390,7 +380,7 @@ export function CrossGradeChart({ data, height = 350 }: CrossGradeChartProps) {
           <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ backgroundColor: BENCHMARK_COLORS.E3 }} />
           <strong>Red dashed:</strong> E3
           {" | "}
-          <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ backgroundColor: SCHOOL_COLORS.norm }} />
+          <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ backgroundColor: SCHOOL_CHART_COLORS.norm }} />
           <strong>Gray dashed:</strong> NWEA Norm
         </p>
         {/* 缺失年級提示 */}

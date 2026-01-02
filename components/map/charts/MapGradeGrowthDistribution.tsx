@@ -36,20 +36,12 @@ import {
 } from "@/components/ui/tooltip";
 import type { GradeGrowthDistributionData } from "@/lib/api/map-analytics";
 import { interpretRSquared } from "@/lib/map/statistics";
-import { SCHOOL_CHART_COLORS, GROWTH_DISTRIBUTION_COLORS } from "@/lib/map/colors";
+import { GROWTH_DISTRIBUTION_COLORS, GAUSSIAN_FIT_COLORS } from "@/lib/map/colors";
 
 interface MapGradeGrowthDistributionProps {
   data: GradeGrowthDistributionData;
   height?: number;
 }
-
-// 配色
-const CHART_COLORS = {
-  kcisGaussian: "#1f2937", // gray-800 (black line for KCIS fit)
-  nweaNorm: "#a855f7", // purple (NWEA norm overlay)
-  nweaNormLight: "rgba(168, 85, 247, 0.3)", // purple with alpha
-  negativeArea: "rgba(239, 68, 68, 0.2)", // red with alpha for negative region
-};
 
 export function MapGradeGrowthDistribution({
   data,
@@ -292,7 +284,7 @@ export function MapGradeGrowthDistribution({
             <ReferenceArea
               x1={minX}
               x2={0}
-              fill={CHART_COLORS.negativeArea}
+              fill={GAUSSIAN_FIT_COLORS.negativeArea}
               fillOpacity={1}
             />
 
@@ -372,7 +364,7 @@ export function MapGradeGrowthDistribution({
             <Line
               type="monotone"
               dataKey="kcisGaussian"
-              stroke={CHART_COLORS.kcisGaussian}
+              stroke={GAUSSIAN_FIT_COLORS.kcis}
               strokeWidth={2}
               dot={false}
               name="KCIS Fit"
@@ -384,7 +376,7 @@ export function MapGradeGrowthDistribution({
               <Line
                 type="monotone"
                 dataKey="nweaGaussian"
-                stroke={CHART_COLORS.nweaNorm}
+                stroke={GAUSSIAN_FIT_COLORS.nwea}
                 strokeWidth={2.5}
                 strokeDasharray="5 3"
                 dot={false}
@@ -428,7 +420,7 @@ export function MapGradeGrowthDistribution({
           <div className="flex items-center gap-1">
             <span
               className="w-5 h-0.5"
-              style={{ backgroundColor: CHART_COLORS.kcisGaussian }}
+              style={{ backgroundColor: GAUSSIAN_FIT_COLORS.kcis }}
             />
             <span>KCIS Fit</span>
           </div>
@@ -437,7 +429,7 @@ export function MapGradeGrowthDistribution({
               <span
                 className="w-5 h-0.5"
                 style={{
-                  backgroundColor: CHART_COLORS.nweaNorm,
+                  backgroundColor: GAUSSIAN_FIT_COLORS.nwea,
                   borderTop: "2px dashed",
                 }}
               />

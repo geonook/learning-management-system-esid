@@ -179,6 +179,47 @@ export const SCHOOL_CHART_COLORS = {
   expected: "#a855f7",
   /** 高斯擬合曲線 - 紫色 */
   gaussianFit: "#a855f7",
+  /** 誤差棒 - 淺綠色 */
+  errorBar: "#86efac",
+} as const;
+
+/**
+ * 高斯擬合曲線配色
+ * 用於 RIT/Growth 分佈圖的高斯曲線
+ */
+export const GAUSSIAN_FIT_COLORS = {
+  /** KCIS 學生分佈曲線 - 深灰 */
+  kcis: "#1f2937",
+  /** NWEA 常模曲線 - 紫色 */
+  nwea: "#a855f7",
+  /** NWEA 常模曲線（半透明） */
+  nweaLight: "rgba(168, 85, 247, 0.3)",
+  /** 負成長區域標記（紅色半透明） */
+  negativeArea: "rgba(239, 68, 68, 0.2)",
+} as const;
+
+/**
+ * RIT 直方圖配色
+ * 用於 RIT 分佈直方圖
+ */
+export const RIT_HISTOGRAM_COLORS = {
+  /** 主要柱狀圖 - 藍色 */
+  bar: "#3b82f6",
+  /** Hover 狀態 - 深藍色 */
+  barHover: "#2563eb",
+} as const;
+
+/**
+ * 測驗品質配色
+ * 用於 Test Quality Pie Chart
+ */
+export const TEST_QUALITY_COLORS = {
+  /** 正常 (≤15% rapid guessing) - 綠色 */
+  normal: "#22c55e",
+  /** 注意 (15-30% rapid guessing) - 琥珀色 */
+  caution: "#f59e0b",
+  /** 標記 (>30% rapid guessing) - 紅色 */
+  flagged: "#ef4444",
 } as const;
 
 /**

@@ -34,20 +34,12 @@ import {
 } from "@/components/ui/tooltip";
 import type { GradeRitDistributionData } from "@/lib/api/map-analytics";
 import { interpretRSquared } from "@/lib/map/statistics";
-import { BENCHMARK_COLORS } from "@/lib/map/colors";
+import { BENCHMARK_COLORS, GAUSSIAN_FIT_COLORS, RIT_HISTOGRAM_COLORS } from "@/lib/map/colors";
 
 interface MapGradeRitDistributionProps {
   data: GradeRitDistributionData;
   height?: number;
 }
-
-// 配色
-const CHART_COLORS = {
-  kcisGaussian: "#1f2937", // gray-800 (black line for KCIS fit)
-  nweaNorm: "#a855f7", // purple (NWEA norm overlay)
-  bar: "#3b82f6", // blue-500 for histogram bars
-  barLight: "#93c5fd", // blue-300 for lighter bars
-};
 
 export function MapGradeRitDistribution({
   data,
@@ -352,7 +344,7 @@ export function MapGradeRitDistribution({
             {data.nweaNorm && (
               <ReferenceLine
                 x={data.nweaNorm.mean}
-                stroke={CHART_COLORS.nweaNorm}
+                stroke={GAUSSIAN_FIT_COLORS.nwea}
                 strokeDasharray="3 3"
                 strokeWidth={1}
               />
@@ -361,7 +353,7 @@ export function MapGradeRitDistribution({
             {/* 直方圖 */}
             <Bar dataKey="count" radius={[3, 3, 0, 0]} barSize={20}>
               {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={CHART_COLORS.bar} />
+                <Cell key={`cell-${index}`} fill={RIT_HISTOGRAM_COLORS.bar} />
               ))}
             </Bar>
 
@@ -369,7 +361,7 @@ export function MapGradeRitDistribution({
             <Line
               type="monotone"
               dataKey="kcisGaussian"
-              stroke={CHART_COLORS.kcisGaussian}
+              stroke={GAUSSIAN_FIT_COLORS.kcis}
               strokeWidth={2}
               dot={false}
               name="KCIS Fit"
@@ -381,7 +373,7 @@ export function MapGradeRitDistribution({
               <Line
                 type="monotone"
                 dataKey="nweaGaussian"
-                stroke={CHART_COLORS.nweaNorm}
+                stroke={GAUSSIAN_FIT_COLORS.nwea}
                 strokeWidth={2.5}
                 strokeDasharray="5 3"
                 dot={false}
@@ -397,14 +389,14 @@ export function MapGradeRitDistribution({
           <div className="flex items-center gap-1">
             <span
               className="w-3 h-3 rounded"
-              style={{ backgroundColor: CHART_COLORS.bar }}
+              style={{ backgroundColor: RIT_HISTOGRAM_COLORS.bar }}
             />
             <span>KCIS Students</span>
           </div>
           <div className="flex items-center gap-1">
             <span
               className="w-5 h-0.5"
-              style={{ backgroundColor: CHART_COLORS.kcisGaussian }}
+              style={{ backgroundColor: GAUSSIAN_FIT_COLORS.kcis }}
             />
             <span>KCIS Fit</span>
           </div>
@@ -413,7 +405,7 @@ export function MapGradeRitDistribution({
               <span
                 className="w-5 h-0.5"
                 style={{
-                  backgroundColor: CHART_COLORS.nweaNorm,
+                  backgroundColor: GAUSSIAN_FIT_COLORS.nwea,
                   borderTop: "2px dashed",
                 }}
               />

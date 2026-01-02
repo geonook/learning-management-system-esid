@@ -33,21 +33,12 @@ import {
   calculateRSquared,
   interpretRSquared,
 } from "@/lib/map/statistics";
-import { SCHOOL_CHART_COLORS } from "@/lib/map/colors";
+import { SCHOOL_CHART_COLORS, GROWTH_DISTRIBUTION_COLORS, GAUSSIAN_FIT_COLORS } from "@/lib/map/colors";
 
 interface GrowthDistributionChartProps {
   data: SchoolGrowthDistributionData;
   height?: number;
 }
-
-// 配色
-const GROWTH_COLORS = {
-  negative: "#ef4444", // red-500
-  low: "#f97316", // orange-500
-  medium: "#eab308", // yellow-500
-  high: "#22c55e", // green-500
-  veryHigh: "#16a34a", // green-600
-};
 
 // Bin width for histogram (matching the bucket ranges)
 const BIN_WIDTH = 5;
@@ -62,15 +53,15 @@ export function GrowthDistributionChart({
     const bucketsWithMidpoint = data.distribution.map((bucket) => {
       let color: string;
       if (bucket.isNegative) {
-        color = GROWTH_COLORS.negative;
+        color = GROWTH_DISTRIBUTION_COLORS.negative;
       } else if (bucket.max <= 5) {
-        color = GROWTH_COLORS.low;
+        color = GROWTH_DISTRIBUTION_COLORS.low;
       } else if (bucket.max <= 10) {
-        color = GROWTH_COLORS.medium;
+        color = GROWTH_DISTRIBUTION_COLORS.medium;
       } else if (bucket.max <= 15) {
-        color = GROWTH_COLORS.high;
+        color = GROWTH_DISTRIBUTION_COLORS.high;
       } else {
-        color = GROWTH_COLORS.veryHigh;
+        color = GROWTH_DISTRIBUTION_COLORS.veryHigh;
       }
 
       // 計算 bucket 中點（處理無限範圍）
@@ -377,7 +368,7 @@ export function GrowthDistributionChart({
           <Line
             type="monotone"
             dataKey="nweaNorm"
-            stroke="#8b5cf6"
+            stroke={GAUSSIAN_FIT_COLORS.nwea}
             strokeWidth={2}
             strokeDasharray="5 3"
             dot={false}
@@ -392,28 +383,28 @@ export function GrowthDistributionChart({
         <div className="flex items-center gap-1">
           <span
             className="w-3 h-3 rounded"
-            style={{ backgroundColor: GROWTH_COLORS.negative }}
+            style={{ backgroundColor: GROWTH_DISTRIBUTION_COLORS.negative }}
           />
           <span>Negative</span>
         </div>
         <div className="flex items-center gap-1">
           <span
             className="w-3 h-3 rounded"
-            style={{ backgroundColor: GROWTH_COLORS.low }}
+            style={{ backgroundColor: GROWTH_DISTRIBUTION_COLORS.low }}
           />
           <span>Low (0-5)</span>
         </div>
         <div className="flex items-center gap-1">
           <span
             className="w-3 h-3 rounded"
-            style={{ backgroundColor: GROWTH_COLORS.medium }}
+            style={{ backgroundColor: GROWTH_DISTRIBUTION_COLORS.medium }}
           />
           <span>Medium (5-10)</span>
         </div>
         <div className="flex items-center gap-1">
           <span
             className="w-3 h-3 rounded"
-            style={{ backgroundColor: GROWTH_COLORS.high }}
+            style={{ backgroundColor: GROWTH_DISTRIBUTION_COLORS.high }}
           />
           <span>High (10+)</span>
         </div>
@@ -432,7 +423,7 @@ export function GrowthDistributionChart({
             <svg width="24" height="4" className="flex-shrink-0">
               <line
                 x1="0" y1="2" x2="24" y2="2"
-                stroke="#8b5cf6"
+                stroke={GAUSSIAN_FIT_COLORS.nwea}
                 strokeWidth="2"
                 strokeDasharray="5 3"
               />
@@ -452,7 +443,7 @@ export function GrowthDistributionChart({
         {data.nweaNorm && (
           <p>
             <strong>Curves explained:</strong> The <span style={{ color: SCHOOL_CHART_COLORS.gaussianFit }}>purple solid curve</span> (KCIS Gaussian)
-            is fitted to our students&apos; actual data. The <span style={{ color: "#8b5cf6" }}>purple dashed curve</span> (NWEA Norm)
+            is fitted to our students&apos; actual data. The <span style={{ color: GAUSSIAN_FIT_COLORS.nwea }}>purple dashed curve</span> (NWEA Norm)
             shows the expected distribution based on NWEA 2025 national norms for comparison.
           </p>
         )}

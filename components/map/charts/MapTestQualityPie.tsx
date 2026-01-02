@@ -16,18 +16,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { TEST_QUALITY_COLORS } from "@/lib/map/colors";
 
 interface MapTestQualityPieProps {
   data: TestQualityData | null;
   height?: number;
 }
-
-// Quality category colors
-const QUALITY_COLORS = {
-  normal: "#22c55e",    // green-500
-  caution: "#f59e0b",   // amber-500
-  flagged: "#ef4444",   // red-500
-};
 
 export function MapTestQualityPie({
   data,
@@ -46,19 +40,19 @@ export function MapTestQualityPie({
       name: "Normal (≤15%)",
       value: data.summary.normal.count,
       percentage: data.summary.normal.percentage,
-      color: QUALITY_COLORS.normal,
+      color: TEST_QUALITY_COLORS.normal,
     },
     {
       name: "Caution (15-30%)",
       value: data.summary.caution.count,
       percentage: data.summary.caution.percentage,
-      color: QUALITY_COLORS.caution,
+      color: TEST_QUALITY_COLORS.caution,
     },
     {
       name: "Flagged (>30%)",
       value: data.summary.flagged.count,
       percentage: data.summary.flagged.percentage,
-      color: QUALITY_COLORS.flagged,
+      color: TEST_QUALITY_COLORS.flagged,
     },
   ];
 
@@ -100,15 +94,15 @@ export function MapTestQualityPie({
         {/* Threshold Legend */}
         <div className="flex items-center justify-center gap-4 text-xs mb-2">
           <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: QUALITY_COLORS.normal }}></span>
+            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: TEST_QUALITY_COLORS.normal }}></span>
             <span>≤15%</span>
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: QUALITY_COLORS.caution }}></span>
+            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: TEST_QUALITY_COLORS.caution }}></span>
             <span>15-30%</span>
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: QUALITY_COLORS.flagged }}></span>
+            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: TEST_QUALITY_COLORS.flagged }}></span>
             <span>&gt;30%</span>
           </span>
         </div>
