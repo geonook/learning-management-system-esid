@@ -1,24 +1,24 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 5.0
+> **Documentation Version**: 5.1
 > **Last Updated**: 2026-01-02
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School LMS with Next.js + TypeScript + Supabase Cloud
-> **Current Version**: v1.65.0 - MAP Growth Analysis & Cohort Display
+> **Current Version**: v1.66.0 - MAP Chart Color System Unification
 
 This file provides essential guidance to Claude Code when working with code in this repository.
 
 ## Current Status
 
-- **v1.65.0** - MAP Growth Analysis complete
+- **v1.66.0** - MAP Chart Color System complete
 - **Production**: 84 classes, 504 courses (2 academic years), 1514 students
 - **Tech Stack**: Next.js 14 (App Router) + TypeScript + Tailwind + Supabase Cloud
 
 **Recent Additions**:
+- **MAP Chart Color Unification**: Centralized color constants in `lib/map/colors.ts`
 - **MAP Growth Analysis**: School/Grades/Growth tabs with cross-grade comparison
 - **Cohort Prefix Display**: Student number prefix (e.g., LE10xxx) shown in charts
 - **Student Class History**: Migration 041 - Historical class assignments for accurate analytics
-- **Year-over-Year Query Fix**: Correct grade query logic for Fall-to-Fall growth analysis
 
 **Next Steps**:
 1. Sprint 7: Student historical grade reports
