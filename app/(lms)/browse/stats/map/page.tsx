@@ -606,7 +606,7 @@ export default function MapAnalysisPage() {
     selectedTab,
     selectedGrade,
     growthType,
-    selectedGrowthPeriod,  // 當選擇的 growth period 變化時觸發重新載入
+    selectedGrowthPeriodId,  // 使用 ID（字串）而非物件，避免無限迴圈
     transitionPeriod,
     spotlightCourse,
     refreshTrigger, // 用於手動觸發重新載入
