@@ -146,10 +146,15 @@ export function SchoolTab() {
       // Phase 3: 載入 Growth（延後載入）
       // ========================================
       const { fromTerm, toTerm } = parseGrowthPeriod(currentGrowthPeriod);
+      console.log('[SchoolTab] Loading Growth data:', { currentGrowthPeriod, fromTerm, toTerm });
       const [growthResult, scatterResult] = await Promise.all([
         getSchoolGrowthDistribution({ fromTerm, toTerm }),
         getRitGrowthScatterData({ fromTerm, toTerm }),
       ]);
+      console.log('[SchoolTab] Growth data loaded:', {
+        growthResult: growthResult ? { totalStudents: growthResult.totalStudents } : null,
+        scatterResult: scatterResult ? { totalStudents: scatterResult.totalStudents } : null
+      });
 
       setGrowthData(growthResult);
       setScatterData(scatterResult);

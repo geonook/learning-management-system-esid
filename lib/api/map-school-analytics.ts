@@ -517,7 +517,12 @@ export async function getSchoolGrowthDistribution(params?: {
     }
   }
 
-  if (!fromTerm || !toTerm) return null;
+  if (!fromTerm || !toTerm) {
+    console.log('[getSchoolGrowthDistribution] Missing terms:', { fromTerm, toTerm });
+    return null;
+  }
+
+  console.log('[getSchoolGrowthDistribution] Querying:', { fromTerm, toTerm });
 
   // 查詢兩個學期的資料
   const { data, error } = await supabase
@@ -540,17 +545,23 @@ export async function getSchoolGrowthDistribution(params?: {
     .not("student_id", "is", null);
 
   if (error) {
-    console.error("Error fetching growth distribution:", error);
+    console.error("[getSchoolGrowthDistribution] Error:", error);
     return null;
   }
 
-  if (!data || data.length === 0) return null;
+  if (!data || data.length === 0) {
+    console.log('[getSchoolGrowthDistribution] No data returned from query');
+    return null;
+  }
+
+  console.log('[getSchoolGrowthDistribution] Raw data count:', data.length);
 
   // 過濾已停用的學生
   const activeData = data.filter((d) => {
     const student = d.students as unknown as { is_active: boolean } | null;
     return student?.is_active === true;
   });
+  console.log('[getSchoolGrowthDistribution] Active data count:', activeData.length);
 
   // 按學生分組計算成長
   interface StudentGrowth {
