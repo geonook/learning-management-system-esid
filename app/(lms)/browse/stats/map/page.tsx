@@ -1066,8 +1066,13 @@ export default function MapAnalysisPage() {
 
                 {/* Student Spotlight - Course Selector + Cards (NEW) */}
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-medium">Student Spotlight</span>
+                    {growthSpotlightData?.cohortPrefix && (
+                      <Badge variant="secondary" className="text-xs font-mono">
+                        {growthSpotlightData.cohortPrefix}xxx cohort
+                      </Badge>
+                    )}
                     <div className="flex gap-1">
                       <Button
                         size="sm"
@@ -1099,7 +1104,10 @@ export default function MapAnalysisPage() {
                 </div>
 
                 {/* Class Comparison Table (NEW) */}
-                <ClassComparisonTable data={classComparisonData} />
+                <ClassComparisonTable
+                  data={classComparisonData}
+                  cohortPrefix={growthSpotlightData?.cohortPrefix}
+                />
 
                 {/* Summary Info */}
                 {growthData && (

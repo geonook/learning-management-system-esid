@@ -25,20 +25,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
 import type { ClassComparisonData } from "@/lib/api/map-growth-analytics";
 import { getGrowthQuintileColor } from "@/lib/map/colors";
 
 interface ClassComparisonTableProps {
   data: ClassComparisonData | null;
   loading?: boolean;
+  /** Cohort prefix for display (e.g., "LE10") */
+  cohortPrefix?: string | null;
 }
 
 type SortKey = "className" | "avgGrowth" | "growthIndex" | "avgCGP" | "studentCount" | "vsNorm";
 type SortDirection = "asc" | "desc";
 
-export function ClassComparisonTable({ data, loading }: ClassComparisonTableProps) {
+export function ClassComparisonTable({ data, loading, cohortPrefix }: ClassComparisonTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>("growthIndex");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [showDistribution, setShowDistribution] = useState(false);
@@ -195,6 +195,7 @@ export function ClassComparisonTable({ data, loading }: ClassComparisonTableProp
           </div>
           <CardDescription>
             {data.course} | {data.fromTerm} → {data.toTerm}
+            {cohortPrefix && ` | ${cohortPrefix}xxx cohort`}
           </CardDescription>
         </CardHeader>
         <CardContent>
