@@ -400,8 +400,19 @@ export async function getGrowthSpotlight(params: {
     .in("term_tested", [fromTerm, toTerm])
     .not("student_id", "is", null);
 
+  // 修復：Fall-to-Fall 成長時，學生年級會變化
+  // 當選擇 G5 時，是看 toTerm（Fall 2025-2026）的 G5 學生
+  // 這些學生在 fromTerm（Fall 2024-2025）是 G4
+  // 所以需要查詢 grade-1 和 grade，然後在程式中過濾只保留 toTerm 時符合年級的學生
+  const isYearOverYear = fromTerm.startsWith("Fall") && toTerm.startsWith("Fall");
   if (grade) {
-    query = query.eq("grade", grade);
+    if (isYearOverYear && grade > 3) {
+      // Year-over-Year: 學生在 toTerm 是 grade，在 fromTerm 是 grade-1
+      query = query.in("grade", [grade - 1, grade]);
+    } else {
+      // Within-Year 或 G3（沒有 G2 的 MAP 資料）
+      query = query.eq("grade", grade);
+    }
   }
 
   const { data, error } = await query;
@@ -419,6 +430,7 @@ export async function getGrowthSpotlight(params: {
     firstName: string | null;
     lastName: string | null;
     fromGrade: number | null;  // 起始年級（用於常模查找）
+    toGrade: number | null;    // 結束年級（用於 Year-over-Year 過濾）
     grade: number;  // 當前年級（用於顯示）
     level: string;
     className: string | null;
@@ -460,6 +472,7 @@ export async function getGrowthSpotlight(params: {
         firstName: row.student_first_name,
         lastName: row.student_last_name,
         fromGrade: null,  // 稍後在 fromTerm 時記錄
+        toGrade: null,    // 稍後在 toTerm 時記錄
         grade: row.grade,
         level: student.level ?? 'E2',
         className: historicalClass ?? currentClassName,  // 使用歷史班級或當前班級
@@ -477,6 +490,7 @@ export async function getGrowthSpotlight(params: {
       record.fromGrade = row.grade;  // 記錄起始年級，用於 NWEA 常模查找
     } else if (row.term_tested === toTerm) {
       record.toScore = row.rit_score;
+      record.toGrade = row.grade;  // 記錄結束年級，用於 Year-over-Year 過濾
       record.rapidGuessing = row.rapid_guessing_percent;
       // CDF 官方 cGP：Fall-to-Spring 使用 conditional_growth_percentile，
       // Fall-to-Fall 使用 fall_to_fall_conditional_growth_percentile
@@ -495,6 +509,10 @@ export async function getGrowthSpotlight(params: {
   let index = 0;
   for (const [, student] of studentMap) {
     if (student.fromScore === null || student.toScore === null) continue;
+
+    // Year-over-Year 過濾：確保學生在 toTerm 時的年級符合選擇
+    // 例如：選擇 G5，應該只包含 toTerm 時是 G5 的學生
+    if (isYearOverYear && grade && student.toGrade !== grade) continue;
 
     const growth = student.toScore - student.fromScore;
 
@@ -611,7 +629,12 @@ export async function getClassGrowthComparison(params: {
 
   // 查詢該年級所有學生的 MAP 資料
   // 包含 conditional_growth_percentile 欄位（CDF 官方值）
-  const { data, error } = await supabase
+  // 修復：Fall-to-Fall 成長時，學生年級會變化
+  // 當選擇 G5 時，是看 toTerm（Fall 2025-2026）的 G5 學生
+  // 這些學生在 fromTerm（Fall 2024-2025）是 G4
+  const isYearOverYear = fromTerm.startsWith("Fall") && toTerm.startsWith("Fall");
+
+  let query = supabase
     .from("map_assessments")
     .select(`
       student_number,
@@ -634,9 +657,17 @@ export async function getClassGrowthComparison(params: {
       )
     `)
     .eq("course", course)
-    .eq("grade", grade)
     .in("term_tested", [fromTerm, toTerm])
     .not("student_id", "is", null);
+
+  // Year-over-Year: 學生在 toTerm 是 grade，在 fromTerm 是 grade-1
+  if (isYearOverYear && grade > 3) {
+    query = query.in("grade", [grade - 1, grade]);
+  } else {
+    query = query.eq("grade", grade);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("Error fetching class growth comparison data:", error);
@@ -648,6 +679,7 @@ export async function getClassGrowthComparison(params: {
     className: string | null;
     fromScore: number | null;
     toScore: number | null;
+    toGrade: number | null;      // 結束年級（用於 Year-over-Year 過濾）
     officialCGP: number | null;  // CDF 官方 cGP
   }
 
@@ -680,6 +712,7 @@ export async function getClassGrowthComparison(params: {
         className: historicalClass ?? currentClassName,
         fromScore: null,
         toScore: null,
+        toGrade: null,
         officialCGP: null,
       });
     }
@@ -690,6 +723,7 @@ export async function getClassGrowthComparison(params: {
       record.fromScore = row.rit_score;
     } else if (row.term_tested === toTerm) {
       record.toScore = row.rit_score;
+      record.toGrade = row.grade;  // 記錄結束年級，用於 Year-over-Year 過濾
       // CDF 官方 cGP
       const rowAny = row as Record<string, unknown>;
       record.officialCGP = (rowAny.conditional_growth_percentile as number | null)
@@ -713,6 +747,10 @@ export async function getClassGrowthComparison(params: {
   for (const [, student] of studentMap) {
     if (student.fromScore === null || student.toScore === null) continue;
     if (!student.className) continue;
+
+    // Year-over-Year 過濾：確保學生在 toTerm 時的年級符合選擇
+    // 例如：選擇 G5，應該只包含 toTerm 時是 G5 的學生
+    if (isYearOverYear && student.toGrade !== grade) continue;
 
     const growth = student.toScore - student.fromScore;
     allGrowths.push(growth);
