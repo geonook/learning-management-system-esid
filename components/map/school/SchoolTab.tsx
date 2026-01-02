@@ -161,7 +161,7 @@ export function SchoolTab() {
       ]);
       console.log('[SchoolTab] Growth data loaded:', {
         growthResult: growthResult ? { totalStudents: growthResult.totalStudents } : null,
-        scatterResult: scatterResult ? { totalStudents: scatterResult.totalStudents } : null
+        scatterResult: scatterResult ? { pointsCount: scatterResult.points.length } : null
       });
 
       setGrowthData(growthResult);
