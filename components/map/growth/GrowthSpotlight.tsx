@@ -70,10 +70,15 @@ function StudentCard({
       {/* Header: Name + Badge */}
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-sm truncate" title={student.studentName}>
-            {student.studentName}
-          </p>
-          <p className="text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5">
+            <Badge variant="secondary" className="text-[10px] px-1 py-0 font-mono shrink-0">
+              {student.studentNumber.substring(0, 4)}
+            </Badge>
+            <p className="font-medium text-sm truncate" title={student.studentName}>
+              {student.studentName}
+            </p>
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5">
             G{student.grade}{student.englishLevel}
             {student.className && ` | ${student.className}`}
           </p>
@@ -212,6 +217,8 @@ export function GrowthSpotlight({ data, loading }: GrowthSpotlightProps) {
             </div>
             <CardDescription>
               Top performers | {data.course}
+              {data.cohortPrefix && ` | ${data.cohortPrefix}xxx cohort`}
+              {data.totalStudents > 0 && ` (${data.totalStudents} students)`}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -262,6 +269,7 @@ export function GrowthSpotlight({ data, loading }: GrowthSpotlightProps) {
             </div>
             <CardDescription>
               May need support | {data.course}
+              {data.cohortPrefix && ` | ${data.cohortPrefix}xxx cohort`}
             </CardDescription>
           </CardHeader>
           <CardContent>

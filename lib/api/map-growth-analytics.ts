@@ -78,6 +78,7 @@ export interface GrowthSpotlightData {
   topGrowth: GrowthSpotlightStudent[];
   needsAttention: GrowthSpotlightStudent[];
   totalStudents: number;
+  cohortPrefix: string | null;  // 學生群體前綴，如 "LE10"
 }
 
 export interface ClassComparisonData {
@@ -572,6 +573,21 @@ export async function getGrowthSpotlight(params: {
 
   const needsAttention = needsAttentionCandidates.slice(0, limit);
 
+  // 計算學生群體前綴（取最常見的學號前 4 位）
+  const prefixCounts = new Map<string, number>();
+  for (const student of studentsWithGrowth) {
+    const prefix = student.studentNumber.substring(0, 4);
+    prefixCounts.set(prefix, (prefixCounts.get(prefix) ?? 0) + 1);
+  }
+  let cohortPrefix: string | null = null;
+  let maxCount = 0;
+  for (const [prefix, count] of prefixCounts) {
+    if (count > maxCount) {
+      maxCount = count;
+      cohortPrefix = prefix;
+    }
+  }
+
   return {
     fromTerm,
     toTerm,
@@ -579,6 +595,7 @@ export async function getGrowthSpotlight(params: {
     topGrowth,
     needsAttention,
     totalStudents: studentsWithGrowth.length,
+    cohortPrefix,
   };
 }
 
