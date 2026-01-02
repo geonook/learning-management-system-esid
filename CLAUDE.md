@@ -1,24 +1,24 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 4.9
-> **Last Updated**: 2025-12-29
+> **Documentation Version**: 5.0
+> **Last Updated**: 2026-01-02
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School LMS with Next.js + TypeScript + Supabase Cloud
-> **Current Version**: v1.66.0 - Security Architecture Refactor & RLS Simplification
+> **Current Version**: v1.65.0 - MAP Growth Analysis & Cohort Display
 
 This file provides essential guidance to Claude Code when working with code in this repository.
 
 ## Current Status
 
-- **v1.66.0** - Security Architecture Refactor complete
+- **v1.65.0** - MAP Growth Analysis complete
 - **Production**: 84 classes, 504 courses (2 academic years), 1514 students
 - **Tech Stack**: Next.js 14 (App Router) + TypeScript + Tailwind + Supabase Cloud
 
 **Recent Additions**:
-- **四層安全架構**: Authentication → RLS → Application Layer → Frontend
-- **RLS 簡化**: Migration 036/037，從 100+ policies 簡化至 ~30 policies
-- **統一權限層**: `lib/api/permissions.ts` - `requireAuth`, `requireRole`, `filterByRole`
-- **API 權限檢查**: 所有 `lib/api/*.ts` 加入權限驗證
+- **MAP Growth Analysis**: School/Grades/Growth tabs with cross-grade comparison
+- **Cohort Prefix Display**: Student number prefix (e.g., LE10xxx) shown in charts
+- **Student Class History**: Migration 041 - Historical class assignments for accurate analytics
+- **Year-over-Year Query Fix**: Correct grade query logic for Fall-to-Fall growth analysis
 
 **Next Steps**:
 1. Sprint 7: Student historical grade reports
@@ -176,7 +176,7 @@ learning-management-system-esid/
 │   ├── grade/            # Grade calculations
 │   ├── api/              # Data fetching
 │   └── actions/          # Server actions
-├── db/migrations/         # SQL migrations (007-037)
+├── db/migrations/         # SQL migrations (007-041)
 ├── hooks/                 # Custom React hooks
 ├── types/                 # TypeScript definitions
 └── .claude/skills/        # LMS-specific knowledge

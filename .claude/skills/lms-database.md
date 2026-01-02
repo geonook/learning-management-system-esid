@@ -1,7 +1,7 @@
 # LMS Database Skill
 
 > Supabase 資料庫查詢模式、RLS 政策、Migration 記錄
-> Last Updated: 2025-12-29
+> Last Updated: 2026-01-02
 >
 > **相關 Skill**: [kcis-school-config.md](kcis-school-config.md) - 學校專屬設定
 
@@ -185,6 +185,21 @@ exam:exams!inner(
 ### Migration 037: Complete RLS Policies
 - 補齊 12 個遺漏表的 RLS policies
 - 受影響表：map_assessments, map_goal_scores, attendance, behavior_tags, student_behaviors, communications, gradebook_expectations, academic_periods, kcfs_categories, timetable_entries, timetable_periods, course_tasks, admin_audit_logs
+
+### Migration 038: Rename MAP Term
+- 重命名 MAP 相關欄位
+
+### Migration 039: Fall-to-Fall Growth Columns
+- 新增 Fall-to-Fall 成長計算欄位
+
+### Migration 040: Academic Periods
+- 建立 `academic_periods` 表
+- 學期與學年設定
+
+### Migration 041: Student Class History
+- 建立 `student_class_history` 表
+- 儲存學生歷史班級資訊（academic_year, grade, english_class, homeroom）
+- 用於 MAP 成長分析中的正確班級對應（避免學生升級後顯示新班級）
 
 ---
 
