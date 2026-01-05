@@ -394,17 +394,21 @@ export function getTermFromDate(date: Date | string): number {
 
 /**
  * Get academic year from date
- * Academic year runs from Sep to Aug
- * e.g., Sep 2025 - Aug 2026 = "2025-2026"
+ * Academic year runs from Aug to Jul
+ * e.g., Aug 2025 - Jul 2026 = "2025-2026"
+ *
+ * Note: This is a synchronous fallback. For production use,
+ * prefer getAcademicYearForDate() from lib/api/academic-year-config.ts
+ * which reads from database configuration.
  */
 export function getAcademicYearFromDate(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   const year = d.getFullYear();
   const month = d.getMonth() + 1; // 1-12
 
-  // Sep-Dec = current year is start year
-  // Jan-Aug = previous year is start year
-  const startYear = month >= 9 ? year : year - 1;
+  // Aug-Dec = current year is start year
+  // Jan-Jul = previous year is start year
+  const startYear = month >= 8 ? year : year - 1;
   const endYear = startYear + 1;
 
   return `${startYear}-${endYear}`;

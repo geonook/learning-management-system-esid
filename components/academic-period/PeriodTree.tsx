@@ -16,6 +16,7 @@ interface PeriodTreeProps {
   onLock: (period: AcademicPeriod) => void;
   onUnlock: (period: AcademicPeriod) => void;
   onSetDeadline: (period: AcademicPeriod) => void;
+  onConfigureDates?: (period: AcademicPeriod) => void;
 }
 
 export function PeriodTree({
@@ -23,6 +24,7 @@ export function PeriodTree({
   onLock,
   onUnlock,
   onSetDeadline,
+  onConfigureDates,
 }: PeriodTreeProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
@@ -66,6 +68,7 @@ export function PeriodTree({
           onLock={onLock}
           onUnlock={onUnlock}
           onSetDeadline={onSetDeadline}
+          onConfigureDates={onConfigureDates}
           depth={0}
         />
       ))}
@@ -80,6 +83,7 @@ interface PeriodTreeNodeProps {
   onLock: (period: AcademicPeriod) => void;
   onUnlock: (period: AcademicPeriod) => void;
   onSetDeadline: (period: AcademicPeriod) => void;
+  onConfigureDates?: (period: AcademicPeriod) => void;
   depth: number;
 }
 
@@ -90,6 +94,7 @@ function PeriodTreeNode({
   onLock,
   onUnlock,
   onSetDeadline,
+  onConfigureDates,
   depth,
 }: PeriodTreeNodeProps) {
   const isExpanded = expandedIds.has(node.period.id);
@@ -103,6 +108,7 @@ function PeriodTreeNode({
       onLock={() => onLock(node.period)}
       onUnlock={() => onUnlock(node.period)}
       onSetDeadline={() => onSetDeadline(node.period)}
+      onConfigureDates={onConfigureDates ? () => onConfigureDates(node.period) : undefined}
       depth={depth}
     >
       {hasChildren &&
@@ -116,6 +122,7 @@ function PeriodTreeNode({
             onLock={onLock}
             onUnlock={onUnlock}
             onSetDeadline={onSetDeadline}
+            onConfigureDates={onConfigureDates}
             depth={depth + 1}
           />
         ))}

@@ -16,6 +16,7 @@ import {
   ChevronDown,
   ChevronRight,
   Clock,
+  Settings2,
 } from "lucide-react";
 import type { AcademicPeriod } from "@/types/academic-period";
 import {
@@ -32,6 +33,7 @@ interface PeriodCardProps {
   onLock?: () => void;
   onUnlock?: () => void;
   onSetDeadline?: () => void;
+  onConfigureDates?: () => void;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
   depth?: number;
@@ -43,6 +45,7 @@ export function PeriodCard({
   onLock,
   onUnlock,
   onSetDeadline,
+  onConfigureDates,
   isExpanded = true,
   onToggleExpand,
   depth = 0,
@@ -139,6 +142,19 @@ export function PeriodCard({
 
             {/* Actions */}
             <div className="flex items-center gap-2">
+              {/* Configure Dates button - only for year-type periods */}
+              {onConfigureDates && period.periodType === "year" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onConfigureDates}
+                  className="h-7 text-xs"
+                >
+                  <Settings2 className="h-3 w-3 mr-1" />
+                  Configure Dates
+                </Button>
+              )}
+
               {onSetDeadline && isEditable && (
                 <Button
                   variant="outline"

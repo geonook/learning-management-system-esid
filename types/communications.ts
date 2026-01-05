@@ -128,28 +128,20 @@ export interface CommunicationStats {
   pending_lt_calls: number;
 }
 
-// Helper function to get current academic year
-export function getCurrentAcademicYear(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1; // 0-indexed
-
-  // If we're in fall semester (Aug-Jan), academic year starts with current year
-  // If we're in spring semester (Feb-Jul), academic year started last year
-  if (month >= 8 || month === 1) {
-    return `${year}-${year + 1}`;
-  } else {
-    return `${year - 1}-${year}`;
-  }
-}
+// Re-export from canonical source for backward compatibility
+// Use this for synchronous fallback only.
+// For production use, prefer getCurrentAcademicYearFromConfig() from lib/api/academic-year-config.ts
+export { getCurrentAcademicYear } from '@/types/academic-year'
 
 // Helper function to get current semester
+// Note: This is a synchronous fallback. For production use,
+// prefer getCurrentSemesterFromConfig() from lib/api/academic-year-config.ts
 export function getCurrentSemester(): Semester {
   const now = new Date();
-  const month = now.getMonth() + 1; // 0-indexed
+  const month = now.getMonth() + 1; // 1-12
 
-  // Fall: August to January
-  // Spring: February to July
+  // Fall: August to January (months 8-12 and 1)
+  // Spring: February to July (months 2-7)
   if (month >= 8 || month === 1) {
     return 'fall';
   } else {

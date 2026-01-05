@@ -14,6 +14,7 @@ import {
   UnlockModal,
   DeadlineEditor,
 } from "@/components/academic-period";
+import { DateConfigEditor } from "@/components/academic-period/DateConfigEditor";
 import {
   Select,
   SelectContent,
@@ -53,6 +54,8 @@ export default function PeriodsPage() {
   const [unlockModalPeriod, setUnlockModalPeriod] =
     useState<AcademicPeriod | null>(null);
   const [deadlineModalPeriod, setDeadlineModalPeriod] =
+    useState<AcademicPeriod | null>(null);
+  const [dateConfigPeriod, setDateConfigPeriod] =
     useState<AcademicPeriod | null>(null);
 
   // Fetch academic years
@@ -328,6 +331,7 @@ export default function PeriodsPage() {
               onLock={setLockModalPeriod}
               onUnlock={setUnlockModalPeriod}
               onSetDeadline={setDeadlineModalPeriod}
+              onConfigureDates={setDateConfigPeriod}
             />
           )}
         </CardContent>
@@ -354,6 +358,13 @@ export default function PeriodsPage() {
         onClose={() => setDeadlineModalPeriod(null)}
         onSave={handleDeadlineSave}
       />
+
+      <DateConfigEditor
+        period={dateConfigPeriod}
+        isOpen={!!dateConfigPeriod}
+        onClose={() => setDateConfigPeriod(null)}
+        onSave={fetchPeriods}
+      />
     </div>
   );
 }
@@ -373,6 +384,10 @@ function toAcademicPeriod(row: AcademicPeriodRow): AcademicPeriod {
     endDate: row.end_date,
     lockDeadline: row.lock_deadline,
     warningDays: row.warning_days,
+    fallStartDate: row.fall_start_date,
+    fallEndDate: row.fall_end_date,
+    springStartDate: row.spring_start_date,
+    springEndDate: row.spring_end_date,
     autoLockEnabled: row.auto_lock_enabled,
     autoLockedAt: row.auto_locked_at,
     statusHistory: row.status_history || [],

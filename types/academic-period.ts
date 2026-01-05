@@ -72,6 +72,12 @@ export interface AcademicPeriod {
   lockDeadline: string | null;
   warningDays: number;
 
+  // Semester dates (only for period_type = 'year')
+  fallStartDate: string | null;
+  fallEndDate: string | null;
+  springStartDate: string | null;
+  springEndDate: string | null;
+
   // Auto-lock
   autoLockEnabled: boolean;
   autoLockedAt: string | null;
@@ -100,6 +106,11 @@ export interface AcademicPeriodRow {
   end_date: string | null;
   lock_deadline: string | null;
   warning_days: number;
+  // Semester dates (only for period_type = 'year')
+  fall_start_date: string | null;
+  fall_end_date: string | null;
+  spring_start_date: string | null;
+  spring_end_date: string | null;
   auto_lock_enabled: boolean;
   auto_locked_at: string | null;
   status_history: StatusHistoryEntry[];
@@ -271,6 +282,10 @@ export function toAcademicPeriod(row: AcademicPeriodRow): AcademicPeriod {
     endDate: row.end_date,
     lockDeadline: row.lock_deadline,
     warningDays: row.warning_days,
+    fallStartDate: row.fall_start_date,
+    fallEndDate: row.fall_end_date,
+    springStartDate: row.spring_start_date,
+    springEndDate: row.spring_end_date,
     autoLockEnabled: row.auto_lock_enabled,
     autoLockedAt: row.auto_locked_at,
     statusHistory: row.status_history || [],
