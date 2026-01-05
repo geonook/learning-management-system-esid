@@ -17,7 +17,6 @@ import {
   requireAuth,
   requireRole,
   gradeInBand,
-  type CurrentUser
 } from './permissions'
 
 export type Class = Database['public']['Tables']['classes']['Row']
@@ -120,7 +119,7 @@ export async function getClassesByTeacher(
   academicYear?: string
 ) {
   await requireAuth()
-  const currentYear = academicYear || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`
+  const currentYear = academicYear || getCurrentAcademicYear()
 
   // Query classes through courses table (teacher_id is in courses, not classes)
   const { data, error } = await supabase
@@ -181,7 +180,7 @@ export async function getTeachingClasses(
   academicYear?: string
 ): Promise<ClassWithCourseType[]> {
   await requireAuth()
-  const currentYear = academicYear || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`
+  const currentYear = academicYear || getCurrentAcademicYear()
 
   // Query courses with class information
   const { data, error } = await supabase
@@ -245,7 +244,7 @@ export async function getClassesByGradeBand(
     return [] // Head cannot access grades outside their band
   }
 
-  const currentYear = academicYear || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`
+  const currentYear = academicYear || getCurrentAcademicYear()
 
   // Parse grade band to get grade numbers
   // "1" -> [1], "3-4" -> [3,4], "1-6" -> [1,2,3,4,5,6]
