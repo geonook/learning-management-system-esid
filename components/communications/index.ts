@@ -1,0 +1,1 @@
+export { StudentCommunicationsTab } from "./StudentCommunicationsTab";

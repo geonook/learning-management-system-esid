@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { useAuthReady } from "@/hooks/useAuthReady";
 import { supabase } from "@/lib/supabase/client";
@@ -16,6 +17,7 @@ import {
   Loader2,
   Calendar,
   FileText,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -280,6 +282,18 @@ export default function ClassCommunicationsPage() {
     }
   };
 
+  // Get dialog title based on communication type
+  const getDialogTitle = (type: CommunicationType | undefined): string => {
+    const titles: Record<CommunicationType, string> = {
+      phone_call: "Record Phone Call",
+      email: "Record Email",
+      in_person: "Record In-Person Meeting",
+      message: "Record Message",
+      other: "Add Note",
+    };
+    return titles[type || "phone_call"] || "New Communication";
+  };
+
   // Calculate LT completion stats
   const ltStats = {
     total: ltStatus.length,
@@ -481,12 +495,18 @@ export default function ClassCommunicationsPage() {
                         className="border-b border-border-subtle hover:bg-surface-hover"
                       >
                         <td className="p-4">
-                          <div className="text-text-primary font-medium">
-                            {status.student_name}
-                          </div>
-                          <div className="text-xs text-text-tertiary">
-                            {status.student_number}
-                          </div>
+                          <Link
+                            href={`/student/${status.student_id}?tab=communications`}
+                            className="group"
+                          >
+                            <div className="text-text-primary font-medium group-hover:text-purple-500 dark:group-hover:text-purple-400 flex items-center gap-1">
+                              {status.student_name}
+                              <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                            <div className="text-xs text-text-tertiary">
+                              {status.student_number}
+                            </div>
+                          </Link>
                         </td>
                         <td className="p-4 text-center">
                           {status.semester_start ? (
@@ -583,15 +603,19 @@ export default function ClassCommunicationsPage() {
                           key={student.id}
                           className="flex items-center justify-between p-4 hover:bg-surface-hover"
                         >
-                          <div>
-                            <div className="text-text-primary font-medium">
+                          <Link
+                            href={`/student/${student.id}?tab=communications`}
+                            className="group"
+                          >
+                            <div className="text-text-primary font-medium group-hover:text-purple-500 dark:group-hover:text-purple-400 flex items-center gap-1">
                               {student.full_name}
+                              <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </div>
                             <div className="text-xs text-text-tertiary">
                               {studentComms.length} note
                               {studentComms.length !== 1 ? "s" : ""}
                             </div>
-                          </div>
+                          </Link>
                           {canEdit && (
                             <Button
                               variant="ghost"
@@ -611,65 +635,20 @@ export default function ClassCommunicationsPage() {
               </div>
             )}
 
-            {/* Recent Communications */}
-            <div className="bg-surface-secondary rounded-xl border border-border-default overflow-hidden">
-              <div className="p-4 border-b border-border-default">
-                <h2 className="text-lg font-semibold text-text-primary">
-                  Recent Communications ({communications.length})
-                </h2>
+            {/* Summary Card */}
+            <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <MessageSquare className="w-5 h-5 text-purple-500 dark:text-purple-400" />
+                  <span className="text-text-secondary">
+                    <span className="font-medium text-text-primary">{communications.length}</span>{" "}
+                    communication{communications.length !== 1 ? "s" : ""} recorded this semester
+                  </span>
+                </div>
+                <p className="text-sm text-text-tertiary">
+                  Click on a student name to view their full communication history
+                </p>
               </div>
-              {communications.length === 0 ? (
-                <div className="p-8 text-center">
-                  <MessageSquare className="w-12 h-12 text-text-tertiary mx-auto mb-4" />
-                  <p className="text-text-secondary">No communications recorded yet</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-border-subtle">
-                  {communications.slice(0, 20).map((comm) => (
-                    <div key={comm.id} className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`p-2 rounded-lg ${
-                              comm.communication_type === "phone_call"
-                                ? "bg-green-500/20 text-green-500 dark:text-green-400"
-                                : comm.communication_type === "email"
-                                ? "bg-blue-500/20 text-blue-500 dark:text-blue-400"
-                                : "bg-purple-500/20 text-purple-500 dark:text-purple-400"
-                            }`}
-                          >
-                            {getTypeIcon(comm.communication_type)}
-                          </div>
-                          <div>
-                            <div className="text-text-primary font-medium">
-                              {comm.student.full_name}
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-text-tertiary">
-                              <span>{formatCommunicationType(comm.communication_type)}</span>
-                              {comm.contact_period && (
-                                <>
-                                  <span>•</span>
-                                  <span>{formatContactPeriod(comm.contact_period)}</span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-text-tertiary">
-                          <Calendar className="w-3 h-3" />
-                          {new Date(comm.communication_date).toLocaleDateString()}
-                        </div>
-                      </div>
-                      {comm.subject && (
-                        <div className="text-sm text-text-primary font-medium mb-1">
-                          {comm.subject}
-                        </div>
-                      )}
-                      <p className="text-sm text-text-secondary line-clamp-2">{comm.content}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </>
         )}
@@ -679,7 +658,7 @@ export default function ClassCommunicationsPage() {
           <DialogContent className="bg-surface-elevated border-border-default">
             <DialogHeader>
               <DialogTitle className="text-text-primary">
-                {isLTCourse ? "Record Phone Call" : "Add Student Note"}
+                {getDialogTitle(newComm.communication_type)}
               </DialogTitle>
             </DialogHeader>
 

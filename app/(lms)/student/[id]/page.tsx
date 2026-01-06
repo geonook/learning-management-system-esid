@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { useAuthReady } from "@/hooks/useAuthReady";
@@ -15,11 +15,13 @@ import {
   Users,
   Target,
   LayoutDashboard,
+  MessageSquare,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { MapStudentSection } from "@/components/map";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StudentMapAnalysisTab } from "@/components/map/student";
+import { StudentCommunicationsTab } from "@/components/communications";
 
 interface StudentDetails {
   id: string;
@@ -43,12 +45,16 @@ interface StudentDetails {
 export default function StudentDetailPage() {
   const { userId } = useAuthReady();
   const params = useParams();
+  const searchParams = useSearchParams();
   const studentId = params?.id as string;
 
   const [student, setStudent] = useState<StudentDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("overview");
+
+  // Get initial tab from URL query param, default to "overview"
+  const initialTab = searchParams?.get("tab") || "overview";
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   // Check if student is in MAP grades (G3-G6)
   const isMapGrade = student ? student.grade >= 3 && student.grade <= 6 : false;
@@ -320,6 +326,10 @@ export default function StudentDetailPage() {
                   <BookOpen className="w-4 h-4" />
                   Courses
                 </TabsTrigger>
+                <TabsTrigger value="communications" className="gap-2">
+                  <MessageSquare className="w-4 h-4" />
+                  Communications
+                </TabsTrigger>
               </TabsList>
 
               {/* Overview Tab */}
@@ -456,6 +466,14 @@ export default function StudentDetailPage() {
                     </Link>
                   </div>
                 )}
+              </TabsContent>
+
+              {/* Communications Tab */}
+              <TabsContent value="communications" className="space-y-6">
+                <StudentCommunicationsTab
+                  studentId={student.id}
+                  studentName={student.full_name}
+                />
               </TabsContent>
             </Tabs>
           </>

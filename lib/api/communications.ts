@@ -64,6 +64,98 @@ export async function getStudentCommunications(
 }
 
 /**
+ * Get paginated communications for a student (cross-year, cross-course)
+ * Used for the student details page Communications tab
+ */
+export async function getStudentCommunicationsPaginated(
+  studentId: string,
+  options?: {
+    page?: number;
+    pageSize?: number;
+    academicYear?: string;
+    semester?: Semester;
+    courseType?: "LT" | "IT" | "KCFS";
+  }
+): Promise<PaginatedCommunications> {
+  const page = options?.page || 1;
+  const pageSize = options?.pageSize || 20;
+  const offset = (page - 1) * pageSize;
+
+  let query = supabase
+    .from("communications")
+    .select(
+      `
+      *,
+      student:students(id, full_name, student_id),
+      teacher:users(id, full_name, display_name),
+      course:courses(id, course_type, class_id, classes(name))
+    `,
+      { count: "exact" }
+    )
+    .eq("student_id", studentId);
+
+  // Apply filters
+  if (options?.academicYear) {
+    query = query.eq("academic_year", options.academicYear);
+  }
+  if (options?.semester) {
+    query = query.eq("semester", options.semester);
+  }
+
+  // Order and paginate
+  query = query
+    .order("communication_date", { ascending: false })
+    .range(offset, offset + pageSize - 1);
+
+  const { data, error, count } = await query;
+
+  if (error) {
+    console.error("Failed to fetch student communications paginated:", error);
+    throw new Error(error.message);
+  }
+
+  // Filter by course_type after fetch (nested filter not directly supported)
+  let filteredData = data || [];
+  if (options?.courseType) {
+    filteredData = filteredData.filter((c) => {
+      const course = c.course as { course_type?: string } | null;
+      return course?.course_type === options.courseType;
+    });
+  }
+
+  const total = count || 0;
+
+  return {
+    communications: transformCommunications(filteredData),
+    total,
+    page,
+    pageSize,
+    totalPages: Math.ceil(total / pageSize),
+  };
+}
+
+/**
+ * Get distinct academic years that have communications for a student
+ */
+export async function getStudentCommunicationYears(
+  studentId: string
+): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("communications")
+    .select("academic_year")
+    .eq("student_id", studentId);
+
+  if (error) {
+    console.error("Failed to fetch student communication years:", error);
+    throw new Error(error.message);
+  }
+
+  // Get distinct years and sort descending
+  const years = [...new Set((data || []).map((d) => d.academic_year))];
+  return years.sort().reverse();
+}
+
+/**
  * Get communications for a course (all students in a class)
  */
 export async function getCourseCommunications(
