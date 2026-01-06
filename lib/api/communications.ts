@@ -87,7 +87,7 @@ export async function getStudentCommunicationsPaginated(
       `
       *,
       student:students(id, full_name, student_id),
-      teacher:users(id, full_name, display_name),
+      teacher:users(id, full_name, teacher_name),
       course:courses(id, course_type, class_id, classes(name))
     `,
       { count: "exact" }

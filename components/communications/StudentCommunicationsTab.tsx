@@ -10,7 +10,6 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
-  Plus,
   Calendar,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +30,6 @@ import type {
   PaginatedCommunications,
   CommunicationType,
   ContactPeriod,
-  Semester,
 } from "@/types/communications";
 
 interface StudentCommunicationsTabProps {
@@ -140,9 +138,9 @@ export function StudentCommunicationsTab({
     const teacher = comm.teacher as {
       id: string;
       full_name: string;
-      display_name?: string;
+      teacher_name?: string;
     };
-    return teacher?.display_name || teacher?.full_name || "Unknown Teacher";
+    return teacher?.teacher_name || teacher?.full_name || "Unknown Teacher";
   };
 
   if (loading && !communications) {
