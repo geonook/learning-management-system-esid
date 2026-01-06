@@ -263,12 +263,33 @@ function mapContactMethod(method: string): "phone_call" | "email" | "in_person" 
   return "other";
 }
 
-function formatDate(dateStr: string): string | null {
-  if (!dateStr || dateStr.trim() === "") return null;
+// Default dates for each term when date is missing or invalid
+const DEFAULT_DATE = "2025-09-01T00:00:00.000Z";
+const TERM_DEFAULT_DATES: Record<string, string> = {
+  "Term 0": "2025-09-01T00:00:00.000Z",
+  "Term 1": "2025-10-29T00:00:00.000Z",
+  "Term 2": "2025-12-25T00:00:00.000Z",
+};
+
+function formatDate(dateStr: string, term: string): string {
+  if (!dateStr || dateStr.trim() === "") {
+    // Use default date based on term, fallback to DEFAULT_DATE
+    return TERM_DEFAULT_DATES[term] || DEFAULT_DATE;
+  }
 
   // Try to parse the date
   const date = new Date(dateStr);
-  if (isNaN(date.getTime())) return null;
+  if (isNaN(date.getTime())) {
+    // Invalid date, use default based on term
+    return TERM_DEFAULT_DATES[term] || DEFAULT_DATE;
+  }
+
+  // Validate year is within reasonable range (2020-2030)
+  const year = date.getFullYear();
+  if (year < 2020 || year > 2030) {
+    // Year out of range (e.g., 20025), use default based on term
+    return TERM_DEFAULT_DATES[term] || DEFAULT_DATE;
+  }
 
   return date.toISOString();
 }
@@ -388,7 +409,7 @@ function transformRows(
       contact_period: mapTerm(row.Term || ""),
       subject: row["Parent Response"]?.trim() || null,
       content: row["Teacher Content"]?.trim() || null,
-      communication_date: formatDate(row.Date),
+      communication_date: formatDate(row.Date, row.Term),
       is_lt_required: row["Contact Type"] === "Scheduled Contact",
     };
 
