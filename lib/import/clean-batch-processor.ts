@@ -5,6 +5,7 @@
  */
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { BATCH_PROCESSING } from '@/lib/config/import'
 import type {
   UserImport,
   ClassImport,
@@ -16,12 +17,8 @@ import type {
   ImportValidationResult
 } from './types'
 
-// Standard batch size for all operations (prevents database overload)
-const BATCH_SIZE = 5
-
-// Standard retry configuration
-const MAX_RETRIES = 3
-const RETRY_DELAY_MS = 200
+// Use centralized batch processing configuration
+const { BATCH_SIZE, MAX_RETRIES, RETRY_DELAY_MS } = BATCH_PROCESSING
 
 /**
  * Standard Batch Insert Template

@@ -18,6 +18,7 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import * as crypto from 'crypto'
+import { COOKIE_TIMEOUTS } from '@/lib/config/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -132,7 +133,7 @@ export async function GET(request: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 900, // 15 minutes
+      maxAge: COOKIE_TIMEOUTS.PKCE_VERIFIER,
     })
 
     // Set state cookie (httpOnly for security)
@@ -141,7 +142,7 @@ export async function GET(request: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 900, // 15 minutes
+      maxAge: COOKIE_TIMEOUTS.OAUTH_STATE,
     })
 
     // Also store redirect URL for after successful auth
@@ -150,7 +151,7 @@ export async function GET(request: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 900, // 15 minutes
+      maxAge: COOKIE_TIMEOUTS.REDIRECT_URL,
     })
 
     console.log('[SSO Redirect] Redirecting to Info Hub OAuth')

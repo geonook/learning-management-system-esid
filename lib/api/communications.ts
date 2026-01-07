@@ -8,6 +8,7 @@ import {
   assertPeriodEditableClient,
   getTermFromDate,
 } from "@/hooks/usePeriodLock";
+import { PAGINATION } from "@/lib/config/pagination";
 import type {
   Communication,
   CommunicationWithDetails,
@@ -78,7 +79,7 @@ export async function getStudentCommunicationsPaginated(
   }
 ): Promise<PaginatedCommunications> {
   const page = options?.page || 1;
-  const pageSize = options?.pageSize || 20;
+  const pageSize = options?.pageSize || PAGINATION.SMALL;
   const offset = (page - 1) * pageSize;
 
   let query = supabase

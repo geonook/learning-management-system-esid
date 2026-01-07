@@ -19,6 +19,7 @@ import {
   gradeInBand,
   type CurrentUser
 } from './permissions'
+import { PAGINATION } from '@/lib/config/pagination'
 
 export type Student = Database['public']['Tables']['students']['Row']
 export type StudentInsert = Database['public']['Tables']['students']['Insert']
@@ -414,7 +415,7 @@ export async function getStudentsWithPagination(options?: {
   await requireAuth()
   const supabase = createClient()
   const page = options?.page || 1
-  const pageSize = options?.pageSize || 50
+  const pageSize = options?.pageSize || PAGINATION.STUDENTS
   const offset = (page - 1) * pageSize
 
   // Build query for students with class name

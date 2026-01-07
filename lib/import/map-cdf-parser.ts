@@ -11,6 +11,7 @@
  */
 
 import { z } from 'zod';
+import { MAP_IMPORT_LIMITS } from '@/lib/config/import';
 
 // ============================================================
 // Types
@@ -175,10 +176,10 @@ const CDF_COLUMNS = {
 } as const;
 
 // Goal columns pattern: Goal1Name, Goal1RitScore, Goal1StdErr, Goal1Range, Goal1Adjective
-const MAX_GOALS = 8;
+const MAX_GOALS = MAP_IMPORT_LIMITS.MAX_GOALS;
 
 // Projected Proficiency columns pattern: ProjectedProficiencyStudy1, ProjectedProficiencyLevel1
-const MAX_PROJECTED_PROFICIENCY = 3;  // Only import first 3
+const MAX_PROJECTED_PROFICIENCY = MAP_IMPORT_LIMITS.MAX_PROJECTED_PROFICIENCY;
 
 // ============================================================
 // Helper Functions

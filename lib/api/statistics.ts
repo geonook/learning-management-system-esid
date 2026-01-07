@@ -17,6 +17,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { requireServerRole } from './permissions-server';
+import { PAGINATION } from '@/lib/config/pagination';
 import {
   calculateAverage,
   calculateMax,
@@ -159,7 +160,7 @@ export async function getClassStatistics(
   if (studentIdList.length > 0) {
     // OPTIMIZED: Use parallel batch fetch instead of sequential while loop
     // First get count, then fetch all pages in parallel
-    const PAGE_SIZE = 1000;
+    const PAGE_SIZE = PAGINATION.LARGE;
 
     // Build base query
     const buildScoresQuery = () => {
@@ -568,7 +569,7 @@ export async function getStudentGrades(
 
   // 1. Fetch students with their classes
   // OPTIMIZED: Use parallel batch fetch instead of sequential while loop
-  const PAGE_SIZE = 1000;
+  const PAGE_SIZE = PAGINATION.LARGE;
   type StudentWithClass = {
     id: string;
     student_id: string;
@@ -683,7 +684,7 @@ export async function getStudentGrades(
   const allScores: ScoreRow[] = [];
 
   if (studentIds.length > 0) {
-    const SCORE_PAGE_SIZE = 1000;
+    const SCORE_PAGE_SIZE = PAGINATION.LARGE;
 
     // Build base query function
     const buildScoresQuery = (rangeStart: number, rangeEnd: number) => {
