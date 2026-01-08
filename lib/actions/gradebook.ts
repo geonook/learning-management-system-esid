@@ -47,7 +47,7 @@ export type GradebookData = {
 export async function getAvailableCourseTypes(
   classId: string
 ): Promise<CourseType[]> {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   // Get current user and their role/permissions
   const {
@@ -115,7 +115,7 @@ export async function getGradebookData(
   courseType?: CourseType | null,
   term?: Term | null
 ): Promise<GradebookData> {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   // 1. Get available course types for this class
   const availableCourseTypes = await getAvailableCourseTypes(classId);
@@ -280,7 +280,7 @@ export async function updateScore(
   isAbsent: boolean = false,
   courseType?: CourseType
 ) {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   // --- Permission Check ---
   const {
