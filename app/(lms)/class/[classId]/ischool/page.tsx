@@ -9,8 +9,6 @@ import {
   FileOutput,
   Loader2,
   AlertCircle,
-  ChevronDown,
-  ChevronRight,
 } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
@@ -23,8 +21,10 @@ import {
 import { ISchoolExportTable, ISchoolExportPreview } from '@/components/ischool'
 import {
   getISchoolExportData,
+  getAvailableISchoolCourses,
   upsertISchoolComment,
 } from '@/lib/api/ischool'
+import type { ISchoolCourseInfo, CourseType } from '@/lib/api/ischool'
 import type { ISchoolExportRow } from '@/types/ischool'
 import { termRequiresComments } from '@/types/ischool'
 import type { Term } from '@/types/academic-year'
@@ -42,6 +42,8 @@ export default function ISchoolExportPage() {
   const { userId, role, isReady } = useAuthReady()
 
   const [classInfo, setClassInfo] = useState<ClassInfo | null>(null)
+  const [courses, setCourses] = useState<ISchoolCourseInfo[]>([])
+  const [selectedCourseType, setSelectedCourseType] = useState<CourseType>('LT')
   const [courseId, setCourseId] = useState<string | null>(null)
   const [selectedTerm, setSelectedTerm] = useState<Term>(2) // Default to Term 2
   const [exportData, setExportData] = useState<ISchoolExportRow[]>([])
@@ -49,12 +51,13 @@ export default function ISchoolExportPage() {
   const [error, setError] = useState<string | null>(null)
   const [hasAccess, setHasAccess] = useState(false)
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+  const [isReadOnly, setIsReadOnly] = useState(false)
 
-  // Check access and fetch class info
+  // Check access and fetch class info + available courses
   useEffect(() => {
     if (!isReady || !classId) return
 
-    const fetchClassInfo = async () => {
+    const fetchClassInfoAndCourses = async () => {
       setIsLoading(true)
       setError(null)
 
@@ -69,34 +72,46 @@ export default function ISchoolExportPage() {
         if (classError) throw new Error('Failed to load class info')
         setClassInfo(classData)
 
-        // Get LT course and check access (filter by academic_year to ensure correct course)
-        const { data: course, error: courseError } = await supabase
-          .from('courses')
-          .select('id, teacher_id')
-          .eq('class_id', classId)
-          .eq('course_type', 'LT')
-          .eq('academic_year', classData.academic_year)
-          .eq('is_active', true)
-          .single()
+        // Get all available courses for this class
+        const allCourses = await getAvailableISchoolCourses(classId, classData.academic_year)
 
-        if (courseError || !course) {
-          setError('No LT course found for this class')
+        if (allCourses.length === 0) {
+          setError('No courses found for this class')
           setIsLoading(false)
           return
         }
 
-        setCourseId(course.id)
-
-        // Check access: admin or LT teacher
+        // Filter courses based on role
         const isAdmin = role === 'admin'
-        const isLTTeacher = course.teacher_id === userId
+        const isOffice = role === 'office_member'
 
-        if (!isAdmin && !isLTTeacher) {
-          setError('Access denied. Only LT teachers and admins can access this page.')
+        let visibleCourses = allCourses
+
+        if (!isAdmin && !isOffice) {
+          // Regular teacher: only see their own courses
+          visibleCourses = allCourses.filter(c => c.teacher_id === userId)
+        }
+        // Admin and Office can see all courses
+
+        if (visibleCourses.length === 0) {
+          setError('Access denied. You do not have permission to export grades for this class.')
           setHasAccess(false)
-        } else {
+          setIsLoading(false)
+          return
+        }
+
+        setCourses(visibleCourses)
+
+        // Set initial course type (prefer LT if available)
+        const initialCourse = visibleCourses.find(c => c.course_type === 'LT') || visibleCourses[0]
+        if (initialCourse) {
+          setSelectedCourseType(initialCourse.course_type)
+          setCourseId(initialCourse.id)
           setHasAccess(true)
         }
+
+        // Office members are read-only
+        setIsReadOnly(isOffice)
       } catch (err) {
         console.error('Error fetching class info:', err)
         setError('Failed to load class information')
@@ -105,12 +120,20 @@ export default function ISchoolExportPage() {
       }
     }
 
-    fetchClassInfo()
+    fetchClassInfoAndCourses()
   }, [classId, userId, role, isReady])
 
-  // Fetch export data when term changes
+  // Update courseId when course type changes
   useEffect(() => {
-    if (!classInfo || !hasAccess) return
+    const course = courses.find(c => c.course_type === selectedCourseType)
+    if (course) {
+      setCourseId(course.id)
+    }
+  }, [selectedCourseType, courses])
+
+  // Fetch export data when term or course type changes
+  useEffect(() => {
+    if (!classInfo || !hasAccess || !courseId) return
 
     const fetchExportData = async () => {
       setIsLoading(true)
@@ -118,7 +141,8 @@ export default function ISchoolExportPage() {
         const data = await getISchoolExportData(
           classId,
           classInfo.academic_year,
-          selectedTerm
+          selectedTerm,
+          selectedCourseType
         )
         setExportData(data)
       } catch (err) {
@@ -130,11 +154,14 @@ export default function ISchoolExportPage() {
     }
 
     fetchExportData()
-  }, [classId, classInfo, selectedTerm, hasAccess])
+  }, [classId, classInfo, selectedTerm, selectedCourseType, courseId, hasAccess])
 
   // Handle comment change with debounce
   const handleCommentChange = useCallback(async (studentId: string, comment: string) => {
     if (!courseId || !classInfo) return
+
+    // Read-only mode: don't save
+    if (isReadOnly) return
 
     // Only save for Term 2 and 4
     if (!termRequiresComments(selectedTerm)) return
@@ -159,7 +186,7 @@ export default function ISchoolExportPage() {
     } catch (err) {
       console.error('Error saving comment:', err)
     }
-  }, [courseId, classInfo, selectedTerm])
+  }, [courseId, classInfo, selectedTerm, isReadOnly])
 
   const getTermLabel = (term: Term): string => {
     switch (term) {
@@ -183,26 +210,57 @@ export default function ISchoolExportPage() {
               {classInfo && (
                 <p className="text-sm text-muted-foreground">
                   {classInfo.name} • {classInfo.academic_year}
+                  {isReadOnly && (
+                    <span className="ml-2 text-yellow-600">(Read-only)</span>
+                  )}
                 </p>
               )}
             </div>
           </div>
 
-          {/* Term Selector */}
-          <Select
-            value={String(selectedTerm)}
-            onValueChange={(value) => setSelectedTerm(Number(value) as Term)}
-          >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">{getTermLabel(1)}</SelectItem>
-              <SelectItem value="2">{getTermLabel(2)}</SelectItem>
-              <SelectItem value="3">{getTermLabel(3)}</SelectItem>
-              <SelectItem value="4">{getTermLabel(4)}</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-3">
+            {/* Course Selector - only show if multiple courses */}
+            {courses.length > 1 && (
+              <Select
+                value={selectedCourseType}
+                onValueChange={(value) => setSelectedCourseType(value as CourseType)}
+              >
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {courses.map(course => (
+                    <SelectItem key={course.id} value={course.course_type}>
+                      {course.course_type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {/* Single course badge */}
+            {courses.length === 1 && (
+              <span className="px-3 py-1.5 text-sm font-medium bg-primary/10 text-primary rounded-md">
+                {selectedCourseType}
+              </span>
+            )}
+
+            {/* Term Selector */}
+            <Select
+              value={String(selectedTerm)}
+              onValueChange={(value) => setSelectedTerm(Number(value) as Term)}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">{getTermLabel(1)}</SelectItem>
+                <SelectItem value="2">{getTermLabel(2)}</SelectItem>
+                <SelectItem value="3">{getTermLabel(3)}</SelectItem>
+                <SelectItem value="4">{getTermLabel(4)}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Error Alert */}
@@ -247,6 +305,7 @@ export default function ISchoolExportPage() {
                   term={selectedTerm}
                   onCommentChange={handleCommentChange}
                   isLoading={isLoading}
+                  isReadOnly={isReadOnly}
                 />
               </div>
             </div>

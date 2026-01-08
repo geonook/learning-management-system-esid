@@ -13,6 +13,42 @@ import type {
 } from '@/types/ischool'
 import { getISchoolTermConfig, termRequiresComments } from '@/types/ischool'
 
+/** Course type for iSchool export */
+export type CourseType = 'LT' | 'IT' | 'KCFS'
+
+/** Course info for iSchool export */
+export interface ISchoolCourseInfo {
+  id: string
+  course_type: CourseType
+  teacher_id: string
+}
+
+/**
+ * Get available courses for iSchool export in a class
+ * Returns all active courses (LT/IT/KCFS) for the class
+ */
+export async function getAvailableISchoolCourses(
+  classId: string,
+  academicYear: string
+): Promise<ISchoolCourseInfo[]> {
+  const supabase = createClient()
+
+  const { data: courses, error } = await supabase
+    .from('courses')
+    .select('id, course_type, teacher_id')
+    .eq('class_id', classId)
+    .eq('academic_year', academicYear)
+    .eq('is_active', true)
+    .in('course_type', ['LT', 'IT', 'KCFS'])
+
+  if (error) {
+    console.error('Failed to fetch available courses:', error.message)
+    return []
+  }
+
+  return (courses || []) as ISchoolCourseInfo[]
+}
+
 /**
  * Get iSchool export data for a class
  * Fetches students with their FA/SA averages and exam scores for the specified term
@@ -20,23 +56,24 @@ import { getISchoolTermConfig, termRequiresComments } from '@/types/ischool'
 export async function getISchoolExportData(
   classId: string,
   academicYear: string,
-  term: Term
+  term: Term,
+  courseType: CourseType = 'LT'
 ): Promise<ISchoolExportRow[]> {
   const supabase = createClient()
   const config = getISchoolTermConfig(term)
 
-  // 1. Get LT course for this class and academic year
+  // 1. Get course for this class and academic year
   const { data: course, error: courseError } = await supabase
     .from('courses')
     .select('id, teacher_id')
     .eq('class_id', classId)
-    .eq('course_type', 'LT')
+    .eq('course_type', courseType)
     .eq('academic_year', academicYear)
     .eq('is_active', true)
     .single()
 
   if (courseError || !course) {
-    console.error('Failed to find LT course:', courseError?.message)
+    console.error(`Failed to find ${courseType} course:`, courseError?.message)
     return []
   }
 

@@ -20,6 +20,7 @@ interface ISchoolExportTableProps {
   term: Term
   onCommentChange?: (studentId: string, comment: string) => void
   isLoading?: boolean
+  isReadOnly?: boolean
 }
 
 export function ISchoolExportTable({
@@ -27,6 +28,7 @@ export function ISchoolExportTable({
   term,
   onCommentChange,
   isLoading = false,
+  isReadOnly = false,
 }: ISchoolExportTableProps) {
   const showComments = termRequiresComments(term)
   const examLabel = term === 1 || term === 3 ? 'MID' : 'FINAL'
@@ -90,6 +92,7 @@ export function ISchoolExportTable({
                     <CommentInput
                       value={row.teacherComment || ''}
                       onChange={(value) => onCommentChange?.(row.studentId, value)}
+                      disabled={isReadOnly}
                     />
                   </TableCell>
                 )}
@@ -115,9 +118,11 @@ const WARNING_THRESHOLD = 350
 function CommentInput({
   value,
   onChange,
+  disabled = false,
 }: {
   value: string
   onChange: (value: string) => void
+  disabled?: boolean
 }) {
   const [localValue, setLocalValue] = useState(value)
   const [isSaving, setIsSaving] = useState(false)
@@ -128,21 +133,23 @@ function CommentInput({
   }, [value])
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (disabled) return
     const newValue = e.target.value
     // Hard limit at 400 characters
     if (newValue.length <= MAX_COMMENT_LENGTH) {
       setLocalValue(newValue)
     }
-  }, [])
+  }, [disabled])
 
   const handleBlur = useCallback(() => {
+    if (disabled) return
     if (localValue !== value) {
       setIsSaving(true)
       onChange(localValue)
       // Reset saving state after a short delay
       setTimeout(() => setIsSaving(false), 500)
     }
-  }, [localValue, value, onChange])
+  }, [localValue, value, onChange, disabled])
 
   const charCount = localValue.length
   const isNearLimit = charCount >= WARNING_THRESHOLD
@@ -154,26 +161,30 @@ function CommentInput({
         value={localValue}
         onChange={handleChange}
         onBlur={handleBlur}
-        placeholder="Enter comment..."
+        placeholder={disabled ? "" : "Enter comment..."}
+        disabled={disabled}
         className={cn(
           "min-h-[100px] text-sm resize-none w-full",
-          isAtLimit && "border-red-500 focus-visible:ring-red-500",
-          isNearLimit && !isAtLimit && "border-yellow-500 focus-visible:ring-yellow-500"
+          disabled && "bg-muted/50 cursor-not-allowed opacity-70",
+          !disabled && isAtLimit && "border-red-500 focus-visible:ring-red-500",
+          !disabled && isNearLimit && !isAtLimit && "border-yellow-500 focus-visible:ring-yellow-500"
         )}
       />
-      <div className="flex justify-between items-center text-xs">
-        <span className={cn(
-          "tabular-nums",
-          isAtLimit && "text-red-500 font-medium",
-          isNearLimit && !isAtLimit && "text-yellow-600 font-medium",
-          !isNearLimit && "text-muted-foreground"
-        )}>
-          {charCount}/{MAX_COMMENT_LENGTH}
-        </span>
-        {isSaving && (
-          <span className="text-emerald-600">Saving...</span>
-        )}
-      </div>
+      {!disabled && (
+        <div className="flex justify-between items-center text-xs">
+          <span className={cn(
+            "tabular-nums",
+            isAtLimit && "text-red-500 font-medium",
+            isNearLimit && !isAtLimit && "text-yellow-600 font-medium",
+            !isNearLimit && "text-muted-foreground"
+          )}>
+            {charCount}/{MAX_COMMENT_LENGTH}
+          </span>
+          {isSaving && (
+            <span className="text-emerald-600">Saving...</span>
+          )}
+        </div>
+      )}
     </div>
   )
 }
