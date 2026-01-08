@@ -31,7 +31,7 @@ export function ISchoolExportTable({
   isReadOnly = false,
 }: ISchoolExportTableProps) {
   const showComments = termRequiresComments(term)
-  const examLabel = term === 1 || term === 3 ? 'MID' : 'FINAL'
+  const examLabel = term === 1 || term === 3 ? 'Midterm' : 'Final'
 
   return (
     <div className="rounded-md border overflow-x-auto">
