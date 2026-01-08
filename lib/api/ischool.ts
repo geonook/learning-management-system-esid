@@ -45,7 +45,7 @@ export async function getISchoolExportData(
   // 2. Get students in class, ordered by student_id (學號)
   const { data: students, error: studentsError } = await supabase
     .from('students')
-    .select('id, student_id, full_name, chinese_name, seat_no')
+    .select('id, student_id, full_name')
     .eq('class_id', classId)
     .eq('is_active', true)
     .order('student_id', { ascending: true })
@@ -129,8 +129,8 @@ export async function getISchoolExportData(
       studentId: student.id,
       studentNumber: student.student_id,
       studentName: student.full_name,
-      chineseName: student.chinese_name,
-      seatNo: student.seat_no,
+      chineseName: null,  // 欄位不存在於 students 表
+      seatNo: null,       // 欄位不存在於 students 表
       formativeAvg,
       summativeAvg,
       examScore,
