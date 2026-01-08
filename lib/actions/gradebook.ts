@@ -471,6 +471,7 @@ export async function updateScore(
         is_absent: isAbsent,
         updated_by: user.id,
         updated_at: new Date().toISOString(),
+        course_id: course.id,
       })
       .eq("id", existingScore.id);
   } else {
@@ -481,6 +482,7 @@ export async function updateScore(
       score: isAbsent ? null : score,
       is_absent: isAbsent,
       entered_by: user.id,
+      course_id: course.id,
     });
   }
 
