@@ -215,7 +215,7 @@ export default function BrowseTeachersPage() {
                       <td className="p-4">
                         {teacher.assigned_classes.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
-                            {teacher.assigned_classes.slice(0, 3).map((cls) => (
+                            {teacher.assigned_classes.slice(0, 3).map((cls: string) => (
                               <span
                                 key={cls}
                                 className="px-2 py-0.5 bg-surface-tertiary text-text-secondary text-xs rounded"

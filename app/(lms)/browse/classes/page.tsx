@@ -76,7 +76,7 @@ export default function BrowseClassesPage() {
 
   // Helper to get teacher name by course type
   const getTeacherName = (courses: ClassWithDetails["courses"], type: "LT" | "IT" | "KCFS") => {
-    const course = courses.find((c) => c.course_type === type);
+    const course = courses.find((c: ClassWithDetails["courses"][number]) => c.course_type === type);
     return course?.teacher?.full_name || "-";
   };
 

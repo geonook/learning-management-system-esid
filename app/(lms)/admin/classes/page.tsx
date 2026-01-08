@@ -67,7 +67,7 @@ export default function ClassManagementPage() {
 
   // Check if a course type has an assigned teacher
   const hasTeacher = (courses: ClassWithDetails["courses"], type: "LT" | "IT" | "KCFS") => {
-    const course = courses.find((c) => c.course_type === type);
+    const course = courses.find((c: ClassWithDetails["courses"][number]) => c.course_type === type);
     return course?.teacher !== null;
   };
 

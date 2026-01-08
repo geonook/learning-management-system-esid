@@ -398,17 +398,26 @@ export async function updateScore(
   // Upsert score
   // First, get exam_id for this assessment code and course.
   // The schema requires exam_id with course_id (NOT class_id).
-  // Strategy: Find the course for this class and course type, then find/create exam.
+  // Strategy: Find the course for this class, course type, and academic year, then find/create exam.
 
-  // 1. Get the course_id for this class and course type
+  // 1. Get the course_id for this class, course type, and academic year
+  // Note: classInfo.academic_year was already fetched for period lock check
   const effectiveCourseType = courseType || "LT";
-  const { data: course, error: courseError } = await supabase
+
+  // Build course query with academic_year filter
+  let courseQuery = supabase
     .from("courses")
     .select("id")
     .eq("class_id", classId)
     .eq("course_type", effectiveCourseType)
-    .eq("is_active", true)
-    .single();
+    .eq("is_active", true);
+
+  // Add academic_year filter if available (prevents duplicate course issues)
+  if (classInfo?.academic_year) {
+    courseQuery = courseQuery.eq("academic_year", classInfo.academic_year);
+  }
+
+  const { data: course, error: courseError } = await courseQuery.single();
 
   if (courseError || !course) {
     throw new Error(`Course not found for class ${classId} and type ${effectiveCourseType}`);
