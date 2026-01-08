@@ -464,7 +464,7 @@ export async function updateScore(
     .single();
 
   if (existingScore) {
-    await supabase
+    const { error: updateError } = await supabase
       .from("scores")
       .update({
         score: isAbsent ? null : score,
@@ -474,8 +474,13 @@ export async function updateScore(
         course_id: course.id,
       })
       .eq("id", existingScore.id);
+
+    if (updateError) {
+      console.error("Score update error:", updateError);
+      throw new Error(`Failed to update score: ${updateError.message}`);
+    }
   } else {
-    await supabase.from("scores").insert({
+    const { error: insertError } = await supabase.from("scores").insert({
       student_id: studentId,
       exam_id: exam.id,
       assessment_code: assessmentCode,
@@ -484,6 +489,11 @@ export async function updateScore(
       entered_by: user.id,
       course_id: course.id,
     });
+
+    if (insertError) {
+      console.error("Score insert error:", insertError);
+      throw new Error(`Failed to insert score: ${insertError.message}`);
+    }
   }
 
   revalidatePath(`/gradebook`);
