@@ -9,6 +9,8 @@ import {
   FileOutput,
   Loader2,
   AlertCircle,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
@@ -18,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ISchoolExportTable, ISchoolExportPreview } from '@/components/ischool'
 import {
   getISchoolExportData,
@@ -47,6 +48,7 @@ export default function ISchoolExportPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [hasAccess, setHasAccess] = useState(false)
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
 
   // Check access and fetch class info
   useEffect(() => {
@@ -171,7 +173,7 @@ export default function ISchoolExportPage() {
 
   return (
     <AuthGuard>
-      <div className="container mx-auto py-6 space-y-6">
+      <div className="container mx-auto py-6 space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -217,64 +219,47 @@ export default function ISchoolExportPage() {
             <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
           </div>
         ) : hasAccess && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left: Export Table */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">
+          <div className="space-y-4">
+            {/* Export Controls - 置頂工具列 */}
+            <ISchoolExportPreview
+              data={exportData}
+              term={selectedTerm}
+              isCollapsible
+              isOpen={isPreviewOpen}
+              onToggle={() => setIsPreviewOpen(!isPreviewOpen)}
+            />
+
+            {/* Student Grades Table - 全寬度 */}
+            <div className="bg-card rounded-lg border shadow-sm">
+              <div className="p-4 border-b">
+                <h2 className="text-lg font-semibold">
                   Student Grades
                   {termRequiresComments(selectedTerm) && (
-                    <span className="ml-2 text-xs font-normal text-muted-foreground">
-                      (with Teacher Comments)
+                    <span className="ml-2 text-sm font-normal text-muted-foreground">
+                      (with Teacher Comments - max 400 chars)
                     </span>
                   )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </h2>
+              </div>
+              <div className="p-4">
                 <ISchoolExportTable
                   data={exportData}
                   term={selectedTerm}
                   onCommentChange={handleCommentChange}
                   isLoading={isLoading}
                 />
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            {/* Right: Export Preview */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Export to iSchool</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ISchoolExportPreview
-                  data={exportData}
-                  term={selectedTerm}
-                />
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Term Info */}
-        {hasAccess && (
-          <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-4">
-            <strong>Term {selectedTerm} Assessment Mapping:</strong>
-            <ul className="mt-2 space-y-1 ml-4 list-disc">
+            {/* Term Info - 簡化版 */}
+            <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg px-4 py-2">
+              <span className="font-medium">Term {selectedTerm}:</span>
               {selectedTerm === 1 || selectedTerm === 3 ? (
-                <>
-                  <li>FA Avg = FA1-4 average</li>
-                  <li>SA Avg = SA1-2 average</li>
-                  <li>Exam = MID (Midterm)</li>
-                </>
+                <span className="ml-2">FA1-4 avg • SA1-2 avg • MID</span>
               ) : (
-                <>
-                  <li>FA Avg = FA5-8 average</li>
-                  <li>SA Avg = SA3-4 average</li>
-                  <li>Exam = FINAL</li>
-                  <li>Teacher Comments = editable (max 400 chars)</li>
-                </>
+                <span className="ml-2">FA5-8 avg • SA3-4 avg • FINAL • Comments (400 chars)</span>
               )}
-            </ul>
+            </div>
           </div>
         )}
       </div>

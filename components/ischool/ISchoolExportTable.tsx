@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import {
   Table,
   TableBody,
@@ -31,24 +31,22 @@ export function ISchoolExportTable({
   const showComments = termRequiresComments(term)
   const examLabel = term === 1 || term === 3 ? 'MID' : 'FINAL'
 
-  const formatScore = (score: number | null): string => {
-    if (score === null) return '-'
-    return score.toFixed(2)
-  }
-
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[50px]">#</TableHead>
-            <TableHead className="w-[100px]">Student ID</TableHead>
-            <TableHead>Student</TableHead>
-            <TableHead className="w-[80px] text-center">FA Avg</TableHead>
-            <TableHead className="w-[80px] text-center">SA Avg</TableHead>
-            <TableHead className="w-[80px] text-center">{examLabel}</TableHead>
+            <TableHead className="w-[40px] text-center">#</TableHead>
+            <TableHead className="w-[90px]">ID</TableHead>
+            <TableHead className="min-w-[140px]">Student</TableHead>
+            <TableHead className="w-[70px] text-center">FA Avg</TableHead>
+            <TableHead className="w-[70px] text-center">SA Avg</TableHead>
+            <TableHead className="w-[70px] text-center">{examLabel}</TableHead>
             {showComments && (
-              <TableHead className="min-w-[250px]">Teacher Comment</TableHead>
+              <TableHead className="min-w-[320px]">
+                Teacher Comment
+                <span className="ml-1 text-xs font-normal text-muted-foreground">(400 chars max)</span>
+              </TableHead>
             )}
           </TableRow>
         </TableHeader>
@@ -67,10 +65,10 @@ export function ISchoolExportTable({
             </TableRow>
           ) : (
             data.map((row, index) => (
-              <TableRow key={row.studentId}>
-                <TableCell className="text-muted-foreground">{index + 1}</TableCell>
-                <TableCell className="font-mono text-xs">{row.studentNumber}</TableCell>
-                <TableCell>
+              <TableRow key={row.studentId} className="align-top">
+                <TableCell className="text-muted-foreground text-center py-3">{index + 1}</TableCell>
+                <TableCell className="font-mono text-xs py-3">{row.studentNumber}</TableCell>
+                <TableCell className="py-3">
                   <div className="flex flex-col">
                     <span className="font-medium">{row.studentName}</span>
                     {row.chineseName && (
@@ -78,17 +76,17 @@ export function ISchoolExportTable({
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="text-center">
+                <TableCell className="text-center py-3">
                   <ScoreCell score={row.formativeAvg} />
                 </TableCell>
-                <TableCell className="text-center">
+                <TableCell className="text-center py-3">
                   <ScoreCell score={row.summativeAvg} />
                 </TableCell>
-                <TableCell className="text-center">
+                <TableCell className="text-center py-3">
                   <ScoreCell score={row.examScore} />
                 </TableCell>
                 {showComments && (
-                  <TableCell>
+                  <TableCell className="py-2">
                     <CommentInput
                       value={row.teacherComment || ''}
                       onChange={(value) => onCommentChange?.(row.studentId, value)}
@@ -111,6 +109,9 @@ function ScoreCell({ score }: { score: number | null }) {
   return <span className="font-mono">{score.toFixed(2)}</span>
 }
 
+const MAX_COMMENT_LENGTH = 400
+const WARNING_THRESHOLD = 350
+
 function CommentInput({
   value,
   onChange,
@@ -120,7 +121,19 @@ function CommentInput({
 }) {
   const [localValue, setLocalValue] = useState(value)
   const [isSaving, setIsSaving] = useState(false)
-  const maxLength = 400
+
+  // Sync localValue when prop changes
+  useEffect(() => {
+    setLocalValue(value)
+  }, [value])
+
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value
+    // Hard limit at 400 characters
+    if (newValue.length <= MAX_COMMENT_LENGTH) {
+      setLocalValue(newValue)
+    }
+  }, [])
 
   const handleBlur = useCallback(() => {
     if (localValue !== value) {
@@ -132,30 +145,33 @@ function CommentInput({
   }, [localValue, value, onChange])
 
   const charCount = localValue.length
-  const isOverLimit = charCount > maxLength
+  const isNearLimit = charCount >= WARNING_THRESHOLD
+  const isAtLimit = charCount >= MAX_COMMENT_LENGTH
 
   return (
     <div className="space-y-1">
       <Textarea
         value={localValue}
-        onChange={(e) => setLocalValue(e.target.value)}
+        onChange={handleChange}
         onBlur={handleBlur}
-        placeholder="Enter comment for iSchool..."
+        placeholder="Enter comment..."
         className={cn(
-          "min-h-[60px] text-sm resize-none",
-          isOverLimit && "border-red-500 focus-visible:ring-red-500"
+          "min-h-[100px] text-sm resize-none w-full",
+          isAtLimit && "border-red-500 focus-visible:ring-red-500",
+          isNearLimit && !isAtLimit && "border-yellow-500 focus-visible:ring-yellow-500"
         )}
-        maxLength={maxLength + 50} // Allow some overflow for visual feedback
       />
-      <div className="flex justify-between text-xs">
+      <div className="flex justify-between items-center text-xs">
         <span className={cn(
-          "text-muted-foreground",
-          isOverLimit && "text-red-500 font-medium"
+          "tabular-nums",
+          isAtLimit && "text-red-500 font-medium",
+          isNearLimit && !isAtLimit && "text-yellow-600 font-medium",
+          !isNearLimit && "text-muted-foreground"
         )}>
-          {charCount}/{maxLength}
+          {charCount}/{MAX_COMMENT_LENGTH}
         </span>
         {isSaving && (
-          <span className="text-muted-foreground">Saving...</span>
+          <span className="text-emerald-600">Saving...</span>
         )}
       </div>
     </div>
