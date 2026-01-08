@@ -396,27 +396,39 @@ export async function updateScore(
   // ------------------------
 
   // Upsert score
-  // First, get exam_id (mocking or finding default exam for this code/class context)
-  // For simplicity in this phase, we assume exam_id is not strictly enforced or we find a default one.
-  // However, the schema requires exam_id. We might need to fetch or create an exam record.
-  // Strategy: Find an exam for this class and assessment_code, or create one.
+  // First, get exam_id for this assessment code and course.
+  // The schema requires exam_id with course_id (NOT class_id).
+  // Strategy: Find the course for this class and course type, then find/create exam.
 
-  // 1. Find existing exam for this assessment code in this class
-  // Note: The schema links scores to exam_id. We need an exam record for "FA1 for Class X".
+  // 1. Get the course_id for this class and course type
+  const effectiveCourseType = courseType || "LT";
+  const { data: course, error: courseError } = await supabase
+    .from("courses")
+    .select("id")
+    .eq("class_id", classId)
+    .eq("course_type", effectiveCourseType)
+    .eq("is_active", true)
+    .single();
+
+  if (courseError || !course) {
+    throw new Error(`Course not found for class ${classId} and type ${effectiveCourseType}`);
+  }
+
+  // 2. Find existing exam for this assessment code and course
   let { data: exam } = await supabase
     .from("exams")
     .select("id")
-    .eq("class_id", classId)
-    .eq("name", assessmentCode) // Using code as name for now
+    .eq("course_id", course.id)
+    .eq("name", assessmentCode)
     .single();
 
-  // 2. If not exists, create it
+  // 3. If not exists, create it
   if (!exam) {
     const { data: newExam, error: createExamError } = await supabase
       .from("exams")
       .insert({
         name: assessmentCode,
-        class_id: classId,
+        course_id: course.id,
         created_by: user.id,
         exam_date: new Date().toISOString(),
       })
