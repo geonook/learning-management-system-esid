@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { AuthGuard } from '@/components/auth/auth-guard'
 import { useAuthReady } from '@/hooks/useAuthReady'
@@ -24,10 +24,11 @@ import {
   getAvailableISchoolCourses,
   upsertISchoolComment,
 } from '@/lib/api/ischool'
-import type { ISchoolCourseInfo, CourseType } from '@/lib/api/ischool'
+import type { ISchoolCourseInfo, CourseType, ISchoolExportRowWithScores } from '@/lib/api/ischool'
 import type { ISchoolExportRow } from '@/types/ischool'
 import { termRequiresComments } from '@/types/ischool'
 import type { Term } from '@/types/academic-year'
+import { FormulaEngine } from '@/lib/gradebook/FormulaEngine'
 
 interface ClassInfo {
   id: string
@@ -46,12 +47,33 @@ export default function ISchoolExportPage() {
   const [selectedCourseType, setSelectedCourseType] = useState<CourseType>('LT')
   const [courseId, setCourseId] = useState<string | null>(null)
   const [selectedTerm, setSelectedTerm] = useState<Term>(2) // Default to Term 2
-  const [exportData, setExportData] = useState<ISchoolExportRow[]>([])
+  const [rawExportData, setRawExportData] = useState<ISchoolExportRowWithScores[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [hasAccess, setHasAccess] = useState(false)
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const [isReadOnly, setIsReadOnly] = useState(false)
+
+  // Calculate FA/SA averages using FormulaEngine (same as Gradebook)
+  const exportData: ISchoolExportRow[] = useMemo(() => {
+    return rawExportData.map(row => {
+      // Use FormulaEngine to calculate averages - same as Gradebook display
+      const formativeAvg = FormulaEngine.getFormativeAverage(row.rawScores)
+      const summativeAvg = FormulaEngine.getSummativeAverage(row.rawScores)
+
+      return {
+        studentId: row.studentId,
+        studentNumber: row.studentNumber,
+        studentName: row.studentName,
+        chineseName: row.chineseName,
+        seatNo: row.seatNo,
+        formativeAvg,
+        summativeAvg,
+        examScore: row.examScore,
+        teacherComment: row.teacherComment,
+      }
+    })
+  }, [rawExportData])
 
   // Check access and fetch class info + available courses
   useEffect(() => {
@@ -144,7 +166,7 @@ export default function ISchoolExportPage() {
           selectedTerm,
           selectedCourseType
         )
-        setExportData(data)
+        setRawExportData(data)
       } catch (err) {
         console.error('Error fetching export data:', err)
         setError('Failed to load export data')
@@ -175,8 +197,8 @@ export default function ISchoolExportPage() {
         comment,
       })
 
-      // Update local state
-      setExportData(prev =>
+      // Update local state (rawExportData - the calculated exportData will update via useMemo)
+      setRawExportData(prev =>
         prev.map(row =>
           row.studentId === studentId
             ? { ...row, teacherComment: comment }

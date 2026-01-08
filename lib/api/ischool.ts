@@ -1,6 +1,9 @@
 /**
  * iSchool Export API
  * Functions for exporting LMS grades to iSchool system
+ *
+ * NOTE: This API uses the same query pattern as gradebook to ensure consistency.
+ * FA/SA averages are calculated using FormulaEngine in the frontend.
  */
 
 import { createClient } from '@/lib/supabase/client'
@@ -49,16 +52,26 @@ export async function getAvailableISchoolCourses(
   return (courses || []) as ISchoolCourseInfo[]
 }
 
+/** Extended export row with raw scores for FormulaEngine calculation */
+export interface ISchoolExportRowWithScores extends ISchoolExportRow {
+  /** Raw scores Record for FormulaEngine calculation */
+  rawScores: Record<string, number | null>
+}
+
 /**
  * Get iSchool export data for a class
- * Fetches students with their FA/SA averages and exam scores for the specified term
+ * Returns students with raw scores - FA/SA averages should be calculated using FormulaEngine
+ * to ensure consistency with Gradebook display.
+ *
+ * NOTE: This function uses the same query pattern as gradebook (lib/actions/gradebook.ts)
+ * to ensure data consistency. FA/SA averages are NOT calculated here anymore.
  */
 export async function getISchoolExportData(
   classId: string,
   academicYear: string,
   term: Term,
   courseType: CourseType = 'LT'
-): Promise<ISchoolExportRow[]> {
+): Promise<ISchoolExportRowWithScores[]> {
   const supabase = createClient()
   const config = getISchoolTermConfig(term)
 
@@ -94,7 +107,8 @@ export async function getISchoolExportData(
 
   const studentIds = students.map(s => s.id)
 
-  // 3. Get scores for the term
+  // 3. Get ALL scores for this course (same pattern as gradebook)
+  // NOT filtered by term - we need all scores for FormulaEngine to calculate correctly
   const { data: scores, error: scoresError } = await supabase
     .from('scores')
     .select(`
@@ -102,13 +116,11 @@ export async function getISchoolExportData(
       assessment_code,
       score,
       exam:exams!inner(
-        course_id,
-        term
+        course_id
       )
     `)
     .in('student_id', studentIds)
     .eq('exam.course_id', courseId)
-    .eq('exam.term', term)
 
   if (scoresError) {
     console.error('Failed to fetch scores:', scoresError.message)
@@ -128,35 +140,20 @@ export async function getISchoolExportData(
     comments = commentData || []
   }
 
-  // 5. Build export data
-  const exportData: ISchoolExportRow[] = students.map(student => {
-    // Get student's scores
+  // 5. Build export data with raw scores
+  const exportData: ISchoolExportRowWithScores[] = students.map(student => {
+    // Get student's scores and build rawScores Record
     const studentScores = scores?.filter(s => s.student_id === student.id) || []
+    const rawScores: Record<string, number | null> = {}
 
-    // Calculate FA average
-    const faScores = studentScores
-      .filter(s => config.faRange.includes(s.assessment_code))
-      .map(s => s.score)
-      .filter((s): s is number => s !== null && s > 0)
+    studentScores.forEach(s => {
+      rawScores[s.assessment_code] = s.score
+    })
 
-    const formativeAvg = faScores.length > 0
-      ? Math.round((faScores.reduce((a, b) => a + b, 0) / faScores.length) * 100) / 100
-      : null
-
-    // Calculate SA average
-    const saScores = studentScores
-      .filter(s => config.saRange.includes(s.assessment_code))
-      .map(s => s.score)
-      .filter((s): s is number => s !== null && s > 0)
-
-    const summativeAvg = saScores.length > 0
-      ? Math.round((saScores.reduce((a, b) => a + b, 0) / saScores.length) * 100) / 100
-      : null
-
-    // Get exam score (MID or FINAL)
-    const examScoreEntry = studentScores.find(s => s.assessment_code === config.examCode)
-    const examScore = examScoreEntry?.score && examScoreEntry.score > 0
-      ? examScoreEntry.score
+    // Get exam score (MID or FINAL) - this is term-specific
+    const examScoreValue = rawScores[config.examCode]
+    const examScore: number | null = examScoreValue && examScoreValue > 0
+      ? examScoreValue
       : null
 
     // Get teacher comment
@@ -168,10 +165,13 @@ export async function getISchoolExportData(
       studentName: student.full_name,
       chineseName: null,  // 欄位不存在於 students 表
       seatNo: null,       // 欄位不存在於 students 表
-      formativeAvg,
-      summativeAvg,
+      // FA/SA averages will be calculated by FormulaEngine in frontend
+      // Set to null here - page.tsx will calculate using FormulaEngine
+      formativeAvg: null,
+      summativeAvg: null,
       examScore,
       teacherComment: comment?.comment || null,
+      rawScores,
     }
   })
 
