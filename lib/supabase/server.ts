@@ -4,8 +4,9 @@ import { Database } from '@/types/database'
 import { NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY } from '@/lib/env'
 
 // Server-side Supabase client for API routes and server components
-export function createClient() {
-  const cookieStore = cookies()
+// Note: Must be async because cookies() returns Promise in Next.js 14.2+
+export async function createClient() {
+  const cookieStore = await cookies()
 
   return createServerClient<Database>(
     NEXT_PUBLIC_SUPABASE_URL,
