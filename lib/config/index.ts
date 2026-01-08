@@ -32,3 +32,14 @@ export {
 
 // SSO Configuration (existing)
 export { getSSOConfig, isSSOEnabled, isEmailPasswordEnabled } from './sso'
+
+// Academic Year Configuration
+export {
+  CURRENT_ACADEMIC_YEAR,
+  getCurrentAcademicYear,
+  getCurrentTerm,
+  getSemesterFromTerm,
+  getCurrentSemester,
+  TERM_LABELS,
+  getTermLabel,
+} from './academic-year'

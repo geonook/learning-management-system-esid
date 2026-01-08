@@ -6,7 +6,9 @@ description: LMS feature implementations including Browse Gradebook, Course Kanb
 # LMS Features Skill
 
 > Browse Gradebook、Course Kanban、Communications、Statistics Module、MAP Analytics、Teacher Schedule
-> Last Updated: 2025-12-29
+> Last Updated: 2026-01-08
+>
+> **重要**: 所有功能查詢都必須遵守 [資料隔離規則](../kcis-school-config/SKILL.md#資料隔離規則-data-isolation-rules)
 
 ## Browse Gradebook 架構
 
@@ -56,11 +58,12 @@ return 'not_started';
 
 ```typescript
 // Stage 1: 取得 exam IDs（依 term 過濾）
+// ⚠️ 必須過濾 academic_year 和 term！
 const { data: exams } = await supabase
   .from('exams')
   .select('id, course_id')
   .in('course_id', courseIds)
-  .eq('term', filters.term);
+  .eq('term', filters.term);  // Term 隔離
 
 // Stage 2: 分批並行查詢 scores
 const EXAM_BATCH_SIZE = 500;
@@ -76,6 +79,8 @@ const batchResults = await Promise.all(
 
 // Aggregate by course_id
 ```
+
+> 詳見 [資料隔離規則](../kcis-school-config/SKILL.md#資料隔離規則-data-isolation-rules)
 
 **效能**: ~100-150ms，可處理 26,000+ scores
 

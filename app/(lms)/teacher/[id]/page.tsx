@@ -6,6 +6,7 @@ import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { useAuthReady } from "@/hooks/useAuthReady";
 import { supabase } from "@/lib/supabase/client";
+import { getCurrentAcademicYear } from "@/lib/config";
 import {
   Users,
   Loader2,
@@ -63,7 +64,7 @@ export default function TeacherDetailPage() {
         if (userError) throw userError;
         if (!userData) throw new Error("Teacher not found");
 
-        // Fetch courses with class info
+        // Fetch courses with class info (filter by current academic year)
         const { data: coursesData, error: coursesError } = await supabase
           .from("courses")
           .select(`
@@ -76,7 +77,8 @@ export default function TeacherDetailPage() {
               grade
             )
           `)
-          .eq("teacher_id", teacherId);
+          .eq("teacher_id", teacherId)
+          .eq("academic_year", getCurrentAcademicYear());
 
         if (coursesError) throw coursesError;
 

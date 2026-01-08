@@ -6,7 +6,9 @@ description: LMS-ESID core architecture including one-class-three-teachers syste
 # LMS Architecture Skill
 
 > LMS-ESID 專案的核心架構知識，包含一班三師系統、課程架構、年段系統
-> Last Updated: 2025-12-22
+> Last Updated: 2026-01-08
+>
+> **相關 Skill**: [kcis-school-config](../kcis-school-config/SKILL.md) - 資料模型核心概念、資料隔離規則
 
 ## 一班三師系統 (One Class, Three Teachers)
 
@@ -142,6 +144,44 @@ G4 LT Head Teacher 可以：
 行政人員可能同時是授課教師：
 - **查看權限**：可查看所有班級、學生、成績（唯讀）
 - **編輯權限**：若同時為授課教師，可編輯自己任課班級的成績
+
+---
+
+## 資料穩定性（重要！）
+
+### 學生資料
+
+| 欄位 | 穩定性 | 說明 |
+|------|--------|------|
+| `students.id` (UUID) | ✅ 穩定 | 所有資料關聯點，永不改變 |
+| `students.student_id` (學號) | ✅ 穩定 | 外部識別碼 (如 LE10028)，永不改變 |
+| `students.grade` | ❌ 會變 | 每年晉級更新 (G4→G5→G6) |
+| `students.class_id` | ❌ 會變 | 指向當前班級，每年更新 |
+
+**成績追蹤**：`scores.student_id` → `students.id` (穩定的 UUID)，成績跟著學生走，跨學年仍可追溯。
+
+### 班級-老師關係
+
+| 概念 | 說明 |
+|------|------|
+| 班級名稱重複 | 相同班名（如 "G4 Voyagers"）每年有不同的 class UUID |
+| 老師每年會換 | 同一班名不同學年可能由不同老師授課 |
+| 老師年段調動 | 老師可能從 G3-4 調到 G5-6，甚至跨 grade band |
+| 課程綁定學年 | `courses` 表中每筆記錄綁定特定 `academic_year` 和 `teacher_id` |
+
+### 歷史班級查詢
+
+查詢學生「過去」所屬班級時，使用 `student_class_history` 表：
+```typescript
+const { data } = await supabase
+  .from('student_class_history')
+  .select('english_class, grade')
+  .eq('student_number', 'LE10028')
+  .eq('academic_year', '2024-2025')
+  .single()
+```
+
+詳見 [kcis-school-config - 資料模型核心概念](../kcis-school-config/SKILL.md#資料模型核心概念-data-model-core-concepts)
 
 ---
 

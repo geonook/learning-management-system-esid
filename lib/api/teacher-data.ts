@@ -8,6 +8,7 @@
  */
 
 import { supabase } from '@/lib/supabase/client'
+import { getCurrentAcademicYear } from '@/lib/config'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Database } from '@/types/database'
 
@@ -134,12 +135,16 @@ export async function getAccessibleClasses(): Promise<TeacherClassView[]> {
     throw new Error('User not authenticated')
   }
 
-  let query = supabase.from('classes').select('*')
+  // Filter by current academic year by default
+  let query = supabase
+    .from('classes')
+    .select('*')
+    .eq('academic_year', getCurrentAcademicYear())
 
   // Apply permission-based filtering
   switch (permissions.role) {
     case 'admin':
-      // Admin can see all classes - no additional filtering
+      // Admin can see all classes in current academic year - no additional filtering
       break
     
     case 'head':

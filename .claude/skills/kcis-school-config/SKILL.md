@@ -209,6 +209,135 @@ const matches = entries.filter(e => e.teacher_id === user.id);
 
 ---
 
+## 資料模型核心概念 (Data Model Core Concepts)
+
+### 學生資料穩定性
+
+| 欄位 | 穩定性 | 說明 |
+|------|--------|------|
+| `students.id` (UUID) | ✅ 穩定 | 所有資料關聯點，永不改變 |
+| `students.student_id` (學號) | ✅ 穩定 | 外部識別碼 (如 LE10028)，永不改變 |
+| `students.grade` | ❌ 會變 | 每年晉級更新 (G4→G5→G6) |
+| `students.class_id` | ❌ 會變 | 指向當前班級，每年更新 |
+
+### 班級-老師關係動態性
+
+| 概念 | 說明 |
+|------|------|
+| 班級名稱重複 | 相同班名（如 "G4 Voyagers"）每年有不同的 class UUID |
+| 老師每年會換 | 同一班名不同學年可能由不同老師授課 |
+| 老師年段調動 | 老師可能從 G3-4 調到 G5-6，甚至跨 grade band |
+| 課程綁定學年 | `courses` 表中每筆記錄綁定特定 `academic_year` 和 `teacher_id` |
+
+**查詢老師的班級時，必須過濾 `academic_year`**：
+```typescript
+// ✅ 正確 - 只取當前學年老師的班級
+const { data } = await supabase
+  .from('courses')
+  .select('*, class:classes(*)')
+  .eq('teacher_id', teacherId)
+  .eq('academic_year', currentAcademicYear)  // 必須！
+
+// ❌ 錯誤 - 會顯示老師過去/未來學年的班級
+const { data } = await supabase
+  .from('courses')
+  .select('*, class:classes(*)')
+  .eq('teacher_id', teacherId)
+```
+
+### 成績追蹤機制
+
+成績透過穩定的 `students.id` 關聯，不會因晉級而遺失：
+```
+scores.student_id → students.id (穩定的 UUID)
+                  ↓
+      成績跟著學生走，跨學年仍可追溯
+```
+
+### 歷史班級查詢
+
+查詢學生「過去」所屬班級時，使用 `student_class_history` 表：
+```typescript
+// 查詢學生在 2024-2025 學年的班級
+const { data } = await supabase
+  .from('student_class_history')
+  .select('english_class, grade')
+  .eq('student_number', 'LE10028')
+  .eq('academic_year', '2024-2025')
+  .single()
+// → { english_class: 'G4 Voyagers', grade: 4 }
+```
+
+---
+
+## 資料隔離規則 (Data Isolation Rules)
+
+### 學年度隔離 (Academic Year Isolation)
+
+**所有涉及 courses/classes/exams/scores 的查詢必須包含 academic_year 過濾**
+
+| 表格 | 過濾欄位 | 說明 |
+|------|----------|------|
+| courses | academic_year | 課程屬於特定學年 |
+| classes | academic_year | 班級屬於特定學年 |
+| exams | 透過 course_id | 間接繼承學年 |
+| scores | 透過 exam_id | 間接繼承學年 |
+
+#### 正確查詢模式
+```typescript
+// ✅ 正確 - 查詢 courses 時過濾 academic_year
+const { data } = await supabase
+  .from('courses')
+  .select('*')
+  .eq('class_id', classId)
+  .eq('academic_year', academicYear)  // 必須！
+  .eq('is_active', true)
+
+// ✅ 正確 - 從 class 取得 academic_year 後再查詢
+const { data: classData } = await supabase
+  .from('classes')
+  .select('academic_year')
+  .eq('id', classId)
+  .single()
+
+const { data: courses } = await supabase
+  .from('courses')
+  .eq('class_id', classId)
+  .eq('academic_year', classData.academic_year)
+```
+
+#### 錯誤查詢模式
+```typescript
+// ❌ 錯誤 - 缺少 academic_year
+const { data } = await supabase
+  .from('courses')
+  .select('*')
+  .eq('class_id', classId)
+  .eq('is_active', true)
+  // 可能返回多個學年的課程！
+```
+
+### Term 隔離 (Term Isolation)
+
+**成績/考試查詢必須包含 term 過濾**
+
+```typescript
+// ✅ 正確 - 查詢特定 term 的成績
+const { data } = await supabase
+  .from('scores')
+  .select('*, exam:exams!inner(*)')
+  .eq('exam.course_id', courseId)
+  .eq('exam.term', term)  // 必須！
+
+// ❌ 錯誤 - 可能混合多個 term 的成績
+const { data } = await supabase
+  .from('scores')
+  .select('*, exam:exams!inner(*)')
+  .eq('exam.course_id', courseId)
+```
+
+---
+
 ## MAP Assessment (NWEA)
 
 ### 適用範圍

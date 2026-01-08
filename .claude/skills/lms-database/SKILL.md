@@ -6,9 +6,9 @@ description: Supabase database query patterns, RLS policies, migration records, 
 # LMS Database Skill
 
 > Supabase 資料庫查詢模式、RLS 政策、Migration 記錄
-> Last Updated: 2026-01-02
+> Last Updated: 2026-01-08
 >
-> **相關 Skill**: [kcis-school-config](../kcis-school-config/SKILL.md) - 學校專屬設定
+> **相關 Skill**: [kcis-school-config](../kcis-school-config/SKILL.md) - 學校專屬設定、**資料隔離規則**
 
 ## Database Connection Strings
 
@@ -210,6 +210,9 @@ exam:exams!inner(
 
 ## 常用查詢模式
 
+> ⚠️ **重要**: 所有 courses/classes 查詢都必須包含 `academic_year` 過濾。
+> 詳見 [kcis-school-config - 資料隔離規則](../kcis-school-config/SKILL.md#資料隔離規則-data-isolation-rules)
+
 ### 取得班級課程與教師
 
 ```typescript
@@ -228,7 +231,8 @@ const { data } = await supabase
       grade
     )
   `)
-  .eq('class_id', classId);
+  .eq('class_id', classId)
+  .eq('academic_year', academicYear);  // 必須過濾學年！
 ```
 
 ### 取得學生成績（含課程篩選）
@@ -241,12 +245,14 @@ const { data } = await supabase
     assessment_code,
     score,
     exam:exams!inner(
+      term,
       course:courses!inner(
         course_type
       )
     )
   `)
   .eq('exam.course.course_type', courseType)
+  .eq('exam.term', term)  // 必須過濾 term！
   .in('student_id', studentIds);
 ```
 

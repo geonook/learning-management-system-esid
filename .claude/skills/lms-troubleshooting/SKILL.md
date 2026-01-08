@@ -6,7 +6,7 @@ description: Solved issues, common errors, and debugging techniques for LMS. Use
 # LMS Troubleshooting Skill
 
 > 已解決問題、常見錯誤、除錯技巧
-> Last Updated: 2025-12-29
+> Last Updated: 2026-01-08
 
 ## Statistics 頁面成績不顯示
 
@@ -384,3 +384,79 @@ psql "postgresql://postgres.piwbooidofbaqklhijup:geonook8588@aws-1-ap-southeast-
 # 檢查 exams 表結構
 \d exams
 ```
+
+---
+
+## 查詢缺少 Academic Year 過濾
+
+### 問題描述
+
+課程/班級查詢沒有過濾 `academic_year`，導致返回多個學年的資料，造成：
+- 顯示錯誤的老師（老師每年可能換班）
+- 顯示錯誤的學生（學生每年晉級換班）
+- 成績資料混淆
+
+### 根本原因
+
+1. 相同班名（如 "G4 Voyagers"）每年有不同的 class UUID
+2. 相同老師每年可能教不同班級、不同年段
+3. `courses` 表每筆記錄綁定特定 `academic_year`
+
+### 解決方案
+
+所有 courses 查詢加入 `.eq('academic_year', academicYear)`：
+
+```typescript
+// ❌ 錯誤 - 缺少 academic_year
+const { data } = await supabase
+  .from('courses')
+  .select('*')
+  .eq('class_id', classId)
+
+// ✅ 正確
+const { data } = await supabase
+  .from('courses')
+  .select('*')
+  .eq('class_id', classId)
+  .eq('academic_year', academicYear)  // 必須！
+```
+
+### 參考
+
+- [kcis-school-config - 資料隔離規則](../kcis-school-config/SKILL.md#資料隔離規則-data-isolation-rules)
+- [kcis-school-config - 班級-老師關係動態性](../kcis-school-config/SKILL.md#班級-老師關係動態性)
+
+---
+
+## 查詢缺少 Term 過濾
+
+### 問題描述
+
+成績/考試查詢沒有過濾 `term`，導致返回多個 Term 的資料。
+
+### 根本原因
+
+每學年有 4 個 Term（Term 1-4），成績按 Term 分開記錄。
+
+### 解決方案
+
+成績查詢必須指定 Term：
+
+```typescript
+// ❌ 錯誤 - 可能混合多個 term 的成績
+const { data } = await supabase
+  .from('scores')
+  .select('*, exam:exams!inner(*)')
+  .eq('exam.course_id', courseId)
+
+// ✅ 正確
+const { data } = await supabase
+  .from('scores')
+  .select('*, exam:exams!inner(*)')
+  .eq('exam.course_id', courseId)
+  .eq('exam.term', term)  // 必須！
+```
+
+### 參考
+
+[kcis-school-config - Term 隔離](../kcis-school-config/SKILL.md#term-隔離-term-isolation)

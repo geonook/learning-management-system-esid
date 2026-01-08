@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { useAuthReady } from "@/hooks/useAuthReady";
 import { supabase } from "@/lib/supabase/client";
+import { getCurrentAcademicYear } from "@/lib/config";
 import { Zap, BookOpen, Users, ChevronRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 
@@ -35,7 +36,7 @@ export default function QuickScoreEntryPage() {
         setLoading(true);
         setError(null);
 
-        // Get courses assigned to this teacher
+        // Get courses assigned to this teacher (filter by current academic year)
         const { data: courses, error: courseError } = await supabase
           .from("courses")
           .select(
@@ -51,6 +52,7 @@ export default function QuickScoreEntryPage() {
           `
           )
           .eq("teacher_id", userId)
+          .eq("academic_year", getCurrentAcademicYear())
           .eq("is_active", true);
 
         if (courseError) throw courseError;

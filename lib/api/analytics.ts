@@ -5,11 +5,12 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentSemesterRange, calculateBasicStats, calculateGradeAverages } from '@/lib/analytics/utils'
-import type { 
-  AnalyticsFilters, 
-  StudentLearningMetrics, 
+import { getCurrentAcademicYear } from '@/lib/config'
+import type {
+  AnalyticsFilters,
+  StudentLearningMetrics,
   ClassComparisonMetrics,
-  SchoolOverviewMetrics 
+  SchoolOverviewMetrics
 } from '@/lib/analytics/types'
 
 /**
@@ -195,7 +196,9 @@ export async function getSchoolAnalytics(
   const supabase = createClient()
 
   try {
-    // Get basic counts
+    const currentYear = getCurrentAcademicYear()
+
+    // Get basic counts (filter by current academic year where applicable)
     const [
       { count: totalStudents },
       { count: totalTeachers },
@@ -204,7 +207,7 @@ export async function getSchoolAnalytics(
     ] = await Promise.all([
       supabase.from('students').select('*', { count: 'exact' }).eq('is_active', true),
       supabase.from('users').select('*', { count: 'exact' }).eq('role', 'teacher'),
-      supabase.from('classes').select('*', { count: 'exact' }).eq('is_active', true),
+      supabase.from('classes').select('*', { count: 'exact' }).eq('academic_year', currentYear).eq('is_active', true),
       supabase.from('exams').select('*', { count: 'exact' })
     ])
 
