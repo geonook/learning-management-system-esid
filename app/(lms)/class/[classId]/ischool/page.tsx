@@ -23,7 +23,6 @@ import { ISchoolExportTable, ISchoolExportPreview } from '@/components/ischool'
 import {
   getISchoolExportData,
   upsertISchoolComment,
-  getLTCourseId,
 } from '@/lib/api/ischool'
 import type { ISchoolExportRow } from '@/types/ischool'
 import { termRequiresComments } from '@/types/ischool'
@@ -68,12 +67,13 @@ export default function ISchoolExportPage() {
         if (classError) throw new Error('Failed to load class info')
         setClassInfo(classData)
 
-        // Get LT course and check access
+        // Get LT course and check access (filter by academic_year to ensure correct course)
         const { data: course, error: courseError } = await supabase
           .from('courses')
           .select('id, teacher_id')
           .eq('class_id', classId)
           .eq('course_type', 'LT')
+          .eq('academic_year', classData.academic_year)
           .eq('is_active', true)
           .single()
 

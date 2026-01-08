@@ -25,12 +25,13 @@ export async function getISchoolExportData(
   const supabase = createClient()
   const config = getISchoolTermConfig(term)
 
-  // 1. Get LT course for this class
+  // 1. Get LT course for this class and academic year
   const { data: course, error: courseError } = await supabase
     .from('courses')
     .select('id, teacher_id')
     .eq('class_id', classId)
     .eq('course_type', 'LT')
+    .eq('academic_year', academicYear)
     .eq('is_active', true)
     .single()
 
@@ -275,9 +276,12 @@ export function generateExportText(
 }
 
 /**
- * Get LT course ID for a class
+ * Get LT course ID for a class and academic year
  */
-export async function getLTCourseId(classId: string): Promise<string | null> {
+export async function getLTCourseId(
+  classId: string,
+  academicYear: string
+): Promise<string | null> {
   const supabase = createClient()
 
   const { data, error } = await supabase
@@ -285,6 +289,7 @@ export async function getLTCourseId(classId: string): Promise<string | null> {
     .select('id')
     .eq('class_id', classId)
     .eq('course_type', 'LT')
+    .eq('academic_year', academicYear)
     .eq('is_active', true)
     .single()
 
