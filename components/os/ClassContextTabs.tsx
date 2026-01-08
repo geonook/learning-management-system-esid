@@ -10,6 +10,7 @@ import {
   Users,
   MessageSquare,
   Target,
+  FileOutput,
 } from "lucide-react";
 
 interface ClassContextTabsProps {
@@ -66,6 +67,13 @@ export function ClassContextTabs({ classId, grade }: ClassContextTabsProps) {
           },
         ]
       : []),
+    // iSchool Export tab (for LT teachers to export grades)
+    {
+      href: `${baseUrl}/ischool`,
+      label: "iSchool",
+      icon: <FileOutput className="w-4 h-4" />,
+      exact: false,
+    },
   ];
 
   return (
