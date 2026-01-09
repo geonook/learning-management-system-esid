@@ -10,24 +10,19 @@ interface CourseTypeSelectorProps {
   onChange: (courseType: CourseType) => void;
 }
 
-const COURSE_TYPE_COLORS: Record<CourseType, { bg: string; text: string; border: string; activeBg: string }> = {
+// Unified solid button style - consistent with Browse pages
+const COURSE_TYPE_COLORS: Record<CourseType, { active: string; inactive: string }> = {
   LT: {
-    bg: "bg-emerald-50 dark:bg-emerald-900/20",
-    text: "text-emerald-700 dark:text-emerald-300",
-    border: "border-emerald-200 dark:border-emerald-800",
-    activeBg: "bg-emerald-100 dark:bg-emerald-900/40",
+    active: "bg-emerald-500 text-white dark:text-white",
+    inactive: "bg-surface-tertiary text-text-secondary hover:bg-surface-hover hover:text-text-primary",
   },
   IT: {
-    bg: "bg-blue-50 dark:bg-blue-900/20",
-    text: "text-blue-700 dark:text-blue-300",
-    border: "border-blue-200 dark:border-blue-800",
-    activeBg: "bg-blue-100 dark:bg-blue-900/40",
+    active: "bg-blue-500 text-white dark:text-white",
+    inactive: "bg-surface-tertiary text-text-secondary hover:bg-surface-hover hover:text-text-primary",
   },
   KCFS: {
-    bg: "bg-purple-50 dark:bg-purple-900/20",
-    text: "text-purple-700 dark:text-purple-300",
-    border: "border-purple-200 dark:border-purple-800",
-    activeBg: "bg-purple-100 dark:bg-purple-900/40",
+    active: "bg-purple-500 text-white dark:text-white",
+    inactive: "bg-surface-tertiary text-text-secondary hover:bg-surface-hover hover:text-text-primary",
   },
 };
 
@@ -44,7 +39,7 @@ export function CourseTypeSelector({
   return (
     <div className="flex items-center gap-2">
       <span className="text-sm text-text-secondary font-medium">Course:</span>
-      <div className="flex items-center gap-1 p-1 bg-surface-secondary rounded-lg border border-border-subtle">
+      <div className="flex items-center gap-1">
         {availableCourseTypes.map((type) => {
           const isActive = type === currentCourseType;
           const colors = COURSE_TYPE_COLORS[type];
@@ -54,20 +49,8 @@ export function CourseTypeSelector({
               key={type}
               onClick={() => onChange(type)}
               className={cn(
-                "px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-150",
-                "focus:outline-none focus:ring-2 focus:ring-offset-1",
-                isActive
-                  ? cn(
-                      colors.activeBg,
-                      colors.text,
-                      "shadow-sm",
-                      "ring-2 ring-offset-1",
-                      colors.border.replace("border-", "ring-")
-                    )
-                  : cn(
-                      "text-text-secondary hover:text-text-primary",
-                      "hover:bg-surface-hover"
-                    )
+                "px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-normal ease-apple",
+                isActive ? colors.active : colors.inactive
               )}
             >
               {type}

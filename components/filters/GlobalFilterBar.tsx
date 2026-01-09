@@ -45,18 +45,19 @@ const COURSE_TYPE_LABELS: Record<CourseType, string> = {
   KCFS: "KCFS",
 };
 
+// Unified solid button style - consistent with Browse pages and TermSelector
 const COURSE_TYPE_COLORS: Record<CourseType, { active: string; inactive: string }> = {
   LT: {
-    active: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 ring-blue-200 dark:ring-blue-800",
-    inactive: "text-text-secondary hover:text-text-primary hover:bg-surface-hover",
+    active: "bg-emerald-500 text-white dark:text-white",
+    inactive: "bg-surface-tertiary text-text-secondary hover:bg-surface-hover hover:text-text-primary",
   },
   IT: {
-    active: "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 ring-purple-200 dark:ring-purple-800",
-    inactive: "text-text-secondary hover:text-text-primary hover:bg-surface-hover",
+    active: "bg-blue-500 text-white dark:text-white",
+    inactive: "bg-surface-tertiary text-text-secondary hover:bg-surface-hover hover:text-text-primary",
   },
   KCFS: {
-    active: "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 ring-emerald-200 dark:ring-emerald-800",
-    inactive: "text-text-secondary hover:text-text-primary hover:bg-surface-hover",
+    active: "bg-purple-500 text-white dark:text-white",
+    inactive: "bg-surface-tertiary text-text-secondary hover:bg-surface-hover hover:text-text-primary",
   },
 };
 
@@ -142,7 +143,7 @@ export function GlobalFilterBar({
       {showCourseType && courseType && onCourseTypeChange && (
         <div className="flex items-center gap-2">
           <span className="text-sm text-text-secondary font-medium">Course:</span>
-          <div className="flex items-center gap-1 p-1 bg-surface-secondary rounded-lg border border-border-subtle">
+          <div className="flex items-center gap-1">
             {availableCourseTypes.map((type) => {
               const isActive = type === courseType;
               const colors = COURSE_TYPE_COLORS[type];
@@ -152,12 +153,9 @@ export function GlobalFilterBar({
                   key={type}
                   onClick={() => onCourseTypeChange(type)}
                   className={cn(
-                    "px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-150",
-                    "focus:outline-none focus:ring-2 focus:ring-offset-1",
-                    compact && "px-2 py-1 text-xs",
-                    isActive
-                      ? cn(colors.active, "shadow-sm ring-2 ring-offset-1")
-                      : colors.inactive
+                    "px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-normal ease-apple",
+                    compact && "px-3 py-1.5",
+                    isActive ? colors.active : colors.inactive
                   )}
                 >
                   {compact ? type : COURSE_TYPE_LABELS[type]}

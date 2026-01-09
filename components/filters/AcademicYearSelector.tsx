@@ -130,11 +130,11 @@ export function AcademicYearSelector({
     );
   }
 
-  // Buttons variant
+  // Buttons variant - unified solid style
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <span className="text-sm text-text-secondary font-medium">Year:</span>
-      <div className="flex items-center gap-1 p-1 bg-surface-secondary rounded-lg border border-border-subtle">
+      <div className="flex items-center gap-1">
         {years.map((year) => {
           const isActive = year === selectedAcademicYear;
 
@@ -143,20 +143,11 @@ export function AcademicYearSelector({
               key={year}
               onClick={() => setSelectedAcademicYear(year)}
               className={cn(
-                "px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-150",
-                "focus:outline-none focus:ring-2 focus:ring-offset-1",
-                compact && "px-2 py-1 text-xs",
+                "px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-normal ease-apple",
+                compact && "px-3 py-1.5",
                 isActive
-                  ? cn(
-                      "bg-primary-100 dark:bg-primary-900/40",
-                      "text-primary-700 dark:text-primary-300",
-                      "shadow-sm",
-                      "ring-2 ring-offset-1 ring-primary-200 dark:ring-primary-800"
-                    )
-                  : cn(
-                      "text-text-secondary hover:text-text-primary",
-                      "hover:bg-surface-hover"
-                    )
+                  ? "bg-accent-blue text-white dark:text-white"
+                  : "bg-surface-tertiary text-text-secondary hover:bg-surface-hover hover:text-text-primary"
               )}
             >
               {year}

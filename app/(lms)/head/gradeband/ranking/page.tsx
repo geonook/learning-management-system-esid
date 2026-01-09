@@ -166,10 +166,10 @@ export default function GradeBandClassRankingPage() {
                 <button
                   key={grade}
                   onClick={() => setSelectedGrade(grade)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-normal ease-apple ${
                     selectedGrade === grade
-                      ? "bg-purple-600 dark:bg-purple-500 text-white"
-                      : "bg-surface-secondary text-text-secondary hover:bg-surface-hover"
+                      ? "bg-purple-600 dark:bg-purple-500 text-white dark:text-white"
+                      : "bg-surface-tertiary text-text-secondary hover:bg-surface-hover hover:text-text-primary"
                   }`}
                 >
                   {`G${grade}`}
@@ -188,14 +188,14 @@ export default function GradeBandClassRankingPage() {
                 <button
                   key={ct}
                   onClick={() => setSelectedCourseType(ct)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-normal ease-apple ${
                     selectedCourseType === ct
                       ? ct === "LT"
-                        ? "bg-cyan-500/20 text-cyan-600 dark:text-cyan-400"
+                        ? "bg-emerald-500 text-white dark:text-white"
                         : ct === "IT"
-                        ? "bg-indigo-500/20 text-indigo-600 dark:text-indigo-400"
-                        : "bg-pink-500/20 text-pink-600 dark:text-pink-400"
-                      : "bg-surface-secondary text-text-secondary hover:bg-surface-hover"
+                        ? "bg-blue-500 text-white dark:text-white"
+                        : "bg-purple-500 text-white dark:text-white"
+                      : "bg-surface-tertiary text-text-secondary hover:bg-surface-hover hover:text-text-primary"
                   }`}
                 >
                   {ct}
