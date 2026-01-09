@@ -9,13 +9,6 @@ import { ScoreInput, ScoreInputValue, ScoreInputHandle, NavigationDirection } fr
 import { KCFS_CATEGORY_NAMES, KCFSCategoryCode } from "@/types/kcfs";
 import { getKCFSCategoryCodes, getKCFSWeight } from "@/lib/grade/kcfs-calculations";
 import { TERM_ASSESSMENT_CODES, Term } from "@/types/academic-year";
-import { HelpCircle } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 export type SaveStatus = "saved" | "saving" | "error";
 
@@ -313,33 +306,6 @@ export function Spreadsheet({
                 Term
               </div>
 
-              {/* Help Tooltip - Keyboard Shortcuts */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div
-                      className={cn(
-                        "w-8 p-2 flex items-center justify-center",
-                        "border-r",
-                        NOTION_STYLES.border,
-                        NOTION_STYLES.bgHeader,
-                        "cursor-help"
-                      )}
-                    >
-                      <HelpCircle className="w-4 h-4 text-text-tertiary hover:text-text-secondary transition-colors" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-xs">
-                    <div className="text-xs space-y-1">
-                      <p className="font-semibold mb-1.5">Keyboard Shortcuts</p>
-                      <p>• Enter / Tab → Move down</p>
-                      <p>• ↑↓←→ → Navigate</p>
-                      <p>• Esc → Cancel edit</p>
-                      <p>• Click ⋮ → Absent / Clear</p>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
             </div>
 
             {/* Scrollable Assessment Columns */}

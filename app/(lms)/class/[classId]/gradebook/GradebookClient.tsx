@@ -6,7 +6,13 @@ import { CourseTypeSelector } from "@/components/gradebook/CourseTypeSelector";
 import { TermSelector } from "@/components/gradebook/TermSelector";
 import { getGradebookData, CourseType } from "@/lib/actions/gradebook";
 import { cn } from "@/lib/utils";
-import { Loader2, User, Check, AlertCircle, Users, Lock, AlertTriangle } from "lucide-react";
+import { Loader2, User, Check, AlertCircle, Users, Lock, AlertTriangle, HelpCircle } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { usePeriodLock } from "@/hooks/usePeriodLock";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuthReady } from "@/hooks/useAuthReady";
@@ -200,6 +206,29 @@ export function GradebookClient({
               </span>
             )}
           </div>
+
+          {/* Keyboard Shortcuts Help */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <HelpCircle className="w-4 h-4 text-text-tertiary hover:text-text-secondary" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" align="end" className="max-w-xs">
+                <div className="text-xs space-y-1">
+                  <p className="font-semibold mb-1.5">Keyboard Shortcuts</p>
+                  <p>• Enter / Tab → Move down</p>
+                  <p>• ↑↓←→ → Navigate</p>
+                  <p>• Esc → Cancel edit</p>
+                  <p>• Click ⋮ → Absent / Clear</p>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
