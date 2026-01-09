@@ -123,8 +123,8 @@ export default function BrowseStudentsPage() {
           backLabel="Dashboard"
         />
 
-        {/* Academic Year Filter */}
-        <GlobalFilterBar showYear compact className="mb-2" />
+        {/* Academic Year Filter - No Term needed for student listing */}
+        <GlobalFilterBar showYear showTerm={false} compact className="mb-2" />
 
         {/* Search */}
         <div className="flex gap-4">

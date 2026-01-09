@@ -126,8 +126,8 @@ export default function BrowseTeachersPage() {
           backLabel="Dashboard"
         />
 
-        {/* Academic Year Filter */}
-        <GlobalFilterBar showYear compact className="mb-2" />
+        {/* Academic Year Filter - No Term needed for teacher listing */}
+        <GlobalFilterBar showYear showTerm={false} compact className="mb-2" />
 
         {/* Search */}
         <div className="flex gap-4">
