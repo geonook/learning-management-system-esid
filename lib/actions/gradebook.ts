@@ -414,15 +414,23 @@ export async function updateScore(
     throw new Error(`Course not found for class ${classId} and type ${effectiveCourseType}`);
   }
 
-  // 2. Find existing exam for this assessment code and course
-  let { data: exam } = await supabase
+  // 2. Find existing exam for this assessment code, course, and term
+  // Note: exams table has UNIQUE constraint on (course_id, name), so we need to include term in the name
+  // or filter by term if it exists
+  let examQuery = supabase
     .from("exams")
     .select("id")
     .eq("course_id", course.id)
-    .eq("name", assessmentCode)
-    .single();
+    .eq("name", assessmentCode);
 
-  // 3. If not exists, create it
+  // Only filter by term if provided (supports "all" view where term is null)
+  if (term) {
+    examQuery = examQuery.eq("term", term);
+  }
+
+  let { data: exam } = await examQuery.single();
+
+  // 3. If not exists, create it with term
   if (!exam) {
     const { data: newExam, error: createExamError } = await supabase
       .from("exams")
@@ -431,6 +439,7 @@ export async function updateScore(
         course_id: course.id,
         created_by: user.id,
         exam_date: new Date().toISOString(),
+        term: term || null, // Include term for proper filtering
       })
       .select("id")
       .single();

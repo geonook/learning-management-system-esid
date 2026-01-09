@@ -8,6 +8,7 @@ import { updateScore, CourseType } from "@/lib/actions/gradebook";
 import { ScoreInput, ScoreInputValue } from "./ScoreInput";
 import { KCFS_CATEGORY_NAMES, KCFSCategoryCode } from "@/types/kcfs";
 import { getKCFSCategoryCodes, getKCFSWeight } from "@/lib/grade/kcfs-calculations";
+import { TERM_ASSESSMENT_CODES, Term } from "@/types/academic-year";
 
 export type SaveStatus = "saved" | "saving" | "error";
 
@@ -73,6 +74,22 @@ interface ColumnConfig {
   weight: string;
 }
 
+// Helper functions for assessment code display
+function getAssessmentLabel(code: string): string {
+  if (code === "MID") return "Midterm";
+  if (code === "FINAL") return "Final";
+  if (code.startsWith("FA")) return `F.A.${code.slice(2)}`;
+  if (code.startsWith("SA")) return `S.A.${code.slice(2)}`;
+  return code;
+}
+
+function getAssessmentWeight(code: string): string {
+  if (code === "MID" || code === "FINAL") return "10%";
+  if (code.startsWith("FA")) return "Formative";
+  if (code.startsWith("SA")) return "Summative";
+  return "";
+}
+
 export function Spreadsheet({
   classId,
   initialData,
@@ -100,7 +117,7 @@ export function Spreadsheet({
     onSaveStatusChange?.(saveStatus);
   }, [saveStatus, onSaveStatusChange]);
 
-  // Columns Configuration - Dynamic based on course type
+  // Columns Configuration - Dynamic based on course type and term
   const ASSESSMENT_COLS = useMemo((): ColumnConfig[] => {
     if (effectiveCourseType === "KCFS") {
       // KCFS: Use grade-specific categories
@@ -112,22 +129,27 @@ export function Spreadsheet({
         weight: `×${weight.toFixed(2)}`,
       }));
     } else {
-      // LT/IT: Standard FA/SA/MID columns
-      return [
-        { code: "MID", label: "Midterm", weight: "10%" },
-        ...Array.from({ length: 8 }, (_, i) => ({
-          code: `FA${i + 1}`,
-          label: `F.A.${i + 1}`,
-          weight: "Formative",
-        })),
-        ...Array.from({ length: 4 }, (_, i) => ({
-          code: `SA${i + 1}`,
-          label: `S.A.${i + 1}`,
-          weight: "Summative",
-        })),
-      ];
+      // LT/IT: Dynamic columns based on term
+      // Term 1: FA1-FA4, SA1-SA2, MID
+      // Term 2: FA5-FA8, SA3-SA4, FINAL
+      // Term 3: FA1-FA4, SA1-SA2, MID
+      // Term 4: FA5-FA8, SA3-SA4, FINAL
+      // All: Show all columns
+      const codes = term
+        ? TERM_ASSESSMENT_CODES[term as Term]
+        : [
+            "MID", "FINAL",
+            ...Array.from({ length: 8 }, (_, i) => `FA${i + 1}`),
+            ...Array.from({ length: 4 }, (_, i) => `SA${i + 1}`),
+          ];
+
+      return codes.map((code) => ({
+        code,
+        label: getAssessmentLabel(code),
+        weight: getAssessmentWeight(code),
+      }));
     }
-  }, [effectiveCourseType, classGrade]);
+  }, [effectiveCourseType, classGrade, term]);
 
   const handleScoreUpdate = (
     studentId: string,
