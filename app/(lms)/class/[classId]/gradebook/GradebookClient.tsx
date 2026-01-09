@@ -271,6 +271,7 @@ export function GradebookClient({
             classGrade={classGrade}
             onSaveStatusChange={setSaveStatus}
             disabled={!canEdit}
+            term={currentTerm !== "all" ? currentTerm : null}
           />
         </div>
       )}

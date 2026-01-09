@@ -63,6 +63,7 @@ interface SpreadsheetProps {
   classGrade?: number; // For KCFS category determination
   onSaveStatusChange?: (status: SaveStatus) => void;
   disabled?: boolean; // Disable inputs when period is locked
+  term?: number | null; // Term number for period lock validation
 }
 
 // Column configuration type
@@ -79,6 +80,7 @@ export function Spreadsheet({
   classGrade = 1,
   onSaveStatusChange,
   disabled = false,
+  term = null,
 }: SpreadsheetProps) {
   const [data, setData] = useState<ExtendedGradeRow[]>(initialData);
   const [focusModeCode, setFocusModeCode] = useState<string | null>(null);
@@ -149,7 +151,7 @@ export function Spreadsheet({
     // 2. Server Action
     startTransition(async () => {
       try {
-        await updateScore(classId, studentId, code, value, isAbsent, effectiveCourseType);
+        await updateScore(classId, studentId, code, value, isAbsent, effectiveCourseType, term ?? undefined);
         setSaveStatus("saved");
       } catch (error) {
         console.error("Failed to save score:", error);
