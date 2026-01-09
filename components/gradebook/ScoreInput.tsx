@@ -8,7 +8,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { UserX, MoreVertical } from "lucide-react";
+import { UserX, MoreVertical, AlertTriangle } from "lucide-react";
 
 export type ScoreInputValue = {
   value: number | null;
@@ -84,6 +84,8 @@ export const ScoreInput = forwardRef<ScoreInputHandle, ScoreInputProps>(({
   );
   const [isOpen, setIsOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [showZeroWarning, setShowZeroWarning] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<NavigationDirection | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Expose focus/select methods to parent
@@ -129,7 +131,19 @@ export const ScoreInput = forwardRef<ScoreInputHandle, ScoreInputProps>(({
     setLocalValue(inputVal);
   };
 
-  const handleInputBlur = () => {
+  // Core save logic - extracted to reuse
+  const saveValue = (finalValue: number, navigateAfter?: NavigationDirection) => {
+    if (finalValue !== value || isAbsent) {
+      onChange({ value: finalValue, isAbsent: false });
+    }
+    setLocalValue(finalValue.toString());
+    // Handle pending navigation after save
+    if (navigateAfter) {
+      onNavigate?.(navigateAfter, rowIndex, colIndex);
+    }
+  };
+
+  const handleInputBlur = (skipZeroCheck = false) => {
     setIsFocused(false);
 
     if (localValue === "" || localValue === "Absent") {
@@ -155,64 +169,99 @@ export const ScoreInput = forwardRef<ScoreInputHandle, ScoreInputProps>(({
       finalValue = Math.max(0, Math.min(100, numVal));
     }
 
-    if (finalValue !== value || isAbsent) {
-      onChange({ value: finalValue, isAbsent: false });
+    // Check for zero score warning (only for NEW zero values)
+    if (finalValue === 0 && value !== 0 && !skipZeroCheck) {
+      setShowZeroWarning(true);
+      return; // Don't save yet, wait for confirmation
     }
-    setLocalValue(finalValue.toString());
+
+    saveValue(finalValue);
+  };
+
+  // Handle confirm zero score
+  const handleConfirmZero = () => {
+    setShowZeroWarning(false);
+    saveValue(0, pendingNavigation ?? undefined);
+    setPendingNavigation(null);
+  };
+
+  // Handle cancel zero score
+  const handleCancelZero = () => {
+    setShowZeroWarning(false);
+    setLocalValue(value?.toString() ?? "");
+    setPendingNavigation(null);
+    inputRef.current?.focus();
+  };
+
+  // Helper to check if current input would result in zero
+  const wouldBeZero = (): boolean => {
+    const numVal = parseFloat(localValue);
+    if (isNaN(numVal)) return false;
+    let finalValue = numVal;
+    if (courseType === "KCFS") {
+      finalValue = Math.round(numVal * 2) / 2;
+    }
+    return finalValue === 0 && value !== 0;
+  };
+
+  // Handle navigation with zero check
+  const handleNavigationWithZeroCheck = (direction: NavigationDirection) => {
+    if (wouldBeZero()) {
+      setPendingNavigation(direction);
+      setShowZeroWarning(true);
+    } else {
+      handleInputBlur();
+      onNavigate?.(direction, rowIndex, colIndex);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     // Arrow key navigation
     if (e.key === "ArrowUp") {
       e.preventDefault();
-      handleInputBlur(); // Save first
-      onNavigate?.('up', rowIndex, colIndex);
+      handleNavigationWithZeroCheck('up');
       return;
     }
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      handleInputBlur(); // Save first
-      onNavigate?.('down', rowIndex, colIndex);
+      handleNavigationWithZeroCheck('down');
       return;
     }
     // Left/Right: only navigate if cursor is at boundary
     if (e.key === "ArrowLeft" && e.currentTarget.selectionStart === 0) {
       e.preventDefault();
-      handleInputBlur();
-      onNavigate?.('left', rowIndex, colIndex);
+      handleNavigationWithZeroCheck('left');
       return;
     }
     if (e.key === "ArrowRight" && e.currentTarget.selectionStart === e.currentTarget.value.length) {
       e.preventDefault();
-      handleInputBlur();
-      onNavigate?.('right', rowIndex, colIndex);
+      handleNavigationWithZeroCheck('right');
       return;
     }
 
     // Enter: save and move down
     if (e.key === "Enter") {
       e.preventDefault();
-      handleInputBlur();
-      onNavigate?.('down', rowIndex, colIndex);
+      handleNavigationWithZeroCheck('down');
       return;
     }
 
     // Tab: save and move down (override default horizontal behavior)
     if (e.key === "Tab") {
       e.preventDefault();
-      handleInputBlur();
-      if (e.shiftKey) {
-        onNavigate?.('up', rowIndex, colIndex);
-      } else {
-        onNavigate?.('down', rowIndex, colIndex);
-      }
+      const direction = e.shiftKey ? 'up' : 'down';
+      handleNavigationWithZeroCheck(direction);
       return;
     }
 
-    // Escape: cancel edit
+    // Escape: cancel edit (also dismiss zero warning)
     if (e.key === "Escape") {
-      setLocalValue(isAbsent ? "Absent" : value?.toString() ?? "");
-      inputRef.current?.blur();
+      if (showZeroWarning) {
+        handleCancelZero();
+      } else {
+        setLocalValue(isAbsent ? "Absent" : value?.toString() ?? "");
+        inputRef.current?.blur();
+      }
     }
   };
 
@@ -258,17 +307,52 @@ export const ScoreInput = forwardRef<ScoreInputHandle, ScoreInputProps>(({
           (value !== null || isAbsent) && "font-medium",
           getScoreColor(value, isAbsent, courseType),
           isAbsent && "italic",
-          disabled && "opacity-50 cursor-not-allowed"
+          disabled && "opacity-50 cursor-not-allowed",
+          // Visual indicator for zero score
+          value === 0 && "bg-amber-50 dark:bg-amber-900/20"
         )}
         placeholder={placeholder}
         value={displayValue}
         onChange={handleInputChange}
-        onBlur={handleInputBlur}
+        onBlur={() => handleInputBlur()}
         onKeyDown={handleKeyDown}
         onFocus={handleFocus}
         disabled={disabled}
         readOnly={false}
       />
+
+      {/* Zero score warning confirmation */}
+      {showZeroWarning && (
+        <div className={cn(
+          "absolute top-full left-1/2 -translate-x-1/2 z-50 mt-1",
+          "bg-amber-50 dark:bg-amber-900/80 border border-amber-300 dark:border-amber-600",
+          "rounded-lg p-2.5 shadow-lg min-w-[140px]"
+        )}>
+          <div className="flex items-center gap-1.5 mb-2">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+            <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
+              確定是 0 分嗎？
+            </p>
+          </div>
+          <div className="flex gap-1.5">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-6 px-2 text-xs flex-1 border-amber-300 dark:border-amber-600"
+              onClick={handleCancelZero}
+            >
+              取消
+            </Button>
+            <Button
+              size="sm"
+              className="h-6 px-2 text-xs flex-1 bg-amber-500 hover:bg-amber-600 text-white"
+              onClick={handleConfirmZero}
+            >
+              確認
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Hover menu button - appears on hover or when cell has value/absent */}
       {!disabled && (
