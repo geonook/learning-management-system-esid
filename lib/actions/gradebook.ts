@@ -6,7 +6,7 @@ import type { Term } from "@/types/academic-year";
 import { TERM_ASSESSMENT_CODES } from "@/types/academic-year";
 import { getKCFSCategoryCodes } from "@/lib/grade/kcfs-calculations";
 import { isValidKCFSScore } from "@/lib/grade/kcfs-calculations";
-import { assertPeriodEditable, getPeriodLockInfo } from "@/lib/academic-period";
+import { assertPeriodEditable, getActiveTerm } from "@/lib/academic-period";
 
 export type CourseType = "LT" | "IT" | "KCFS";
 
@@ -338,20 +338,28 @@ export async function updateScore(
     .eq("id", classId)
     .single();
 
-  // Use frontend-passed term parameter for period lock validation
+  // Period lock validation using frontend term or active term from Period Management
   // This applies to all course types (LT/IT/KCFS)
-  // If term is null (e.g., "all" view), skip period lock check
-  if (term && classInfo?.academic_year) {
-    try {
-      await assertPeriodEditable({
-        academicYear: classInfo.academic_year,
-        term: term,
-      });
-    } catch (error) {
-      // Re-throw with a user-friendly message
-      throw new Error(
-        error instanceof Error ? error.message : "此時間段已鎖定，無法編輯成績"
-      );
+  if (classInfo?.academic_year) {
+    // If term is provided by frontend, use it; otherwise get active term from Period Management
+    let termToCheck = term;
+    if (!termToCheck) {
+      termToCheck = await getActiveTerm(classInfo.academic_year) ?? undefined;
+    }
+
+    // Only check if we have a term to validate
+    if (termToCheck) {
+      try {
+        await assertPeriodEditable({
+          academicYear: classInfo.academic_year,
+          term: termToCheck,
+        });
+      } catch (error) {
+        // Re-throw with a user-friendly message
+        throw new Error(
+          error instanceof Error ? error.message : "此時間段已鎖定，無法編輯成績"
+        );
+      }
     }
   }
   // ------------------------

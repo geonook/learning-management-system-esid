@@ -394,6 +394,35 @@ export async function updatePeriodStatus(
 }
 
 /**
+ * Get the currently active term for an academic year
+ * Returns the term number (1-4) that is in 'active' or 'closing' status
+ * If multiple terms are active, returns the first one found
+ * If no term is active, returns null
+ *
+ * @param academicYear - The academic year (e.g., '2025-2026')
+ * @returns Promise<number | null>
+ */
+export async function getActiveTerm(academicYear: string): Promise<number | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('academic_periods')
+    .select('term')
+    .eq('academic_year', academicYear)
+    .eq('period_type', 'term')
+    .in('status', ['active', 'closing'])
+    .order('term', { ascending: true })
+    .limit(1);
+
+  if (error || !data || data.length === 0) {
+    return null;
+  }
+
+  const firstRow = data[0];
+  return firstRow?.term ?? null;
+}
+
+/**
  * Update period deadline
  */
 export async function updatePeriodDeadline(
