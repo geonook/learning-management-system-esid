@@ -304,6 +304,8 @@ export const ScoreInput = forwardRef<ScoreInputHandle, ScoreInputProps>(({
           "hover:bg-gray-50 dark:hover:bg-slate-800/50",
           "focus:bg-blue-50 dark:focus:bg-blue-900/20",
           "focus:ring-1 focus:ring-inset focus:ring-blue-200 dark:focus:ring-blue-800",
+          // Hide number spinner (conflicts with hover menu button)
+          "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
           (value !== null || isAbsent) && "font-medium",
           getScoreColor(value, isAbsent, courseType),
           isAbsent && "italic",
