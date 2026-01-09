@@ -134,40 +134,38 @@ export default function BrowseStudentsPage() {
           </div>
         </div>
 
-        {/* Grade and Level Filters */}
-        <div className="flex flex-wrap gap-6">
-          <div className="flex gap-2 items-center">
-            <span className="text-sm text-text-tertiary">Grade:</span>
-            {(["All", 1, 2, 3, 4, 5, 6] as GradeFilter[]).map((grade) => (
-              <button
-                key={grade}
-                onClick={() => setSelectedGrade(grade)}
-                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-normal ease-apple ${
-                  selectedGrade === grade
-                    ? "bg-purple-600 dark:bg-purple-500 text-white"
-                    : "bg-surface-tertiary text-text-secondary hover:bg-surface-hover"
-                }`}
-              >
-                {grade === "All" ? "All" : `G${grade}`}
-              </button>
-            ))}
-          </div>
-          <div className="flex gap-2 items-center">
-            <span className="text-sm text-text-tertiary">Level:</span>
-            {(["All", "E1", "E2", "E3"] as LevelFilter[]).map((level) => (
-              <button
-                key={level}
-                onClick={() => setSelectedLevel(level)}
-                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-normal ease-apple ${
-                  selectedLevel === level
-                    ? "bg-purple-600 dark:bg-purple-500 text-white"
-                    : "bg-surface-tertiary text-text-secondary hover:bg-surface-hover"
-                }`}
-              >
-                {level}
-              </button>
-            ))}
-          </div>
+        {/* Grade Tabs */}
+        <div className="flex gap-2">
+          {(["All", 1, 2, 3, 4, 5, 6] as GradeFilter[]).map((grade) => (
+            <button
+              key={grade}
+              onClick={() => setSelectedGrade(grade)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-normal ease-apple ${
+                selectedGrade === grade
+                  ? "bg-purple-600 dark:bg-purple-500 text-white dark:text-white"
+                  : "bg-surface-tertiary text-text-secondary hover:bg-surface-hover"
+              }`}
+            >
+              {grade === "All" ? "All" : `G${grade}`}
+            </button>
+          ))}
+        </div>
+
+        {/* Level Tabs */}
+        <div className="flex gap-2">
+          {(["All", "E1", "E2", "E3"] as LevelFilter[]).map((level) => (
+            <button
+              key={level}
+              onClick={() => setSelectedLevel(level)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-normal ease-apple ${
+                selectedLevel === level
+                  ? "bg-purple-600 dark:bg-purple-500 text-white dark:text-white"
+                  : "bg-surface-tertiary text-text-secondary hover:bg-surface-hover"
+              }`}
+            >
+              {level === "All" ? "All Levels" : level}
+            </button>
+          ))}
         </div>
 
         {/* Loading State */}
