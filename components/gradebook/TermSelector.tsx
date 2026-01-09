@@ -17,41 +17,9 @@ interface TermSelectorProps {
   disabled?: boolean; // Disable all term buttons (e.g., for read-only users)
 }
 
-const TERM_COLORS: Record<
-  Term | "all",
-  { bg: string; text: string; border: string; activeBg: string }
-> = {
-  all: {
-    bg: "bg-slate-50 dark:bg-slate-900/20",
-    text: "text-slate-700 dark:text-slate-300",
-    border: "border-slate-200 dark:border-slate-800",
-    activeBg: "bg-slate-100 dark:bg-slate-900/40",
-  },
-  1: {
-    bg: "bg-amber-50 dark:bg-amber-900/20",
-    text: "text-amber-700 dark:text-amber-300",
-    border: "border-amber-200 dark:border-amber-800",
-    activeBg: "bg-amber-100 dark:bg-amber-900/40",
-  },
-  2: {
-    bg: "bg-orange-50 dark:bg-orange-900/20",
-    text: "text-orange-700 dark:text-orange-300",
-    border: "border-orange-200 dark:border-orange-800",
-    activeBg: "bg-orange-100 dark:bg-orange-900/40",
-  },
-  3: {
-    bg: "bg-cyan-50 dark:bg-cyan-900/20",
-    text: "text-cyan-700 dark:text-cyan-300",
-    border: "border-cyan-200 dark:border-cyan-800",
-    activeBg: "bg-cyan-100 dark:bg-cyan-900/40",
-  },
-  4: {
-    bg: "bg-teal-50 dark:bg-teal-900/20",
-    text: "text-teal-700 dark:text-teal-300",
-    border: "border-teal-200 dark:border-teal-800",
-    activeBg: "bg-teal-100 dark:bg-teal-900/40",
-  },
-};
+// Unified solid button style - consistent with Browse pages
+// Active: solid blue background with white text
+// Inactive: surface-tertiary with text-secondary
 
 export function TermSelector({
   availableTerms = ALL_TERMS,
@@ -109,10 +77,9 @@ export function TermSelector({
   return (
     <div className="flex items-center gap-2">
       <span className="text-sm text-text-secondary font-medium">Term:</span>
-      <div className="flex items-center gap-1 p-1 bg-surface-secondary rounded-lg border border-border-subtle">
+      <div className="flex items-center gap-1">
         {options.map((term) => {
           const isActive = term === currentTerm;
-          const colors = TERM_COLORS[term];
           const isLocked = term !== "all" && lockedTerms.has(term);
 
           return (
@@ -121,29 +88,22 @@ export function TermSelector({
               onClick={() => onChange(term)}
               disabled={disabled}
               className={cn(
-                "px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-150",
-                "focus:outline-none focus:ring-2 focus:ring-offset-1",
+                "px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-normal ease-apple",
                 "flex items-center gap-1",
-                compact && "px-2 py-1",
+                compact && "px-3 py-1.5",
                 disabled && "opacity-50 cursor-not-allowed",
                 isActive
-                  ? cn(
-                      colors.activeBg,
-                      colors.text,
-                      "shadow-sm",
-                      "ring-2 ring-offset-1",
-                      colors.border.replace("border-", "ring-")
-                    )
+                  ? "bg-accent-blue text-white dark:text-white"
                   : cn(
-                      "text-text-secondary hover:text-text-primary",
-                      !disabled && "hover:bg-surface-hover"
+                      "bg-surface-tertiary text-text-secondary",
+                      !disabled && "hover:bg-surface-hover hover:text-text-primary"
                     )
               )}
               title={isLocked ? `${getLabel(term)} (Locked)` : getLabel(term)}
             >
               {getLabel(term)}
               {isLocked && (
-                <Lock className="h-3 w-3 text-red-500 dark:text-red-400" />
+                <Lock className={cn("h-3 w-3", isActive ? "text-white/80" : "text-red-500 dark:text-red-400")} />
               )}
             </button>
           );
