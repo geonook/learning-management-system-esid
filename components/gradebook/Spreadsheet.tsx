@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useTransition, useEffect, useMemo } from "react";
+import React, { useState, useTransition, useEffect, useMemo, useRef, useCallback } from "react";
 import { FormulaEngine, GradeRow } from "@/lib/gradebook/FormulaEngine";
 import { cn } from "@/lib/utils";
 import { FocusGradeInput } from "./FocusGradeInput";
 import { updateScore, CourseType } from "@/lib/actions/gradebook";
-import { ScoreInput, ScoreInputValue } from "./ScoreInput";
+import { ScoreInput, ScoreInputValue, ScoreInputHandle, NavigationDirection } from "./ScoreInput";
 import { KCFS_CATEGORY_NAMES, KCFSCategoryCode } from "@/types/kcfs";
 import { getKCFSCategoryCodes, getKCFSWeight } from "@/lib/grade/kcfs-calculations";
 import { TERM_ASSESSMENT_CODES, Term } from "@/types/academic-year";
@@ -107,6 +107,22 @@ export function Spreadsheet({
 
   const effectiveCourseType: CourseType = courseType || "LT";
 
+  // 2D ref map for keyboard navigation
+  const inputRefs = useRef<Map<string, ScoreInputHandle>>(new Map());
+
+  // Helper to generate ref key
+  const getRefKey = useCallback((row: number, col: number) => `${row}-${col}`, []);
+
+  // Helper to set ref
+  const setInputRef = useCallback((row: number, col: number) => (el: ScoreInputHandle | null) => {
+    const key = getRefKey(row, col);
+    if (el) {
+      inputRefs.current.set(key, el);
+    } else {
+      inputRefs.current.delete(key);
+    }
+  }, [getRefKey]);
+
   // Update data when initialData changes (e.g., course type switch)
   useEffect(() => {
     setData(initialData);
@@ -190,6 +206,36 @@ export function Spreadsheet({
   ) => {
     handleScoreUpdate(studentId, code, newValue.value, newValue.isAbsent);
   };
+
+  // Handle keyboard navigation between cells
+  const handleNavigate = useCallback((direction: NavigationDirection, row: number, col: number) => {
+    const maxRow = data.length - 1;
+    const maxCol = ASSESSMENT_COLS.length - 1;
+    let nextRow = row;
+    let nextCol = col;
+
+    switch (direction) {
+      case 'down':
+        nextRow = Math.min(row + 1, maxRow);
+        break;
+      case 'up':
+        nextRow = Math.max(row - 1, 0);
+        break;
+      case 'left':
+        nextCol = Math.max(col - 1, 0);
+        break;
+      case 'right':
+        nextCol = Math.min(col + 1, maxCol);
+        break;
+    }
+
+    // Focus and select the next input
+    const nextInput = inputRefs.current.get(getRefKey(nextRow, nextCol));
+    if (nextInput) {
+      nextInput.focus();
+      nextInput.select();
+    }
+  }, [data.length, ASSESSMENT_COLS.length, getRefKey]);
 
   return (
     <div className={cn("flex-1 flex flex-col h-full overflow-hidden", NOTION_STYLES.bg)}>
@@ -445,7 +491,7 @@ export function Spreadsheet({
                   )}
 
                   {/* Score Inputs */}
-                  {ASSESSMENT_COLS.map((col) => {
+                  {ASSESSMENT_COLS.map((col, colIndex) => {
                     const scoreValue = row.scores[col.code] ?? null;
                     const isAbsent = row.absentFlags?.[col.code] ?? false;
 
@@ -455,6 +501,7 @@ export function Spreadsheet({
                         className={cn("w-24 p-0 relative", "border-r", NOTION_STYLES.borderMuted)}
                       >
                         <ScoreInput
+                          ref={setInputRef(index, colIndex)}
                           value={scoreValue}
                           isAbsent={isAbsent}
                           onChange={(newValue) =>
@@ -462,6 +509,9 @@ export function Spreadsheet({
                           }
                           courseType={effectiveCourseType}
                           disabled={disabled}
+                          rowIndex={index}
+                          colIndex={colIndex}
+                          onNavigate={handleNavigate}
                         />
                       </div>
                     );
