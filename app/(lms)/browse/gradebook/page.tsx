@@ -170,7 +170,7 @@ export default function BrowseGradebookPage() {
         </div>
 
         {/* Global Filters (Year + Term) */}
-        <GlobalFilterBar showYear showTerm />
+        <GlobalFilterBar showYear showTerm compact />
 
         {/* Stats */}
         <div className="grid grid-cols-4 gap-4">

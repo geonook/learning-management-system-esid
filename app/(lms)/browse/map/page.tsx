@@ -122,83 +122,73 @@ export default function BrowseMapPage() {
           subtitle="Browse NWEA MAP assessment scores for G3-G6 students"
         />
 
-        {/* Filters */}
-        <div className="bg-surface-elevated rounded-xl border border-border-default p-4 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
-            <Filter className="w-4 h-4 text-text-secondary" />
-            <span className="text-sm font-medium text-text-primary">Filters</span>
+        {/* Filters - inline without container */}
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Grade Filter */}
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-text-secondary font-medium">Grade:</label>
+            <select
+              value={selectedGrade ?? ""}
+              onChange={(e) => setSelectedGrade(e.target.value ? Number(e.target.value) : null)}
+              className="px-3 py-2 bg-surface-tertiary border-0 rounded-lg text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+            >
+              <option value="">All</option>
+              {GRADES.map((g) => (
+                <option key={g} value={g}>
+                  G{g}
+                </option>
+              ))}
+            </select>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Grade Filter */}
-            <div>
-              <label className="block text-xs text-text-tertiary mb-1.5">Grade</label>
-              <select
-                value={selectedGrade ?? ""}
-                onChange={(e) => setSelectedGrade(e.target.value ? Number(e.target.value) : null)}
-                className="w-full px-3 py-2 bg-surface-default border border-border-default rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-              >
-                <option value="">All Grades</option>
-                {GRADES.map((g) => (
-                  <option key={g} value={g}>
-                    Grade {g}
-                  </option>
-                ))}
-              </select>
-            </div>
+          {/* Course Filter */}
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-text-secondary font-medium">Course:</label>
+            <select
+              value={selectedCourse ?? ""}
+              onChange={(e) =>
+                setSelectedCourse(
+                  e.target.value ? (e.target.value as "Reading" | "Language Usage") : null
+                )
+              }
+              className="px-3 py-2 bg-surface-tertiary border-0 rounded-lg text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+            >
+              <option value="">All</option>
+              {COURSES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
 
-            {/* Course Filter */}
-            <div>
-              <label className="block text-xs text-text-tertiary mb-1.5">Course</label>
-              <select
-                value={selectedCourse ?? ""}
-                onChange={(e) =>
-                  setSelectedCourse(
-                    e.target.value ? (e.target.value as "Reading" | "Language Usage") : null
-                  )
-                }
-                className="w-full px-3 py-2 bg-surface-default border border-border-default rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-              >
-                <option value="">All Courses</option>
-                {COURSES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
+          {/* Term Filter */}
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-text-secondary font-medium">Term:</label>
+            <select
+              value={selectedTerm ?? ""}
+              onChange={(e) => setSelectedTerm(e.target.value || null)}
+              className="px-3 py-2 bg-surface-tertiary border-0 rounded-lg text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+            >
+              <option value="">All</option>
+              {availableTerms.map((term) => (
+                <option key={term} value={term}>
+                  {formatTermLabel(term)}
+                </option>
+              ))}
+            </select>
+          </div>
 
-            {/* Term Filter */}
-            <div>
-              <label className="block text-xs text-text-tertiary mb-1.5">Term</label>
-              <select
-                value={selectedTerm ?? ""}
-                onChange={(e) => setSelectedTerm(e.target.value || null)}
-                className="w-full px-3 py-2 bg-surface-default border border-border-default rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-              >
-                <option value="">All Terms</option>
-                {availableTerms.map((term) => (
-                  <option key={term} value={term}>
-                    {formatTermLabel(term)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Search */}
-            <div>
-              <label className="block text-xs text-text-tertiary mb-1.5">Search</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
-                <input
-                  type="text"
-                  placeholder="Student ID or name..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-surface-default border border-border-default rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                />
-              </div>
-            </div>
+          {/* Search */}
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
+            <input
+              type="text"
+              placeholder="Student ID or name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 bg-surface-tertiary border-0 rounded-lg text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+            />
           </div>
         </div>
 

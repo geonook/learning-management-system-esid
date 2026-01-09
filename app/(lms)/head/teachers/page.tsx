@@ -144,7 +144,7 @@ export default function TeacherProgressPage() {
         </div>
 
         {/* Global Filter Bar */}
-        <GlobalFilterBar showYear showTerm />
+        <GlobalFilterBar showYear showTerm compact />
 
         {/* Search */}
         <div className="relative max-w-md">

@@ -303,7 +303,7 @@ export default function GradeOverviewPage() {
         </div>
 
         {/* Global Filter Bar */}
-        <GlobalFilterBar showYear showTerm />
+        <GlobalFilterBar showYear showTerm compact />
 
         {/* Data Scope Indicator */}
         <ScopeIndicator

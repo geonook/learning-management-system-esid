@@ -151,7 +151,7 @@ export default function GradeBandManagementPage() {
         </div>
 
         {/* Global Filters */}
-        <GlobalFilterBar showYear showTerm />
+        <GlobalFilterBar showYear showTerm compact />
 
         {/* Scope Indicator */}
         {gradeBand && (

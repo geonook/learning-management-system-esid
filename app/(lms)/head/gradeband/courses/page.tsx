@@ -184,7 +184,7 @@ export default function GradeBandCourseAnalysisPage() {
         </div>
 
         {/* Global Filters (Year + Term) */}
-        <GlobalFilterBar showYear showTerm />
+        <GlobalFilterBar showYear showTerm compact />
 
         {/* Course Type Tabs */}
         <div className="flex gap-2">

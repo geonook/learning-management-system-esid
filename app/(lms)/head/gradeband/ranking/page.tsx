@@ -152,7 +152,7 @@ export default function GradeBandClassRankingPage() {
         </div>
 
         {/* Global Filters (Year + Term) */}
-        <GlobalFilterBar showYear showTerm />
+        <GlobalFilterBar showYear showTerm compact />
 
         {/* Filters */}
         <div className="flex flex-wrap gap-6">

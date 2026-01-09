@@ -143,7 +143,7 @@ export default function GradeBandGradeLevelComparisonPage() {
         </div>
 
         {/* Global Filters (Year + Term) */}
-        <GlobalFilterBar showYear showTerm />
+        <GlobalFilterBar showYear showTerm compact />
 
         {/* Course Type Tabs - Unified solid button style */}
         <div className="flex gap-2">

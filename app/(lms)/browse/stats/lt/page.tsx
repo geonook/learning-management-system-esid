@@ -105,7 +105,7 @@ export default function LTAnalysisPage() {
         </div>
 
         {/* Global Filters (Year + Term) */}
-        <GlobalFilterBar showYear showTerm />
+        <GlobalFilterBar showYear showTerm compact />
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

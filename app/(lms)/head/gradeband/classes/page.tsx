@@ -184,7 +184,7 @@ export default function GradeBandClassStatisticsPage() {
         </div>
 
         {/* Global Filters (Year + Term) */}
-        <GlobalFilterBar showYear showTerm />
+        <GlobalFilterBar showYear showTerm compact />
 
         {/* Search */}
         <div className="relative max-w-md">
