@@ -1,7 +1,7 @@
 # LMS Features Skill
 
-> Browse Gradebook、Course Kanban、Communications、Statistics Module、MAP Analytics、Teacher Schedule
-> Last Updated: 2025-12-29
+> Browse Gradebook、Course Kanban、Communications、Statistics Module、MAP Analytics、Teacher Schedule、iSchool Export
+> Last Updated: 2026-01-09
 
 ## Browse Gradebook 架構
 
@@ -537,3 +537,52 @@ student_behaviors (
   student_id, course_id, tag_id, date, recorded_by
 )
 ```
+
+---
+
+## iSchool Export System (v1.65.0)
+
+### 功能概述
+
+匯出成績資料到學校 iSchool 系統：
+- **Multi-Course Export**：支援 LT/IT/KCFS 三種課程類型
+- **Comment System**：學生評語（400 字元限制）
+- **Semester Grade Calculation**：自動計算學期成績
+
+### 頁面路徑
+
+```
+/class/[classId]/ischool    # iSchool 匯出頁面
+```
+
+### 匯出格式
+
+| 課程類型 | 欄位 |
+|----------|------|
+| LT/IT | FA, SA, Semester, Comment |
+| KCFS | Categories, Semester, Comment |
+
+### Comments System
+
+```sql
+-- iSchool 評語表 (Migration 044)
+ischool_comments (
+  id UUID PRIMARY KEY,
+  student_id UUID REFERENCES students(id),
+  course_id UUID REFERENCES courses(id),
+  academic_year TEXT NOT NULL,
+  term INTEGER NOT NULL,
+  comment TEXT,
+  updated_by UUID REFERENCES users(id),
+  UNIQUE(student_id, course_id, academic_year, term)
+)
+```
+
+### 相關檔案
+
+| 檔案 | 說明 |
+|------|------|
+| `app/(lms)/class/[classId]/ischool/page.tsx` | iSchool 匯出頁面 |
+| `components/ischool/ISchoolExport.tsx` | 匯出元件 |
+| `components/ischool/CommentEditor.tsx` | 評語編輯器 |
+| `lib/api/ischool.ts` | API 函數 |

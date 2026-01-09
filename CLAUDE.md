@@ -1,24 +1,25 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 5.1
-> **Last Updated**: 2026-01-02
+> **Documentation Version**: 5.2
+> **Last Updated**: 2026-01-09
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School LMS with Next.js + TypeScript + Supabase Cloud
-> **Current Version**: v1.66.0 - MAP Chart Color System Unification
+> **Current Version**: v1.67.0 - Gradebook UX Enhancements
 
 This file provides essential guidance to Claude Code when working with code in this repository.
 
 ## Current Status
 
-- **v1.66.0** - MAP Chart Color System complete
+- **v1.67.0** - Gradebook UX enhancements complete
 - **Production**: 84 classes, 504 courses (2 academic years), 1514 students
 - **Tech Stack**: Next.js 14 (App Router) + TypeScript + Tailwind + Supabase Cloud
 
 **Recent Additions**:
-- **MAP Chart Color Unification**: Centralized color constants in `lib/map/colors.ts`
-- **MAP Growth Analysis**: School/Grades/Growth tabs with cross-grade comparison
-- **Cohort Prefix Display**: Student number prefix (e.g., LE10xxx) shown in charts
-- **Student Class History**: Migration 041 - Historical class assignments for accurate analytics
+- **Gradebook Keyboard Navigation**: Enter/Tab moves down, Arrow keys navigate, Esc cancels
+- **Zero Score Warning**: Confirmation dialog for 0 scores (防呆機制)
+- **Hover Menu for Absent/Clear**: Click ⋮ icon instead of clicking cell
+- **Keyboard Shortcuts Tooltip**: Help icon in toolbar with shortcut reference
+- **iSchool Comments System**: Migration 044 - Student comments for iSchool export
 
 **Next Steps**:
 1. Sprint 7: Student historical grade reports

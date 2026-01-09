@@ -81,6 +81,29 @@ Term Grade = 50 + Σ(category_score × weight)
 - Priority: Class > Grade×Track > Default
 - Affects display only, not calculation
 
+### Gradebook UX Enhancements (v1.67.0)
+
+#### Keyboard Navigation
+| Key | Action |
+|-----|--------|
+| Enter / Tab | Save and move down |
+| Shift+Tab | Save and move up |
+| ↑↓←→ | Navigate cells |
+| Esc | Cancel edit |
+
+#### Score Input Features
+- **Hover Menu (⋮)**: Click to access Absent/Clear options
+- **Zero Score Warning**: Confirmation dialog for 0 scores (防呆)
+- **Number Spinner Hidden**: CSS hides spinner to prevent overlap
+- **Visual Indicators**: Amber background for 0 scores, orange italic for Absent
+
+#### Components
+| Component | File | Purpose |
+|-----------|------|---------|
+| ScoreInput | `components/gradebook/ScoreInput.tsx` | Individual score cell with navigation |
+| Spreadsheet | `components/gradebook/Spreadsheet.tsx` | Grid with 2D ref management |
+| GradebookClient | `app/(lms)/class/[classId]/gradebook/GradebookClient.tsx` | Toolbar with shortcuts tooltip |
+
 ## References
 - LT/IT Formula: [references/lt-it-formula.md](references/lt-it-formula.md)
 - KCFS Formula: [references/kcfs-formula.md](references/kcfs-formula.md)
