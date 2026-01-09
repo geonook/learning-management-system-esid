@@ -12,7 +12,7 @@ import {
   getLevelStatistics,
   type PaginatedStudents,
 } from "@/lib/api/students";
-import { PageHeader } from "@/components/layout/PageHeader";
+import { SimpleHeader } from "@/components/layout/SimpleHeader";
 
 type GradeFilter = "All" | 1 | 2 | 3 | 4 | 5 | 6;
 type LevelFilter = "All" | "E1" | "E2" | "E3";
@@ -111,16 +111,11 @@ export default function BrowseStudentsPage() {
     <AuthGuard requiredRoles={["admin", "head", "office_member"]}>
       <div className="space-y-6">
         {/* Header */}
-        <PageHeader
+        <SimpleHeader
+          icon={<GraduationCap className="w-6 h-6 text-purple-500 dark:text-purple-400" />}
+          iconBgColor="bg-purple-500/20"
           title="Browse Students"
           subtitle={`View all student records (${data?.total || 0} students)`}
-          breadcrumbs={[
-            { label: "Dashboard", href: "/dashboard" },
-            { label: "Browse Data", href: "/browse/classes" },
-            { label: "All Students" },
-          ]}
-          backHref="/dashboard"
-          backLabel="Dashboard"
         />
 
         {/* Academic Year Filter - No Term needed for student listing */}

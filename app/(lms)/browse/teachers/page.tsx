@@ -13,7 +13,7 @@ import {
   type TeacherWithCourses,
   type TeacherType,
 } from "@/lib/api/users";
-import { PageHeader } from "@/components/layout/PageHeader";
+import { SimpleHeader } from "@/components/layout/SimpleHeader";
 
 type TypeFilter = "All" | "LT" | "IT" | "KCFS";
 
@@ -114,16 +114,11 @@ export default function BrowseTeachersPage() {
     <AuthGuard requiredRoles={["admin", "head", "office_member"]}>
       <div className="space-y-6">
         {/* Header */}
-        <PageHeader
+        <SimpleHeader
+          icon={<Users className="w-6 h-6 text-emerald-500 dark:text-emerald-400" />}
+          iconBgColor="bg-emerald-500/20"
           title="Browse Teachers"
           subtitle={`View all teachers and their assignments (${teachers.length} teachers)`}
-          breadcrumbs={[
-            { label: "Dashboard", href: "/dashboard" },
-            { label: "Browse Data", href: "/browse/classes" },
-            { label: "All Teachers" },
-          ]}
-          backHref="/dashboard"
-          backLabel="Dashboard"
         />
 
         {/* Academic Year Filter - No Term needed for teacher listing */}

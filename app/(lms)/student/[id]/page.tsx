@@ -17,7 +17,7 @@ import {
   LayoutDashboard,
   MessageSquare,
 } from "lucide-react";
-import { PageHeader } from "@/components/layout/PageHeader";
+import { SimpleHeader } from "@/components/layout/SimpleHeader";
 import { MapStudentSection } from "@/components/map";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StudentMapAnalysisTab } from "@/components/map/student";
@@ -232,29 +232,16 @@ export default function StudentDetailPage() {
     return "text-red-700 dark:text-red-400";
   };
 
-  // Build breadcrumbs based on loaded student
-  const breadcrumbs = student
-    ? [
-        { label: "Browse Data", href: "/dashboard" },
-        { label: "All Students", href: "/browse/students" },
-        { label: student.full_name },
-      ]
-    : [
-        { label: "Browse Data", href: "/dashboard" },
-        { label: "All Students", href: "/browse/students" },
-        { label: "Loading..." },
-      ];
 
   return (
     <AuthGuard requiredRoles={["admin", "head", "teacher", "office_member"]}>
       <div className="space-y-6">
-        {/* Page Header with Breadcrumbs */}
-        <PageHeader
+        {/* Page Header */}
+        <SimpleHeader
+          icon={<GraduationCap className="w-6 h-6 text-purple-500 dark:text-purple-400" />}
+          iconBgColor="bg-purple-500/20"
           title={student?.full_name || "Student Details"}
           subtitle={student ? `ID: ${student.student_id} • Grade ${student.grade}${student.class_name ? ` • ${student.class_name}` : ""}` : undefined}
-          breadcrumbs={breadcrumbs}
-          backHref="/browse/students"
-          backLabel="Back to Students"
         />
 
         {/* Loading State */}

@@ -10,7 +10,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { PageHeader } from "@/components/layout/PageHeader";
+import { SimpleHeader } from "@/components/layout/SimpleHeader";
 import { supabase } from "@/lib/supabase/client";
 import { useAuthReady } from "@/hooks/useAuthReady";
 import {
@@ -235,31 +235,14 @@ export default function ClassMapPage() {
     };
   }, [students]);
 
-  // Breadcrumbs
-  const breadcrumbs = classInfo
-    ? isMyClass
-      ? [
-          { label: "My Classes", href: "/dashboard" },
-          { label: classInfo.name, href: `/class/${classId}` },
-          { label: "MAP Scores" },
-        ]
-      : [
-          { label: "Browse Data", href: "/dashboard" },
-          { label: "All Classes", href: "/browse/classes" },
-          { label: classInfo.name, href: `/class/${classId}` },
-          { label: "MAP Scores" },
-        ]
-    : [{ label: "Loading..." }];
-
   return (
     <AuthGuard requiredRoles={["admin", "head", "teacher", "office_member"]}>
       <div className="space-y-6">
-        <PageHeader
+        <SimpleHeader
+          icon={<TrendingUp className="w-6 h-6 text-orange-500 dark:text-orange-400" />}
+          iconBgColor="bg-orange-500/20"
           title={classInfo ? `${classInfo.name} - MAP Scores` : "MAP Scores"}
           subtitle={classInfo ? `Grade ${classInfo.grade} • NWEA MAP Growth Assessment` : undefined}
-          breadcrumbs={breadcrumbs}
-          backHref={`/class/${classId}`}
-          backLabel="Back to Class"
         />
 
         {/* Loading State */}

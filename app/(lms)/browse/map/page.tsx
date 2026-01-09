@@ -8,7 +8,7 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { PageHeader } from "@/components/layout/PageHeader";
+import { SimpleHeader } from "@/components/layout/SimpleHeader";
 import {
   Target,
   Loader2,
@@ -112,20 +112,14 @@ export default function BrowseMapPage() {
     };
   }, [assessments]);
 
-  const breadcrumbs = [
-    { label: "Browse Data", href: "/dashboard" },
-    { label: "MAP Scores" },
-  ];
-
   return (
     <AuthGuard requiredRoles={["admin", "head", "office_member", "teacher"]}>
       <div className="space-y-6">
-        <PageHeader
+        <SimpleHeader
+          icon={<TrendingUp className="w-6 h-6 text-orange-500 dark:text-orange-400" />}
+          iconBgColor="bg-orange-500/20"
           title="MAP Growth Scores"
           subtitle="Browse NWEA MAP assessment scores for G3-G6 students"
-          breadcrumbs={breadcrumbs}
-          backHref="/dashboard"
-          backLabel="Back to Dashboard"
         />
 
         {/* Filters */}

@@ -8,7 +8,7 @@ import { useGlobalFilters, GlobalFilterBar } from "@/components/filters/GlobalFi
 import { School, Search, Loader2, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { getClassesWithDetails, type ClassWithDetails } from "@/lib/api/classes";
-import { PageHeader } from "@/components/layout/PageHeader";
+import { SimpleHeader } from "@/components/layout/SimpleHeader";
 
 type GradeFilter = "All" | 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -84,16 +84,11 @@ export default function BrowseClassesPage() {
     <AuthGuard requiredRoles={["admin", "head", "office_member"]}>
       <div className="space-y-6">
         {/* Header */}
-        <PageHeader
+        <SimpleHeader
+          icon={<School className="w-6 h-6 text-blue-500 dark:text-blue-400" />}
+          iconBgColor="bg-blue-500/20"
           title="Browse Classes"
           subtitle={`View all classes across grades (${classes.length} classes)`}
-          breadcrumbs={[
-            { label: "Dashboard", href: "/dashboard" },
-            { label: "Browse Data", href: "/browse/classes" },
-            { label: "All Classes" },
-          ]}
-          backHref="/dashboard"
-          backLabel="Dashboard"
         />
 
         {/* Academic Year Filter - No Term needed for class listing */}

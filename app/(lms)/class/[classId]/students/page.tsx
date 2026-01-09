@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
-import { PageHeader } from "@/components/layout/PageHeader";
+import { SimpleHeader } from "@/components/layout/SimpleHeader";
 
 interface ClassInfo {
   id: string;
@@ -129,16 +129,11 @@ export default function ClassStudentsPage() {
     <AuthGuard requiredRoles={["admin", "head", "teacher", "office_member"]}>
       <div className="space-y-6">
         {/* Header */}
-        <PageHeader
+        <SimpleHeader
+          icon={<Users className="w-6 h-6 text-purple-500 dark:text-purple-400" />}
+          iconBgColor="bg-purple-500/20"
           title={loading ? "Loading..." : `${classInfo?.name || "Class"} - Student Roster`}
           subtitle={`${students.length} student${students.length !== 1 ? "s" : ""} enrolled`}
-          breadcrumbs={[
-            { label: "Dashboard", href: "/dashboard" },
-            { label: classInfo?.name || "Class", href: `/class/${classId}` },
-            { label: "Students" },
-          ]}
-          backHref={`/class/${classId}`}
-          backLabel="Back to Class"
         />
 
         {/* Search */}

@@ -5,7 +5,8 @@ import { useParams } from "next/navigation";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { supabase } from "@/lib/supabase/client";
 import { useAuthReady } from "@/hooks/useAuthReady";
-import { PageHeader } from "@/components/layout/PageHeader";
+import { SimpleHeader } from "@/components/layout/SimpleHeader";
+import { School } from "lucide-react";
 import { CourseKanban } from "@/components/class/CourseKanban";
 import { getClassCourses } from "@/lib/api/course-tasks";
 
@@ -90,35 +91,14 @@ export default function ClassOverviewPage() {
     fetchData();
   }, [classId, userId, isReady, isAdminOrOffice, isHeadTeacher, track, selectedCourseId]);
 
-  // Determine breadcrumb path based on whether this is user's class
-  const breadcrumbs = classInfo
-    ? isMyClass
-      ? [
-          { label: "My Classes", href: "/dashboard" },
-          { label: classInfo.name },
-        ]
-      : [
-          { label: "Browse Data", href: "/dashboard" },
-          { label: "All Classes", href: "/browse/classes" },
-          { label: classInfo.name },
-        ]
-    : [
-        { label: "Loading...", href: "/dashboard" },
-      ];
-
-  // Determine back navigation
-  const backHref = isMyClass ? "/dashboard" : "/browse/classes";
-  const backLabel = isMyClass ? "Back to Dashboard" : "Back to Classes";
-
   return (
     <AuthGuard requiredRoles={["admin", "head", "teacher", "office_member"]}>
       <div className="space-y-6">
-        <PageHeader
+        <SimpleHeader
+          icon={<School className="w-6 h-6 text-blue-500 dark:text-blue-400" />}
+          iconBgColor="bg-blue-500/20"
           title={classInfo?.name || "Class Overview"}
           subtitle={classInfo ? `Grade ${classInfo.grade}` : undefined}
-          breadcrumbs={breadcrumbs}
-          backHref={backHref}
-          backLabel={backLabel}
         />
 
         {/* Course Selector for Admin/Office */}
