@@ -201,7 +201,8 @@ export default function ClassManagementPage() {
 
         {/* Classes Table */}
         <div className="bg-surface-secondary rounded-xl border border-border-default overflow-hidden shadow-sm">
-          <table className="w-full">
+          <div className="table-responsive">
+          <table className="min-w-[700px] w-full">
             <thead>
               <tr className="border-b border-border-default">
                 <th className="text-left p-4 text-sm font-medium text-text-secondary">Class</th>
@@ -297,6 +298,7 @@ export default function ClassManagementPage() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
 
         {/* Summary */}

@@ -158,7 +158,7 @@ export default function TeacherProgressPage() {
         </div>
 
         {/* Progress Summary */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-text-secondary text-sm">Teachers</span>
@@ -328,7 +328,8 @@ function TeacherTable({
   getProgressBarColor: (rate: number) => string;
 }) {
   return (
-    <table className="w-full">
+    <div className="table-responsive">
+    <table className="min-w-[600px] w-full">
       <thead>
         <tr className="border-b border-border-default">
           <th className="text-left p-4 text-sm font-medium text-text-secondary">Teacher</th>
@@ -380,5 +381,6 @@ function TeacherTable({
         ))}
       </tbody>
     </table>
+    </div>
   );
 }

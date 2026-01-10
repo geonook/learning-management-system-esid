@@ -75,7 +75,8 @@ export default function RolePermissionsPage() {
 
         {/* Permissions Matrix */}
         <div className="bg-surface-secondary rounded-xl border border-border-default overflow-hidden">
-          <table className="w-full">
+          <div className="table-responsive">
+          <table className="min-w-[600px] w-full">
             <thead>
               <tr className="border-b border-border-default">
                 <th className="text-left p-4 text-sm font-medium text-text-secondary">Permission</th>
@@ -108,6 +109,7 @@ export default function RolePermissionsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
 
         {/* Info Box */}

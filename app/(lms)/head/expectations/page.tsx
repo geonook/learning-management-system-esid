@@ -351,7 +351,7 @@ function KCFSSettings({
         Unified Settings (All Grades & Levels)
       </h3>
 
-      <div className="grid grid-cols-2 gap-6 max-w-2xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl">
         {/* FA Count */}
         <div>
           <label className="block text-sm text-text-secondary mb-2">

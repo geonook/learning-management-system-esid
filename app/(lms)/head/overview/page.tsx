@@ -314,7 +314,7 @@ export default function GradeOverviewPage() {
         />
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-text-secondary text-sm">Classes</span>
@@ -374,7 +374,7 @@ export default function GradeOverviewPage() {
         </div>
 
         {/* Charts Row */}
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Score Distribution */}
           <div className="bg-surface-secondary rounded-xl border border-border-default p-6">
             <h3 className="text-lg font-medium text-text-primary mb-4">Score Distribution</h3>
