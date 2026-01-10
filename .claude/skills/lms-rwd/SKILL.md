@@ -299,18 +299,25 @@ import { Container } from "@/components/ui/container";
 
 ---
 
-## Phase 3-4 待完成清單
+## Phase 3 完成狀態
 
-### Phase 3：複雜頁面
+**Commit**: `5d99d19` - style(rwd): implement Phase 3 responsive design for complex pages
+
+### Phase 3：複雜頁面 ✅
 
 | 頁面 | 檔案 | 修改內容 | 狀態 |
 |------|------|----------|------|
-| Gradebook Spreadsheet | `components/gradebook/Spreadsheet.tsx` | sticky 欄位 | ⏳ |
-| MAP Statistics | `app/(lms)/browse/stats/map/page.tsx` | 圖表響應式 | ⏳ |
-| Browse Gradebook | `app/(lms)/browse/gradebook/page.tsx` | 表格捲動 | ⏳ |
-| Head Expectations | `app/(lms)/head/expectations/page.tsx` | 表格捲動 | ⏳ |
-| Admin Users | `app/(lms)/admin/users/page.tsx` | 表格捲動 | ⏳ |
-| Admin Courses | `app/(lms)/admin/courses/page.tsx` | 表格捲動 | ⏳ |
+| Browse Gradebook | `app/(lms)/browse/gradebook/page.tsx` | 統計 Grid (1→2→4 cols) + table-responsive | ✅ |
+| Head Expectations | `app/(lms)/head/expectations/page.tsx` | table-responsive wrapper | ✅ |
+| Admin Users | `app/(lms)/admin/users/page.tsx` | 統計 Grid (1→2→3→5 cols) + table-responsive | ✅ |
+| Admin Courses | `app/(lms)/admin/courses/page.tsx` | 統計 Grid (1→2→4 cols) + table-responsive | ✅ |
+| MAP Statistics | `app/(lms)/browse/stats/map/page.tsx` | Padding 標準化 (p-3 sm:p-4 lg:p-6) | ✅ |
+
+**注意**：Gradebook Spreadsheet (`components/gradebook/Spreadsheet.tsx`) 結構複雜，已有 sticky 欄位實作，暫不修改。
+
+---
+
+## Phase 4 待完成清單
 
 ### Phase 4：收尾
 
