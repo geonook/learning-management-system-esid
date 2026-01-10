@@ -140,3 +140,80 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* === RESPONSIVE WEB DESIGN === */
+
+/* Touch device optimization (tablets and phones) */
+@media (pointer: coarse) {
+  /* Minimum touch target size per Apple HIG (44x44px) */
+  button,
+  [role="button"],
+  a,
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Form inputs need adequate height for touch */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  textarea,
+  select {
+    min-height: 44px;
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+
+  /* Increase spacing for touch-friendly taps */
+  .touch-spacing > * {
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* Responsive table container */
+.table-responsive {
+  @apply overflow-x-auto -mx-3 px-3 sm:-mx-4 sm:px-4 lg:mx-0 lg:px-0;
+}
+
+/* Sticky first column for tables on mobile */
+.table-sticky-first th:first-child,
+.table-sticky-first td:first-child {
+  @apply sticky left-0 z-10 bg-surface-elevated;
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Hide scrollbar but keep functionality (for mobile nav) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Responsive text utilities */
+@layer utilities {
+  .text-responsive {
+    @apply text-sm sm:text-base;
+  }
+  .text-responsive-lg {
+    @apply text-base sm:text-lg lg:text-xl;
+  }
+  .text-responsive-xl {
+    @apply text-lg sm:text-xl lg:text-2xl;
+  }
+}

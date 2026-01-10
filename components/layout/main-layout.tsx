@@ -6,6 +6,7 @@ import { useAppStore } from "@/lib/store";
 import { useIsHydrated } from "@/lib/hooks/use-is-hydrated";
 import Sidebar from "./sidebar";
 import Header from "./header";
+import { OrientationGuard } from "./orientation-guard";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -53,20 +54,24 @@ export default function MainLayout({ children }: MainLayoutProps) {
   }
 
   return (
-    <div className="flex h-screen bg-background">
-      {/* Sidebar */}
-      <Sidebar />
+    <OrientationGuard>
+      <div className="flex h-screen bg-background">
+        {/* Sidebar - Hidden on mobile/tablet, visible on desktop */}
+        <div className="hidden lg:block">
+          <Sidebar />
+        </div>
 
-      {/* Main Content */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Header */}
-        <Header />
+        {/* Main Content */}
+        <div className="flex flex-1 flex-col overflow-hidden">
+          {/* Header */}
+          <Header />
 
-        {/* Page Content */}
-        <main className="flex-1 overflow-auto p-6">
-          <div className="mx-auto max-w-7xl">{children}</div>
-        </main>
+          {/* Page Content - Responsive padding */}
+          <main className="flex-1 overflow-auto p-3 sm:p-4 lg:p-6">
+            <div className="mx-auto max-w-7xl">{children}</div>
+          </main>
+        </div>
       </div>
-    </div>
+    </OrientationGuard>
   );
 }

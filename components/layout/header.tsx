@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAppStore } from "@/lib/store";
 import NotificationCenter from "@/components/ui/notification-center";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { MobileNav } from "./mobile-nav";
 
 // Page title mapping
 const pageTitles: Record<string, string> = {
@@ -60,28 +61,34 @@ export default function Header() {
     .slice(0, 2);
 
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-background px-6">
-      {/* Left Section - Title & Breadcrumbs */}
-      <div className="flex flex-col">
-        <h1 className="text-lg font-semibold">{pageTitle}</h1>
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          {breadcrumbs.map((crumb, index) => (
-            <div key={crumb.href} className="flex items-center gap-1">
-              {index > 0 && <span>/</span>}
-              <span
-                className={
-                  index === breadcrumbs.length - 1 ? "text-foreground" : ""
-                }
-              >
-                {crumb.label}
-              </span>
-            </div>
-          ))}
+    <header className="flex h-14 lg:h-16 items-center justify-between border-b bg-background px-3 lg:px-6">
+      {/* Left Section - Mobile Nav + Title & Breadcrumbs */}
+      <div className="flex items-center gap-2 lg:gap-4 min-w-0 flex-1">
+        {/* Mobile Navigation - Only visible on mobile/tablet */}
+        <MobileNav />
+
+        <div className="flex flex-col min-w-0">
+          <h1 className="text-base lg:text-lg font-semibold truncate">{pageTitle}</h1>
+          {/* Breadcrumbs - Hidden on mobile */}
+          <div className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground">
+            {breadcrumbs.map((crumb, index) => (
+              <div key={crumb.href} className="flex items-center gap-1">
+                {index > 0 && <span>/</span>}
+                <span
+                  className={
+                    index === breadcrumbs.length - 1 ? "text-foreground" : ""
+                  }
+                >
+                  {crumb.label}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Center Section - Context Info */}
-      <div className="hidden md:flex items-center gap-2">
+      {/* Center Section - Context Info - Hidden on mobile/tablet */}
+      <div className="hidden lg:flex items-center gap-2">
         {currentRole && (
           <Badge variant="outline" className="capitalize">
             {currentRole}
@@ -96,13 +103,13 @@ export default function Header() {
       </div>
 
       {/* Right Section - Actions */}
-      <div className="flex items-center gap-2">
-        {/* Search */}
-        <div className="hidden sm:flex relative">
+      <div className="flex items-center gap-1 sm:gap-2">
+        {/* Search - Hidden on mobile */}
+        <div className="hidden md:flex relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search students, classes..."
-            className="pl-9 w-64"
+            className="pl-9 w-40 lg:w-64"
           />
         </div>
 
@@ -111,11 +118,11 @@ export default function Header() {
 
         {/* User Menu */}
         <div className="flex items-center gap-2">
-          <div className="hidden sm:flex flex-col text-right">
+          <div className="hidden md:flex flex-col text-right">
             <span className="text-sm font-medium">{userName}</span>
             <span className="text-xs text-muted-foreground">{userEmail}</span>
           </div>
-          <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+          <div className="h-8 w-8 lg:h-9 lg:w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
             {userLoading ? "..." : userInitials}
           </div>
         </div>
