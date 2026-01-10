@@ -103,10 +103,11 @@ extend: {
 | 元件 | 路徑 | 用途 |
 |------|------|------|
 | Sheet | `components/ui/sheet.tsx` | 滑出面板（基於 Radix Dialog） |
-| MobileNav | `components/layout/mobile-nav.tsx` | 手機/平板導航選單 |
+| MobileNav | `components/layout/mobile-nav.tsx` | 手機/平板導航選單（含 Compact Mode） |
 | OrientationGuard | `components/layout/orientation-guard.tsx` | iPad 直向旋轉提示 |
 | **Grid** | `components/ui/grid.tsx` | 響應式 Grid 佈局（CVA variants） |
 | **Container** | `components/ui/container.tsx` | 響應式容器寬度（CVA variants） |
+| **SidebarContext** | `lib/sidebar-context.tsx` | 側邊欄收合狀態管理 |
 
 ### MobileNav 使用方式
 
@@ -171,6 +172,35 @@ import { Container } from "@/components/ui/container";
 
 **size variants**: `xs` (max-w-md), `sm` (max-w-2xl), `md` (max-w-4xl), `lg` (max-w-6xl), `xl` (max-w-7xl), `full`
 **padding variants**: `none`, `sm`, `md`, `lg`
+
+### Sidebar 收合功能
+
+**Commit**: `291daa4` - feat(sidebar): add collapsible sidebar for all devices
+
+```tsx
+import { useSidebar } from "@/lib/sidebar-context";
+
+// 在元件中使用
+const { isCollapsed, toggleSidebar } = useSidebar();
+
+// 動態寬度
+<aside className={cn(
+  "fixed left-0 ...",
+  isCollapsed ? "w-16" : "w-64"
+)}>
+
+// 動態 margin
+<main className={cn(
+  "...",
+  isCollapsed ? "ml-16" : "ml-64"
+)}>
+```
+
+**功能**：
+- 桌機：側邊欄可收合 (256px → 64px)，僅顯示 icon
+- 手機/平板：MobileNav Sheet 內有「Compact Mode」切換
+- 狀態保存至 localStorage (`lms-sidebar-collapsed`)
+- 收合時 hover icon 顯示 tooltip
 
 ---
 
@@ -317,13 +347,24 @@ import { Container } from "@/components/ui/container";
 
 ---
 
-## Phase 4 待完成清單
+## Phase 4 完成狀態
 
-### Phase 4：收尾
+**Commit**: `291daa4` - feat(sidebar): add collapsible sidebar for all devices
 
-- [ ] 全站跨裝置測試
-- [ ] 修復發現的 RWD bugs
-- [ ] 更新此 skill 文件
+### Phase 4：收尾 ✅
+
+| 項目 | 內容 | 狀態 |
+|------|------|------|
+| Sidebar 收合 | 桌機側邊欄可收合 (w-64 → w-16) | ✅ |
+| MobileNav Compact | 手機導航 Sheet 精簡模式 | ✅ |
+| SidebarContext | 全局狀態管理 + localStorage | ✅ |
+| Skill 文件更新 | 記錄所有 RWD 功能 | ✅ |
+
+**修改檔案**：
+- `lib/sidebar-context.tsx` - 新增
+- `components/os/Sidebar.tsx` - 收合邏輯
+- `components/os/TeacherOSLayout.tsx` - SidebarProvider + 動態 margin
+- `components/layout/mobile-nav.tsx` - Compact Mode
 
 ---
 
@@ -396,3 +437,6 @@ import { Container } from "@/components/ui/container";
 | `components/layout/orientation-guard.tsx` | iPad 直向提示 |
 | `components/layout/main-layout.tsx` | 主佈局（整合 OrientationGuard） |
 | `components/layout/header.tsx` | Header（整合 MobileNav） |
+| `lib/sidebar-context.tsx` | **Sidebar 收合狀態管理** |
+| `components/os/Sidebar.tsx` | **TeacherOS Sidebar（支援收合）** |
+| `components/os/TeacherOSLayout.tsx` | **TeacherOS 佈局（整合 SidebarProvider）** |
