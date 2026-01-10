@@ -282,18 +282,24 @@ import { Container } from "@/components/ui/container";
 
 ---
 
-## Phase 2-4 待完成清單
+## Phase 2 完成狀態
 
-### Phase 2：高流量頁面
+**Commit**: `1c8a965` - style(rwd): implement Phase 2 responsive design for high-traffic pages
+
+### Phase 2：高流量頁面 ✅
 
 | 頁面 | 檔案 | 修改內容 | 狀態 |
 |------|------|----------|------|
-| Dashboard | `app/(lms)/dashboard/page.tsx` | 響應式 grid | ⏳ |
-| Browse Students | `app/(lms)/browse/students/page.tsx` | 表格捲動 | ⏳ |
-| Browse Classes | `app/(lms)/browse/classes/page.tsx` | 表格捲動 | ⏳ |
-| Browse Teachers | `app/(lms)/browse/teachers/page.tsx` | 表格捲動 | ⏳ |
-| Class Overview | `app/(lms)/class/[classId]/page.tsx` | 響應式 layout | ⏳ |
-| Schedule | `app/(lms)/schedule/page.tsx` | 表格/卡片切換 | ⏳ |
+| Dashboard | `app/(lms)/dashboard/page.tsx` | 響應式 grid (2→4→6 cols) | ✅ 已有 |
+| Browse Students | `app/(lms)/browse/students/page.tsx` | 統計 Grid (1→2→4 cols) + table-responsive | ✅ |
+| Browse Classes | `app/(lms)/browse/classes/page.tsx` | 卡片 padding (p-4 sm:p-6) + min-height | ✅ |
+| Browse Teachers | `app/(lms)/browse/teachers/page.tsx` | 統計 Grid (1→2→3→5 cols) + table-responsive | ✅ |
+| Class Overview | `app/(lms)/class/[classId]/page.tsx` | 課程選擇器 flex-wrap | ✅ |
+| Schedule | `app/(lms)/schedule/page.tsx` | Padding 標準化 (p-3 sm:p-4 lg:p-6) | ✅ |
+
+---
+
+## Phase 3-4 待完成清單
 
 ### Phase 3：複雜頁面
 
