@@ -218,7 +218,7 @@ git push origin develop  # Push to develop (auto-deploy)
 | [lms-teacher-timetable](.claude/skills/lms-teacher-timetable.md) | 課表系統、點名導航、課程類型 |
 | [lms-nwea-map](.claude/skills/lms-nwea-map/) | **MAP 系統**：CDF 匯入、成績分析、Benchmarks |
 | [lms-map-analytics](.claude/skills/lms-map-analytics/) | **MAP 分析**：UI 組件、官方資料、圖表 |
-| [lms-rwd](.claude/skills/lms-rwd.md) | **響應式設計**：斷點定義、元件、實作模式、Phase 2-4 待辦 |
+| [lms-rwd](.claude/skills/lms-rwd/SKILL.md) | **響應式設計**：斷點定義、元件、實作模式、Phase 2-4 待辦 |
 
 ### Documentation
 | 類別 | 位置 |

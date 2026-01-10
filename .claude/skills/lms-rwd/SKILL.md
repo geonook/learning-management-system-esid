@@ -1,20 +1,50 @@
+---
+name: lms-rwd
+description: LMS responsive design patterns including breakpoints, components, and implementation guides. Use when implementing responsive design, adding mobile support, fixing RWD issues, or working with MobileNav, Sheet, OrientationGuard components.
+---
+
 # LMS RWD (Responsive Web Design) Skill
 
-> LMS 響應式設計規範，包含已完成 MVP 元件、斷點定義、實作模式
-> Last Updated: 2026-01-10
+LMS 響應式設計規範，包含已完成 MVP 元件、斷點定義、實作模式。
 
-## MVP 完成狀態 ✅
+## When to use this Skill
+
+- Implementing responsive layouts for LMS pages
+- Adding mobile/tablet support to existing pages
+- Using MobileNav, Sheet, or OrientationGuard components
+- Fixing RWD issues or layout problems on mobile devices
+- Following LMS breakpoint conventions (xs, sm, md, lg, xl)
+
+## Quick Start
+
+```tsx
+// 1. 表格響應式
+<div className="table-responsive">
+  <table className="min-w-[600px] w-full">...</table>
+</div>
+
+// 2. 手機隱藏元素
+<div className="hidden lg:block">Desktop only</div>
+<div className="lg:hidden">Mobile/Tablet only</div>
+
+// 3. 響應式 padding
+<main className="p-3 sm:p-4 lg:p-6">
+```
+
+---
+
+## MVP 完成狀態
 
 **Commit**: `6c7662d` - feat(rwd): implement MVP responsive design for mobile and tablet
 
 已完成項目：
-- ✅ Tailwind 設定調整（xs 斷點、portrait/landscape/touch variants）
-- ✅ Sheet 元件 (`components/ui/sheet.tsx`)
-- ✅ Mobile Navigation (`components/layout/mobile-nav.tsx`)
-- ✅ Main Layout 響應式 (`components/layout/main-layout.tsx`)
-- ✅ Header 響應式 (`components/layout/header.tsx`)
-- ✅ 全域 CSS 觸控友善規則 (`app/globals.css`)
-- ✅ iPad 直向提示元件 (`components/layout/orientation-guard.tsx`)
+- Tailwind 設定調整（xs 斷點、portrait/landscape/touch variants）
+- Sheet 元件 (`components/ui/sheet.tsx`)
+- Mobile Navigation (`components/layout/mobile-nav.tsx`)
+- Main Layout 響應式 (`components/layout/main-layout.tsx`)
+- Header 響應式 (`components/layout/header.tsx`)
+- 全域 CSS 觸控友善規則 (`app/globals.css`)
+- iPad 直向提示元件 (`components/layout/orientation-guard.tsx`)
 
 ---
 
@@ -66,7 +96,7 @@ extend: {
 
 ---
 
-## 響應式元件清單
+## 響應式元件
 
 ### 已建立元件
 
@@ -103,7 +133,7 @@ import { OrientationGuard } from "@/components/layout/orientation-guard";
 
 ## CSS 類別參考
 
-### 在 globals.css 中定義的類別
+### globals.css 中定義的類別
 
 | 類別 | 用途 |
 |------|------|
@@ -252,14 +282,3 @@ import { OrientationGuard } from "@/components/layout/orientation-guard";
 | `components/layout/orientation-guard.tsx` | iPad 直向提示 |
 | `components/layout/main-layout.tsx` | 主佈局（整合 OrientationGuard） |
 | `components/layout/header.tsx` | Header（整合 MobileNav） |
-
----
-
-## 推薦搭配使用的 SkillsMP Skills
-
-| Skill | 用途 |
-|-------|------|
-| `tailwind-design-system` | Tailwind 設計系統、responsive patterns |
-| `css-uiux-audit` | CSS/RWD 問題檢查與自動修正 |
-
-**安裝方式**：到 [SkillsMP](https://skillsmp.com) 搜尋並安裝
