@@ -320,12 +320,67 @@ import { Container } from "@/components/ui/container";
 
 ---
 
+## Design Tokens 整合
+
+**參考文件**: [docs/DESIGN_TOKENS.md](../../../docs/DESIGN_TOKENS.md)
+
+### 響應式 Padding 標準（必須遵守）
+
+```tsx
+// Page content - 標準模式
+<main className="p-3 sm:p-4 lg:p-6">
+
+// Card padding
+<div className="p-3 sm:p-4">
+// 或
+<div className="p-4 sm:p-6">
+
+// Gap between elements
+<div className="flex gap-3 sm:gap-4 lg:gap-6">
+```
+
+### 響應式 Grid 標準
+
+```tsx
+// 4 欄統計卡
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+// 5 欄統計卡
+<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+
+// Dashboard KPI 區塊
+<div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+```
+
+### 表格響應式標準（重要）
+
+**正確模式**：保持外層卡片樣式，內層使用 `table-responsive`
+
+```tsx
+{/* ✅ 正確：卡片樣式 + 內層 table-responsive */}
+<div className="bg-surface-elevated rounded-xl border border-border-default overflow-hidden shadow-sm">
+  <div className="table-responsive">
+    <table className="min-w-[600px] w-full">
+      {/* 表格內容 */}
+    </table>
+  </div>
+  {/* Pagination 放在 table-responsive 外層 */}
+</div>
+
+{/* ❌ 錯誤：直接用 table-responsive 取代卡片 */}
+<div className="table-responsive">
+  <table className="min-w-[600px] w-full">
+```
+
+---
+
 ## 相關檔案
 
 | 檔案 | 說明 |
 |------|------|
 | `tailwind.config.js` | 斷點與 variants 設定 |
 | `app/globals.css` | RWD CSS 類別定義 |
+| `docs/DESIGN_TOKENS.md` | **Design Token 參考文件（必讀）** |
 | `components/ui/sheet.tsx` | Sheet 元件 |
 | `components/ui/grid.tsx` | Grid 元件（響應式 grid 佈局） |
 | `components/ui/container.tsx` | Container 元件（響應式容器寬度） |
@@ -334,4 +389,3 @@ import { Container } from "@/components/ui/container";
 | `components/layout/orientation-guard.tsx` | iPad 直向提示 |
 | `components/layout/main-layout.tsx` | 主佈局（整合 OrientationGuard） |
 | `components/layout/header.tsx` | Header（整合 MobileNav） |
-| `docs/DESIGN_TOKENS.md` | Design Token 參考文件 |
