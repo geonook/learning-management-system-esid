@@ -209,7 +209,7 @@ export default function TeacherDetailPage() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <div className="bg-surface-secondary rounded-xl border border-border-default p-6">
                 <div className="flex items-center gap-3 mb-2">
                   <School className="w-5 h-5 text-blue-500 dark:text-blue-400" />

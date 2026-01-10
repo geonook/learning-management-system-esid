@@ -322,7 +322,7 @@ export default function StudentDetailPage() {
               {/* Overview Tab */}
               <TabsContent value="overview" className="space-y-6">
                 {/* Stats Grid */}
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                   {student.grade_averages.map((ga) => (
                     <div key={ga.course_type} className="bg-surface-elevated rounded-xl border border-border-default p-6 shadow-sm">
                       <div className="flex items-center gap-3 mb-2">

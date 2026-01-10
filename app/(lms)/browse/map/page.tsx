@@ -194,7 +194,7 @@ export default function BrowseMapPage() {
 
         {/* Stats Summary */}
         {stats && (
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div className="bg-surface-elevated rounded-xl border border-border-default p-4 shadow-sm">
               <p className="text-xs text-text-tertiary mb-1">Results</p>
               <p className="text-2xl font-bold text-text-primary">{totalCount}</p>

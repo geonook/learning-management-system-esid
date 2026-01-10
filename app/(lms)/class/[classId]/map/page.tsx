@@ -268,7 +268,7 @@ export default function ClassMapPage() {
 
         {/* Class Statistics */}
         {!loading && isValidGrade && stats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div className="bg-surface-elevated rounded-xl border border-border-default p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-2">
                 <Users className="w-4 h-4 text-text-tertiary" />
@@ -333,8 +333,8 @@ export default function ClassMapPage() {
                 <p className="text-text-secondary">No students found in this class</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
+              <div className="table-responsive">
+                <table className="min-w-[600px] w-full">
                   <thead>
                     <tr className="border-b border-border-subtle bg-surface-tertiary">
                       <th className="px-4 py-3 text-left text-xs font-medium text-text-tertiary uppercase tracking-wide">
