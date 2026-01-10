@@ -103,9 +103,9 @@ export default function ClassOverviewPage() {
 
         {/* Course Selector for Admin/Office */}
         {isAdminOrOffice && allCourses.length > 0 && (
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-4">
             <span className="text-sm text-text-secondary">View course:</span>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {allCourses.map((course) => (
                 <button
                   key={course.id}

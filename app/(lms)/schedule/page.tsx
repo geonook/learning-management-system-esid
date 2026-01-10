@@ -93,7 +93,7 @@ export default function SchedulePage() {
 
   return (
     <AuthGuard requiredRoles={["admin", "head", "teacher"]}>
-      <div className="p-6 max-w-6xl mx-auto">
+      <div className="p-3 sm:p-4 lg:p-6 max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>

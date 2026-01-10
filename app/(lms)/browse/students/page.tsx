@@ -202,7 +202,8 @@ export default function BrowseStudentsPage() {
         {/* Students Table */}
         {!loading && !error && data && data.students.length > 0 && (
           <div className="bg-surface-elevated rounded-xl border border-border-default overflow-hidden shadow-sm">
-            <table className="w-full">
+            <div className="table-responsive">
+              <table className="min-w-[600px] w-full">
               <thead>
                 <tr className="border-b border-border-default">
                   <th className="text-left p-4 text-sm font-medium text-text-secondary">Student ID</th>
@@ -249,7 +250,8 @@ export default function BrowseStudentsPage() {
                   </Link>
                 ))}
               </tbody>
-            </table>
+              </table>
+            </div>
 
             {/* Pagination */}
             <div className="flex items-center justify-between p-4 border-t border-border-default">
@@ -280,7 +282,7 @@ export default function BrowseStudentsPage() {
         )}
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-surface-elevated rounded-xl border border-border-default p-4 shadow-sm">
             <div className="text-2xl font-bold text-text-primary">{stats?.total || 0}</div>
             <div className="text-xs text-text-tertiary">Total Students</div>

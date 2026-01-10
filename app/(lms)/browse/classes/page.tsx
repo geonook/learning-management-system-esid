@@ -155,7 +155,7 @@ export default function BrowseClassesPage() {
                 href={`/class/${cls.id}`}
                 className="group block"
               >
-                <div className="relative bg-surface-elevated rounded-xl border border-border-default p-6 h-[180px] flex flex-col hover:shadow-md hover:border-blue-500/30 dark:hover:border-blue-400/30 hover:-translate-y-0.5 transition-all duration-normal ease-apple shadow-sm">
+                <div className="relative bg-surface-elevated rounded-xl border border-border-default p-4 sm:p-6 min-h-[160px] flex flex-col hover:shadow-md hover:border-blue-500/30 dark:hover:border-blue-400/30 hover:-translate-y-0.5 transition-all duration-normal ease-apple shadow-sm">
                   {/* Hover indicator */}
                   <div className="absolute right-4 top-4 opacity-0 group-hover:opacity-100 transition-opacity duration-normal ease-apple">
                     <ChevronRight className="w-5 h-5 text-text-tertiary" />
