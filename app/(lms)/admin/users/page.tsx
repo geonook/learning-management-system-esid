@@ -217,7 +217,7 @@ export default function UserManagementPage() {
 
         {/* Stats Cards */}
         {stats && (
-          <div className="grid grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <div className="bg-surface-secondary rounded-xl border border-border-default p-4 shadow-sm">
               <div className="text-2xl font-bold text-text-primary">{stats.total}</div>
               <div className="text-xs text-text-tertiary">Total Users</div>
@@ -294,7 +294,8 @@ export default function UserManagementPage() {
 
         {/* User Table */}
         <div className="bg-surface-secondary rounded-xl border border-border-default overflow-hidden shadow-sm">
-          <table className="w-full">
+          <div className="table-responsive">
+          <table className="min-w-[800px] w-full">
             <thead>
               <tr className="border-b border-border-default">
                 <th className="text-left p-4 text-sm font-medium text-text-secondary">
@@ -537,6 +538,7 @@ export default function UserManagementPage() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
 
         {/* Footer Info */}

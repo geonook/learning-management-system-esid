@@ -412,7 +412,7 @@ export default function CourseAssignmentPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-text-secondary text-sm">Total Courses</span>
@@ -465,7 +465,8 @@ export default function CourseAssignmentPage() {
 
         {/* Courses Table */}
         <div className="bg-surface-secondary rounded-xl border border-border-default overflow-hidden">
-          <table className="w-full">
+          <div className="table-responsive">
+          <table className="min-w-[700px] w-full">
             <thead>
               <tr className="border-b border-border-default">
                 <th className="text-left p-4 text-sm font-medium text-text-secondary">Class</th>
@@ -559,6 +560,7 @@ export default function CourseAssignmentPage() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
 
         {/* Showing count */}
