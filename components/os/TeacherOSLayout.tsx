@@ -5,23 +5,37 @@ import { Desktop } from "./Desktop";
 import { MenuBar } from "./MenuBar";
 import { Spotlight } from "./Spotlight";
 import { Sidebar } from "./Sidebar";
+import { SidebarProvider, useSidebar } from "@/lib/sidebar-context";
+import { cn } from "@/lib/utils";
 
 interface TeacherOSLayoutProps {
   children: React.ReactNode;
 }
 
+function MainContent({ children }: { children: React.ReactNode }) {
+  const { isCollapsed } = useSidebar();
+  return (
+    <main className={cn(
+      "h-full overflow-y-auto pt-12 pb-6 px-6 transition-all duration-300 ease-apple",
+      isCollapsed ? "ml-16" : "ml-64"
+    )}>
+      {children}
+    </main>
+  );
+}
+
 export function TeacherOSLayout({ children }: TeacherOSLayoutProps) {
   return (
-    <div className="h-screen w-screen overflow-hidden font-sans antialiased">
-      <MenuBar />
-      <Desktop>
-        <Sidebar />
-        <main className="ml-64 h-full overflow-y-auto pt-12 pb-6 px-6">
-          {children}
-        </main>
-      </Desktop>
-      {/* Dock removed - functionality available in TeacherOS (Info Hub) */}
-      <Spotlight />
-    </div>
+    <SidebarProvider>
+      <div className="h-screen w-screen overflow-hidden font-sans antialiased">
+        <MenuBar />
+        <Desktop>
+          <Sidebar />
+          <MainContent>{children}</MainContent>
+        </Desktop>
+        {/* Dock removed - functionality available in TeacherOS (Info Hub) */}
+        <Spotlight />
+      </div>
+    </SidebarProvider>
   );
 }

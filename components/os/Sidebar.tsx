@@ -20,8 +20,11 @@ import {
   Zap,
   ChevronDown,
   Target,
-  UserCog
+  UserCog,
+  PanelLeftClose,
+  PanelLeftOpen
 } from "lucide-react";
+import { useSidebar } from "@/lib/sidebar-context";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Section IDs for localStorage persistence
@@ -45,6 +48,7 @@ const STORAGE_KEY = 'lms-sidebar-sections';
 export function Sidebar() {
   const pathname = usePathname();
   const { userId, permissions: userPermissions } = useAuthReady();
+  const { isCollapsed, toggleSidebar } = useSidebar();
   const [classes, setClasses] = useState<Class[]>([]);
   // Head Teacher specific states
   const [teachingClasses, setTeachingClasses] = useState<ClassWithCourseType[]>([]);
@@ -135,7 +139,10 @@ export function Sidebar() {
   const isExpanded = (sectionId: SectionId) => isHydrated ? expandedSections[sectionId] : DEFAULT_EXPANDED[sectionId];
 
   return (
-    <aside className="fixed left-0 top-8 bottom-0 w-64 bg-surface-primary/80 dark:bg-black/60 backdrop-blur-xl border-r border-[rgb(var(--border-default))] z-40 flex flex-col overflow-hidden">
+    <aside className={cn(
+      "fixed left-0 top-8 bottom-0 bg-surface-primary/80 dark:bg-black/60 backdrop-blur-xl border-r border-[rgb(var(--border-default))] z-40 flex flex-col overflow-hidden transition-all duration-300 ease-apple",
+      isCollapsed ? "w-16" : "w-64"
+    )}>
       {/* Scrollable content area */}
       <div className="flex-1 overflow-y-auto py-2">
         {/* Section: Overview */}
@@ -144,18 +151,21 @@ export function Sidebar() {
           sectionId="overview"
           isExpanded={isExpanded('overview')}
           onToggle={() => toggleSection('overview')}
+          isCollapsed={isCollapsed}
         >
           <SidebarItem
             href="/dashboard"
             icon={<LayoutDashboard className="w-4 h-4" />}
             label="Dashboard"
             active={pathname === "/dashboard"}
+            isCollapsed={isCollapsed}
           />
           <SidebarItem
             href="/schedule"
             icon={<Calendar className="w-4 h-4" />}
             label="My Schedule"
             active={pathname === "/schedule"}
+            isCollapsed={isCollapsed}
           />
         </SidebarSection>
 
@@ -167,48 +177,56 @@ export function Sidebar() {
             isExpanded={isExpanded('admin')}
             onToggle={() => toggleSection('admin')}
             itemCount={7}
+            isCollapsed={isCollapsed}
           >
             <SidebarItem
               href="/admin/users"
               icon={<Users className="w-4 h-4" />}
               label="User Management"
               active={pathname === "/admin/users"}
+              isCollapsed={isCollapsed}
             />
             <SidebarItem
               href="/admin/classes"
               icon={<School className="w-4 h-4" />}
               label="Class Management"
               active={pathname === "/admin/classes"}
+              isCollapsed={isCollapsed}
             />
             <SidebarItem
               href="/admin/courses"
               icon={<BookOpen className="w-4 h-4" />}
               label="Course Assignments"
               active={pathname === "/admin/courses"}
+              isCollapsed={isCollapsed}
             />
             <SidebarItem
               href="/admin/roles"
               icon={<Shield className="w-4 h-4" />}
               label="Role Permissions"
               active={pathname === "/admin/roles"}
+              isCollapsed={isCollapsed}
             />
             <SidebarItem
               href="/admin/periods"
               icon={<Calendar className="w-4 h-4" />}
               label="Period Management"
               active={pathname === "/admin/periods"}
+              isCollapsed={isCollapsed}
             />
             <SidebarItem
               href="/admin/settings"
               icon={<Settings className="w-4 h-4" />}
               label="System Settings"
               active={pathname === "/admin/settings"}
+              isCollapsed={isCollapsed}
             />
             <SidebarItem
               href="/admin/impersonate"
               icon={<UserCog className="w-4 h-4" />}
               label="Impersonate"
               active={pathname === "/admin/impersonate"}
+              isCollapsed={isCollapsed}
             />
           </SidebarSection>
         )}
@@ -221,30 +239,35 @@ export function Sidebar() {
             isExpanded={isExpanded('grade')}
             onToggle={() => toggleSection('grade')}
             itemCount={4}
+            isCollapsed={isCollapsed}
           >
             <SidebarItem
               href="/head/overview"
               icon={<LayoutDashboard className="w-4 h-4" />}
               label="Grade Overview"
               active={pathname === "/head/overview"}
+              isCollapsed={isCollapsed}
             />
             <SidebarItem
               href="/head/teachers"
               icon={<Users className="w-4 h-4" />}
               label="Teacher Progress"
               active={pathname === "/head/teachers"}
+              isCollapsed={isCollapsed}
             />
             <SidebarItem
               href="/head/gradeband"
               icon={<BarChart3 className="w-4 h-4" />}
               label="Statistics"
               active={pathname?.startsWith("/head/gradeband") ?? false}
+              isCollapsed={isCollapsed}
             />
             <SidebarItem
               href="/head/expectations"
               icon={<Target className="w-4 h-4" />}
               label="Expectations"
               active={pathname === "/head/expectations"}
+              isCollapsed={isCollapsed}
             />
           </SidebarSection>
         )}
@@ -257,24 +280,28 @@ export function Sidebar() {
             isExpanded={isExpanded('browse')}
             onToggle={() => toggleSection('browse')}
             itemCount={3}
+            isCollapsed={isCollapsed}
           >
             <SidebarItem
               href="/browse/classes"
               icon={<School className="w-4 h-4" />}
               label="All Classes"
               active={pathname === "/browse/classes"}
+              isCollapsed={isCollapsed}
             />
             <SidebarItem
               href="/browse/teachers"
               icon={<Users className="w-4 h-4" />}
               label="All Teachers"
               active={pathname === "/browse/teachers" || pathname?.startsWith("/teacher/")}
+              isCollapsed={isCollapsed}
             />
             <SidebarItem
               href="/browse/students"
               icon={<GraduationCap className="w-4 h-4" />}
               label="All Students"
               active={pathname === "/browse/students" || pathname?.startsWith("/student/")}
+              isCollapsed={isCollapsed}
             />
           </SidebarSection>
         )}
@@ -287,30 +314,35 @@ export function Sidebar() {
             isExpanded={isExpanded('academic')}
             onToggle={() => toggleSection('academic')}
             itemCount={4}
+            isCollapsed={isCollapsed}
           >
             <SidebarItem
               href="/browse/gradebook"
               icon={<BookOpen className="w-4 h-4" />}
               label="Gradebook"
               active={pathname === "/browse/gradebook"}
+              isCollapsed={isCollapsed}
             />
             <SidebarItem
               href="/browse/map"
               icon={<Target className="w-4 h-4" />}
               label="MAP Scores"
               active={pathname === "/browse/map"}
+              isCollapsed={isCollapsed}
             />
             <SidebarItem
               href="/browse/comms"
               icon={<MessageSquare className="w-4 h-4" />}
               label="Communications"
               active={pathname === "/browse/comms"}
+              isCollapsed={isCollapsed}
             />
             <SidebarItem
               href="/browse/stats"
               icon={<BarChart3 className="w-4 h-4" />}
               label="Statistics"
               active={pathname === "/browse/stats"}
+              isCollapsed={isCollapsed}
             />
           </SidebarSection>
         )}
@@ -322,12 +354,14 @@ export function Sidebar() {
             sectionId="quick"
             isExpanded={isExpanded('quick')}
             onToggle={() => toggleSection('quick')}
+            isCollapsed={isCollapsed}
           >
             <SidebarItem
               href="/scores/entry"
               icon={<Zap className="w-4 h-4" />}
               label="Quick Score Entry"
               active={pathname === "/scores/entry"}
+              isCollapsed={isCollapsed}
             />
           </SidebarSection>
         )}
@@ -340,6 +374,7 @@ export function Sidebar() {
             isExpanded={isExpanded('teaching')}
             onToggle={() => toggleSection('teaching')}
             itemCount={loading ? undefined : teachingClasses.length}
+            isCollapsed={isCollapsed}
           >
             {loading ? (
               <div className="space-y-1">
@@ -347,7 +382,7 @@ export function Sidebar() {
                 <Skeleton className="h-9 w-full rounded-lg" />
               </div>
             ) : teachingClasses.length === 0 ? (
-              <div className="text-sm text-text-tertiary py-1">No classes assigned</div>
+              !isCollapsed && <div className="text-sm text-text-tertiary py-1">No classes assigned</div>
             ) : (
               teachingClasses.map((cls) => (
                 <SidebarItem
@@ -356,6 +391,7 @@ export function Sidebar() {
                   icon={<BookOpen className="w-4 h-4" />}
                   label={`${cls.name} (${cls.course_type})`}
                   active={pathname?.startsWith(`/class/${cls.id}`) ?? false}
+                  isCollapsed={isCollapsed}
                 />
               ))
             )}
@@ -370,6 +406,7 @@ export function Sidebar() {
             isExpanded={isExpanded('managed')}
             onToggle={() => toggleSection('managed')}
             itemCount={loading ? undefined : managedClasses.length}
+            isCollapsed={isCollapsed}
           >
             {loading ? (
               <div className="space-y-1">
@@ -378,7 +415,7 @@ export function Sidebar() {
                 <Skeleton className="h-9 w-full rounded-lg" />
               </div>
             ) : managedClasses.length === 0 ? (
-              <div className="text-sm text-text-tertiary py-1">No classes in grade band</div>
+              !isCollapsed && <div className="text-sm text-text-tertiary py-1">No classes in grade band</div>
             ) : (
               managedClasses.map((cls) => (
                 <SidebarItem
@@ -387,6 +424,7 @@ export function Sidebar() {
                   icon={<BookOpen className="w-4 h-4" />}
                   label={cls.name}
                   active={pathname?.startsWith(`/class/${cls.id}`) ?? false}
+                  isCollapsed={isCollapsed}
                 />
               ))
             )}
@@ -401,6 +439,7 @@ export function Sidebar() {
             isExpanded={isExpanded('classes')}
             onToggle={() => toggleSection('classes')}
             itemCount={loading ? undefined : classes.length}
+            isCollapsed={isCollapsed}
           >
             {loading ? (
               <div className="space-y-1">
@@ -409,7 +448,7 @@ export function Sidebar() {
                 <Skeleton className="h-9 w-full rounded-lg" />
               </div>
             ) : classes.length === 0 ? (
-              <div className="text-sm text-text-tertiary py-1">No classes assigned</div>
+              !isCollapsed && <div className="text-sm text-text-tertiary py-1">No classes assigned</div>
             ) : (
               classes.map((cls) => (
                 <SidebarItem
@@ -418,11 +457,36 @@ export function Sidebar() {
                   icon={<BookOpen className="w-4 h-4" />}
                   label={cls.name}
                   active={pathname?.startsWith(`/class/${cls.id}`) ?? false}
+                  isCollapsed={isCollapsed}
                 />
               ))
             )}
           </SidebarSection>
         )}
+      </div>
+
+      {/* Collapse Toggle Button */}
+      <div className="border-t border-[rgb(var(--border-default))] p-2">
+        <button
+          onClick={toggleSidebar}
+          className={cn(
+            "w-full flex items-center gap-2 px-3 py-2 rounded-lg",
+            "text-text-secondary hover:bg-[rgb(var(--surface-hover))]",
+            "transition-colors duration-normal ease-apple",
+            "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50",
+            isCollapsed ? "justify-center" : "justify-start"
+          )}
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {isCollapsed ? (
+            <PanelLeftOpen className="w-4 h-4" />
+          ) : (
+            <>
+              <PanelLeftClose className="w-4 h-4" />
+              <span className="text-sm">Collapse</span>
+            </>
+          )}
+        </button>
       </div>
     </aside>
   );
@@ -435,6 +499,7 @@ function SidebarSection({
   isExpanded,
   onToggle,
   itemCount,
+  isCollapsed,
   children,
 }: {
   title: string;
@@ -442,8 +507,20 @@ function SidebarSection({
   isExpanded: boolean;
   onToggle: () => void;
   itemCount?: number;
+  isCollapsed?: boolean;
   children: React.ReactNode;
 }) {
+  // When sidebar is collapsed, hide section headers and show items directly
+  if (isCollapsed) {
+    return (
+      <div className="px-1 py-1">
+        <nav className="space-y-0.5">
+          {children}
+        </nav>
+      </div>
+    );
+  }
+
   return (
     <div className="px-3 py-1">
       <button
@@ -494,24 +571,29 @@ function SidebarItem({
   icon,
   label,
   active,
+  isCollapsed,
 }: {
   href: string;
   icon: React.ReactNode;
   label: string;
   active?: boolean;
+  isCollapsed?: boolean;
 }) {
   return (
     <Link
       href={href}
+      title={isCollapsed ? label : undefined}
       className={cn(
-        "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-normal ease-apple",
+        "flex items-center rounded-lg text-sm font-medium transition-all duration-normal ease-apple",
+        isCollapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
         active
           ? "bg-accent-blue/10 text-accent-blue"
-          : "text-text-primary hover:bg-[rgb(var(--surface-hover))] hover:translate-x-1"
+          : "text-text-primary hover:bg-[rgb(var(--surface-hover))]",
+        !isCollapsed && !active && "hover:translate-x-1"
       )}
     >
       {icon}
-      <span className="truncate">{label}</span>
+      {!isCollapsed && <span className="truncate">{label}</span>}
     </Link>
   );
 }

@@ -26,6 +26,8 @@ import {
   LogOut,
   Clock,
   X,
+  Minimize2,
+  Maximize2,
 } from "lucide-react"
 import * as VisuallyHidden from "@radix-ui/react-visually-hidden"
 
@@ -97,6 +99,7 @@ const sidebarItems = [
 export function MobileNav({ className }: MobileNavProps) {
   const [open, setOpen] = useState(false)
   const [expandedItem, setExpandedItem] = useState<string | null>(null)
+  const [compactMode, setCompactMode] = useState(false)
   const pathname = usePathname()
   const role = useAppStore((s) => s.role)
   const { signOut } = useAuthReady()
@@ -147,17 +150,34 @@ export function MobileNav({ className }: MobileNavProps) {
           </Button>
         </div>
 
-        {/* Role Badge */}
-        {role && (
-          <div className="p-4 pb-2">
+        {/* Role Badge & Compact Mode Toggle */}
+        <div className="p-4 pb-2 space-y-2">
+          {role && (
             <Badge variant="secondary" className="w-full justify-center capitalize">
               {role} Role
             </Badge>
-          </div>
-        )}
+          )}
+          <button
+            onClick={() => setCompactMode(!compactMode)}
+            className={cn(
+              "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm",
+              "bg-muted/50 hover:bg-muted transition-colors"
+            )}
+          >
+            <span className="text-muted-foreground">Compact Mode</span>
+            {compactMode ? (
+              <Maximize2 className="h-4 w-4 text-primary" />
+            ) : (
+              <Minimize2 className="h-4 w-4 text-muted-foreground" />
+            )}
+          </button>
+        </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 overflow-y-auto p-2">
+        <nav className={cn(
+          "flex-1 overflow-y-auto p-2",
+          compactMode ? "grid grid-cols-4 gap-1 content-start" : "space-y-1"
+        )}>
           {filteredItems.map((item) => {
             const Icon = item.icon
             const isActive =
@@ -166,6 +186,26 @@ export function MobileNav({ className }: MobileNavProps) {
             const hasSubItems = item.subItems && item.subItems.length > 0
             const isExpanded = expandedItem === item.href
 
+            // Compact mode: icon-only grid
+            if (compactMode) {
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  title={item.label}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-1 rounded-lg p-2 text-xs transition-colors hover:bg-accent touch:min-h-[44px]",
+                    isActive && "bg-accent text-accent-foreground"
+                  )}
+                  onClick={handleLinkClick}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span className="truncate w-full text-center text-[10px]">{item.label.split(' ')[0]}</span>
+                </Link>
+              )
+            }
+
+            // Normal mode: full list
             return (
               <div key={item.href}>
                 <Link
