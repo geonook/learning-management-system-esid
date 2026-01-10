@@ -47,6 +47,10 @@ module.exports = {
         "accent-red": "rgb(var(--accent-red) / <alpha-value>)",
         "accent-orange": "rgb(var(--accent-orange) / <alpha-value>)",
         "accent-purple": "rgb(var(--accent-purple) / <alpha-value>)",
+        // Status Colors (Semantic aliases)
+        "accent-success": "rgb(var(--accent-success) / <alpha-value>)",
+        "accent-warning": "rgb(var(--accent-warning) / <alpha-value>)",
+        "accent-info": "rgb(var(--accent-info) / <alpha-value>)",
         // Legacy shadcn colors (kept for compatibility)
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

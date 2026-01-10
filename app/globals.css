@@ -32,6 +32,11 @@
     --accent-orange: 255 149 0;          /* #FF9500 - Apple Orange */
     --accent-purple: 175 82 222;         /* #AF52DE - Apple Purple */
 
+    /* Status Colors (Semantic aliases) */
+    --accent-success: 52 199 89;         /* Apple Green - for success states */
+    --accent-warning: 255 149 0;         /* Apple Orange - for warning states */
+    --accent-info: 0 122 255;            /* Apple Blue - for info states */
+
     /* Design Tokens */
     --radius-sm: 8px;
     --radius-md: 12px;

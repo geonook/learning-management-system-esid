@@ -105,6 +105,8 @@ extend: {
 | Sheet | `components/ui/sheet.tsx` | 滑出面板（基於 Radix Dialog） |
 | MobileNav | `components/layout/mobile-nav.tsx` | 手機/平板導航選單 |
 | OrientationGuard | `components/layout/orientation-guard.tsx` | iPad 直向旋轉提示 |
+| **Grid** | `components/ui/grid.tsx` | 響應式 Grid 佈局（CVA variants） |
+| **Container** | `components/ui/container.tsx` | 響應式容器寬度（CVA variants） |
 
 ### MobileNav 使用方式
 
@@ -128,6 +130,47 @@ import { OrientationGuard } from "@/components/layout/orientation-guard";
   <MainContent />
 </OrientationGuard>
 ```
+
+### Grid 使用方式
+
+```tsx
+import { Grid } from "@/components/ui/grid";
+
+// 基本使用
+<Grid cols={3} gap="md">
+  <Card>1</Card>
+  <Card>2</Card>
+  <Card>3</Card>
+</Grid>
+
+// 自訂響應式
+<Grid cols={4} gap="lg" className="sm:grid-cols-2">
+  {items.map(item => <Card key={item.id} />)}
+</Grid>
+```
+
+**cols variants**: `1`, `2`, `3`, `4`, `5`, `6`
+**gap variants**: `none`, `xs`, `sm`, `md`, `lg`, `xl`
+
+### Container 使用方式
+
+```tsx
+import { Container } from "@/components/ui/container";
+
+// 頁面容器
+<Container size="lg" padding="md">
+  <h1>Page Title</h1>
+  <Content />
+</Container>
+
+// 窄版表單
+<Container size="sm" padding="sm">
+  <Form />
+</Container>
+```
+
+**size variants**: `xs` (max-w-md), `sm` (max-w-2xl), `md` (max-w-4xl), `lg` (max-w-6xl), `xl` (max-w-7xl), `full`
+**padding variants**: `none`, `sm`, `md`, `lg`
 
 ---
 
@@ -278,7 +321,11 @@ import { OrientationGuard } from "@/components/layout/orientation-guard";
 | `tailwind.config.js` | 斷點與 variants 設定 |
 | `app/globals.css` | RWD CSS 類別定義 |
 | `components/ui/sheet.tsx` | Sheet 元件 |
+| `components/ui/grid.tsx` | Grid 元件（響應式 grid 佈局） |
+| `components/ui/container.tsx` | Container 元件（響應式容器寬度） |
+| `components/ui/input.tsx` | Input 元件（含 error/success 狀態） |
 | `components/layout/mobile-nav.tsx` | 手機導航 |
 | `components/layout/orientation-guard.tsx` | iPad 直向提示 |
 | `components/layout/main-layout.tsx` | 主佈局（整合 OrientationGuard） |
 | `components/layout/header.tsx` | Header（整合 MobileNav） |
+| `docs/DESIGN_TOKENS.md` | Design Token 參考文件 |
