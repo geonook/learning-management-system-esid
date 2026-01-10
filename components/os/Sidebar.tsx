@@ -140,7 +140,8 @@ export function Sidebar() {
 
   return (
     <aside className={cn(
-      "fixed left-0 top-8 bottom-0 bg-surface-primary/80 dark:bg-black/60 backdrop-blur-xl border-r border-[rgb(var(--border-default))] z-40 flex flex-col overflow-hidden transition-all duration-300 ease-apple",
+      "fixed left-0 top-8 bottom-0 bg-surface-primary/80 dark:bg-black/60 backdrop-blur-xl border-r border-[rgb(var(--border-default))] z-40 flex-col overflow-hidden transition-all duration-300 ease-apple",
+      "hidden lg:flex",  // Hide on mobile/tablet, show on desktop
       isCollapsed ? "w-16" : "w-64"
     )}>
       {/* Scrollable content area */}
