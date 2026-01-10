@@ -207,8 +207,8 @@ export default function ClassStatisticsPage() {
 
         {/* Statistics Table */}
         <div className="bg-surface-secondary rounded-xl border border-border-default overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="table-responsive">
+            <table className="min-w-[900px] w-full">
               <thead>
                 <tr className="border-b border-border-default bg-surface-elevated/50">
                   <th className="text-left p-4 text-sm font-medium text-text-secondary">

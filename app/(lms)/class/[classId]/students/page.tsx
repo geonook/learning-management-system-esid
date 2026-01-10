@@ -176,7 +176,8 @@ export default function ClassStudentsPage() {
         {/* Students Table */}
         {!loading && !error && filteredStudents.length > 0 && (
           <div className="bg-surface-elevated rounded-xl border border-border-default overflow-hidden shadow-sm">
-            <table className="w-full">
+            <div className="table-responsive">
+            <table className="min-w-[600px] w-full">
               <thead>
                 <tr className="border-b border-border-default">
                   <th className="text-left p-4 text-sm font-medium text-text-secondary">Student ID</th>
@@ -228,6 +229,7 @@ export default function ClassStudentsPage() {
                 ))}
               </tbody>
             </table>
+            </div>
 
             {/* Footer */}
             <div className="flex items-center justify-between p-4 border-t border-border-default">

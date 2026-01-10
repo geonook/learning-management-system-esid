@@ -147,15 +147,15 @@ export default function AllStudentGradesPage() {
         </div>
 
         {/* Filters - Unified solid button style */}
-        <div className="flex flex-wrap gap-6">
+        <div className="flex flex-wrap gap-3 sm:gap-4 lg:gap-6">
           {/* Course Type Filter */}
-          <div className="flex gap-2 items-center">
-            <span className="text-sm text-text-secondary font-medium">Course:</span>
+          <div className="flex gap-1 sm:gap-2 items-center">
+            <span className="text-xs sm:text-sm text-text-secondary font-medium">Course:</span>
             {courseTypes.map((ct) => (
               <button
                 key={ct}
                 onClick={() => setSelectedCourseType(ct)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-normal ease-apple ${
+                className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors duration-normal ease-apple ${
                   selectedCourseType === ct
                     ? ct === "LT"
                       ? "bg-emerald-500 text-white dark:text-white"
@@ -171,13 +171,13 @@ export default function AllStudentGradesPage() {
           </div>
 
           {/* Grade Filter */}
-          <div className="flex gap-2 items-center">
-            <span className="text-sm text-text-secondary font-medium">Grade:</span>
+          <div className="flex gap-1 sm:gap-2 items-center">
+            <span className="text-xs sm:text-sm text-text-secondary font-medium">Grade:</span>
             {gradeOptions.map((grade) => (
               <button
                 key={grade}
                 onClick={() => setSelectedGrade(grade)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-normal ease-apple ${
+                className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors duration-normal ease-apple ${
                   selectedGrade === grade
                     ? "bg-purple-600 dark:bg-purple-500 text-white dark:text-white"
                     : "bg-surface-tertiary text-text-secondary hover:bg-surface-hover hover:text-text-primary"
@@ -197,8 +197,8 @@ export default function AllStudentGradesPage() {
 
         {/* Statistics Table */}
         <div className="bg-surface-secondary rounded-xl border border-border-default overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="table-responsive">
+            <table className="min-w-[800px] w-full">
               <thead>
                 <tr className="border-b border-border-default bg-surface-elevated/50">
                   <th className="text-left p-4 text-sm font-medium text-text-secondary whitespace-nowrap">

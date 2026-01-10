@@ -108,12 +108,12 @@ export default function BrowseClassesPage() {
         </div>
 
         {/* Grade Tabs */}
-        <div className="flex gap-2">
+        <div className="flex gap-1 sm:gap-2">
           {(["All", 1, 2, 3, 4, 5, 6] as GradeFilter[]).map((grade) => (
             <button
               key={grade}
               onClick={() => setSelectedGrade(grade)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-normal ease-apple ${
+              className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors duration-normal ease-apple ${
                 selectedGrade === grade
                   ? "bg-accent-blue text-white dark:text-white"
                   : "bg-surface-tertiary text-text-secondary hover:bg-surface-hover"

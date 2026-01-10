@@ -123,7 +123,7 @@ export default function BrowseStatsPage() {
         <GlobalFilterBar showYear showTerm={false} />
 
         {/* Quick Stats Summary */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           {loading ? (
             <>
               {[1, 2, 3, 4].map((i) => (
@@ -172,7 +172,7 @@ export default function BrowseStatsPage() {
           <h2 className="text-lg font-semibold text-text-primary mb-4">
             Analytics Modules
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {statNavCards.map((card) => (
               <StatNavCard
                 key={card.href}

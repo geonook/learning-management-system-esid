@@ -135,16 +135,16 @@ export default function BrowseStudentsPage() {
         </div>
 
         {/* Filters Row - Grade and Level on same line */}
-        <div className="flex flex-wrap items-center gap-6">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4 lg:gap-6">
           {/* Grade Filter */}
           <div className="flex items-center gap-2">
-            <span className="text-sm text-text-secondary font-medium">Grade:</span>
-            <div className="flex gap-2">
+            <span className="text-xs sm:text-sm text-text-secondary font-medium">Grade:</span>
+            <div className="flex gap-1 sm:gap-2">
               {(["All", 1, 2, 3, 4, 5, 6] as GradeFilter[]).map((grade) => (
                 <button
                   key={grade}
                   onClick={() => setSelectedGrade(grade)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-normal ease-apple ${
+                  className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors duration-normal ease-apple ${
                     selectedGrade === grade
                       ? "bg-purple-600 dark:bg-purple-500 text-white dark:text-white"
                       : "bg-surface-tertiary text-text-secondary hover:bg-surface-hover"
@@ -158,13 +158,13 @@ export default function BrowseStudentsPage() {
 
           {/* Level Filter */}
           <div className="flex items-center gap-2">
-            <span className="text-sm text-text-secondary font-medium">Level:</span>
-            <div className="flex gap-2">
+            <span className="text-xs sm:text-sm text-text-secondary font-medium">Level:</span>
+            <div className="flex gap-1 sm:gap-2">
               {(["All", "E1", "E2", "E3"] as LevelFilter[]).map((level) => (
                 <button
                   key={level}
                   onClick={() => setSelectedLevel(level)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-normal ease-apple ${
+                  className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors duration-normal ease-apple ${
                     selectedLevel === level
                       ? "bg-purple-600 dark:bg-purple-500 text-white dark:text-white"
                       : "bg-surface-tertiary text-text-secondary hover:bg-surface-hover"

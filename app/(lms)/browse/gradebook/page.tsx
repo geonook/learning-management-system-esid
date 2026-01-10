@@ -173,8 +173,8 @@ export default function BrowseGradebookPage() {
         <GlobalFilterBar showYear showTerm compact />
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-3 sm:p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-text-secondary text-sm">Classes</span>
               <School className="w-4 h-4 text-amber-500 dark:text-amber-400" />
@@ -186,7 +186,7 @@ export default function BrowseGradebookPage() {
             )}
             <div className="text-xs text-text-tertiary">total classes</div>
           </div>
-          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-3 sm:p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-text-secondary text-sm">On Track</span>
               <CheckCircle className="w-4 h-4 text-green-500 dark:text-green-400" />
@@ -200,7 +200,7 @@ export default function BrowseGradebookPage() {
             )}
             <div className="text-xs text-text-tertiary">all courses ≥80%</div>
           </div>
-          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-3 sm:p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-text-secondary text-sm">Behind</span>
               <Clock className="w-4 h-4 text-amber-500 dark:text-amber-400" />
@@ -214,7 +214,7 @@ export default function BrowseGradebookPage() {
             )}
             <div className="text-xs text-text-tertiary">some progress</div>
           </div>
-          <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
+          <div className="bg-surface-secondary rounded-xl border border-border-default p-3 sm:p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-text-secondary text-sm">Not Started</span>
               <AlertTriangle className="w-4 h-4 text-red-500/50 dark:text-red-400/50" />
@@ -229,8 +229,8 @@ export default function BrowseGradebookPage() {
         </div>
 
         {/* Filters */}
-        <div className="flex gap-4 flex-wrap">
-          <div className="relative flex-1 min-w-[200px]">
+        <div className="flex gap-3 sm:gap-4 flex-wrap">
+          <div className="relative flex-1 min-w-[150px] sm:min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
             <Input
               placeholder="Search classes..."

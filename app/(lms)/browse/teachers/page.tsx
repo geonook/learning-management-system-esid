@@ -138,12 +138,12 @@ export default function BrowseTeachersPage() {
         </div>
 
         {/* Type Tabs */}
-        <div className="flex gap-2">
+        <div className="flex gap-1 sm:gap-2">
           {(["All", "LT", "IT", "KCFS"] as TypeFilter[]).map((type) => (
             <button
               key={type}
               onClick={() => setSelectedType(type)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-normal ease-apple ${
+              className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors duration-normal ease-apple ${
                 selectedType === type
                   ? "bg-emerald-500 text-white dark:text-white"
                   : "bg-surface-tertiary text-text-secondary hover:bg-surface-hover"
@@ -243,7 +243,7 @@ export default function BrowseTeachersPage() {
         )}
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
           <div className="bg-surface-secondary rounded-xl border border-border-default p-4">
             <div className="text-2xl font-bold text-text-primary">{stats?.total || 0}</div>
             <div className="text-xs text-text-tertiary">Total</div>

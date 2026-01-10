@@ -217,7 +217,7 @@ export default function UserManagementPage() {
 
         {/* Stats Cards */}
         {stats && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
             <div className="bg-surface-secondary rounded-xl border border-border-default p-4 shadow-sm">
               <div className="text-2xl font-bold text-text-primary">{stats.total}</div>
               <div className="text-xs text-text-tertiary">Total Users</div>
@@ -254,7 +254,7 @@ export default function UserManagementPage() {
         )}
 
         {/* Search and Filters */}
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
             <Input
@@ -267,7 +267,7 @@ export default function UserManagementPage() {
           <div className="relative">
             <Button
               variant="outline"
-              className="border-border-default text-text-secondary min-w-[150px] justify-between hover:text-text-primary"
+              className="border-border-default text-text-secondary w-full sm:w-auto sm:min-w-[150px] justify-between hover:text-text-primary"
               onClick={() => setShowRoleDropdown(!showRoleDropdown)}
             >
               {filterRole === "all" ? "All Roles" : filterRole.replace("_", " ")}
