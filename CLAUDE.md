@@ -1,24 +1,26 @@
 # CLAUDE.md - learning-management-system-esid
 
-> **Documentation Version**: 5.2
-> **Last Updated**: 2026-01-09
+> **Documentation Version**: 5.3
+> **Last Updated**: 2026-01-10
 > **Project**: learning-management-system-esid
 > **Description**: Full-stack Primary School LMS with Next.js + TypeScript + Supabase Cloud
-> **Current Version**: v1.67.0 - Gradebook UX Enhancements
+> **Current Version**: v1.68.0 - RWD & Sidebar Collapse
 
 This file provides essential guidance to Claude Code when working with code in this repository.
 
 ## Current Status
 
-- **v1.67.0** - Gradebook UX enhancements complete
+- **v1.68.0** - RWD & Sidebar Collapse complete
 - **Production**: 84 classes, 504 courses (2 academic years), 1514 students
 - **Tech Stack**: Next.js 14 (App Router) + TypeScript + Tailwind + Supabase Cloud
 
 **Recent Additions**:
+- **RWD (Responsive Web Design)**: Phase 2-4 完成，支援手機/平板/桌機
+- **Sidebar 收合功能**: 桌機可收合 (w-64 → w-16)，手機 Sheet 有 Compact Mode
+- **Design System**: Grid, Container 組件, Status Colors (success/warning/info)
+- **SidebarContext**: 全局側邊欄狀態管理 + localStorage 持久化
 - **Gradebook Keyboard Navigation**: Enter/Tab moves down, Arrow keys navigate, Esc cancels
 - **Zero Score Warning**: Confirmation dialog for 0 scores (防呆機制)
-- **Hover Menu for Absent/Clear**: Click ⋮ icon instead of clicking cell
-- **Keyboard Shortcuts Tooltip**: Help icon in toolbar with shortcut reference
 - **iSchool Comments System**: Migration 044 - Student comments for iSchool export
 
 **Next Steps**:
@@ -114,9 +116,13 @@ psql "postgresql://postgres.piwbooidofbaqklhijup:geonook8588@aws-1-ap-southeast-
 ```
 /app/**                 # Next.js routes
 /components/**          # Reusable UI components
+/components/os/**       # TeacherOS layout (Sidebar, MenuBar, Desktop)
+/components/layout/**   # Layout components (MobileNav, Header)
+/components/ui/**       # shadcn/ui components + Grid, Container
 /lib/supabase/**        # Supabase clients
 /lib/grade/**           # Grade calculation (NEVER convert to letters)
 /lib/api/**             # Frontend data layer + permissions.ts
+/lib/sidebar-context.tsx # Sidebar collapse state management
 /db/migrations/**       # SQL migrations
 ```
 

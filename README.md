@@ -1,16 +1,21 @@
 # Learning Management System - ESID
 
-> **Version**: 1.66.0
-> **Status**: Production Ready (Security Architecture Refactor)
+> **Version**: 1.68.0
+> **Status**: Production Ready (RWD & Sidebar Collapse)
 > **Tech Stack**: Next.js 14 + TypeScript + Supabase Cloud + Tailwind CSS
-> **Last Updated**: 2025-12-29
+> **Last Updated**: 2026-01-10
 
 A comprehensive **Primary School (G1-G6)** Learning Management System featuring English Language Arts (ELA) and KCFS courses with advanced **Analytics Engine**, **Four-Layer Security Architecture**, and **Info Hub SSO Integration**. Features **One Class, Three Teachers (一班三師)** architecture where each class has dedicated LT, IT, and KCFS instructors, plus **NWEA MAP Growth Assessment** analysis, real-time performance analytics, and **Teacher Schedule System**.
 
-## 🎯 Current Status (Updated 2025-12-29)
+## 🎯 Current Status (Updated 2026-01-10)
 
 ### ✅ Completed Features
 
+- **v1.68.0 RWD & Sidebar**: ✅ Full responsive design + collapsible sidebar for all devices
+- **Responsive Web Design**: ✅ Phase 2-4 complete - mobile, tablet, desktop support
+- **Sidebar Collapse**: ✅ Desktop w-64→w-16, MobileNav Compact Mode, localStorage persistence
+- **Design System**: ✅ Grid, Container components, Status Colors (success/warning/info)
+- **v1.67.0 Gradebook UX**: ✅ Keyboard navigation, zero score warning, hover menu
 - **v1.66.0 Security Architecture**: ✅ Four-layer security (Auth → RLS → Application → Frontend)
 - **RLS Simplification**: ✅ Migration 036/037 - simplified from 100+ to ~30 policies
 - **Application Permission Layer**: ✅ Unified `lib/api/permissions.ts` with role-based access
@@ -22,7 +27,7 @@ A comprehensive **Primary School (G1-G6)** Learning Management System featuring 
 - **Browse Pages**: ✅ Classes, Students, Teachers, Gradebook, Statistics with real data
 - **SSO Integration**: ✅ Full OAuth 2.0 + PKCE flow with Info Hub
 - **Real Data Deployment**: ✅ 84 classes, 504 courses (2 academic years), 1514 students
-- **Database Migrations**: ✅ 37 migrations deployed (007-037)
+- **Database Migrations**: ✅ 44 migrations deployed (007-044)
 - **Analytics Engine**: ✅ 40+ TypeScript interfaces, professional chart components
 
 ### ⏳ In Progress
@@ -521,9 +526,9 @@ Proprietary - All Rights Reserved
 
 ---
 
-**🎯 Primary School ELA LMS | 康橋小學英語學習管理系統 | v1.66.0**
+**🎯 Primary School ELA LMS | 康橋小學英語學習管理系統 | v1.68.0**
 
 **Maintained By**: ESID Development Team
-**Last Updated**: 2025-12-29
+**Last Updated**: 2026-01-10
 
-🏫 **Core Features**: G1-G6 支援 | 一班三師架構 | Grade×CourseType 權限 | CSV 批量匯入 | 📊 Analytics 引擎 | 🧠 MAP 成長分析 | 🔐 Info Hub SSO 整合 | 🛡️ 四層安全架構
+🏫 **Core Features**: G1-G6 支援 | 一班三師架構 | Grade×CourseType 權限 | CSV 批量匯入 | 📊 Analytics 引擎 | 🧠 MAP 成長分析 | 🔐 Info Hub SSO 整合 | 🛡️ 四層安全架構 | 📱 RWD 響應式設計

@@ -251,6 +251,41 @@ The project uses two color systems:
 
 ---
 
+## Sidebar Context
+
+The sidebar collapse state is managed globally through `SidebarContext`:
+
+```tsx
+import { useSidebar } from "@/lib/sidebar-context"
+
+function MyComponent() {
+  const { isCollapsed, toggleSidebar, setCollapsed } = useSidebar()
+
+  return (
+    <div className={cn(
+      "transition-all duration-300",
+      isCollapsed ? "ml-16" : "ml-64"
+    )}>
+      {/* Content */}
+    </div>
+  )
+}
+```
+
+**Features**:
+- `isCollapsed`: boolean - Current collapse state
+- `toggleSidebar()`: Toggle collapse state
+- `setCollapsed(boolean)`: Set specific state
+- localStorage persistence (key: `lms-sidebar-collapsed`)
+- Hydration-safe (avoids SSR/CSR mismatch)
+
+**Usage in TeacherOS**:
+- `TeacherOSLayout`: Wraps content with `SidebarProvider`
+- `Sidebar`: Responsive width w-64 → w-16
+- `MainContent`: Dynamic margin ml-64 → ml-16
+
+---
+
 ## Files Reference
 
 | File | Content |
@@ -260,3 +295,6 @@ The project uses two color systems:
 | `components/ui/grid.tsx` | Grid component |
 | `components/ui/container.tsx` | Container component |
 | `components/ui/input.tsx` | Input with state variants |
+| `lib/sidebar-context.tsx` | Sidebar collapse state management |
+| `components/os/Sidebar.tsx` | TeacherOS sidebar with collapse |
+| `components/layout/mobile-nav.tsx` | MobileNav with Compact Mode |
