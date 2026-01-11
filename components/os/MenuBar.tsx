@@ -1,6 +1,7 @@
 "use client";
 
 import { Home, Search, ChevronDown, LogOut, User } from "lucide-react";
+import { MobileNav } from "@/components/layout/mobile-nav";
 import Image from "next/image";
 import { DateTimeDisplay } from "./DateTimeDisplay";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -36,9 +37,12 @@ export function MenuBar({ onOpenEvents }: MenuBarProps) {
   };
 
   return (
-    <div className="absolute top-0 left-0 right-0 h-8 bg-surface-primary/70 dark:bg-black/50 backdrop-blur-2xl border-b border-[rgb(var(--border-default))] flex items-center justify-between px-2 z-50 select-none">
-      {/* Left Side: Back to TeacherOS & App Name */}
-      <div className="flex items-center gap-3">
+    <div className="absolute top-0 left-0 right-0 h-12 sm:h-8 bg-surface-primary/70 dark:bg-black/50 backdrop-blur-2xl border-b border-[rgb(var(--border-default))] flex items-center justify-between px-2 z-50 select-none">
+      {/* Left Side: Mobile Nav, Back to TeacherOS & App Name */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Mobile Navigation - hamburger menu for mobile/tablet */}
+        <MobileNav />
+
         {/* Back to TeacherOS Button */}
         <Button
           variant="ghost"
